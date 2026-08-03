@@ -1,19 +1,49 @@
 
-function predict(hoursRemaining){
 
-let freshness =
-Math.max(
-0,
-Math.min(
-100,
-(hoursRemaining / 24) * 100
-)
-);
+function predict(data){
+
+let prediction="FRESHNESS_STABLE";
+
+let confidence=50;
+
+let action="MONITOR";
 
 
-return Number(
-freshness.toFixed(2)
-);
+if(data.freshness < 30){
+
+prediction="FRESHNESS_COLLAPSE_EXPECTED";
+
+confidence+=35;
+
+action="DISTRIBUTE_FAST";
+
+}
+
+
+if(data.freshness < 15){
+
+prediction="CRITICAL_FRESHNESS_RISK";
+
+confidence+=15;
+
+action="IMMEDIATE_MOVEMENT";
+
+}
+
+
+if(confidence>100)
+confidence=100;
+
+
+return {
+
+prediction,
+
+confidence,
+
+action
+
+};
 
 }
 
