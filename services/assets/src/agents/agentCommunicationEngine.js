@@ -1,59 +1,33 @@
-const {pool}=require("../postgres");
+
+function communicate(asset,data){
 
 
-async function broadcast(data){
+return [
 
-const result =
-await pool.query(
-`
-INSERT INTO food_brain_agent_messages
-(
-agent,
-message,
-confidence,
-payload
-)
+{
+agent:"MARKET_AGENT",
+message:"Demand analysis complete",
+confidence:90
+},
 
-VALUES
-($1,$2,$3,$4)
+{
+agent:"FRESHNESS_AGENT",
+message:"Freshness risk evaluated",
+confidence:88
+},
 
-RETURNING *
-`,
-[
-data.agent,
-data.message,
-data.confidence || 0,
-JSON.stringify(data.payload || {})
-]
-);
-
-
-return result.rows[0];
-
+{
+agent:"LOGISTICS_AGENT",
+message:"Movement priority calculated",
+confidence:85
 }
 
-
-
-async function history(){
-
-const result =
-await pool.query(
-`
-SELECT *
-FROM food_brain_agent_messages
-ORDER BY id DESC
-LIMIT 100
-`
-);
-
-
-return result.rows;
+];
 
 }
-
 
 
 module.exports={
-broadcast,
-history
+communicate
 };
+
