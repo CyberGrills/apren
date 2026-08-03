@@ -1,3 +1,5 @@
+const tradeEngine = require("./transactions/tradeEngine");
+
 const foodTransactionEngine = require("./transactions/foodTransactionEngine");
 
 const assetCreationService = require("./services/assetCreationService");
@@ -2358,6 +2360,41 @@ error:error.message
 
 
 });
+
+
+
+app.post("/economy/trade", async(req,res)=>{
+
+try{
+
+const result =
+await tradeEngine.executeTrade(req.body);
+
+
+res.json({
+
+success:true,
+
+transaction:result
+
+});
+
+}
+
+catch(error){
+
+console.error(error);
+
+res.status(500).json({
+
+error:error.message
+
+});
+
+}
+
+});
+
 
 app.listen(4003,()=>{
 
