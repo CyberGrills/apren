@@ -33,6 +33,8 @@ const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
 
 const foodBrainEngine = require("./brain/foodBrainEngine");
 
+const executiveGovernorEngine = require("./governor/executiveGovernorEngine");
+
 const agentOrchestrationEngine = require("./agents/agentOrchestrationEngine");
 
 const decisionEngine = require("./decision/decisionEngine");
