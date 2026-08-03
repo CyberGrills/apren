@@ -1,40 +1,38 @@
+
 function analyze(data){
 
-let vote="NEUTRAL";
-let confidence=50;
+if(data.freshness < 15){
 
-
-const freshness =
-Number(data.freshness || 0);
-
-
-if(freshness <= 0){
-
-vote="BLOCK";
-confidence=99;
+return {
+agent:"freshness",
+signal:"CRITICAL",
+recommendation:"MOVE_FAST",
+confidence:95
+};
 
 }
-else if(freshness < 30){
 
-vote="FAST_MOVE";
-confidence=85;
+if(data.freshness < 30){
 
-}
-else if(freshness > 80){
-
-vote="KEEP_ACTIVE";
-confidence=80;
+return {
+agent:"freshness",
+signal:"WARNING",
+recommendation:"MONITOR",
+confidence:75
+};
 
 }
 
 
 return {
-agent:"FRESHNESS_AGENT",
-vote,
-confidence
+agent:"freshness",
+signal:"STABLE",
+recommendation:"HOLD",
+confidence:60
 };
 
 }
 
 
 module.exports={analyze};
+

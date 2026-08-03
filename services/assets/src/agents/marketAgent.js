@@ -1,34 +1,43 @@
+
+
 function analyze(data){
 
-let vote="NEUTRAL";
-let confidence=50;
 
-
-const demand =
-Number(data.demand || 0);
-
-
-if(demand > 80){
-
-vote="PROMOTE";
-confidence=85;
-
-}
-else if(demand < 30){
-
-vote="DISCOUNT";
-confidence=70;
-
-}
+if(data.supply==="LOW" && data.demand==="HIGH"){
 
 
 return {
-agent:"MARKET_AGENT",
-vote,
-confidence
+
+agent:"market",
+
+signal:"OPPORTUNITY",
+
+recommendation:"MAXIMIZE_DISTRIBUTION",
+
+confidence:90
+
 };
 
 }
 
 
+
+return {
+
+agent:"market",
+
+signal:"BALANCED",
+
+recommendation:"NORMAL_TRADING",
+
+confidence:60
+
+};
+
+
+}
+
+
 module.exports={analyze};
+
+

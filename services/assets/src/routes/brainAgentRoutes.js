@@ -1,22 +1,23 @@
 
+
 const express=require("express");
 
 const router=express.Router();
 
 
 const brain =
-require("../agents/multiAgentBrainEngine");
+require("../agents/agentCollaborationEngine");
 
 
 
 router.post(
-"/agents/cycle/:assetId",
+"/agents/:assetId",
 async(req,res)=>{
 
 try{
 
 res.json(
-await brain.cycle(
+await brain.collaborate(
 req.params.assetId,
 req.body
 )
@@ -36,4 +37,5 @@ error:error.message
 
 
 module.exports=router;
+
 
