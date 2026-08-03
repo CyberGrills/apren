@@ -1,29 +1,19 @@
 
-const evaluator =
-require("./outcomeEvaluationEngine");
-
-const adaptation =
-require("./confidenceAdaptationEngine");
+const accuracy =
+require("./accuracyEngine");
 
 const memory =
-require("./learningMemoryEngine");
+require("./selfLearningMemoryEngine");
 
 
 
 async function learn(assetId,data){
 
 
-const evaluation =
-evaluator.evaluate(
-data.result
-);
-
-
-
-const newConfidence =
-adaptation.adapt(
-data.confidence || 0,
-evaluation.status
+const score =
+accuracy.calculate(
+data.prediction,
+data.actual
 );
 
 
@@ -32,17 +22,17 @@ return await memory.remember({
 
 assetId,
 
-decision:data.decision,
+type:"EVOLUTION_MODEL",
 
-result:data.result,
+state:{
+lastPrediction:data.prediction,
+lastActual:data.actual,
+learningScore:score
+},
 
-status:evaluation.status,
+accuracy:score,
 
-confidenceBefore:data.confidence || 0,
-
-confidenceAfter:newConfidence,
-
-signal:evaluation.signal
+confidence:score
 
 });
 

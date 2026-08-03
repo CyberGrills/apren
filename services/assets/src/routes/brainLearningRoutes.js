@@ -8,15 +8,11 @@ const learning =
 require("../learning/selfLearningEngine");
 
 
-const memory =
-require("../learning/learningMemoryEngine");
 
+router.post("/learn/:assetId",async(req,res)=>{
 
-
-router.post("/learning/outcome/:assetId",async(req,res)=>{
 
 try{
-
 
 res.json(
 await learning.learn(
@@ -24,7 +20,6 @@ req.params.assetId,
 req.body
 )
 );
-
 
 }
 
@@ -36,23 +31,8 @@ error:error.message
 
 }
 
-});
-
-
-
-
-router.get("/learning/history/:assetId",async(req,res)=>{
-
-
-res.json(
-await memory.history(
-req.params.assetId
-)
-);
-
 
 });
-
 
 
 module.exports=router;
