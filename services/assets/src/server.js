@@ -1,3 +1,5 @@
+const assetCreationService = require("./services/assetCreationService");
+
 const express = require("express");
 const cors = require("cors");
 const createAssetProfile = require("./identity/profile");
@@ -255,64 +257,41 @@ assets
 
 
 
-app.post("/assets",(req,res)=>{
 
+app.post("/assets", async(req,res)=>{
 
-const {
+try {
 
-owner_id,
-name,
-kitchen,
-category,
-base_value,
-currency="ə"
-
-}=req.body;
-
-
-
-const result = db.prepare(`
-
-INSERT INTO food_assets
-
-(
-owner_id,
-name,
-kitchen,
-category,
-base_value,
-currency,
-freshness_score,
-demand,
-status
-)
-
-VALUES
-(?,?,?,?,?,?,?,?,?)
-
-`).run(
-
-owner_id,
-name,
-kitchen,
-category,
-base_value,
-currency,
-90,
-"New",
-"available"
-
+const asset =
+await assetCreationService.createFoodAsset(
+req.body
 );
-
 
 
 res.json({
 
 created:true,
 
-id:result.lastInsertRowid
+asset
 
 });
+
+
+}
+catch(error){
+
+console.error(error);
+
+res.status(500).json({
+
+error:error.message
+
+});
+
+}
+
+
+
 
 
 });
