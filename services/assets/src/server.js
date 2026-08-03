@@ -69,6 +69,8 @@ const brainDecisionRoutes = require("./routes/brainDecisionRoutes");
 
 const brainExecutionRoutes = require("./routes/brainExecutionRoutes");
 
+const brainOrchestrationRoutes = require("./routes/brainOrchestrationRoutes");
+
 const brainGovernanceRoutes = require("./routes/brainGovernanceRoutes");
 
 const brainPermissionRoutes = require("./routes/brainPermissionRoutes");
@@ -137,6 +139,8 @@ app.use(express.json());
 app.use("/brain", brainDecisionRoutes);
 
 app.use("/brain", brainExecutionRoutes);
+
+app.use("/brain", brainOrchestrationRoutes);
 
 app.use("/brain", brainGovernanceRoutes);
 
