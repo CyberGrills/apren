@@ -1,3 +1,6 @@
+const actionEngine = require("./autonomy/actionEngine");
+const automationEngine = require("./autonomy/automationEngine");
+
 const feedbackEngine = require("./learning/feedbackEngine");
 const accuracyEngine = require("./learning/accuracyEngine");
 const adaptationEngine = require("./learning/adaptationEngine");
@@ -3046,6 +3049,81 @@ try{
 res.json(
 await adaptationEngine.adapt(
 req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+
+app.post("/brain/action/create/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await actionEngine.createAction(
+req.params.assetId,
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/actions/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await actionEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/brain/action/execute/:actionId", async(req,res)=>{
+
+try{
+
+res.json(
+await automationEngine.execute(
+req.params.actionId
 )
 );
 
