@@ -1,3 +1,7 @@
+const feedbackEngine = require("./learning/feedbackEngine");
+const accuracyEngine = require("./learning/accuracyEngine");
+const adaptationEngine = require("./learning/adaptationEngine");
+
 const brainMemoryEngine = require("./memory/brainMemoryEngine");
 const predictionEngine = require("./memory/predictionEngine");
 
@@ -2959,6 +2963,104 @@ error:error.message
 }
 
 });
+
+
+
+
+app.post("/brain/feedback/store", async(req,res)=>{
+
+try{
+
+res.json(
+await feedbackEngine.recordFeedback(
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/feedback/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await feedbackEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/accuracy/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await accuracyEngine.calculate(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/adapt/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await adaptationEngine.adapt(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
 
 app.listen(4003,()=>{
 
