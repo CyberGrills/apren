@@ -1,35 +1,19 @@
-function predict(data){
 
-const current =
-Number(data.freshness || 0);
+function predict(hoursRemaining){
 
-
-const hours =
-Number(data.hours || 24);
-
-
-const decay =
-Math.round(
-(hours / 24) * 40
-);
-
-
-const future =
+let freshness =
 Math.max(
 0,
-current - decay
+Math.min(
+100,
+(hoursRemaining / 24) * 100
+)
 );
 
 
-return {
-
-current_freshness:current,
-
-predicted_freshness:future,
-
-hours_ahead:hours
-
-};
+return Number(
+freshness.toFixed(2)
+);
 
 }
 
@@ -37,3 +21,4 @@ hours_ahead:hours
 module.exports={
 predict
 };
+
