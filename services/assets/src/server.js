@@ -1,3 +1,5 @@
+const lifecycleEngine = require("./lifecycle/lifecycleEngine");
+
 const ruleEngine = require("./rules/ruleEngine");
 
 const passportEngine = require("./passport/passportEngine");
@@ -2583,6 +2585,78 @@ error:error.message
 }
 
 });
+
+
+
+
+
+app.post("/food/lifecycle/update", async(req,res)=>{
+
+try{
+
+
+const result =
+await lifecycleEngine.updateLifecycle(
+req.body
+);
+
+
+res.json({
+
+success:true,
+
+lifecycle:result
+
+});
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+
+error:error.message
+
+});
+
+}
+
+
+});
+
+
+
+app.get("/food/lifecycle/:assetId", async(req,res)=>{
+
+
+try{
+
+
+const result =
+await lifecycleEngine.getLifecycle(
+req.params.assetId
+);
+
+
+res.json(result);
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+
+error:error.message
+
+});
+
+}
+
+
+});
+
 
 
 app.listen(4003,()=>{
