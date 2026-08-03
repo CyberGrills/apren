@@ -33,6 +33,8 @@ const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
 
 const foodBrainEngine = require("./brain/foodBrainEngine");
 
+const agentOrchestrationEngine = require("./agents/agentOrchestrationEngine");
+
 const decisionEngine = require("./decision/decisionEngine");
 
 const lifecycleEngine = require("./lifecycle/lifecycleEngine");
@@ -3835,6 +3837,33 @@ try{
 res.json(
 await decisionEngine.history(
 req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+
+app.post("/brain/agents/orchestrate/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await agentOrchestrationEngine.orchestrate(
+req.params.assetId,
+req.body
 )
 );
 
