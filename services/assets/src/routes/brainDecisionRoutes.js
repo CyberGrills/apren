@@ -1,22 +1,30 @@
-const express = require("express");
 
-const router = express.Router();
+const express=require("express");
 
-const autonomousDecisionEngine =
+const router=express.Router();
+
+
+const decision =
 require("../decision/autonomousDecisionEngine");
 
 
-router.post("/decision/:assetId", async(req,res)=>{
+const memory =
+require("../decision/decisionMemoryEngine");
+
+
+
+router.post("/decision/:assetId",async(req,res)=>{
 
 try{
 
-const result =
-await autonomousDecisionEngine.decide(
+
+res.json(
+await decision.evaluate(
 req.params.assetId,
-req.body.simulations || []
+req.body
+)
 );
 
-res.json(result);
 
 }
 
@@ -31,26 +39,20 @@ error:error.message
 });
 
 
-router.get("/decision/history/:assetId", async(req,res)=>{
 
-try{
 
-res.json({
-asset_id:req.params.assetId,
-message:"Decision history ready"
-});
+router.get("/decision/history/:assetId",async(req,res)=>{
 
-}
 
-catch(error){
+res.json(
+await memory.history(
+req.params.assetId
+)
+);
 
-res.status(500).json({
-error:error.message
-});
-
-}
 
 });
 
 
-module.exports = router;
+module.exports=router;
+

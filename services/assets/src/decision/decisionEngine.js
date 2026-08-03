@@ -1,52 +1,79 @@
-const {pool}=require("../postgres");
 
+const ranking =
+require("./actionRankingEngine");
 
-const recommendation =
-require("./recommendationEngine");
-
-
-
-async function decide(assetId,data){
-
-
-const decision =
-recommendation.recommend(data);
+const reasoning =
+require("./reasoningEngine");
 
 
 
-const result =
-await pool.query(
-`
-INSERT INTO food_brain_decisions
-(
-asset_id,
-decision,
-confidence,
-priority
-)
+function decide(data){
 
-VALUES
-($1,$2,$3,$4)
 
-RETURNING *
-`,
-[
-assetId,
-JSON.stringify(decision),
-decision.confidence,
-decision.priority
-]
-);
+let actions=[
+
+{
+action:"HOLD",
+score:40
+},
+
+{
+action:"PROMOTE",
+score:60
+},
+
+{
+action:"SELL_NOW",
+score:50
+},
+
+{
+action:"TRADE",
+score:45
+}
+
+];
+
+
+
+if(data.freshness < 40){
+
+actions.find(
+x=>x.action==="SELL_NOW"
+).score += 40;
+
+}
+
+
+
+if(data.demand==="HIGH"){
+
+actions.find(
+x=>x.action==="PROMOTE"
+).score += 30;
+
+}
+
+
+
+const ranked =
+ranking.rank(actions);
 
 
 
 return {
 
-asset_id:assetId,
+action:
+ranked[0].action,
 
-decision,
+confidence:
+Math.min(
+95,
+ranked[0].score
+),
 
-record:result.rows[0]
+reasoning:
+reasoning.explain(data)
 
 };
 
@@ -54,31 +81,7 @@ record:result.rows[0]
 
 
 
-
-async function history(assetId){
-
-const result =
-await pool.query(
-`
-SELECT *
-FROM food_brain_decisions
-WHERE asset_id=$1
-ORDER BY id DESC
-`,
-[
-assetId
-]
-);
-
-
-return result.rows;
-
-}
-
-
-
 module.exports={
-decide,
-history
+decide
 };
 

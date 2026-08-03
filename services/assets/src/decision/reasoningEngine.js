@@ -1,33 +1,47 @@
-function explain(decision){
+
+function explain(data){
 
 
-const reasons={
-
-SELL_NOW:
-"Immediate movement preserves current food value",
-
-HOLD:
-"Holding allows future market opportunity",
-
-PROMOTE:
-"Promotion increases demand and reduces waste risk",
-
-TRADE:
-"Exchange improves asset utility"
-
-};
+let reasons=[];
 
 
-return {
+if(data.freshness < 50){
 
-decision:decision.scenario,
+reasons.push(
+"freshness window declining"
+);
 
-reason:
-reasons[decision.scenario]
-||
-"Optimized by food brain"
+}
 
-};
+
+if(data.demand==="HIGH"){
+
+reasons.push(
+"market demand increasing"
+);
+
+}
+
+
+if(data.simulationRisk==="HIGH"){
+
+reasons.push(
+"value loss risk detected"
+);
+
+}
+
+
+if(data.autonomy==="AUTONOMOUS"){
+
+reasons.push(
+"user permits autonomous optimization"
+);
+
+}
+
+
+return reasons;
 
 }
 
@@ -35,3 +49,4 @@ reasons[decision.scenario]
 module.exports={
 explain
 };
+

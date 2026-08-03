@@ -1,72 +1,45 @@
-const selector =
-require("./actionSelector");
 
+const decision =
+require("./decisionEngine");
 
-const reasoning =
-require("./reasoningEngine");
-
-
-const {pool}=require("../postgres");
+const memory =
+require("./decisionMemoryEngine");
 
 
 
-async function decide(assetId, simulations){
-
-
-const selected =
-selector.select(simulations);
-
-
-const explanation =
-reasoning.explain(selected);
-
+async function evaluate(assetId,data){
 
 
 const result =
-await pool.query(
-`
-INSERT INTO food_brain_autonomous_decisions
-(
-asset_id,
-decision,
-reason,
-confidence,
-simulation_score
-)
+decision.decide(data);
 
-VALUES
-($1,$2,$3,$4,$5)
 
-RETURNING *
-`,
-[
+
+return await memory.remember({
+
 assetId,
-selected.scenario,
-explanation.reason,
-selected.score >=200 ? 90 : 70,
-selected.score
-]
-);
 
+action:
+result.action,
 
+reasoning:
+result.reasoning,
 
-return {
+signals:data,
 
-asset_id:assetId,
+confidence:
+result.confidence,
 
-autonomous_decision:selected,
+mode:
+data.autonomy || "ASSISTED"
 
-reasoning:explanation,
-
-record:result.rows[0]
-
-};
+});
 
 
 }
 
 
-
 module.exports={
-decide
+evaluate
 };
+
