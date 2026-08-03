@@ -1,52 +1,36 @@
 
-
 function analyze(memories){
 
 
-let confidence=50;
-
-let pattern="NORMAL_ACTIVITY";
+let success=0;
 
 
-const text =
-JSON.stringify(memories);
+for(const memory of memories){
 
+if(memory.outcome){
 
-
-if(text.includes("DISTRIBUTE_FAST")){
-
-pattern="FAST_DISTRIBUTION_PATTERN";
-
-confidence+=30;
+success++;
 
 }
 
-
-
-if(text.includes("HIGH")){
-
-pattern="HIGH_DEMAND_PATTERN";
-
-confidence+=20;
-
 }
-
-
-
-if(confidence>100)
-confidence=100;
 
 
 return {
 
-pattern,
+patterns_found:memories.length,
 
-confidence
+experience_score:
+memories.length
+?
+Math.round(
+(success/memories.length)*100
+)
+:0
 
 };
 
 }
-
 
 
 module.exports={

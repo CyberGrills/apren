@@ -4,32 +4,38 @@ const express=require("express");
 const router=express.Router();
 
 
-const brain =
-require("../memory/memoryFusionBrainEngine");
+const store =
+require("../memory/memoryStoreEngine");
+
+const experience =
+require("../memory/brainExperienceEngine");
+
 
 
 router.post(
-"/memory/fuse/:assetId",
+"/memory/store/:assetId",
 async(req,res)=>{
 
-try{
-
 res.json(
-await brain.fuse(
+await store.remember(
 req.params.assetId,
 req.body
 )
 );
 
-}
-
-catch(error){
-
-res.status(500).json({
-error:error.message
 });
 
-}
+
+
+router.get(
+"/memory/learn/:assetId",
+async(req,res)=>{
+
+res.json(
+await experience.learn(
+req.params.assetId
+)
+);
 
 });
 
