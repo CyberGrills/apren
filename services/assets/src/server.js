@@ -33,6 +33,10 @@ const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
 
 const foodBrainEngine = require("./brain/foodBrainEngine");
 
+const predictiveSimulationEngine = require("./predictive/predictiveSimulationEngine");
+
+const adaptiveIntelligenceEngine = require("./adaptive/adaptiveIntelligenceEngine");
+
 const memoryFusionEngine = require("./memory/memoryFusionEngine");
 
 const executiveGovernorEngine = require("./governor/executiveGovernorEngine");
@@ -3933,6 +3937,81 @@ error:error.message
 
 
 
+
+}
+
+});
+
+
+
+
+app.get("/brain/adaptive/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await adaptiveIntelligenceEngine.adapt(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+app.post("/brain/simulation/run/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await predictiveSimulationEngine.simulate(
+req.params.assetId,
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/simulation/history/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await predictiveSimulationEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
 
 }
 
