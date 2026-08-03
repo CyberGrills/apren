@@ -1,3 +1,5 @@
+const perceptionEngine = require("./perception/perceptionEngine");
+
 const supplyIntelligenceEngine = require("./market/supplyIntelligenceEngine");
 const demandForecastEngine = require("./market/demandForecastEngine");
 const marketIntelligenceEngine = require("./market/marketIntelligenceEngine");
@@ -3525,6 +3527,60 @@ res.json(
 await marketIntelligenceEngine.analyze(
 req.params.assetId,
 req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+
+app.post("/brain/perception/analyze", async(req,res)=>{
+
+try{
+
+res.json(
+await perceptionEngine.analyze(
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/perception/history/:assetId", async(req,res)=>{
+
+try{
+
+const observation =
+require("./perception/observationEngine");
+
+
+res.json(
+await observation.history(
+req.params.assetId
 )
 );
 
