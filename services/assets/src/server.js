@@ -33,6 +33,8 @@ const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
 
 const foodBrainEngine = require("./brain/foodBrainEngine");
 
+const autonomousDecisionEngine = require("./decision/autonomousDecisionEngine");
+
 const predictiveSimulationEngine = require("./predictive/predictiveSimulationEngine");
 
 const adaptiveIntelligenceEngine = require("./adaptive/adaptiveIntelligenceEngine");

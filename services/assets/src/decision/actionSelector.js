@@ -1,64 +1,39 @@
-function select(signals){
-
-let action="HOLD";
-
-let priority="MEDIUM";
-
-let reason="Market conditions stable";
+const scorer =
+require("./actionScoringEngine");
 
 
-
-if(
-signals.freshness < 30 &&
-signals.demand > 70
-){
-
-action="FAST_MOVE";
-
-priority="HIGH";
-
-reason="Freshness risk with strong demand";
-
-}
-
-else if(
-signals.demand > 80 &&
-signals.freshness > 70
-){
-
-action="PROMOTE";
-
-priority="HIGH";
-
-reason="High demand and strong freshness";
-
-}
-
-else if(
-signals.supply < signals.demand
-){
-
-action="INCREASE_SUPPLY";
-
-priority="MEDIUM";
-
-reason="Demand exceeds available supply";
-
-}
+function select(simulations){
 
 
+let best=null;
+let highest=-1;
 
-return {
 
-action,
+for(const simulation of simulations){
 
-priority,
 
-reason
+const score =
+scorer.score(simulation);
 
+
+if(score > highest){
+
+highest=score;
+
+best={
+scenario:simulation.scenario,
+score
 };
 
 }
+
+}
+
+
+return best;
+
+}
+
 
 
 module.exports={
