@@ -1,3 +1,5 @@
+const memoryGraphEngine = require("./memoryGraph/memoryGraphEngine");
+
 const perceptionEngine = require("./perception/perceptionEngine");
 
 const supplyIntelligenceEngine = require("./market/supplyIntelligenceEngine");
@@ -3595,6 +3597,106 @@ error:error.message
 }
 
 });
+
+
+
+
+
+app.post("/brain/memory/node", async(req,res)=>{
+
+try{
+
+res.json(
+await memoryGraphEngine.createNode(
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/brain/memory/connect", async(req,res)=>{
+
+try{
+
+res.json(
+await memoryGraphEngine.connect(
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/memory/graph/:nodeId", async(req,res)=>{
+
+try{
+
+res.json(
+await memoryGraphEngine.graph(
+req.params.nodeId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/memory/:assetId/:type", async(req,res)=>{
+
+try{
+
+res.json(
+await memoryGraphEngine.search(
+req.params.assetId,
+req.params.type
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
 
 
 app.listen(4003,()=>{
