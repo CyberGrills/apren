@@ -1,3 +1,5 @@
+const ruleEngine = require("./rules/ruleEngine");
+
 const passportEngine = require("./passport/passportEngine");
 
 const foodEvidenceEngine = require("./intelligence/foodEvidenceEngine");
@@ -2539,6 +2541,34 @@ const result =
 await passportEngine.getPassport(
 req.params.assetId
 );
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+
+app.post("/rules/evaluate", async(req,res)=>{
+
+try{
+
+const result =
+await ruleEngine.evaluate(
+req.body
+);
+
 
 res.json(result);
 
