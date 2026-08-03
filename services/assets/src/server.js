@@ -75,6 +75,8 @@ const brainPermissionRoutes = require("./routes/brainPermissionRoutes");
 
 const brainTrustAuditRoutes = require("./routes/brainTrustAuditRoutes");
 
+const brainLearningRoutes = require("./routes/brainLearningRoutes");
+
 const express = require("express");
 const cors = require("cors");
 const createAssetProfile = require("./identity/profile");
@@ -135,6 +137,8 @@ app.use("/brain", brainGovernanceRoutes);
 app.use("/brain", brainPermissionRoutes);
 
 app.use("/brain", brainTrustAuditRoutes);
+
+app.use("/brain", brainLearningRoutes);
 
 db.exec(`
 
