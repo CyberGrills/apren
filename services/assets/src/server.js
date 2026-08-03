@@ -1,3 +1,7 @@
+const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
+
+const foodBrainEngine = require("./brain/foodBrainEngine");
+
 const decisionEngine = require("./intelligence/decisionEngine");
 
 const lifecycleEngine = require("./lifecycle/lifecycleEngine");
@@ -2716,6 +2720,118 @@ error:error.message
 });
 
 }
+
+});
+
+
+
+
+
+app.post("/brain/analyze/:assetId", async(req,res)=>{
+
+try{
+
+const result =
+await foodBrainEngine.analyze(
+req.params.assetId
+);
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/history/:assetId", async(req,res)=>{
+
+try{
+
+const result =
+await foodBrainEngine.history(
+req.params.assetId
+);
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+
+app.post("/brain/orchestrate/:assetId", async(req,res)=>{
+
+try{
+
+
+const result =
+await foodBrainOrchestrator.orchestrate(
+req.params.assetId
+);
+
+
+res.json(result);
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+
+});
+
+
+
+app.get("/brain/cycles/:assetId", async(req,res)=>{
+
+try{
+
+
+const result =
+await foodBrainOrchestrator.history(
+req.params.assetId
+);
+
+
+res.json(result);
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
 
 });
 
