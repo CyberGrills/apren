@@ -1,47 +1,35 @@
-const { pool } = require("../postgres");
+const {pool}=require("../postgres");
 
 
-async function recordFeedback(data){
+async function record(data){
 
 const result =
 await pool.query(
 `
-INSERT INTO food_brain_feedback
+INSERT INTO food_brain_learning_feedback
 (
-prediction_id,
 asset_id,
-result,
-success,
-impact
+engine,
+prediction,
+actual_result,
+accuracy,
+error_score
 )
 
 VALUES
-($1,$2,$3,$4,$5)
+($1,$2,$3,$4,$5,$6)
 
 RETURNING *
 `,
 [
-data.prediction_id,
 data.asset_id,
-data.result,
-data.success,
-data.impact || null
+data.engine,
+JSON.stringify(data.prediction || {}),
+JSON.stringify(data.actual_result || {}),
+data.accuracy || 0,
+data.error_score || 0
 ]
 );
-
-
-
-await pool.query(
-`
-UPDATE food_predictions
-SET resolved=true
-WHERE id=$1
-`,
-[
-data.prediction_id
-]
-);
-
 
 
 return result.rows[0];
@@ -56,7 +44,7 @@ const result =
 await pool.query(
 `
 SELECT *
-FROM food_brain_feedback
+FROM food_brain_learning_feedback
 WHERE asset_id=$1
 ORDER BY id DESC
 `,
@@ -73,6 +61,6 @@ return result.rows;
 
 
 module.exports={
-recordFeedback,
+record,
 history
 };

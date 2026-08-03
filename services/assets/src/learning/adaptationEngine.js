@@ -1,32 +1,42 @@
-const accuracy =
-require("./accuracyEngine");
+const {pool}=require("../postgres");
 
 
-async function adapt(assetId){
+async function adapt(engine){
 
 
-const result =
-await accuracy.calculate(assetId);
+const performance =
+await pool.query(
+`
+SELECT
+AVG(error_score) as error
+FROM food_brain_learning_feedback
+WHERE engine=$1
+`,
+[
+engine
+]
+);
 
 
 
-let mode="STANDARD";
+const error =
+Number(
+performance.rows[0].error || 0
+);
 
 
-if(
-result.accuracy_score >=80
-){
 
-mode="HIGH_CONFIDENCE";
+let adjustment="NO_CHANGE";
+
+
+if(error>20){
+
+adjustment="INCREASE_REVIEW";
 
 }
+else if(error<5){
 
-else if(
-result.accuracy_score <50 &&
-result.sample_size>3
-){
-
-mode="CAUTIOUS";
+adjustment="HIGH_CONFIDENCE";
 
 }
 
@@ -34,16 +44,13 @@ mode="CAUTIOUS";
 
 return {
 
-asset_id:assetId,
+engine,
 
-brain_mode:mode,
+error,
 
-accuracy:result.accuracy_score,
-
-sample_size:result.sample_size
+adjustment
 
 };
-
 
 }
 

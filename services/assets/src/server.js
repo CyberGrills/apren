@@ -25,13 +25,15 @@ const accuracyEngine = require("./learning/accuracyEngine");
 const adaptationEngine = require("./learning/adaptationEngine");
 
 const brainMemoryEngine = require("./memory/brainMemoryEngine");
+const learningEngine = require("./learning/learningEngine");
+
 const predictionEngine = require("./prediction/predictionEngine");
 
 const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
 
 const foodBrainEngine = require("./brain/foodBrainEngine");
 
-const decisionEngine = require("./intelligence/decisionEngine");
+const decisionEngine = require("./decision/decisionEngine");
 
 const lifecycleEngine = require("./lifecycle/lifecycleEngine");
 
@@ -3698,6 +3700,155 @@ error:error.message
 
 });
 
+
+
+
+
+
+app.post("/brain/learning/feedback", async(req,res)=>{
+
+try{
+
+res.json(
+await learningEngine.recordFeedback(
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/learning/history/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await learningEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/learning/performance/:engine", async(req,res)=>{
+
+try{
+
+res.json(
+await learningEngine.performance(
+req.params.engine
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/learning/adapt/:engine", async(req,res)=>{
+
+try{
+
+res.json(
+await learningEngine.adapt(
+req.params.engine
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+
+app.post("/brain/decision/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await decisionEngine.decide(
+req.params.assetId,
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/decision/history/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await decisionEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
 
 
 app.listen(4003,()=>{
