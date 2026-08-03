@@ -1,3 +1,5 @@
+const foodEvidenceEngine = require("./intelligence/foodEvidenceEngine");
+
 const portfolioEngine = require("./economy/portfolioEngine");
 const fundingEngine = require("./economy/fundingEngine");
 const tradePreview = require("./economy/tradePreview");
@@ -2468,6 +2470,37 @@ error:error.message
 });
 
 }
+
+});
+
+
+
+
+
+app.post("/food/evidence/analyze", async(req,res)=>{
+
+try{
+
+
+const result =
+await foodEvidenceEngine.analyzeEvidence(
+req.body
+);
+
+
+res.json(result);
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
 
 });
 
