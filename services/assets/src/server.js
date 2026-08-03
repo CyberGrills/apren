@@ -10,7 +10,7 @@ const valuationEngine = require("./economy/valuationEngine");
 const marketPulseEngine = require("./economy/marketPulseEngine");
 const economicEventEngine = require("./economy/economicEventEngine");
 
-const executiveGovernor = require("./governor/executiveGovernor");
+
 
 const agentCouncilEngine = require("./agents/agentCouncilEngine");
 
@@ -3313,8 +3313,9 @@ app.post("/brain/govern/:assetId", async(req,res)=>{
 try{
 
 res.json(
-await executiveGovernor.govern(
-req.params.assetId
+await executiveGovernorEngine.govern(
+req.params.assetId,
+req.body
 )
 );
 
