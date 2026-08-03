@@ -1,26 +1,27 @@
 
+
 const express=require("express");
 
 const router=express.Router();
 
 
-const simulation =
-require("../simulation/marketSimulationEngineRunner");
+const brain =
+require("../simulation/simulationBrain");
 
 
 
-router.post("/simulation/run/:assetId",async(req,res)=>{
-
+router.post(
+"/simulate/:assetId",
+async(req,res)=>{
 
 try{
 
 res.json(
-await simulation.run(
+await brain.simulate(
 req.params.assetId,
 req.body
 )
 );
-
 
 }
 
@@ -32,9 +33,9 @@ error:error.message
 
 }
 
-
 });
 
 
 module.exports=router;
+
 
