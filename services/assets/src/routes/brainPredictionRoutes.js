@@ -6,7 +6,8 @@ const router=express.Router();
 
 
 const brain =
-require("../prediction/predictiveFoodBrain");
+require("../prediction/predictiveBrain");
+
 
 
 router.post(
@@ -36,4 +37,5 @@ error:error.message
 
 
 module.exports=router;
+
 

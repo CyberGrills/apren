@@ -1,36 +1,32 @@
+
+
 function predict(data){
 
-const demand =
-Number(data.demand || 0);
+let demand="STABLE";
+let confidence=60;
 
 
-const trend =
-Number(data.trend || 0);
+if(data.demand==="HIGH"){
+
+demand="INCREASING";
+confidence=90;
+
+}
 
 
+if(data.supply==="LOW" && data.demand==="HIGH"){
 
-let future =
-Math.round(
-demand + trend
-);
+demand="SURGING";
+confidence=95;
 
-
-
-future=Math.min(
-100,
-Math.max(
-0,
-future
-)
-);
-
+}
 
 
 return {
 
-current_demand:demand,
+prediction:"DEMAND_"+demand,
 
-predicted_demand:future
+confidence
 
 };
 
@@ -40,3 +36,4 @@ predicted_demand:future
 module.exports={
 predict
 };
+

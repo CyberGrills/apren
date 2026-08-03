@@ -14,7 +14,9 @@ router.post(
 "/orchestrate/:assetId",
 async(req,res)=>{
 
+
 try{
+
 
 res.json(
 await brain.orchestrate(
@@ -23,7 +25,9 @@ req.body
 )
 );
 
+
 }
+
 
 catch(error){
 
@@ -33,8 +37,10 @@ error:error.message
 
 }
 
+
 });
 
 
 module.exports=router;
+
 

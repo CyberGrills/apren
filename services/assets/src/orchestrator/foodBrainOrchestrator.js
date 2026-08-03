@@ -1,22 +1,19 @@
 
 
-const market =
-require("../marketbrain/marketReactionBrainEngine");
+const prediction =
+require("../prediction/predictiveBrain");
 
-const negotiation =
-require("../negotiation/agentNegotiationBrainEngine");
+const simulation =
+require("../simulation/simulationBrain");
 
-const autonomy =
-require("../autonomy/autonomousBrainEngine");
+const agents =
+require("../agents/agentCollaborationEngine");
 
-const execution =
-require("../execution/executionGatewayEngine");
+const cycle =
+require("../cycle/decisionLoopEngine");
 
-const coordinator =
-require("./decisionCoordinatorEngine");
-
-const learner =
-require("./learningFeedbackEngine");
+const strategy =
+require("../strategy/actionStrategyEngine");
 
 const {pool}=require("../postgres");
 
@@ -25,24 +22,24 @@ const {pool}=require("../postgres");
 async function orchestrate(assetId,data){
 
 
-const marketResult =
-await market.analyze(
+const predictive =
+await prediction.predict(
 assetId,
 data
 );
 
 
 
-const negotiationResult =
-await negotiation.negotiate(
+const simulated =
+await simulation.simulate(
 assetId,
 data
 );
 
 
 
-const actionResult =
-await autonomy.decide(
+const collaboration =
+await agents.collaborate(
 assetId,
 data
 );
@@ -50,79 +47,79 @@ data
 
 
 const decision =
-coordinator.coordinate(
-marketResult,
-negotiationResult,
-actionResult
+await cycle.run(
+assetId,
+data
 );
 
 
 
-let executionResult =
-{
-status:"WAITING_APPROVAL"
+const finalStrategy =
+strategy.create(
+data,
+decision.risk
+);
+
+
+
+let confidence =
+Math.round(
+(
+predictive.prediction.overall_confidence +
+collaboration.consensus.confidence
++
+simulated.recommended_path.score
+) / 3
+);
+
+
+
+const finalDecision={
+
+action:finalStrategy.strategy,
+
+steps:finalStrategy.steps,
+
+reason:{
+
+prediction:predictive.prediction,
+
+simulation:simulated.recommended_path,
+
+agents:collaboration.consensus,
+
+decision
+
+}
+
 };
 
 
 
-if(data.approved===true){
-
-executionResult =
-await execution.execute(
-assetId,
-{
-action:decision.decision,
-approved:true,
-confidence:decision.confidence
-}
-);
-
-}
-
-
-
-await learner.learn({
-
-assetId,
-
-action:decision.decision,
-
-result:executionResult,
-
-score:decision.confidence
-
-});
-
-
-
-const cycle =
 await pool.query(
 `
-INSERT INTO food_brain_orchestrator_cycles
+INSERT INTO food_brain_orchestrator_decisions
 (
 asset_id,
-cycle_input,
-market_result,
-negotiation_result,
-action_result,
-execution_result,
-confidence,
-status
+input_state,
+intelligence_chain,
+final_decision,
+confidence
 )
 
-VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-
-RETURNING *
+VALUES($1,$2,$3,$4,$5)
 `,
 [
 assetId,
 JSON.stringify(data),
-JSON.stringify(marketResult),
-JSON.stringify(negotiationResult),
-JSON.stringify(actionResult),
-JSON.stringify(executionResult),
-decision.confidence,
-"COMPLETE"
+JSON.stringify({
+prediction:true,
+simulation:true,
+agents:true,
+decision:true
+}),
+JSON.stringify(finalDecision),
+confidence
 ]
 );
 
@@ -132,19 +129,11 @@ return {
 
 asset_id:assetId,
 
-brain_status:"COMPLETE",
+brain_status:"AUTONOMOUS",
 
-decision,
+confidence,
 
-market:marketResult,
-
-negotiation:negotiationResult,
-
-action:actionResult,
-
-execution:executionResult,
-
-cycle:cycle.rows[0]
+final_decision:finalDecision
 
 };
 
@@ -156,4 +145,5 @@ cycle:cycle.rows[0]
 module.exports={
 orchestrate
 };
+
 

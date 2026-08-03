@@ -2,48 +2,37 @@
 
 function predict(data){
 
-let prediction="FRESHNESS_STABLE";
 
-let confidence=50;
+let status="SAFE";
 
-let action="MONITOR";
+let confidence=70;
 
-
-if(data.freshness < 30){
-
-prediction="FRESHNESS_COLLAPSE_EXPECTED";
-
-confidence+=35;
-
-action="DISTRIBUTE_FAST";
-
-}
 
 
 if(data.freshness < 15){
 
-prediction="CRITICAL_FRESHNESS_RISK";
+status="CRITICAL";
 
-confidence+=15;
+confidence=95;
 
-action="IMMEDIATE_MOVEMENT";
+}
+else if(data.freshness < 30){
+
+status="DECLINING";
+
+confidence=85;
 
 }
 
 
-if(confidence>100)
-confidence=100;
-
-
 return {
 
-prediction,
+prediction:"FRESHNESS_"+status,
 
-confidence,
-
-action
+confidence
 
 };
+
 
 }
 

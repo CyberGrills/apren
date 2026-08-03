@@ -1,39 +1,53 @@
+
+
 function predict(data){
 
-const value =
-Number(data.value || 0);
 
+let value=data.value || 50;
 
-const freshness =
-Number(data.freshness || 0);
+let direction="STABLE";
 
-
-
-const multiplier =
-0.5 + freshness / 200;
+let confidence=60;
 
 
 
-const futureValue =
-Number(
-(value * multiplier)
-.toFixed(2)
-);
+if(data.demand==="HIGH"){
 
+value +=20;
 
+direction="UP";
 
-return {
-
-current_value:value,
-
-predicted_value:futureValue
-
-};
+confidence=90;
 
 }
 
 
 
+if(data.supply==="LOW"){
+
+value +=15;
+
+confidence=95;
+
+}
+
+
+
+return {
+
+prediction:"VALUE_"+direction,
+
+estimated_value:value,
+
+confidence
+
+};
+
+
+}
+
+
 module.exports={
 predict
 };
+
