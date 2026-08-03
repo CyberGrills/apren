@@ -1,3 +1,5 @@
+const foodTransactionEngine = require("./transactions/foodTransactionEngine");
+
 const assetCreationService = require("./services/assetCreationService");
 
 const express = require("express");
@@ -2318,6 +2320,44 @@ events
 });
 
 
+
+
+
+app.post("/economy/create", async(req,res)=>{
+
+try{
+
+const asset =
+await foodTransactionEngine.createFoodEconomyTransaction(
+req.body
+);
+
+
+res.json({
+
+success:true,
+
+asset
+
+});
+
+
+}
+
+catch(error){
+
+console.error(error);
+
+res.status(500).json({
+
+error:error.message
+
+});
+
+}
+
+
+});
 
 app.listen(4003,()=>{
 
