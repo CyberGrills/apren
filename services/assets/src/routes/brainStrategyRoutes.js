@@ -1,22 +1,22 @@
 
+
 const express=require("express");
 
 const router=express.Router();
 
 
-const strategy =
-require("../strategy/adaptiveStrategyEngine");
-
+const brain =
+require("../strategy/autonomousStrategyBrain");
 
 
 router.post(
-"/strategy/evolve/:assetId",
+"/strategy/:assetId",
 async(req,res)=>{
 
 try{
 
 res.json(
-await strategy.adapt(
+await brain.generate(
 req.params.assetId,
 req.body
 )
