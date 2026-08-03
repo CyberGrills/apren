@@ -1,3 +1,7 @@
+const portfolioEngine = require("./economy/portfolioEngine");
+const fundingEngine = require("./economy/fundingEngine");
+const tradePreview = require("./economy/tradePreview");
+
 const tradeEngine = require("./transactions/tradeEngine");
 
 const foodTransactionEngine = require("./transactions/foodTransactionEngine");
@@ -2389,6 +2393,78 @@ res.status(500).json({
 
 error:error.message
 
+});
+
+}
+
+});
+
+
+
+
+app.get("/portfolio/:userId", async(req,res)=>{
+
+try{
+
+const result =
+await portfolioEngine.getPortfolio(
+req.params.userId
+);
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/wallet/fund", async(req,res)=>{
+
+try{
+
+const result =
+await fundingEngine.fundWallet(req.body);
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/economy/trade-preview", async(req,res)=>{
+
+try{
+
+const result =
+await tradePreview.previewTrade(req.body);
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
 });
 
 }
