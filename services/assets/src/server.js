@@ -1,3 +1,5 @@
+const passportEngine = require("./passport/passportEngine");
+
 const foodEvidenceEngine = require("./intelligence/foodEvidenceEngine");
 
 const portfolioEngine = require("./economy/portfolioEngine");
@@ -2501,6 +2503,54 @@ error:error.message
 
 }
 
+
+});
+
+
+
+
+app.post("/food/passport/create", async(req,res)=>{
+
+try{
+
+const result =
+await passportEngine.createPassport(req.body);
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+app.get("/food/passport/:assetId", async(req,res)=>{
+
+try{
+
+const result =
+await passportEngine.getPassport(
+req.params.assetId
+);
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
 
 });
 
