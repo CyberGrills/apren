@@ -1,0 +1,143 @@
+const Database = require("better-sqlite3");
+const path = require("path");
+
+const dbPath = path.join(
+    __dirname,
+    "database",
+    "food_assets.sqlite"
+);
+
+const db = new Database(dbPath);
+
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS food_assets (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    owner_id INTEGER NOT NULL,
+
+    name TEXT NOT NULL,
+
+    kitchen TEXT,
+
+    category TEXT,
+
+    base_value REAL,
+
+    currency TEXT,
+
+    freshness_score REAL,
+
+    expiry_time TEXT,
+
+    demand TEXT,
+
+    status TEXT,
+
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+
+);
+`);
+
+
+const count = db
+.prepare("SELECT COUNT(*) as count FROM food_assets")
+.get();
+
+
+if(count.count === 0){
+
+const insert = db.prepare(`
+
+INSERT INTO food_assets
+(
+owner_id,
+name,
+kitchen,
+category,
+base_value,
+currency,
+freshness_score,
+demand,
+status
+)
+
+VALUES
+(?,?,?,?,?,?,?,?,?)
+
+`);
+
+
+insert.run(
+1,
+"Chicken Rice Bowl",
+"Kitchen A",
+"Prepared meals",
+15,
+"ə",
+92,
+"Increasing",
+"available"
+);
+
+
+insert.run(
+1,
+"Heirloom Tomatoes",
+"Green Acre Farm",
+"Produce",
+6,
+"ə",
+97,
+"High",
+"available"
+);
+
+
+insert.run(
+1,
+"Jasmine Rice 5kg",
+"Mekong Supply Co.",
+"Grains",
+11,
+"ə",
+88,
+"Steady",
+"available"
+);
+
+}
+
+
+
+
+
+
+
+
+db.exec(`
+
+CREATE TABLE IF NOT EXISTS asset_evidence (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    asset_id INTEGER NOT NULL,
+
+    type TEXT,
+
+    file TEXT,
+
+    uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+    analysis_status TEXT DEFAULT 'PENDING',
+
+    freshness_score REAL,
+
+    confidence REAL
+
+);
+
+`);
+
+module.exports = db;

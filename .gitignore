@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# environment secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+
+# databases
+*.db
+*.sqlite
+*.sqlite3
+
+# backups
+backups/
+*.backup.*
+
+# build files
+dist/
+build/
+
+# editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store

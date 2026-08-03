@@ -1,0 +1,1086 @@
+const express = require("express");
+const cors = require("cors");
+const createAssetProfile = require("./identity/profile");
+
+const db = require("./db");
+const analyzeFreshness = require("./intelligence/freshness");
+const detectFood = require("./intelligence/food-vision");
+const calculateDecayIntelligence = require("./intelligence/freshness-decay");
+const adjustValue = require("./intelligence/value-adjustment");
+const calculateMarketValue = require("./market/price-engine");
+const calculateDecay = require("./intelligence/decay");
+const analyzeEvidence = require("./intelligence/evidence-analysis");
+const lifecycle = require("./lifecycle/lifecycle");
+const verificationEngine = require("./verification/verify");
+const evidence = require("./evidence/evidence");
+const passportDB = require("./passport/passport-db");
+const ownershipDB = require("./ownership/ownership-db");
+
+
+const app = express();
+
+
+db.exec(`
+
+CREATE TABLE IF NOT EXISTS asset_evidence (
+
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+asset_id INTEGER NOT NULL,
+
+type TEXT,
+
+file TEXT,
+
+uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+analysis_status TEXT DEFAULT 'PENDING',
+
+freshness_score REAL,
+
+confidence REAL
+
+);
+
+`);
+
+
+
+app.use(cors());
+app.use(express.json());
+
+
+
+app.get("/assets",(req,res)=>{
+
+
+const assets = db
+.prepare(
+"SELECT * FROM food_assets"
+)
+.all();
+
+
+res.json({
+
+system:"apren-food-asset-engine",
+
+assets
+
+});
+
+
+});
+
+
+
+
+app.get("/assets/:id",(req,res)=>{
+
+
+const asset = db
+.prepare(
+"SELECT * FROM food_assets WHERE id=?"
+)
+.get(req.params.id);
+
+
+
+if(!asset){
+
+return res.status(404).json({
+
+error:"Asset not found"
+
+});
+
+}
+
+
+
+const freshness = analyzeFreshness({
+
+category:asset.category,
+
+imageConfidence:asset.freshness_score
+
+});
+
+
+
+res.json({
+
+...asset,
+
+freshness
+
+});
+
+
+});
+
+
+
+
+app.get("/assets/user/:userId",(req,res)=>{
+
+
+const assets = db
+.prepare(
+"SELECT * FROM food_assets WHERE owner_id=?"
+)
+.all(req.params.userId);
+
+
+
+res.json({
+
+owner:req.params.userId,
+
+assets
+
+});
+
+
+});
+
+
+
+
+
+app.post("/assets",(req,res)=>{
+
+
+const {
+
+owner_id,
+name,
+kitchen,
+category,
+base_value,
+currency="ə"
+
+}=req.body;
+
+
+
+const result = db.prepare(`
+
+INSERT INTO food_assets
+
+(
+owner_id,
+name,
+kitchen,
+category,
+base_value,
+currency,
+freshness_score,
+demand,
+status
+)
+
+VALUES
+(?,?,?,?,?,?,?,?,?)
+
+`).run(
+
+owner_id,
+name,
+kitchen,
+category,
+base_value,
+currency,
+90,
+"New",
+"available"
+
+);
+
+
+
+res.json({
+
+created:true,
+
+id:result.lastInsertRowid
+
+});
+
+
+});
+
+
+
+
+
+
+
+
+app.get("/passport/:assetId",(req,res)=>{
+
+
+const asset = db.prepare(
+
+"SELECT * FROM food_assets WHERE id=?"
+
+).get(req.params.assetId);
+
+
+
+if(!asset){
+
+return res.status(404).json({
+
+error:"Asset not found"
+
+});
+
+}
+
+
+
+const history = db.prepare(
+
+"SELECT * FROM passport_events WHERE asset_id=? ORDER BY id ASC"
+
+).all(req.params.assetId);
+
+
+
+res.json({
+
+system:"apren-food-passport",
+
+passport:{
+
+assetId:asset.id,
+
+food:asset.name,
+
+origin:asset.kitchen,
+
+category:asset.category,
+
+owner:asset.owner_id,
+
+value:asset.base_value,
+
+currency:asset.currency,
+
+freshness:asset.freshness_score,
+
+demand:asset.demand,
+
+status:asset.status,
+
+history
+
+}
+
+});
+
+
+});
+
+
+
+
+
+app.get("/ownership/:assetId",(req,res)=>{
+
+
+const holding = db.prepare(`
+
+SELECT
+
+h.asset_id,
+h.owner_id,
+h.quantity,
+h.ownership_type,
+h.acquired_at,
+a.name AS asset
+
+FROM food_asset_holdings h
+
+JOIN food_assets a
+
+ON a.id=h.asset_id
+
+WHERE h.asset_id=?
+
+`).get(req.params.assetId);
+
+
+
+if(!holding){
+
+return res.status(404).json({
+
+error:"Ownership record not found"
+
+});
+
+}
+
+
+
+res.json({
+
+system:"apren-food-ownership",
+
+ownership:{
+
+asset:holding.asset,
+
+assetId:holding.asset_id,
+
+owner:holding.owner_id,
+
+quantity:holding.quantity,
+
+status:"owned",
+
+ownershipType:holding.ownership_type,
+
+acquiredAt:holding.acquired_at
+
+}
+
+});
+
+
+});
+
+
+
+
+
+
+app.post("/lifecycle/:id/event",(req,res)=>{
+
+ const event=lifecycle.createEvent(
+    req.params.id,
+    req.body.type,
+    req.body.description
+ );
+
+ res.json({
+    system:"apren-food-lifecycle",
+    event
+ });
+
+});
+
+
+app.get("/lifecycle/:id",(req,res)=>{
+
+ res.json({
+    system:"apren-food-lifecycle",
+    assetId:req.params.id,
+    events:lifecycle.getEvents(req.params.id)
+ });
+
+});
+
+
+
+
+app.post("/verify/:id",(req,res)=>{
+
+
+ const result = verification.verifyFood({
+
+    id:req.params.id,
+
+    type:req.body.type,
+
+    file:req.body.file
+
+ });
+
+
+ lifecycle.createEvent(
+    req.params.id,
+    "VERIFIED",
+    "Food evidence verified by āprən intelligence"
+ );
+
+
+ res.json({
+
+    system:"apren-food-verification",
+
+    verification:result
+
+ });
+
+
+});
+
+
+
+app.get("/verify/:id",(req,res)=>{
+
+
+ res.json({
+
+    system:"apren-food-verification",
+
+    assetId:req.params.id,
+
+    records:
+       verification.getVerification(req.params.id)
+
+ });
+
+
+});
+
+
+
+
+
+
+
+app.get("/freshness/:id",(req,res)=>{
+
+
+ const result = calculateDecay({
+
+    id:Number(req.params.id),
+
+    name:"Chicken Rice Bowl",
+
+    category:"Prepared meals",
+
+    verifiedAt:new Date()
+
+ });
+
+
+ res.json({
+
+    system:"apren-freshness-engine",
+
+    assetId:req.params.id,
+
+    result
+
+ });
+
+
+});
+
+
+
+
+
+app.get("/asset-profile/:id",(req,res)=>{
+
+ const id=req.params.id;
+
+ try {
+
+   const asset = db.prepare(
+     "SELECT * FROM food_assets WHERE id=?"
+   ).get(id);
+
+
+   if(!asset){
+      return res.status(404).json({
+        error:"Asset not found",
+        assetId:id
+      });
+   }
+
+
+   const freshness = analyzeFreshness({
+      category: asset.category,
+      imageConfidence: asset.freshness_score
+   });
+
+
+   const passport = db.prepare(
+      "SELECT * FROM passport_events WHERE asset_id=? ORDER BY created_at ASC"
+   ).all(id);
+
+
+   const ownership = db.prepare(
+      "SELECT * FROM food_asset_holdings WHERE asset_id=?"
+   ).get(id)
+   || {
+        asset_id:id,
+        owner_id:null
+      };
+
+
+   const lifecycleEvents =
+      lifecycle.getEvents(id);
+
+
+   const verificationResult =
+      verificationEngine.verifyFood(asset);
+
+
+   res.json({
+
+      system:"apren-food-asset-profile",
+
+      asset,
+
+      intelligence:{
+        freshness
+      },
+
+      passport,
+
+      ownership,
+
+      lifecycle:lifecycleEvents,
+
+      verification: verificationResult
+
+   });
+
+
+ } catch(error){
+
+    res.status(500).json({
+      error:error.message
+    });
+
+ }
+
+});
+
+
+
+
+
+app.post("/assets/:id/evidence",(req,res)=>{
+
+try{
+
+const result=evidence.addEvidence(
+req.params.id,
+req.body.type || "image",
+req.body.file || "unknown"
+);
+
+res.json({
+
+system:"apren-food-evidence",
+
+evidence:result
+
+});
+
+
+}catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/assets/:id/evidence",(req,res)=>{
+
+const records=db.prepare(
+"SELECT * FROM food_evidence WHERE asset_id=?"
+)
+.all(req.params.id);
+
+
+res.json({
+
+assetId:req.params.id,
+
+evidence:records
+
+});
+
+});
+
+
+
+
+app.post("/assets/:id/evidence/:evidenceId/analyze",(req,res)=>{
+
+try{
+
+
+const evidence =
+db.prepare(
+"SELECT * FROM food_evidence WHERE id=?"
+)
+.get(req.params.evidenceId);
+
+
+
+if(!evidence){
+
+return res.status(404).json({
+error:"Evidence not found"
+});
+
+}
+
+
+
+const analysis =
+analyzeEvidence(evidence);
+
+
+
+db.prepare(`
+UPDATE food_evidence
+
+SET
+analysis_status=?,
+freshness_score=?,
+confidence=?
+
+WHERE id=?
+
+`)
+.run(
+analysis.status,
+analysis.freshnessScore,
+analysis.confidence,
+req.params.evidenceId
+);
+
+
+
+db.prepare(`
+UPDATE food_assets
+
+SET
+freshness_score=?,
+expiry_time=?
+
+WHERE id=?
+
+`)
+.run(
+analysis.freshnessScore,
+analysis.estimatedExpiry,
+req.params.id
+);
+
+
+
+res.json({
+
+system:"apren-evidence-intelligence",
+
+assetId:req.params.id,
+
+evidenceId:req.params.evidenceId,
+
+analysis
+
+});
+
+
+}catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+
+});
+
+
+
+
+app.post("/assets/:id/analyze-food",(req,res)=>{
+
+try{
+
+
+const asset =
+db.prepare(
+"SELECT * FROM food_assets WHERE id=?"
+)
+.get(req.params.id);
+
+
+
+if(!asset){
+
+return res.status(404).json({
+error:"Asset not found"
+});
+
+}
+
+
+
+const vision =
+detectFood(asset);
+
+
+
+const decay =
+calculateDecayIntelligence(asset);
+
+
+
+const valuation =
+adjustValue(asset,decay);
+
+
+
+db.prepare(`
+UPDATE food_assets
+
+SET freshness_score=?
+
+WHERE id=?
+
+`)
+.run(
+decay.freshnessScore,
+req.params.id
+);
+
+
+
+res.json({
+
+system:"apren-food-intelligence",
+
+asset,
+
+vision,
+
+freshness:decay,
+
+valuation
+
+});
+
+
+}catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+
+});
+
+
+
+
+
+
+app.get("/assets/:id/market-value",(req,res)=>{
+
+try {
+
+const asset=db
+.prepare(
+"SELECT * FROM food_assets WHERE id=?"
+)
+.get(req.params.id);
+
+
+if(!asset){
+
+return res.status(404).json({
+error:"Asset not found"
+});
+
+}
+
+
+const freshness =
+analyzeFreshness({
+
+category:asset.category,
+
+imageConfidence:
+asset.freshness_score
+
+});
+
+
+const marketValue =
+Number(
+(
+asset.base_value *
+(freshness.score / 100)
+).toFixed(2)
+);
+
+
+
+res.json({
+
+system:"apren-food-market-engine",
+
+asset:asset.name,
+
+market:{
+
+baseValue:asset.base_value,
+
+marketValue,
+
+currency:asset.currency,
+
+signals:{
+
+demand:asset.demand,
+
+availability:asset.status
+
+}
+
+}
+
+});
+
+
+}catch(error){
+
+res.status(500).json({
+
+error:error.message
+
+});
+
+}
+
+});
+
+
+
+
+app.get("/assets/:id/market-intelligence",(req,res)=>{
+
+try{
+
+const asset =
+db.prepare(
+"SELECT * FROM food_assets WHERE id=?"
+)
+.get(req.params.id);
+
+
+if(!asset){
+
+return res.status(404).json({
+error:"Asset not found"
+});
+
+}
+
+
+const signals =
+db.prepare(
+"SELECT * FROM market_signals WHERE asset_id=?"
+)
+.get(asset.id);
+
+
+const value =
+(
+asset.base_value *
+signals.demand_multiplier *
+signals.freshness_multiplier *
+signals.scarcity_multiplier *
+signals.location_multiplier *
+signals.seasonal_multiplier
+).toFixed(2);
+
+
+res.json({
+
+system:"apren-market-intelligence",
+
+asset:asset.name,
+
+valuation:{
+
+baseValue:asset.base_value,
+
+marketValue:Number(value),
+
+currency:asset.currency
+
+},
+
+signals
+
+});
+
+
+}catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+app.post("/evidence/analyze/:id",(req,res)=>{
+
+
+const asset =
+db.prepare(
+"SELECT * FROM food_assets WHERE id=?"
+)
+.get(req.params.id);
+
+
+
+if(!asset){
+
+return res.status(404).json({
+error:"Asset not found"
+});
+
+}
+
+
+
+const evidenceResult =
+analyzeEvidence({
+
+assetId:asset.id,
+
+category:asset.category,
+
+mediaType:req.body.media_type || "photo",
+
+source:req.body.source || "camera"
+
+});
+
+
+
+const freshness =
+analyzeFreshness({
+
+category:asset.category,
+
+imageConfidence:
+evidenceResult.confidence || asset.freshness_score
+
+});
+
+
+
+const expiry =
+calculateDecayIntelligence({
+
+category:asset.category,
+
+verifiedAt:new Date()
+
+});
+
+
+
+
+db.prepare(`
+
+UPDATE food_assets
+
+SET
+
+freshness_score=?,
+
+expiry_time=?
+
+WHERE id=?
+
+`).run(
+
+freshness.score || asset.freshness_score,
+
+expiry.expiry_time || null,
+
+asset.id
+
+);
+
+
+
+
+db.prepare(`
+
+INSERT INTO passport_events
+
+(
+
+asset_id,
+
+event_type,
+
+description
+
+)
+
+VALUES
+
+(?,?,?)
+
+`).run(
+
+asset.id,
+
+"FRESHNESS_UPDATED",
+
+"Freshness updated from food evidence intelligence"
+
+);
+
+
+
+
+res.json({
+
+system:"apren-food-intelligence-engine",
+
+assetId:asset.id,
+
+freshness,
+
+expiry,
+
+evidence:evidenceResult
+
+});
+
+
+});
+
+
+
+app.listen(4003,()=>{
+
+console.log(
+"āprən Food Asset Engine running on 4003"
+);
+
+});

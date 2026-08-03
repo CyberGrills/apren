@@ -1,0 +1,32 @@
+{
+  "name": "apren",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "services/assets",
+    "services/intelligence",
+    "services/identity",
+    "services/wallet",
+    "services/gateway",
+    "services/market",
+    "services/trade"
+  ],
+  "scripts": {
+    "install": "npm install",
+    "build:web": "npm --workspace apps/web run build",
+    "build": "npm run build:web",
+    "dev:web": "npm --workspace apps/web run dev -- --host 0.0.0.0",
+    "start:web": "npm run dev:web",
+    "start:gateway": "npm --workspace services/gateway run start",
+    "start:assets": "npm --workspace services/assets run start",
+    "start:intelligence": "npm --workspace services/intelligence run start",
+    "start:identity": "npm --workspace services/identity run start",
+    "start:wallet": "npm --workspace services/wallet run start",
+    "start:market": "npm --workspace services/market run start",
+    "start:trade": "npm --workspace services/trade run start",
+    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:assets\" \"npm run start:intelligence\" \"npm run start:identity\" \"npm run start:wallet\" \"npm run start:market\" \"npm run start:trade\" \"npm run start:web\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

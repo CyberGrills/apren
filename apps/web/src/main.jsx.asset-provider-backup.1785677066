@@ -1,0 +1,12 @@
+import React from "react";
+import { createRoot } from "react-dom/client";
+
+import AprenApp from "./features/apren/AprenApp.jsx";
+
+createRoot(
+  document.getElementById("root")
+).render(
+  <React.StrictMode>
+    <AprenApp />
+  </React.StrictMode>
+);

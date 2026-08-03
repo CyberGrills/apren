@@ -1,0 +1,1342 @@
+
+function getUserTimezone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return "Local time";
+  }
+}
+
+import {
+    getTimeGreeting,
+    getCurrentTime
+} from "../../services/timeGreeting";
+
+import { getWallet } from "../../services/api/walletApi";
+import { getAssets, getMappedAssets } from "../../services/api/assetApi";
+import { useWalletIntelligence } from "../../hooks/useWalletIntelligence";
+import { useAssets } from "../../context/AssetContext";
+import { formatCurrency, formatFoodCurrency } from "../../services/currencyFormatter";
+
+import React, { useState, useMemo, useEffect } from "react";
+import { getNotifications } from "../../services/aprenNotifications";
+
+import {
+  Bell, Wallet, Sparkles, ChefHat, ArrowRight, ArrowLeft, TrendingUp, TrendingDown,
+  Minus, MapPin, Search, SlidersHorizontal, ArrowUpRight, ArrowDownRight, Leaf, Check, ChevronDown
+} from "lucide-react";
+
+/* ---------- shared data ---------- */
+
+const assets = [
+  {
+    name: "Chicken Rice Bowl", kitchen: "Kitchen A", origin: "Local farm network", category: "Prepared meals",
+    freshness: 92, price: 15, change: 4, demand: "Increasing", journey: ["Farm", "Kitchen", "You"],
+    history: [13.5, 13.8, 14, 14.2, 14.6, 14.8, 15, 15],
+    log: [
+      { label: "Sourced", detail: "Rice and vegetables from Local farm network", date: "Jul 27" },
+      { label: "Prepared", detail: "Cooked fresh at Kitchen A", date: "Jul 29" },
+      { label: "Listed", detail: "Added to market at ə15", date: "Jul 30" },
+      { label: "Available", detail: "Ready for pickup near you", date: "Jul 30" },
+    ],
+  },
+  {
+    name: "Heirloom Tomatoes", kitchen: "Green Acre Farm", origin: "12km away", category: "Produce",
+    freshness: 97, price: 6, change: 8, demand: "High", journey: ["Farm", "Market", "You"],
+    history: [4, 5, 4.6, 5.2, 5.6, 6.1, 5.8, 6],
+    log: [
+      { label: "Harvested", detail: "Picked at Green Acre Farm", date: "Jul 28" },
+      { label: "Transported", detail: "12km to the local market hub", date: "Jul 29" },
+      { label: "Listed", detail: "Added to market at ə6", date: "Jul 30" },
+    ],
+  },
+  {
+    name: "Jasmine Rice, 5kg", kitchen: "Mekong Supply Co.", origin: "Regional distributor", category: "Grains",
+    freshness: 88, price: 11, change: 0, demand: "Steady", journey: ["Farm", "Mill", "You"],
+    history: [11, 11, 10.8, 11, 11.1, 11, 11, 11],
+    log: [
+      { label: "Milled", detail: "Processed by Mekong Supply Co.", date: "Jul 20" },
+      { label: "Distributed", detail: "Shipped to regional distributor", date: "Jul 24" },
+      { label: "Listed", detail: "Added to market at ə11", date: "Jul 26" },
+    ],
+  },
+  {
+    name: "Sourdough Loaf", kitchen: "Miso & Co.", origin: "3km away", category: "Specialty",
+    freshness: 90, price: 8, change: -1, demand: "Steady", journey: ["Mill", "Kitchen", "You"],
+    history: [8.2, 8.1, 8.3, 8, 8.1, 8, 8.1, 8],
+    log: [
+      { label: "Fermented", detail: "36-hour starter proof at Miso & Co.", date: "Jul 29" },
+      { label: "Baked", detail: "Baked fresh this morning", date: "Jul 30" },
+      { label: "Listed", detail: "Added to market at ə8", date: "Jul 30" },
+    ],
+  },
+  {
+    name: "Yellow Yams", kitchen: "Local farm network", origin: "8km away", category: "Produce",
+    freshness: 85, price: 5, change: -3, demand: "Low", journey: ["Farm", "Market", "You"],
+    history: [5.6, 5.5, 5.3, 5.2, 5, 5.1, 5, 5],
+    log: [
+      { label: "Harvested", detail: "Picked from Local farm network", date: "Jul 25" },
+      { label: "Stored", detail: "Cold storage, 8km away", date: "Jul 27" },
+      { label: "Listed", detail: "Added to market at ə5", date: "Jul 29" },
+    ],
+  },
+  {
+    name: "Miso Ramen Bowl", kitchen: "Miso & Co.", origin: "3km away", category: "Prepared meals",
+    freshness: 94, price: 13, change: 6, demand: "High", journey: ["Farm", "Kitchen", "You"],
+    history: [11.8, 12, 12.2, 12.5, 12.8, 13, 12.9, 13],
+    log: [
+      { label: "Broth started", detail: "Miso broth simmered at Miso & Co.", date: "Jul 29" },
+      { label: "Assembled", detail: "Bowl assembled to order", date: "Jul 30" },
+      { label: "Listed", detail: "Added to market at ə13", date: "Jul 30" },
+    ],
+  },
+];
+
+const kitchens = [
+  {
+    name: "PastaBox", initial: "PB", tagline: "Fresh pasta, made daily", specialties: ["Italian", "Fresh pasta"],
+    signal: "2 new meals today", capacity: "120 meals/day", demand: "up", assetNames: [],
+    log: [
+      { label: "New menu", detail: "Added 2 new pasta meals", date: "Jul 30" },
+      { label: "Started service", detail: "Opened as a kitchen partner", date: "Jun 12" },
+    ],
+  },
+  {
+    name: "Miso & Co.", initial: "MC", tagline: "Fermentation-forward kitchen", specialties: ["Japanese", "Bakery"],
+    signal: "Restocked · 94% fresh", capacity: "80 meals/day", demand: "up", assetNames: ["Sourdough Loaf", "Miso Ramen Bowl"],
+    log: [
+      { label: "Restocked", detail: "Fresh batch of sourdough and ramen", date: "Jul 30" },
+      { label: "Milestone", detail: "500 meals served this month", date: "Jul 24" },
+    ],
+  },
+  {
+    name: "Kitchen A", initial: "KA", tagline: "Community kitchen network", specialties: ["Comfort food"],
+    signal: "Steady production", capacity: "200 meals/day", demand: "flat", assetNames: ["Chicken Rice Bowl"],
+    log: [
+      { label: "Steady output", detail: "200 meals produced today", date: "Jul 30" },
+      { label: "Feedback", detail: "4.8 average rating from recent customers", date: "Jul 28" },
+    ],
+  },
+  {
+    name: "Green Acre Farm", initial: "GA", tagline: "Farm-direct produce", specialties: ["Produce", "Farm-to-table"],
+    signal: "Supply increased this week", capacity: "1.2t/week", demand: "up", assetNames: ["Heirloom Tomatoes"],
+    log: [
+      { label: "Harvest", detail: "Tomato harvest increased 15%", date: "Jul 29" },
+      { label: "Supply update", detail: "Added to 3 new kitchens' supply chain", date: "Jul 22" },
+    ],
+  },
+];
+
+const pulse = [
+  { label: "Tomatoes", detail: "High demand near you", trend: "up" },
+  { label: "Rice", detail: "Steady this week", trend: "flat" },
+  { label: "Green Acre Farm", detail: "Supply increased", trend: "up" },
+];
+
+const categories = ["All", "Produce", "Grains", "Prepared meals", "Specialty"];
+const demandStyle = { High: "hot", Increasing: "hot", Steady: "flat", Low: "cool" };
+
+const exchangeHistorySeed = [
+  { from: "Jasmine Rice, 5kg", to: "Yellow Yams", fromAmt: 1, toAmt: 2.2, when: "Yesterday" },
+  { from: "Heirloom Tomatoes", to: "Chicken Rice Bowl", fromAmt: 3, toAmt: 1.2, when: "3 days ago" },
+  { from: "Sourdough Loaf", to: "Miso Ramen Bowl", fromAmt: 2, toAmt: 1.2, when: "Last week" },
+];
+
+const recommendationReasons = {
+  "Chicken Rice Bowl": "Freshest option from a kitchen you've visited, with rising demand nearby.",
+  "Heirloom Tomatoes": "Peak freshness and high demand — the best value window today.",
+  "Miso Ramen Bowl": "High demand, a short farm-to-kitchen journey, and strong freshness.",
+};
+
+const decisionFlow = ["Data", "Understanding", "Prediction", "Recommendation"];
+
+const quickPrompts = [
+  "What's the best dinner option today?",
+  "What's available near me?",
+  "What has the best value?",
+];
+
+const earnWays = [
+  { label: "Discover food opportunities", detail: "Surface a kitchen or asset others haven't found", range: "+1–3 ə", icon: Sparkles },
+  { label: "Support kitchens", detail: "Acquire assets from local kitchens", range: "+1–2 ə", icon: ChefHat },
+  { label: "Provide feedback", detail: "Rate freshness and quality after a purchase", range: "+1 ə", icon: Leaf },
+  { label: "Contribute intelligence", detail: "Confirm or correct a demand signal", range: "+1 ə", icon: TrendingUp },
+  { label: "Sustainable actions", detail: "Choose near-expiry or surplus assets", range: "+2 ə", icon: MapPin },
+];
+
+const rewardHistory = [
+  { label: "Feedback on Chicken Rice Bowl", amount: 1, date: "Jul 29" },
+  { label: "Supported Green Acre Farm", amount: 2, date: "Jul 28" },
+  { label: "Confirmed rice demand signal", amount: 1, date: "Jul 26" },
+  { label: "Discovered Miso & Co.", amount: 3, date: "Jul 22" },
+];
+
+const contributionBreakdown = [
+  { label: "Participation", pct: 45 },
+  { label: "Feedback", pct: 30 },
+  { label: "Sustainability", pct: 25 },
+];
+
+function factorsFor(asset) {
+  const factors = [];
+  factors.push(
+    asset.freshness >= 90
+      ? `${asset.freshness}% freshness — near peak quality`
+      : `${asset.freshness}% freshness`
+  );
+  factors.push(
+    asset.demand === "High" || asset.demand === "Increasing"
+      ? `${asset.demand} demand nearby is pushing value up`
+      : `Demand is ${asset.demand.toLowerCase()} — price is stable`
+  );
+  factors.push(
+    asset.change !== 0
+      ? `Price moved ${asset.change > 0 ? "+" : ""}${asset.change}% this week`
+      : "Price has held steady this week"
+  );
+  factors.push(`Journey: ${asset.journey.join(" → ")}`);
+  return factors;
+}
+
+/* ---------- shared bits ---------- */
+
+function TrendIcon({ trend }) {
+  if (trend === "up") return <TrendingUp size={15} strokeWidth={2} />;
+  if (trend === "down") return <TrendingDown size={15} strokeWidth={2} />;
+  return <Minus size={15} strokeWidth={2} />;
+}
+
+function FreshnessRing({ value, size = 48 }) {
+  const r = 19;
+  const c = 2 * Math.PI * r;
+  const offset = c - (value / 100) * c;
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r={r} fill="none" stroke="var(--line)" strokeWidth="3" />
+      <circle cx="24" cy="24" r={r} fill="none" stroke="var(--basil)" strokeWidth="3"
+        strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 24 24)" />
+      <text x="24" y="27" textAnchor="middle" className="ring-text">{value}</text>
+    </svg>
+  );
+}
+
+function SchwaStamp({ size = 56 }) {
+  return (
+    <div className="stamp" style={{ width: size, height: size }}>
+      <svg viewBox="0 0 100 100" width="100%" height="100%">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="2 4" />
+        <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <text x="50" y="60" textAnchor="middle" className="stamp-glyph">ə</text>
+      </svg>
+    </div>
+  );
+}
+
+function Sparkline({ points, positive, w = 64, h = 24 }) {
+  const min = Math.min(...points), max = Math.max(...points);
+  const range = max - min || 1;
+  const coords = points.map((p, i) => {
+    const x = (i / (points.length - 1)) * w;
+    const y = h - ((p - min) / range) * h;
+    return `${x},${y}`;
+  }).join(" ");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <polyline points={coords} fill="none" stroke={positive ? "var(--basil)" : "var(--brick)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function BackButton({ onClick, label }) {
+  return (
+    <button className="back-btn" onClick={onClick}>
+      <ArrowLeft size={14} /> {label}
+    </button>
+  );
+}
+
+function WhyPanel({ asset }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="why-panel">
+      <button className="why-toggle" onClick={() => setOpen(!open)}>
+        Why this price <ChevronDown size={13} className={open ? "chev open" : "chev"} />
+      </button>
+      {open && (
+        <ul className="why-list">
+          {factorsFor(asset).map((f) => <li key={f}>{f}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function NavBar({ active, onNavigate }) {
+  const nav = [
+    { id: "wallet", label: "Wallet", icon: Wallet },
+    { id: "intelligence", label: "Intelligence", icon: Sparkles },
+    { id: "market", label: "Market", icon: TrendingUp },
+    { id: "exchange", label: "Exchange", icon: ArrowRight },
+    { id: "kitchens", label: "Kitchens", icon: ChefHat },
+  ];
+  return (
+    <div className="navbar">
+      {nav.map(({ id, label, icon: Icon }) => (
+        <button key={id} className={`navbtn ${active === id ? "active" : ""}`} onClick={() => onNavigate(id)}>
+          <Icon size={18} strokeWidth={active === id ? 2.4 : 1.8} />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- wallet screen ---------- */
+
+function WalletScreen({ goTo }) {
+
+const {
+wallet,
+preferences,
+loading
+}=useWalletIntelligence(1);
+
+
+const {
+assets:liveAssets
+}=useAssets();
+
+const [backendAssets,setBackendAssets]=useState([]);
+const [notifications,setNotifications]=useState([]);
+const [showNotifications,setShowNotifications]=useState(false);
+
+
+useEffect(()=>{
+
+getMappedAssets()
+.then(setBackendAssets)
+.catch(()=>{});
+
+
+getNotifications(1)
+.then(data=>setNotifications(data.notifications || []))
+.catch(()=>{});
+
+
+},[]);
+
+
+const today =
+new Intl.DateTimeFormat(
+undefined,
+{
+weekday:"short",
+month:"short",
+day:"numeric"
+}
+).format(new Date());
+
+
+return (
+    <div className="scroll">
+
+      <div className="topbar">
+
+        <span className="eyebrow">
+        {today}
+        </span>
+
+
+        <button 
+        className="bell"
+        onClick={()=>setShowNotifications(!showNotifications)}
+        >
+        <Bell size={16}/>
+        </button>
+
+      </div>
+
+
+{showNotifications && (
+
+<div className="notification-panel">
+
+<h4>Notifications</h4>
+
+{
+notifications.map(n=>(
+
+<div 
+className="notification-item"
+key={n.id}
+>
+
+<strong>{n.title}</strong>
+
+<div>
+{n.detail}
+</div>
+
+</div>
+
+))
+}
+
+</div>
+
+)}
+
+
+      <div className="greeting">
+{getTimeGreeting("CyberShef")}
+</div>
+
+<div className="text-sm opacity-70">
+{getCurrentTime()} · {getUserTimezone()}
+</div>
+
+      <div className="brief">
+        <div className="brief-row"><Leaf size={15} /><span>Tomatoes are in high demand near you today.</span></div>
+        <div className="brief-row">
+<Wallet size={15} />
+<span>
+You have {
+wallet?.wallets?.find(
+w=>w.currency==="ə"
+)?.balance ?? 0
+} ə ready to support eligible purchases.
+</span>
+</div>
+        <div className="brief-row"><ChefHat size={15} /><span>Two kitchens you visited have new meals.</span></div>
+        <div className="brief-row"><Minus size={15} /><span>Rice prices are steady this week.</span></div>
+        <div className="brief-row"><MapPin size={15} /><span>A nearby farm has increased supply.</span></div>
+      </div>
+
+      
+
+<div className="cash-wallet-card">
+
+<div className="wallet-label">
+Cash Wallet
+</div>
+
+
+<div className="wallet-balance">
+
+{
+formatCurrency(
+wallet?.wallets?.find(
+w=>w.currency!=="ə"
+)?.balance ?? 0,
+
+preferences?.display_currency || "EUR"
+
+)
+
+}
+
+</div>
+
+</div>
+
+
+<button className="wallet-card" onClick={() => goTo("rewards", { backTo: "wallet" })}>
+        <SchwaStamp />
+        <div className="wallet-label">Your ə balance</div>
+        <div className="wallet-balance">{
+wallet?.wallets?.find(
+w=>w.wallet_type==="schwa"
+)?.balance ?? 42
+}
+<span className="unit">ə</span></div>
+        <div className="wallet-sub">+3 ə earned this week · tap to see how</div>
+      </button>
+
+      <div className="section-head">
+        <div className="section-title">Food assets</div>
+        <button className="section-link" onClick={() => goTo("market")}>View all <ArrowRight size={12} /></button>
+      </div>
+      <div className="asset-scroll">
+        {liveAssets.slice(0, 3).map((a) => (
+          <div className="asset-card" key={a.name} onClick={() => goTo("assetDetail", { asset: a, backTo: "wallet" })}>
+            <div className="asset-top">
+              <div>
+                <div className="asset-name">{a.name}</div>
+                <div className="asset-kitchen">{a.kitchen} · {a.origin}</div>
+              </div>
+              <FreshnessRing value={a.freshness} />
+            </div>
+            <div className="asset-journey">
+              {a.journey.map((step, i) => (
+                <React.Fragment key={step}>
+                  <span>{step}</span>
+                  {i < a.journey.length - 1 && <ArrowRight size={10} />}
+                </React.Fragment>
+              ))}
+            </div>
+            <div className="asset-value">ə {a.price}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-head">
+        <div className="section-title">Kitchens</div>
+        <button className="section-link" onClick={() => goTo("kitchens")}>View all <ArrowRight size={12} /></button>
+      </div>
+      <div className="kitchen-list">
+        {kitchens.slice(0, 2).map((k) => (
+          <div className="kitchen-row" key={k.name} onClick={() => goTo("kitchenDetail", { kitchen: k, backTo: "wallet" })}>
+            <div className="kitchen-avatar">{k.initial}</div>
+            <div>
+              <div className="kitchen-name">{k.name}</div>
+              <div className="kitchen-note">{k.signal}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-head">
+        <div className="section-title">Market pulse</div>
+        <button className="section-link" onClick={() => goTo("market")}>Open market <ArrowRight size={12} /></button>
+      </div>
+      <div className="pulse-list">
+        {pulse.map((p) => (
+          <div className="pulse-row" key={p.label}>
+            <div className={`pulse-icon ${p.trend}`}><TrendIcon trend={p.trend} /></div>
+            <div>
+              <div className="pulse-label">{p.label}</div>
+              <div className="pulse-detail">{p.detail}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- market screen ---------- */
+
+function MarketScreen({ goTo }) {
+
+const {
+assets:marketAssets
+}=useAssets();
+
+  const [category, setCategory] = useState("All");
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    return marketAssets.filter((l) => {
+      const inCat = category === "All" || l.category === category;
+      const inQuery = l.name.toLowerCase().includes(query.toLowerCase());
+      return inCat && inQuery;
+    });
+  }, [category, query]);
+
+  return (
+    <div className="scroll">
+      <div className="topbar">
+        <div>
+          <div className="eyebrow">Food market</div>
+          <div className="title">Discover value</div>
+        </div>
+      </div>
+
+      <div className="search-row">
+        <div className="search-box">
+          <Search size={15} color="var(--ink-soft)" />
+          <input placeholder="Search rice, tomatoes, meals..." value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
+        <div className="filter-btn"><SlidersHorizontal size={16} /></div>
+      </div>
+
+      <div className="chips">
+        {categories.map((c) => (
+          <button key={c} className={`chip ${category === c ? "active" : ""}`} onClick={() => setCategory(c)}>{c}</button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty">
+          <Search size={22} />
+          <div className="empty-title">No assets match</div>
+          <div className="empty-body">Try a different category or search term.</div>
+        </div>
+      ) : (
+        <>
+          <div className="result-count">{filtered.length} asset{filtered.length !== 1 ? "s" : ""} · sorted by demand</div>
+          {filtered.map((l) => (
+            <div className="listing" key={l.name} onClick={() => goTo("assetDetail", { asset: l, backTo: "market" })}>
+              <div className="listing-main">
+                <div className="listing-name">{l.name}</div>
+                <div className="listing-source">{l.kitchen} · {l.origin}</div>
+                <div className="listing-tags">
+                  <span className={`tag ${demandStyle[l.demand]}`}>{l.demand}</span>
+                  <span className="tag fresh">{l.freshness}% fresh</span>
+                </div>
+              </div>
+              <div className="listing-side">
+                <Sparkline points={l.history} positive={l.change >= 0} />
+                <div className="listing-price">ə {l.price}</div>
+                <div className={`listing-change ${l.change > 0 ? "pos" : l.change < 0 ? "neg" : "zero"}`}>
+                  {l.change > 0 && <ArrowUpRight size={11} />}
+                  {l.change < 0 && <ArrowDownRight size={11} />}
+                  {l.change === 0 ? "steady" : `${l.change > 0 ? "+" : ""}${l.change}%`}
+                </div>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ---------- exchange screen ---------- */
+
+function AssetField({ label, asset, amount, onAmount, editable, open, onToggle, onPick, exclude }) {
+  return (
+    <div className="swap-field">
+      <div className="swap-field-label">{label}</div>
+      <div className="swap-field-row">
+        <input
+          type="number" min="0" step="0.1" className="swap-amount"
+          value={amount} readOnly={!editable}
+          onChange={(e) => editable && onAmount(Math.max(0, Number(e.target.value)))}
+        />
+        <button className="swap-asset-btn" onClick={onToggle}>
+          {asset.name} <ArrowRight size={12} className="swap-chevron" />
+        </button>
+      </div>
+      {open && (
+        <div className="swap-options">
+          {assets.filter((a) => a.name !== exclude).map((a) => (
+            <button key={a.name} className="swap-option" onClick={() => onPick(a)}>
+              {a.name} <span>ə {a.price}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExchangeScreen({ presetAsset }) {
+  const [fromAsset, setFromAsset] = useState(assets[2]);
+  const [toAsset, setToAsset] = useState(presetAsset || assets[4]);
+  const [fromAmt, setFromAmt] = useState(1);
+  const [openField, setOpenField] = useState(null);
+  const [step, setStep] = useState("form");
+  const [log, setLog] = useState(exchangeHistorySeed);
+
+  const toAmt = useMemo(() => {
+    const val = (fromAmt * fromAsset.price) / toAsset.price;
+    return Math.round(val * 10) / 10;
+  }, [fromAmt, fromAsset, toAsset]);
+
+  const rate = Math.round((fromAsset.price / toAsset.price) * 100) / 100;
+
+  function swapDirection() {
+    setFromAsset(toAsset);
+    setToAsset(fromAsset);
+  }
+
+  function confirm() {
+    setLog([{ from: fromAsset.name, to: toAsset.name, fromAmt, toAmt, when: "Just now" }, ...log]);
+    setStep("done");
+  }
+
+  if (step === "review") {
+    return (
+      <div className="scroll">
+        <div className="topbar">
+          <div>
+            <div className="eyebrow">Confirm</div>
+            <div className="title">Review exchange</div>
+          </div>
+        </div>
+        <div className="swap-card">
+          <div className="review-row"><span>You give</span><strong>{fromAmt} × {fromAsset.name}</strong></div>
+          <div className="review-row"><span>You receive</span><strong>{toAmt} × {toAsset.name}</strong></div>
+          <div className="review-row"><span>Rate</span><strong>1 {fromAsset.name} ≈ {rate} {toAsset.name}</strong></div>
+          <div className="review-row"><span>Fee</span><strong>0 ə · community exchange</strong></div>
+          <button className="swap-confirm" onClick={confirm}>Confirm exchange</button>
+          <button className="swap-cancel" onClick={() => setStep("form")}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "done") {
+    return (
+      <div className="scroll">
+        <div className="topbar">
+          <div>
+            <div className="eyebrow">Exchange</div>
+            <div className="title">Done</div>
+          </div>
+        </div>
+        <div className="receipt">
+          <div className="receipt-check"><Check size={20} /></div>
+          <div className="receipt-title">Exchange complete</div>
+          <div className="receipt-body">{fromAmt} × {fromAsset.name} for {toAmt} × {toAsset.name}</div>
+          <button className="swap-confirm" onClick={() => setStep("form")}>Make another exchange</button>
+        </div>
+        <div className="section-head"><div className="section-title">Recent exchanges</div></div>
+        <div className="kitchen-list">
+          {log.map((h, i) => (
+            <div className="kitchen-row" key={i}>
+              <div className="kitchen-avatar hist"><ArrowRight size={14} /></div>
+              <div style={{ flex: 1 }}>
+                <div className="kitchen-name">{h.fromAmt}× {h.from} → {h.toAmt}× {h.to}</div>
+                <div className="kitchen-note">{h.when}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="scroll">
+      <div className="topbar">
+        <div>
+          <div className="eyebrow">Food exchange</div>
+          <div className="title">Trade value</div>
+        </div>
+      </div>
+
+      <div className="swap-card">
+        <AssetField
+          label="You give" asset={fromAsset} amount={fromAmt} onAmount={setFromAmt} editable
+          open={openField === "from"} onToggle={() => setOpenField(openField === "from" ? null : "from")}
+          onPick={(a) => { setFromAsset(a); setOpenField(null); }} exclude={toAsset.name}
+        />
+        <button className="swap-divider" onClick={swapDirection} aria-label="Reverse exchange">
+          <ArrowRight size={16} style={{ transform: "rotate(90deg)" }} />
+        </button>
+        <AssetField
+          label="You receive" asset={toAsset} amount={toAmt} onAmount={() => {}} editable={false}
+          open={openField === "to"} onToggle={() => setOpenField(openField === "to" ? null : "to")}
+          onPick={(a) => { setToAsset(a); setOpenField(null); }} exclude={fromAsset.name}
+        />
+        <div className="swap-rate">1 {fromAsset.name} ≈ {rate} {toAsset.name}</div>
+        <button className="swap-confirm" disabled={fromAmt <= 0} onClick={() => fromAmt > 0 && setStep("review")}>
+          {fromAmt > 0 ? "Review exchange" : "Enter an amount"}
+        </button>
+      </div>
+
+      <div className="section-head"><div className="section-title">Recent exchanges</div></div>
+      <div className="kitchen-list">
+        {log.map((h, i) => (
+          <div className="kitchen-row" key={i}>
+            <div className="kitchen-avatar hist"><ArrowRight size={14} /></div>
+            <div style={{ flex: 1 }}>
+              <div className="kitchen-name">{h.fromAmt}× {h.from} → {h.toAmt}× {h.to}</div>
+              <div className="kitchen-note">{h.when}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- intelligence screen ---------- */
+
+function IntelligenceScreen({ goTo }) {
+  const top = liveAssets.find((a) => a.name === "Chicken Rice Bowl");
+  const more = liveAssets.filter((a) => recommendationReasons[a.name] && a.name !== top.name);
+
+  return (
+    <div className="scroll">
+      <div className="topbar">
+        <div>
+          <div className="eyebrow">Food intelligence</div>
+          <div className="title">Ask āprən</div>
+        </div>
+      </div>
+
+      <div className="ask-box">
+        <input className="ask-input" placeholder="What should I eat tonight?" readOnly />
+        <button className="ask-send" aria-label="Ask"><ArrowRight size={15} /></button>
+      </div>
+      <div className="chips" style={{ marginBottom: 22 }}>
+        {quickPrompts.map((p) => <button className="chip" key={p}>{p}</button>)}
+      </div>
+
+      <div className="flow-strip">
+        {decisionFlow.map((step, i) => (
+          <React.Fragment key={step}>
+            <div className="flow-step">{step}</div>
+            {i < decisionFlow.length - 1 && <div className="flow-line" />}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="section-head"><div className="section-title">Today's top pick</div></div>
+      <div className="pick-card">
+        <div className="pick-top" onClick={() => goTo("assetDetail", { asset: top, backTo: "intelligence" })}>
+          <div>
+            <div className="pick-name">{top.name}</div>
+            <div className="asset-kitchen">{top.kitchen} · {top.origin}</div>
+          </div>
+          <FreshnessRing value={top.freshness} />
+        </div>
+        <div className="pick-why">{recommendationReasons[top.name]}</div>
+        <WhyExpand asset={top} light />
+        <div className="pick-bottom">
+          <div className="asset-value">ə {top.price}</div>
+          <span className={`tag ${demandStyle[top.demand]}`}>{top.demand}</span>
+        </div>
+      </div>
+
+      <div className="section-head"><div className="section-title">More recommendations</div></div>
+      <div className="asset-scroll">
+        {more.map((a) => (
+          <div className="asset-card" key={a.name} onClick={() => goTo("assetDetail", { asset: a, backTo: "intelligence" })}>
+            <div className="asset-top">
+              <div>
+                <div className="asset-name">{a.name}</div>
+                <div className="asset-kitchen">{a.kitchen}</div>
+              </div>
+              <FreshnessRing value={a.freshness} />
+            </div>
+            <div className="pick-why small">{recommendationReasons[a.name]}</div>
+            <div className="asset-value">ə {a.price}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WhyExpand({ asset, light }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`why-panel ${light ? "on-dark" : ""}`}>
+      <button className="why-toggle" onClick={() => setOpen(!open)}>
+        See why <ChevronDown size={13} className={open ? "chev open" : "chev"} />
+      </button>
+      {open && (
+        <ul className="why-list">
+          {factorsFor(asset).map((f) => <li key={f}>{f}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ---------- kitchens screen ---------- */
+
+function KitchensScreen({ goTo }) {
+  return (
+    <div className="scroll">
+      <div className="topbar">
+        <div>
+          <div className="eyebrow">Kitchens</div>
+          <div className="title">Food creators</div>
+        </div>
+      </div>
+
+      {kitchens.map((k) => (
+        <div className="kitchen-card" key={k.name} onClick={() => goTo("kitchenDetail", { kitchen: k, backTo: "kitchens" })}>
+          <div className="kitchen-card-top">
+            <div className="kitchen-avatar lg">{k.initial}</div>
+            <div style={{ flex: 1 }}>
+              <div className="kitchen-name">{k.name}</div>
+              <div className="kitchen-tagline">{k.tagline}</div>
+            </div>
+            <div className={`pulse-icon ${k.demand}`}><TrendIcon trend={k.demand} /></div>
+          </div>
+
+          <div className="kitchen-specialties">
+            {k.specialties.map((s) => <span className="tag flat" key={s}>{s}</span>)}
+          </div>
+
+          <div className="kitchen-signal">
+            <span>{k.signal}</span>
+            <span className="kitchen-capacity">{k.capacity}</span>
+          </div>
+
+          {k.assetNames.length > 0 && (
+            <div className="kitchen-assets">
+              {k.assetNames.map((name) => {
+                const a = assets.find((x) => x.name === name);
+                if (!a) return null;
+                return (
+                  <button className="kitchen-asset-chip" key={name}
+                    onClick={(e) => { e.stopPropagation(); goTo("assetDetail", { asset: a, backTo: "kitchens" }); }}>
+                    {name} <span>ə {a.price}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- asset detail screen ---------- */
+
+function AssetDetailScreen({ asset, backTo, goTo }) {
+  if (!asset) return null;
+  return (
+    <div className="scroll">
+      <BackButton onClick={() => goTo(backTo)} label={`Back to ${backTo}`} />
+
+      <div className="detail-head">
+        <div>
+          <div className="eyebrow">Food asset</div>
+          <div className="title">{asset.name}</div>
+          <div className="asset-kitchen">{asset.kitchen} · {asset.origin}</div>
+        </div>
+        <FreshnessRing value={asset.freshness} size={56} />
+      </div>
+
+      <div className="detail-stats">
+        <div className="stat-box">
+          <div className="stat-label">Current value</div>
+          <div className="stat-value">ə {asset.price}</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">This week</div>
+          <div className={`stat-value ${asset.change >= 0 ? "pos" : "neg"}`}>
+            {asset.change === 0 ? "steady" : `${asset.change > 0 ? "+" : ""}${asset.change}%`}
+          </div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">Demand</div>
+          <div className="stat-value">{asset.demand}</div>
+        </div>
+      </div>
+
+      <WhyPanel asset={asset} />
+
+      <div className="section-head"><div className="section-title">Price history</div></div>
+      <div className="chart-card">
+        <Sparkline points={asset.history} positive={asset.change >= 0} w={360} h={80} />
+      </div>
+
+      <div className="section-head"><div className="section-title">Journey</div></div>
+      <div className="asset-journey lg">
+        {asset.journey.map((step, i) => (
+          <React.Fragment key={step}>
+            <span>{step}</span>
+            {i < asset.journey.length - 1 && <ArrowRight size={12} />}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="log-list">
+        {asset.log.map((entry, i) => (
+          <div className="log-row" key={i}>
+            <div className="log-dot" />
+            <div style={{ flex: 1 }}>
+              <div className="log-label">{entry.label}</div>
+              <div className="log-detail">{entry.detail}</div>
+            </div>
+            <div className="log-date">{entry.date}</div>
+          </div>
+        ))}
+      </div>
+
+      <button className="swap-confirm" style={{ marginTop: 20 }} onClick={() => goTo("exchange", { trade: asset })}>
+        Trade this asset
+      </button>
+    </div>
+  );
+}
+
+/* ---------- kitchen detail screen ---------- */
+
+function KitchenDetailScreen({ kitchen, backTo, goTo }) {
+  const [supported, setSupported] = useState(false);
+  if (!kitchen) return null;
+  const kitchenAssets = kitchen.assetNames.map((n) => liveAssets.find((a) => a.name === n)).filter(Boolean);
+
+  return (
+    <div className="scroll">
+      <BackButton onClick={() => goTo(backTo)} label={`Back to ${backTo}`} />
+
+      <div className="detail-head">
+        <div className="kitchen-avatar lg">{kitchen.initial}</div>
+        <div style={{ flex: 1 }}>
+          <div className="title">{kitchen.name}</div>
+          <div className="asset-kitchen">{kitchen.tagline}</div>
+        </div>
+        <div className={`pulse-icon ${kitchen.demand}`}><TrendIcon trend={kitchen.demand} /></div>
+      </div>
+
+      <div className="kitchen-specialties">
+        {kitchen.specialties.map((s) => <span className="tag flat" key={s}>{s}</span>)}
+      </div>
+
+      <div className="detail-stats">
+        <div className="stat-box">
+          <div className="stat-label">Capacity</div>
+          <div className="stat-value">{kitchen.capacity}</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">Signal</div>
+          <div className="stat-value small">{kitchen.signal}</div>
+        </div>
+      </div>
+
+      {kitchenAssets.length > 0 && (
+        <>
+          <div className="section-head"><div className="section-title">Food assets</div></div>
+          <div className="asset-scroll">
+            {kitchenAssets.map((a) => (
+              <div className="asset-card" key={a.name} onClick={() => goTo("assetDetail", { asset: a, backTo: "kitchenDetail" })}>
+                <div className="asset-top">
+                  <div>
+                    <div className="asset-name">{a.name}</div>
+                    <div className="asset-kitchen">{a.freshness}% fresh</div>
+                  </div>
+                  <FreshnessRing value={a.freshness} />
+                </div>
+                <div className="asset-value">ə {a.price}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="section-head"><div className="section-title">Production history</div></div>
+      <div className="log-list">
+        {kitchen.log.map((entry, i) => (
+          <div className="log-row" key={i}>
+            <div className="log-dot" />
+            <div style={{ flex: 1 }}>
+              <div className="log-label">{entry.label}</div>
+              <div className="log-detail">{entry.detail}</div>
+            </div>
+            <div className="log-date">{entry.date}</div>
+          </div>
+        ))}
+      </div>
+
+      {supported ? (
+        <div className="supported-note"><Check size={14} /> You supported {kitchen.name} — thanks for contributing.</div>
+      ) : (
+        <button className="swap-confirm" style={{ marginTop: 20 }} onClick={() => setSupported(true)}>
+          Support this kitchen
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ---------- rewards screen ---------- */
+
+function RewardsScreen({ backTo, goTo }) {
+  return (
+    <div className="scroll">
+      <BackButton onClick={() => goTo(backTo)} label={`Back to ${backTo}`} />
+      <div className="eyebrow">Contribution economy</div>
+      <div className="title" style={{ marginBottom: 4 }}>How you earn ə</div>
+      <div className="asset-kitchen" style={{ marginBottom: 18 }}>42 ə balance · +3 ə this week</div>
+
+      <div className="section-head"><div className="section-title">Ways to earn</div></div>
+      <div className="kitchen-list">
+        {earnWays.map(({ label, detail, range, icon: Icon }) => (
+          <div className="kitchen-row" key={label}>
+            <div className="kitchen-avatar earn"><Icon size={16} /></div>
+            <div style={{ flex: 1 }}>
+              <div className="kitchen-name">{label}</div>
+              <div className="kitchen-note">{detail}</div>
+            </div>
+            <div className="earn-range">{range}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-head"><div className="section-title">Contribution breakdown</div></div>
+      <div className="breakdown-card">
+        {contributionBreakdown.map((b) => (
+          <div className="breakdown-row" key={b.label}>
+            <div className="breakdown-label">{b.label}</div>
+            <div className="breakdown-track"><div className="breakdown-fill" style={{ width: `${b.pct}%` }} /></div>
+            <div className="breakdown-pct">{b.pct}%</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-head"><div className="section-title">Recent rewards</div></div>
+      <div className="kitchen-list">
+        {rewardHistory.map((r, i) => (
+          <div className="kitchen-row" key={i}>
+            <div className="kitchen-avatar earn"><Sparkles size={14} /></div>
+            <div style={{ flex: 1 }}>
+              <div className="kitchen-name">{r.label}</div>
+              <div className="kitchen-note">{r.date}</div>
+            </div>
+            <div className="earn-range pos">+{r.amount} ə</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- app shell ---------- */
+
+export default function AprenApp() {
+  const [screen, setScreen] = useState("wallet");
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [selectedKitchen, setSelectedKitchen] = useState(null);
+  const [backTo, setBackTo] = useState("wallet");
+  const [tradeTarget, setTradeTarget] = useState(null);
+
+  function goTo(id, opts = {}) {
+    if (opts.asset) setSelectedAsset(opts.asset);
+    if (opts.kitchen) setSelectedKitchen(opts.kitchen);
+    setBackTo(opts.backTo || "wallet");
+    setTradeTarget(opts.trade || null);
+    setScreen(id);
+  }
+
+  const navActive = ["wallet", "intelligence", "market", "exchange", "kitchens"].includes(screen) ? screen : "";
+
+  return (
+    <div className="shell">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+        .shell {
+          --paper: #F7F2E6; --card: #FFFDF8; --ink: #241F18; --ink-soft: #7A7161; --line: #E1D6B8;
+          --basil: #3F6B4A; --basil-deep: #2B4A33; --basil-bg: #E4EDDF;
+          --brick: #A8432C; --brick-bg: #F3E2D9; --wheat: #C99A2E; --wheat-bg: #F7EACB;
+          font-family: 'Inter', sans-serif; background: var(--paper); color: var(--ink);
+          max-width: 440px; margin: 0 auto; border: 1px solid var(--line); border-radius: 20px;
+          overflow: hidden; box-sizing: border-box; position: relative;
+        }
+        .shell * { box-sizing: border-box; }
+        .scroll { padding: 20px 20px 88px; min-height: 640px; }
+
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: var(--ink-soft); text-transform: uppercase; }
+        .bell { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; color: var(--ink); flex-shrink: 0; background:none; cursor:pointer; }
+
+        .notification-panel {
+          position:relative;
+          margin:12px 0;
+          padding:14px;
+          border:1px solid var(--line);
+          border-radius:16px;
+          background:var(--surface);
+        }
+
+        .notification-item {
+          padding:10px 0;
+          border-bottom:1px solid var(--line);
+          font-size:13px;
+        }
+
+        .title { font-family: 'Fraunces', serif; font-style: italic; font-size: 26px; font-weight: 500; }
+
+        .greeting { font-family: 'Fraunces', serif; font-style: italic; font-size: 26px; font-weight: 500; margin: 0 0 14px; line-height: 1.25; }
+
+        .brief { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; }
+        .brief-row { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+        .brief-row:last-child { border-bottom: none; }
+        .brief-row svg { flex-shrink: 0; margin-top: 2px; color: var(--basil); }
+        .brief-row span { color: var(--ink); line-height: 1.4; }
+
+        .wallet-card { display: block; text-align: left; width: 100%; position: relative; background: var(--basil-deep); color: #F3EEDC; border: none; border-radius: 16px; padding: 20px; margin-bottom: 22px; overflow: hidden; cursor: pointer; }
+        .wallet-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; }
+        .wallet-balance { font-family: 'IBM Plex Mono', monospace; font-size: 46px; font-weight: 500; margin: 6px 0 2px; display: flex; align-items: baseline; gap: 6px; }
+        .wallet-balance .unit { font-size: 22px; opacity: 0.8; }
+        .wallet-sub { font-size: 12.5px; opacity: 0.85; }
+        .stamp { position: absolute; top: 14px; right: 14px; color: #F3EEDC; opacity: 0.9; }
+        .stamp-glyph { font-family: 'Fraunces', serif; font-style: italic; font-size: 34px; fill: currentColor; }
+
+        .section-head { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 12px; }
+        .section-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; }
+        .section-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); display: flex; align-items: center; gap: 3px; background: none; border: none; cursor: pointer; padding: 0; }
+
+        .asset-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; margin: 0 -20px 24px; padding-left: 20px; padding-right: 20px; }
+        .asset-scroll::-webkit-scrollbar { display: none; }
+        .asset-card { flex: 0 0 210px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; cursor: pointer; }
+        .asset-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+        .asset-name { font-size: 14px; font-weight: 500; line-height: 1.3; }
+        .asset-kitchen { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
+        .ring-text { font-family: 'IBM Plex Mono', monospace; font-size: 11px; fill: var(--ink); }
+        .asset-journey { display: flex; align-items: center; gap: 4px; margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-soft); }
+        .asset-journey.lg { font-size: 12px; margin: 0 0 18px; }
+        .asset-journey svg { color: var(--ink-soft); }
+        .asset-value { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 500; margin-top: 10px; color: var(--basil-deep); }
+
+        .kitchen-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+        .kitchen-row:last-child { border-bottom: none; }
+        .kitchen-avatar { width: 40px; height: 40px; border-radius: 10px; background: var(--wheat-bg); color: var(--wheat); font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .kitchen-avatar.lg { width: 46px; height: 46px; border-radius: 12px; font-size: 14px; }
+        .kitchen-avatar.hist { background: var(--basil-bg); color: var(--basil-deep); }
+        .kitchen-avatar.earn { background: var(--basil-bg); color: var(--basil-deep); }
+        .kitchen-name { font-size: 14px; font-weight: 500; }
+        .kitchen-note { font-size: 12px; color: var(--ink-soft); margin-top: 1px; }
+        .kitchen-list { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 4px 16px; margin-bottom: 24px; }
+        .kitchen-tagline { font-size: 12px; color: var(--ink-soft); margin-top: 1px; }
+
+        .kitchen-card { border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 14px; cursor: pointer; }
+        .kitchen-card-top { display: flex; align-items: center; gap: 12px; }
+        .kitchen-specialties { display: flex; gap: 6px; margin: 12px 0 10px; flex-wrap: wrap; }
+        .kitchen-signal { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 10px; }
+        .kitchen-capacity { color: var(--ink); }
+        .kitchen-assets { display: flex; gap: 8px; margin-top: 12px; overflow-x: auto; }
+        .kitchen-asset-chip { flex-shrink: 0; display: flex; align-items: center; gap: 6px; font-family: 'Inter'; font-size: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; color: var(--ink); cursor: pointer; }
+        .kitchen-asset-chip span { font-family: 'IBM Plex Mono', monospace; color: var(--basil-deep); }
+
+        .pulse-list { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 4px 16px; margin-bottom: 6px; }
+        .pulse-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+        .pulse-row:last-child { border-bottom: none; }
+        .pulse-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .pulse-icon.up { background: var(--wheat-bg); color: var(--wheat); }
+        .pulse-icon.down { background: var(--brick-bg); color: var(--brick); }
+        .pulse-icon.flat { background: var(--line); color: var(--ink-soft); }
+        .pulse-label { font-size: 13.5px; font-weight: 500; }
+        .pulse-detail { font-size: 12px; color: var(--ink-soft); }
+
+        .search-row { display: flex; gap: 8px; margin-bottom: 14px; }
+        .search-box { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+        .search-box input { border: none; outline: none; background: none; font-family: 'Inter'; font-size: 13.5px; color: var(--ink); width: 100%; }
+        .search-box input::placeholder { color: var(--ink-soft); }
+        .filter-btn { width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; border: 1px solid var(--line); background: var(--card); display: flex; align-items: center; justify-content: center; color: var(--ink); }
+
+        .chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px 18px; padding: 0 20px 4px; }
+        .chips::-webkit-scrollbar { display: none; }
+        .chip { flex-shrink: 0; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; padding: 7px 13px; border-radius: 20px; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); cursor: pointer; }
+        .chip.active { background: var(--basil-deep); border-color: var(--basil-deep); color: #F3EEDC; }
+
+        .result-count { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-bottom: 10px; }
+
+        .listing { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; margin-bottom: 10px; cursor: pointer; }
+        .listing-main { flex: 1; min-width: 0; }
+        .listing-name { font-size: 14px; font-weight: 500; }
+        .listing-source { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
+        .listing-tags { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+        .tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 3px 7px; border-radius: 8px; }
+        .tag.hot { background: var(--brick-bg); color: var(--brick); }
+        .tag.flat { background: var(--line); color: var(--ink-soft); }
+        .tag.cool { background: var(--basil-bg); color: var(--basil-deep); }
+        .tag.fresh { background: var(--wheat-bg); color: var(--wheat); }
+
+        .listing-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+        .listing-price { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 500; }
+        .listing-change { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; display: flex; align-items: center; gap: 2px; }
+        .listing-change.pos { color: var(--basil); }
+        .listing-change.neg { color: var(--brick); }
+        .listing-change.zero { color: var(--ink-soft); }
+
+        .swap-card { border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 24px; position: relative; }
+        .swap-field { padding: 10px 0; }
+        .swap-field-label { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin-bottom: 6px; }
+        .swap-field-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .swap-amount { font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 500; border: none; outline: none; background: none; color: var(--ink); width: 90px; }
+        .swap-asset-btn { display: flex; align-items: center; gap: 6px; font-family: 'Inter'; font-size: 13.5px; font-weight: 500; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 8px 12px; color: var(--ink); cursor: pointer; }
+        .swap-chevron { transform: rotate(90deg); color: var(--ink-soft); }
+        .swap-options { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 6px; max-height: 180px; overflow-y: auto; }
+        .swap-option { display: flex; justify-content: space-between; font-size: 12.5px; padding: 8px 10px; border-radius: 8px; border: none; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+        .swap-option:hover { background: var(--card); }
+        .swap-option span { font-family: 'IBM Plex Mono', monospace; color: var(--ink-soft); }
+        .swap-divider { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--basil-deep); color: #F3EEDC; border: 3px solid var(--card); margin: -4px auto; position: relative; z-index: 1; cursor: pointer; }
+        .swap-rate { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ink-soft); text-align: center; padding: 12px 0 4px; border-top: 1px solid var(--line); margin-top: 6px; }
+        .swap-confirm { width: 100%; margin-top: 12px; background: var(--basil-deep); color: #F3EEDC; border: none; border-radius: 12px; padding: 13px; font-family: 'Inter'; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .swap-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+        .swap-cancel { width: 100%; margin-top: 8px; background: none; color: var(--ink-soft); border: none; padding: 10px; font-family: 'Inter'; font-size: 13px; cursor: pointer; }
+        .review-row { display: flex; justify-content: space-between; font-size: 13px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+        .review-row:last-of-type { border-bottom: none; }
+        .review-row span { color: var(--ink-soft); }
+
+        .receipt { text-align: center; padding: 28px 16px; border: 1px solid var(--line); background: var(--card); border-radius: 16px; margin-bottom: 24px; }
+        .receipt-check { width: 44px; height: 44px; border-radius: 50%; background: var(--basil-bg); color: var(--basil-deep); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+        .receipt-title { font-family: 'Fraunces', serif; font-size: 17px; margin-bottom: 4px; }
+        .receipt-body { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
+
+        .ask-box { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 6px 6px 6px 14px; margin-bottom: 12px; }
+        .ask-input { flex: 1; border: none; outline: none; background: none; font-family: 'Fraunces', serif; font-style: italic; font-size: 15px; color: var(--ink); }
+        .ask-input::placeholder { color: var(--ink-soft); }
+        .ask-send { width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; border: none; background: var(--basil-deep); color: #F3EEDC; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .flow-strip { display: flex; align-items: center; margin: 4px 0 24px; }
+        .flow-step { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 6px 10px; white-space: nowrap; }
+        .flow-line { flex: 1; height: 1px; background: var(--line); margin: 0 4px; }
+
+        .pick-card { background: var(--basil-deep); color: #F3EEDC; border-radius: 16px; padding: 16px; margin-bottom: 24px; }
+        .pick-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; cursor: pointer; }
+        .pick-name { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; }
+        .pick-card .asset-kitchen { color: #D8E2CE; }
+        .pick-card .ring-text { fill: #F3EEDC; }
+        .pick-why { font-size: 12.5px; color: #E7EEDD; line-height: 1.4; margin: 10px 0 6px; }
+        .pick-why.small { color: var(--ink-soft); margin: 8px 0; }
+        .pick-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+        .pick-card .asset-value { color: #F3EEDC; margin-top: 0; }
+
+        .why-panel { margin: 10px 0 4px; }
+        .why-panel.on-dark .why-toggle { color: #E7EEDD; border-color: rgba(243,238,220,0.3); }
+        .why-toggle { display: flex; align-items: center; gap: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+        .chev { transition: transform 0.15s; }
+        .chev.open { transform: rotate(180deg); }
+        .why-list { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.6; }
+        .why-panel.on-dark .why-list { color: #E7EEDD; }
+
+        .back-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; padding: 0; margin-bottom: 16px; }
+
+        .detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+        .detail-stats { display: flex; gap: 8px; margin-bottom: 18px; }
+        .stat-box { flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+        .stat-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 4px; }
+        .stat-value { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 500; }
+        .stat-value.small { font-family: 'Inter'; font-size: 12px; font-weight: 500; }
+        .stat-value.pos { color: var(--basil-deep); }
+        .stat-value.neg { color: var(--brick); }
+
+        .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 24px; display: flex; justify-content: center; }
+
+        .log-list { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 4px 16px; margin-bottom: 6px; }
+        .log-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+        .log-row:last-child { border-bottom: none; }
+        .log-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--basil); margin-top: 5px; flex-shrink: 0; }
+        .log-label { font-size: 13px; font-weight: 500; }
+        .log-detail { font-size: 12px; color: var(--ink-soft); margin-top: 1px; }
+        .log-date { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-soft); white-space: nowrap; }
+
+        .supported-note { display: flex; align-items: center; gap: 8px; margin-top: 20px; font-size: 13px; color: var(--basil-deep); background: var(--basil-bg); border-radius: 12px; padding: 12px 14px; }
+
+        .earn-range { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+        .earn-range.pos { color: var(--basil-deep); }
+
+        .breakdown-card { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 24px; }
+        .breakdown-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+        .breakdown-label { font-size: 12px; width: 92px; flex-shrink: 0; color: var(--ink-soft); }
+        .breakdown-track { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+        .breakdown-fill { height: 100%; background: var(--basil); border-radius: 3px; }
+        .breakdown-pct { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink); width: 32px; text-align: right; }
+
+        .empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 60px 20px; color: var(--ink-soft); }
+        .empty svg { color: var(--basil); }
+        .empty-title { font-family: 'Fraunces', serif; font-size: 17px; color: var(--ink); }
+        .empty-body { font-size: 13px; }
+
+        .navbar { position: absolute; bottom: 0; left: 0; right: 0; display: flex; background: var(--card); border-top: 1px solid var(--line); padding: 8px 4px 12px; }
+        .navbtn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; cursor: pointer; padding: 6px 0; }
+        .navbtn.active { color: var(--basil-deep); }
+      `}</style>
+
+      {screen === "wallet" && <WalletScreen goTo={goTo} />}
+      {screen === "market" && <MarketScreen goTo={goTo} />}
+      {screen === "intelligence" && <IntelligenceScreen goTo={goTo} />}
+      {screen === "exchange" && <ExchangeScreen presetAsset={tradeTarget} />}
+      {screen === "kitchens" && <KitchensScreen goTo={goTo} />}
+      {screen === "assetDetail" && <AssetDetailScreen asset={selectedAsset} backTo={backTo} goTo={goTo} />}
+      {screen === "kitchenDetail" && <KitchenDetailScreen kitchen={selectedKitchen} backTo={backTo} goTo={goTo} />}
+      {screen === "rewards" && <RewardsScreen backTo={backTo} goTo={goTo} />}
+
+      <NavBar active={navActive} onNavigate={(id) => goTo(id)} />
+    </div>
+  );
+}
