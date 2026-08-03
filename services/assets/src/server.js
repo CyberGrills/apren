@@ -65,6 +65,8 @@ const foodTransactionEngine = require("./transactions/foodTransactionEngine");
 
 const assetCreationService = require("./services/assetCreationService");
 
+const brainDecisionRoutes = require("./routes/brainDecisionRoutes");
+
 const express = require("express");
 const cors = require("cors");
 const createAssetProfile = require("./identity/profile");
@@ -115,6 +117,8 @@ confidence REAL
 
 app.use(cors());
 app.use(express.json());
+
+app.use("/brain", brainDecisionRoutes);
 
 db.exec(`
 
@@ -3839,9 +3843,9 @@ app.post("/brain/decision/:assetId", async(req,res)=>{
 try{
 
 res.json(
-await decisionEngine.decide(
+await autonomousDecisionEngine.decide(
 req.params.assetId,
-req.body
+req.body.simulations
 )
 );
 
@@ -4019,6 +4023,32 @@ error:error.message
 
 });
 
+
+
+
+console.log("=== REGISTERED ROUTES ===");
+
+const router = app._router || app.router;
+
+if(router && router.stack){
+
+router.stack
+.filter(r=>r.route)
+.forEach(r=>{
+console.log(
+Object.keys(r.route.methods)
+.join(",")
+.toUpperCase(),
+r.route.path
+);
+});
+
+}
+else{
+
+console.log("NO ROUTER STACK FOUND");
+
+}
 
 app.listen(4003,()=>{
 
