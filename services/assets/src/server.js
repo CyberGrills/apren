@@ -1,3 +1,5 @@
+const decisionEngine = require("./intelligence/decisionEngine");
+
 const lifecycleEngine = require("./lifecycle/lifecycleEngine");
 
 const ruleEngine = require("./rules/ruleEngine");
@@ -2657,6 +2659,65 @@ error:error.message
 
 });
 
+
+
+
+
+
+app.post("/food/intelligence/evaluate/:assetId", async(req,res)=>{
+
+try{
+
+
+const result =
+await decisionEngine.evaluateAsset(
+req.params.assetId
+);
+
+
+res.json(result);
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+
+});
+
+
+
+app.get("/food/intelligence/:assetId", async(req,res)=>{
+
+try{
+
+
+const result =
+await decisionEngine.history(
+req.params.assetId
+);
+
+
+res.json(result);
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
 
 
 app.listen(4003,()=>{
