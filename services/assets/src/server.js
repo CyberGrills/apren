@@ -33,6 +33,8 @@ const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
 
 const foodBrainEngine = require("./brain/foodBrainEngine");
 
+const memoryFusionEngine = require("./memory/memoryFusionEngine");
+
 const executiveGovernorEngine = require("./governor/executiveGovernorEngine");
 
 const agentOrchestrationEngine = require("./agents/agentOrchestrationEngine");
@@ -2898,6 +2900,24 @@ error:error.message
 
 
 
+app.get("/brain/memory/recall/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await memoryFusionEngine.recall(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
 app.get("/brain/memory/:assetId", async(req,res)=>{
 
 try{
@@ -3877,6 +3897,42 @@ catch(error){
 res.status(500).json({
 error:error.message
 });
+
+}
+
+});
+
+
+
+
+
+
+
+app.post("/brain/memory/build/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await memoryFusionEngine.build(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
 
 }
 
