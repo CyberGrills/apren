@@ -1,8 +1,16 @@
 const {pool}=require("../postgres");
 
+const audit =
+require("./trustAuditEngine");
+
 
 
 async function setPermission(userId,mode){
+
+
+const current =
+await getPermission(userId);
+
 
 
 const result =
@@ -35,6 +43,23 @@ mode
 );
 
 
+
+await audit.record({
+
+userId,
+
+oldPermission:current,
+
+newPermission:mode,
+
+changedBy:userId,
+
+eventType:"AUTONOMY_PERMISSION_CHANGE"
+
+});
+
+
+
 return result.rows[0];
 
 }
@@ -55,9 +80,7 @@ FROM food_brain_user_preferences
 
 WHERE user_id=$1
 `,
-[
-userId
-]
+[userId]
 );
 
 
@@ -71,15 +94,11 @@ return "ASSISTED";
 
 return result.rows[0].autonomy_mode;
 
-
 }
 
 
 
 module.exports={
-
 setPermission,
-
 getPermission
-
 };
