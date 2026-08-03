@@ -1,3 +1,14 @@
+const valuationEngine = require("./economy/valuationEngine");
+const marketPulseEngine = require("./economy/marketPulseEngine");
+const economicEventEngine = require("./economy/economicEventEngine");
+
+const executiveGovernor = require("./governor/executiveGovernor");
+
+const agentCouncilEngine = require("./agents/agentCouncilEngine");
+
+const optimizationEngine = require("./optimization/optimizationEngine");
+const ruleEvolutionEngine = require("./optimization/ruleEvolutionEngine");
+
 const actionEngine = require("./autonomy/actionEngine");
 const automationEngine = require("./autonomy/automationEngine");
 
@@ -3124,6 +3135,315 @@ try{
 res.json(
 await automationEngine.execute(
 req.params.actionId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+app.post("/brain/optimize/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await optimizationEngine.optimize(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+app.get("/brain/strategy/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await optimizationEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+app.post("/brain/evolve/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await ruleEvolutionEngine.evolve(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+app.get("/brain/evolution/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await ruleEvolutionEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/brain/council/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await agentCouncilEngine.decide(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+app.get("/brain/council/history/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await agentCouncilEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/brain/govern/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await executiveGovernor.govern(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+app.get("/brain/govern/history/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await executiveGovernor.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+app.post("/economy/value/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await valuationEngine.evaluate(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/economy/value/history/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await valuationEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/economy/pulse", async(req,res)=>{
+
+try{
+
+res.json(
+marketPulseEngine.analyze(
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/economy/event", async(req,res)=>{
+
+try{
+
+res.json(
+await economicEventEngine.record(
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/economy/events/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await economicEventEngine.history(
+req.params.assetId
 )
 );
 
