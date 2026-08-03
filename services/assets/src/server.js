@@ -1,3 +1,6 @@
+const brainMemoryEngine = require("./memory/brainMemoryEngine");
+const predictionEngine = require("./memory/predictionEngine");
+
 const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
 
 const foodBrainEngine = require("./brain/foodBrainEngine");
@@ -2835,6 +2838,127 @@ error:error.message
 
 });
 
+
+
+
+app.post("/brain/memory/store", async(req,res)=>{
+
+try{
+
+const result =
+await brainMemoryEngine.storeMemory(
+req.body
+);
+
+res.json(result);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/memory/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await brainMemoryEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/learn/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await brainMemoryEngine.learn(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/brain/predict/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await predictionEngine.predict(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.get("/brain/predictions/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await predictionEngine.history(
+req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
 
 app.listen(4003,()=>{
 
