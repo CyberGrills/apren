@@ -25,7 +25,7 @@ const accuracyEngine = require("./learning/accuracyEngine");
 const adaptationEngine = require("./learning/adaptationEngine");
 
 const brainMemoryEngine = require("./memory/brainMemoryEngine");
-const predictionEngine = require("./memory/predictionEngine");
+const predictionEngine = require("./prediction/predictionEngine");
 
 const foodBrainOrchestrator = require("./orchestrator/foodBrainOrchestrator");
 
@@ -2946,7 +2946,8 @@ try{
 
 res.json(
 await predictionEngine.predict(
-req.params.assetId
+req.params.assetId,
+req.body
 )
 );
 
