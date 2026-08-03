@@ -91,6 +91,8 @@ const brainStrategyRoutes = require("./routes/brainStrategyRoutes");
 
 const brainOptimizationRoutes = require("./routes/brainOptimizationRoutes");
 
+const brainCycleRoutes = require("./routes/brainCycleRoutes");
+
 const brainAgentRoutes = require("./routes/brainAgentRoutes");
 
 const brainGraphRoutes = require("./routes/brainGraphRoutes");
@@ -183,6 +185,8 @@ app.use("/brain", brainWorldModelRoutes);
 app.use("/brain", brainStrategyRoutes);
 
 app.use("/brain", brainOptimizationRoutes);
+
+app.use("/brain", brainCycleRoutes);
 
 app.use("/brain", brainAgentRoutes);
 
