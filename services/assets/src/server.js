@@ -81,6 +81,8 @@ const brainPredictionRoutes = require("./routes/brainPredictionRoutes");
 
 const brainCollectiveRoutes = require("./routes/brainCollectiveRoutes");
 
+const brainSimulationRoutes = require("./routes/brainSimulationRoutes");
+
 const express = require("express");
 const cors = require("cors");
 const createAssetProfile = require("./identity/profile");
@@ -147,6 +149,8 @@ app.use("/brain", brainLearningRoutes);
 app.use("/brain", brainPredictionRoutes);
 
 app.use("/brain", brainCollectiveRoutes);
+
+app.use("/brain", brainSimulationRoutes);
 
 db.exec(`
 
