@@ -1,3 +1,7 @@
+const supplyIntelligenceEngine = require("./market/supplyIntelligenceEngine");
+const demandForecastEngine = require("./market/demandForecastEngine");
+const marketIntelligenceEngine = require("./market/marketIntelligenceEngine");
+
 const valuationEngine = require("./economy/valuationEngine");
 const marketPulseEngine = require("./economy/marketPulseEngine");
 const economicEventEngine = require("./economy/economicEventEngine");
@@ -3444,6 +3448,83 @@ try{
 res.json(
 await economicEventEngine.history(
 req.params.assetId
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+
+
+app.post("/market/supply/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await supplyIntelligenceEngine.record(
+req.params.assetId,
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/market/forecast/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await demandForecastEngine.forecast(
+req.params.assetId,
+req.body
+)
+);
+
+}
+
+catch(error){
+
+res.status(500).json({
+error:error.message
+});
+
+}
+
+});
+
+
+
+app.post("/market/intelligence/:assetId", async(req,res)=>{
+
+try{
+
+res.json(
+await marketIntelligenceEngine.analyze(
+req.params.assetId,
+req.body
 )
 );
 
