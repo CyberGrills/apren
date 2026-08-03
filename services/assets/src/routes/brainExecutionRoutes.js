@@ -1,19 +1,20 @@
 
+
 const express=require("express");
 
 const router=express.Router();
 
 
 const execution =
-require("../execution/actionExecutionEngine");
+require("../execution/executionGatewayEngine");
 
 
 
-router.post("/execute/:assetId",async(req,res)=>{
-
+router.post(
+"/execution/approve/:assetId",
+async(req,res)=>{
 
 try{
-
 
 res.json(
 await execution.execute(
@@ -21,7 +22,6 @@ req.params.assetId,
 req.body
 )
 );
-
 
 }
 
@@ -32,7 +32,6 @@ error:error.message
 });
 
 }
-
 
 });
 

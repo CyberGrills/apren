@@ -1,122 +1,128 @@
-const { pool } = require("../postgres");
 
-
-const brain =
-require("../brain/foodBrainEngine");
-
-const lifecycle =
-require("../lifecycle/lifecycleEngine");
-
-const decision =
-require("../intelligence/decisionEngine");
 
 const market =
-require("./marketSignalEngine");
+require("../marketbrain/marketReactionBrainEngine");
+
+const negotiation =
+require("../negotiation/agentNegotiationBrainEngine");
+
+const autonomy =
+require("../autonomy/autonomousBrainEngine");
+
+const execution =
+require("../execution/executionGatewayEngine");
+
+const coordinator =
+require("./decisionCoordinatorEngine");
+
+const learner =
+require("./learningFeedbackEngine");
+
+const {pool}=require("../postgres");
 
 
 
-async function orchestrate(assetId){
+async function orchestrate(assetId,data){
 
 
-const asset =
-await pool.query(
-`
-SELECT *
-FROM food_assets
-WHERE id=$1
-`,
-[
-assetId
-]
+const marketResult =
+await market.analyze(
+assetId,
+data
 );
 
 
 
-if(!asset.rows[0]){
+const negotiationResult =
+await negotiation.negotiate(
+assetId,
+data
+);
 
-throw new Error("Asset not found");
+
+
+const actionResult =
+await autonomy.decide(
+assetId,
+data
+);
+
+
+
+const decision =
+coordinator.coordinate(
+marketResult,
+negotiationResult,
+actionResult
+);
+
+
+
+let executionResult =
+{
+status:"WAITING_APPROVAL"
+};
+
+
+
+if(data.approved===true){
+
+executionResult =
+await execution.execute(
+assetId,
+{
+action:decision.decision,
+approved:true,
+confidence:decision.confidence
+}
+);
 
 }
 
 
 
-const item =
-asset.rows[0];
+await learner.learn({
 
+assetId,
 
+action:decision.decision,
 
-const freshness =
-Number(item.freshness_score || 0);
+result:executionResult,
 
-
-
-const life =
-await lifecycle.updateLifecycle({
-
-asset_id:assetId,
-
-freshness,
-
-market_value:item.current_value || 0,
-
-reason:"Brain automatic lifecycle evaluation"
+score:decision.confidence
 
 });
 
 
 
-const intelligence =
-await decision.evaluateAsset(
-assetId
-);
-
-
-
-const brainResult =
-await brain.analyze(
-assetId
-);
-
-
-
-const signal =
-market.generateMarketSignal({
-
-freshness,
-
-demand:Number(item.demand_score || 0),
-
-trust:Number(item.trust_score || 0)
-
-});
-
-
-
-
-const result =
+const cycle =
 await pool.query(
 `
-INSERT INTO food_brain_cycles
+INSERT INTO food_brain_orchestrator_cycles
 (
 asset_id,
-lifecycle_state,
-brain_action,
-market_signal,
-valuation_change,
-executed
+cycle_input,
+market_result,
+negotiation_result,
+action_result,
+execution_result,
+confidence,
+status
 )
 
-VALUES
-($1,$2,$3,$4,$5,true)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8)
 
 RETURNING *
 `,
 [
 assetId,
-life.state,
-brainResult.brain_action,
-signal.signal,
-signal.valuation_adjustment
+JSON.stringify(data),
+JSON.stringify(marketResult),
+JSON.stringify(negotiationResult),
+JSON.stringify(actionResult),
+JSON.stringify(executionResult),
+decision.confidence,
+"COMPLETE"
 ]
 );
 
@@ -126,54 +132,28 @@ return {
 
 asset_id:assetId,
 
-lifecycle:life.state,
+brain_status:"COMPLETE",
 
-brain_action:
-brainResult.brain_action,
+decision,
 
-decision:
-intelligence.decision,
+market:marketResult,
 
-market_signal:
-signal.signal,
+negotiation:negotiationResult,
 
-valuation_adjustment:
-signal.valuation_adjustment,
+action:actionResult,
 
-executed:true,
+execution:executionResult,
 
-cycle:result.rows[0]
+cycle:cycle.rows[0]
 
 };
 
-
-}
-
-
-
-async function history(assetId){
-
-const result =
-await pool.query(
-`
-SELECT *
-FROM food_brain_cycles
-WHERE asset_id=$1
-ORDER BY id DESC
-`,
-[
-assetId
-]
-);
-
-
-return result.rows;
 
 }
 
 
 
 module.exports={
-orchestrate,
-history
+orchestrate
 };
+

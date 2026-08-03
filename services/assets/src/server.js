@@ -69,6 +69,10 @@ const brainDecisionRoutes = require("./routes/brainDecisionRoutes");
 
 const brainExecutionRoutes = require("./routes/brainExecutionRoutes");
 
+const brainMarketRoutes = require("./routes/brainMarketRoutes");
+
+const brainOrchestratorRoutes = require("./routes/brainOrchestratorRoutes");
+
 const brainOrchestrationRoutes = require("./routes/brainOrchestrationRoutes");
 
 const brainGovernanceRoutes = require("./routes/brainGovernanceRoutes");
@@ -88,6 +92,8 @@ const brainAgentRoutes = require("./routes/brainAgentRoutes");
 const brainGraphRoutes = require("./routes/brainGraphRoutes");
 
 const brainNegotiationRoutes = require("./routes/brainNegotiationRoutes");
+
+const brainAutonomousRoutes = require("./routes/brainAutonomousRoutes");
 
 const brainPredictionRoutes = require("./routes/brainPredictionRoutes");
 
@@ -150,6 +156,10 @@ app.use("/brain", brainDecisionRoutes);
 
 app.use("/brain", brainExecutionRoutes);
 
+app.use("/brain", brainMarketRoutes);
+
+app.use("/brain", brainOrchestratorRoutes);
+
 app.use("/brain", brainOrchestrationRoutes);
 
 app.use("/brain", brainGovernanceRoutes);
@@ -169,6 +179,8 @@ app.use("/brain", brainAgentRoutes);
 app.use("/brain", brainGraphRoutes);
 
 app.use("/brain", brainNegotiationRoutes);
+
+app.use("/brain", brainAutonomousRoutes);
 
 app.use("/brain", brainPredictionRoutes);
 
