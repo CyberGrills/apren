@@ -75,6 +75,8 @@ const brainOrchestratorRoutes = require("./routes/brainOrchestratorRoutes");
 
 const brainMemoryRoutes = require("./routes/brainMemoryRoutes");
 
+const brainInsightRoutes = require("./routes/brainInsightRoutes");
+
 const brainOrchestrationRoutes = require("./routes/brainOrchestrationRoutes");
 
 const brainGovernanceRoutes = require("./routes/brainGovernanceRoutes");
@@ -169,6 +171,8 @@ app.use("/brain", brainMarketRoutes);
 app.use("/brain", brainOrchestratorRoutes);
 
 app.use("/brain", brainMemoryRoutes);
+
+app.use("/brain", brainInsightRoutes);
 
 app.use("/brain", brainOrchestrationRoutes);
 
