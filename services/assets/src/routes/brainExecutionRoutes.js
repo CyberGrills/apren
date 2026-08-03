@@ -1,22 +1,24 @@
+
 const express=require("express");
 
 const router=express.Router();
 
 
-const executionEngine =
-require("../execution/autonomousExecutionEngine");
+const execution =
+require("../execution/actionExecutionEngine");
 
 
 
-router.post("/execution/:assetId",async(req,res)=>{
+router.post("/execute/:assetId",async(req,res)=>{
+
 
 try{
 
 
 res.json(
-await executionEngine.execute(
+await execution.execute(
 req.params.assetId,
-req.body.decision
+req.body
 )
 );
 
