@@ -15,7 +15,8 @@ router.post(
       const result =
         await agent.run({
           assetId:
-            req.body.assetId,
+            req.body.assetId ||
+            req.body.assetCode,
 
           goal:
             req.body.goal,

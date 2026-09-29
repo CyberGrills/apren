@@ -26,34 +26,20 @@ const executionGateway =
 
 const { pool } = require("../postgres");
 
+function makeRunId() {
+  return crypto.randomUUID();
+}
+
+const assetIdentityResolver =
+  require("../asset/assetIdentityResolver");
+
 
 
 async function buildAssetContext(assetId, inputData = {}) {
-  const result = await pool.query(
-    `
-    SELECT
-      id,
-      food_id,
-      asset_code,
-      current_value,
-      freshness_score,
-      demand_score,
-      trust_score,
-      market_status,
-      total_trades,
-      available_supply,
-      kitchen_price
-    FROM food_assets
-    WHERE id = $1::integer
-    `,
-    [assetId]
-  );
-
-  if (!result.rows.length) {
-    throw new Error(`Food asset ${assetId} was not found.`);
-  }
-
-  const asset = result.rows[0];
+  const asset =
+    await assetIdentityResolver.resolveAssetIdentifier(
+      assetId
+    );
 
   const freshness = Number(
     inputData.freshness ??
@@ -98,10 +84,11 @@ async function buildAssetContext(assetId, inputData = {}) {
         : "NORMAL"
     );
 
-  return {
+  const context = {
+    id: asset.id,
     asset_id: asset.id,
-    food_id: asset.food_id,
     asset_code: asset.asset_code,
+    food_id: asset.food_id,
 
     freshness,
     freshness_score: Number(
@@ -118,6 +105,7 @@ async function buildAssetContext(assetId, inputData = {}) {
     current_value: Number(
       asset.current_value ?? value
     ),
+
     kitchen_price: Number(
       asset.kitchen_price ?? value
     ),
@@ -125,24 +113,25 @@ async function buildAssetContext(assetId, inputData = {}) {
     trust: Number(
       asset.trust_score ?? 0
     ),
+
     trust_score: Number(
       asset.trust_score ?? 0
     ),
 
-    market_status: asset.market_status ?? null,
+    market_status:
+      asset.market_status ?? null,
 
     total_trades: Number(
       asset.total_trades ?? 0
     ),
 
-    input: inputData
+    input: inputData,
+
+    ...inputData
   };
-}
 
-function makeRunId() {
-  return crypto.randomUUID();
+  return context;
 }
-
 
 async function step(runId, order, name, fn, input) {
   await store.addStep({
@@ -258,11 +247,19 @@ async function run({
     throw new Error("Agent goal is required");
   }
 
+  const resolvedAsset =
+    await assetIdentityResolver.resolveAssetIdentifier(
+      assetId
+    );
+
+  const normalizedAssetId =
+    resolvedAsset.id;
+
   const runId = makeRunId();
 
   await store.createRun({
     runId,
-    assetId,
+    assetId: normalizedAssetId,
     goal,
     autonomyMode,
     input: data || {}
@@ -275,7 +272,7 @@ async function run({
   try {
 
     const context = await buildAssetContext(
-      assetId,
+      normalizedAssetId,
       data || {}
     );
 
@@ -290,7 +287,7 @@ async function run({
         "PREDICTION",
         () =>
           prediction.predict(
-            assetId,
+            normalizedAssetId,
             context
           ),
         context
@@ -304,7 +301,7 @@ async function run({
         "SIMULATION",
         () =>
           simulation.simulate(
-            assetId,
+            normalizedAssetId,
             context
           ),
         context
@@ -318,7 +315,7 @@ async function run({
         "MULTI_AGENT_COLLABORATION",
         () =>
           collaboration.collaborate(
-            assetId,
+            normalizedAssetId,
             context
           ),
         context
@@ -332,7 +329,7 @@ async function run({
         "DECISION",
         () =>
           decisionLoop.run(
-            assetId,
+            normalizedAssetId,
             context
           ),
         context
@@ -429,7 +426,7 @@ async function run({
           "EXECUTION",
           () =>
             executionGateway.execute(
-              assetId,
+              normalizedAssetId,
               {
                 action: finalDecision.action,
                 confidence:
