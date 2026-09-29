@@ -112,6 +112,8 @@ const brainCollectiveRoutes = require("./routes/brainCollectiveRoutes");
 const brainSimulationRoutes = require("./routes/brainSimulationRoutes");
 
 const express = require("express");
+const agentKernelRoutes = require("./routes/agentKernelRoutes");
+
 const cors = require("cors");
 const createAssetProfile = require("./identity/profile");
 
@@ -131,8 +133,6 @@ const ownershipDB = require("./ownership/ownership-db");
 
 
 const app = express();
-
-
 db.exec(`
 
 CREATE TABLE IF NOT EXISTS asset_evidence (
@@ -162,6 +162,7 @@ confidence REAL
 app.use(cors());
 app.use(express.json());
 
+app.use("/brain", agentKernelRoutes);
 app.use("/brain", brainDecisionRoutes);
 
 app.use("/brain", brainExecutionRoutes);

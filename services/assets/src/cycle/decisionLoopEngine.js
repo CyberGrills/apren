@@ -16,6 +16,10 @@ const risk =
 require("../strategy/riskRewardEngine");
 
 
+const decisionEngine =
+require("../decision/decisionEngine");
+
+
 
 async function run(assetId,data){
 
@@ -37,10 +41,16 @@ riskResult
 );
 
 
+const decisionResult =
+decisionEngine.decide(data);
+
+
 
 const decision={
 
-action:strategyResult.strategy,
+action:decisionResult.action,
+
+confidence:decisionResult.confidence,
 
 priority:priorityResult.priority,
 

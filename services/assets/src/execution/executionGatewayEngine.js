@@ -36,6 +36,29 @@ const destination =
 router.route(data.action);
 
 
+/*
+ * āprən safety boundary:
+ * SIMULATED execution must never enqueue a real execution request.
+ * The gateway remains the controlled execution boundary while the
+ * autonomous Agent Kernel is being validated.
+ */
+
+if (data.executionMode === "SIMULATED") {
+
+return {
+
+status: "SIMULATED",
+
+action: data.action,
+
+destination,
+
+message: "Execution gateway completed a safe simulated execution."
+
+};
+
+}
+
 
 const result =
 await pool.query(

@@ -1,5 +1,6 @@
-const Database = require("better-sqlite3");
+const fs = require("fs");
 const path = require("path");
+const Database = require("better-sqlite3");
 
 const dbPath = path.join(
     __dirname,
@@ -7,6 +8,8 @@ const dbPath = path.join(
     "food_assets.sqlite"
 );
 
+const databaseDirectory = path.dirname(dbPath);
+fs.mkdirSync(databaseDirectory, { recursive: true });
 const db = new Database(dbPath);
 
 
