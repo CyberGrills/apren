@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   control:
-    name: Remote ${${ inputs.operation }}
+    name: Remote ${{ inputs.operation }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,16 +33,16 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
       - name: Install dependencies
-        if: ${${ inputs.operation == 'build' || inputs.operation == 'audit-and-build' }}
+        if: ${{ inputs.operation == 'build' || inputs.operation == 'audit-and-build' }}
         run: npm install --no-audit --no-fund
       - name: Repository audit
-        if: ${${ inputs.operation == 'audit' || inputs.operation == 'audit-and-build' }}
+        if: ${{ inputs.operation == 'audit' || inputs.operation == 'audit-and-build' }}
         shell: bash
         run: |
           set -euo pipefail
           echo "=== apren remote audit ==="
           echo "Commit: $(git rev-parse HEAD)"
-          echo "Branch: ${GITHUB_REF_NAME}"
+          echo "Branch: ${{ github.ref_name }}"
           echo
           echo "Workspace packages:"
           node -e 'const p=require("./package.json"); console.log(p.workspaces.join("\n"))'
@@ -53,5 +53,5 @@ jobs:
           echo "Tracked workflow files:"
           find .github/workflows -maxdepth 1 -type f -print | sort
       - name: Web build
-        if: ${${ inputs.operation == 'build' || inputs.operation == 'audit-and-build' }}
+        if: ${{ inputs.operation == 'build' || inputs.operation == 'audit-and-build' }}
         run: npm run build:web
