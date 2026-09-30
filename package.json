@@ -12,7 +12,6 @@
     "services/trade"
   ],
   "scripts": {
-    "install": "npm install",
     "build:web": "npm --workspace apps/web run build",
     "build": "npm run build:web",
     "dev:web": "npm --workspace apps/web run dev -- --host 0.0.0.0",
