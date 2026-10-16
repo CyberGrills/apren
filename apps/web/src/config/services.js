@@ -4,10 +4,20 @@ function cleanUrl(value) {
   return String(value || "").trim().replace(/\/+$/, "");
 }
 
-export const GATEWAY_ORIGIN = cleanUrl(
-  import.meta.env.VITE_GATEWAY_URL ||
-    (isDevelopment ? "http://localhost:4000" : window.location.origin)
-).replace(/\/api$/i, "");
+const configuredGateway = cleanUrl(import.meta.env.VITE_GATEWAY_URL)
+  .replace(/\/api$/i, "");
+
+// Never silently send production API requests to the static frontend origin.
+// A production build must declare the actual reachable gateway origin.
+if (!isDevelopment && !configuredGateway) {
+  throw new Error(
+    "āprən production API is not configured: set VITE_GATEWAY_URL to the HTTPS origin of the deployed gateway before building."
+  );
+}
+
+export const GATEWAY_ORIGIN = isDevelopment
+  ? configuredGateway || "http://localhost:4000"
+  : configuredGateway;
 
 export const GATEWAY_API = `${GATEWAY_ORIGIN}/api`;
 
