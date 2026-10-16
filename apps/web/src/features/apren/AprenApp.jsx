@@ -22,6 +22,7 @@ import { formatCurrency, formatFoodCurrency } from "../../services/currencyForma
 
 import React, { useState, useMemo, useEffect } from "react";
 import AprenLogo from "../../components/AprenLogo";
+import HospitalityWorkspace from "./HospitalityWorkspace";
 import { getNotifications } from "../../services/aprenNotifications";
 
 import {
@@ -281,6 +282,7 @@ function NavBar({ active, onNavigate }) {
     { id: "market", label: "Market", icon: TrendingUp },
     { id: "exchange", label: "Exchange", icon: ArrowRight },
     { id: "kitchens", label: "Kitchens", icon: ChefHat },
+    { id: "arrival", label: "Stay", icon: MapPin },
   ];
   return (
     <div className="navbar">
@@ -1253,7 +1255,7 @@ export default function AprenApp() {
     setScreen(id);
   }
 
-  const navActive = ["wallet", "intelligence", "market", "exchange", "kitchens"].includes(screen) ? screen : "";
+  const navActive = ["wallet", "intelligence", "market", "exchange", "kitchens", "arrival"].includes(screen) ? screen : "";
 
   return (
     <div className="shell">
@@ -1485,6 +1487,7 @@ export default function AprenApp() {
       {screen === "intelligence" && <IntelligenceScreen goTo={goTo} />}
       {screen === "exchange" && <ExchangeScreen presetAsset={tradeTarget} />}
       {screen === "kitchens" && <KitchensScreen goTo={goTo} />}
+      {screen === "arrival" && <HospitalityWorkspace />}
       {screen === "assetDetail" && <AssetDetailScreen asset={selectedAsset} backTo={backTo} goTo={goTo} />}
       {screen === "kitchenDetail" && <KitchenDetailScreen kitchen={selectedKitchen} backTo={backTo} goTo={goTo} />}
       {screen === "rewards" && <RewardsScreen backTo={backTo} goTo={goTo} />}
