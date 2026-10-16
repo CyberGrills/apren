@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowRight, BedDouble, Bus, CheckCircle2, Clock3, Hotel, LogIn, LogOut, MapPin, Plane, RefreshCw, Search, ShieldCheck, UserRound, Wallet, AlertCircle } from "lucide-react";
 import "./HospitalityWorkspace.css";
 
-const API_BASE = import.meta.env.VITE_GATEWAY_URL ||
-  (window.location.hostname === "localhost" ? "http://localhost:4000" : "http://" + window.location.hostname + ":4000");
+import { GATEWAY_ORIGIN } from "../../config/services";
+
+const API_BASE = GATEWAY_ORIGIN;
 const AIRPORT = { lat: "4.875833", lng: "8.098889" };
 const emptyProperty = { name: "", propertyType: "hotel", description: "", address: "", city: "Uyo", contactName: "", contactPhone: "", contactEmail: "", websiteUrl: "", latitude: "", longitude: "" };
 const emptyRoom = { name: "", description: "", capacity: "2", inventoryCount: "1", priceNaira: "", pricingUnit: "per_night" };

@@ -1,68 +1,37 @@
-const API =
-    import.meta.env.VITE_ASSET_API ||
-    "http://localhost:4003";
+import { SERVICES } from "../config/services";
 
+const API = SERVICES.assets;
 
-async function request(path){
+async function request(path, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  try {
+    const token = window.sessionStorage.getItem("seven_access_token") || "";
+    if (token && !headers.authorization) headers.authorization = `Bearer ${token}`;
+  } catch {
+    // Storage may be unavailable in restricted browser contexts.
+  }
 
-    const res = await fetch(
-        `${API}${path}`
-    );
-
-    if(!res.ok){
-        throw new Error(
-            `Asset API error ${res.status}`
-        );
-    }
-
-    return res.json();
+  const res = await fetch(`${API}${path}`, { ...options, headers });
+  if (!res.ok) throw new Error(`Asset API error ${res.status}`);
+  return res.json();
 }
 
-
-export function getAsset(id){
-
-    return request(
-        `/assets/${id}`
-    );
-
+export function getAsset(id) {
+  return request(`/assets/${id}`);
 }
 
-
-export function getAssetProfile(id){
-
-    return request(
-        `/asset-profile/${id}`
-    );
-
+export function getAssetProfile(id) {
+  return request(`/asset-profile/${id}`);
 }
 
-
-export function analyzeFood(id){
-
-    return fetch(
-        `${API}/assets/${id}/analyze-food`,
-        {
-            method:"POST"
-        }
-    )
-    .then(r=>r.json());
-
+export function analyzeFood(id) {
+  return request(`/assets/${id}/analyze-food`, { method: "POST" });
 }
 
-
-export function getMarketValue(id){
-
-    return request(
-        `/assets/${id}/market-value`
-    );
-
+export function getMarketValue(id) {
+  return request(`/assets/${id}/market-value`);
 }
 
-
-export function getMarketIntelligence(id){
-
-    return request(
-        `/assets/${id}/market-intelligence`
-    );
-
+export function getMarketIntelligence(id) {
+  return request(`/assets/${id}/market-intelligence`);
 }
