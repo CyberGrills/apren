@@ -16,7 +16,8 @@ Set these environment variables in the runtime environment (do not commit secret
 
 - `PAYSTACK_SECRET_KEY` — the Paystack secret key for the intended test or live environment.
 - `PAYSTACK_CALLBACK_URL` — optional public frontend URL to which Paystack redirects after checkout.
-- `OSRM_BASE_URL` — optional OSRM routing service base URL, without `/route/v1/driving`. When configured, the service calculates driving distance and duration for up to 20 nearest verified properties and ranks routed properties by estimated driving time.
+- `GOOGLE_MAPS_API_KEY` — optional server-only Google Maps Platform API key with the Routes API enabled. Keep this value in `.env.apren.local` or the server environment; never expose it to the web app or commit it. The service uses Google Routes API for up to 20 nearest properties with verified coordinates and ranks successful routes by estimated driving time.
+- `OSRM_BASE_URL` — optional OSRM routing service base URL, without `/route/v1/driving`. It is used as a fallback if Google is not configured or a Google route request fails. Successful route results identify `routingProvider` as `google_maps` or `osrm`.
 
 Configure the Paystack dashboard webhook URL as `https://YOUR_PUBLIC_API_HOST/api/hospitality/webhooks/paystack`. The webhook route validates `x-paystack-signature` against the raw request body using HMAC-SHA512, then verifies successful transactions server-side before marking reservations paid.
 
@@ -24,7 +25,7 @@ Without `PAYSTACK_SECRET_KEY`, online checkout, server-side verification and ref
 
 ## Location integrity
 
-Property owners may submit latitude/longitude, but cannot mark them verified. An authenticated user with the `admin` role can review the property through the partner workspace. Straight-line distance uses Haversine calculation. When `OSRM_BASE_URL` is configured, driving distance and duration are requested for up to 20 nearest verified properties; failed routes remain without an ETA and are not assigned invented times. Origin coordinates are optional; preset terminal coordinates are planning pins and should be checked against the traveller's actual ticket/location.
+Property owners may submit latitude/longitude, but cannot mark them verified. An authenticated user with the `admin` role can review the property through the partner workspace. Straight-line distance uses Haversine calculation. When `GOOGLE_MAPS_API_KEY` or `OSRM_BASE_URL` is configured, driving distance and duration are requested for up to 20 nearest verified properties; failed routes remain without an ETA and are not assigned invented times. Origin coordinates are optional; preset terminal coordinates are planning pins and should be checked against the traveller's actual ticket/location.
 
 ## Verification
 

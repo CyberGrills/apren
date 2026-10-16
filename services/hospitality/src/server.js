@@ -122,6 +122,31 @@ function distanceKm(lat1, lon1, lat2, lon2) {
 }
 
 async function drivingRoute(originLat, originLng, propertyLat, propertyLng) {
+  const googleKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (googleKey) {
+    try {
+      const response = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+        method: "POST",
+        headers: { "content-type": "application/json", "X-Goog-Api-Key": googleKey, "X-Goog-FieldMask": "routes.distanceMeters,routes.duration" },
+        body: JSON.stringify({
+          origin: { location: { latLng: { latitude: originLat, longitude: originLng } } },
+          destination: { location: { latLng: { latitude: propertyLat, longitude: propertyLng } } },
+          travelMode: "DRIVE", routingPreference: "TRAFFIC_AWARE", computeAlternativeRoutes: false, units: "METRIC"
+        }),
+        signal: AbortSignal.timeout(4500)
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const route = data.routes && data.routes[0];
+        const seconds = route && Number.parseFloat(String(route.duration || "").replace(/s$/, ""));
+        if (route && Number.isFinite(route.distanceMeters) && Number.isFinite(seconds)) {
+          return { driveDistanceKm: Number((route.distanceMeters / 1000).toFixed(1)), driveMinutes: Math.max(1, Math.ceil(seconds / 60)), routingProvider: "google_maps" };
+        }
+      }
+    } catch {
+      // Use the configured OSRM fallback when Google Routes is unavailable.
+    }
+  }
   const base = process.env.OSRM_BASE_URL;
   if (!base) return null;
   try {
@@ -133,7 +158,7 @@ async function drivingRoute(originLat, originLng, propertyLat, propertyLng) {
     const data = await response.json();
     const route = data.routes && data.routes[0];
     if (!route || !Number.isFinite(route.distance) || !Number.isFinite(route.duration)) return null;
-    return { driveDistanceKm: Number((route.distance / 1000).toFixed(1)), driveMinutes: Math.max(1, Math.ceil(route.duration / 60)) };
+    return { driveDistanceKm: Number((route.distance / 1000).toFixed(1)), driveMinutes: Math.max(1, Math.ceil(route.duration / 60)), routingProvider: "osrm" };
   } catch {
     return null;
   }
@@ -298,7 +323,7 @@ app.get("/hospitality/discover", asyncRoute(async (req, res) => {
       const bDistance = b.distanceKm === null ? Number.POSITIVE_INFINITY : b.distanceKm;
       return aDistance - bDistance || Number(a.resources[0]?.priceMinor || 0) - Number(b.resources[0]?.priceMinor || 0);
     });
-    if (process.env.OSRM_BASE_URL) {
+    if (process.env.GOOGLE_MAPS_API_KEY || process.env.OSRM_BASE_URL) {
       const routeCandidates = propertyList.filter(property =>
         property.coordinatesVerified && property.latitude !== null && property.longitude !== null
       ).slice(0, 20);
@@ -318,7 +343,7 @@ app.get("/hospitality/discover", asyncRoute(async (req, res) => {
   }
   res.json({
     city, origin: origin || null, originCoordinatesProvided: originLat !== null,
-    routingProviderConfigured: Boolean(process.env.OSRM_BASE_URL),
+    routingProviderConfigured: Boolean(process.env.GOOGLE_MAPS_API_KEY || process.env.OSRM_BASE_URL),
     checkedAvailability: Boolean(checkIn && checkOut),
     count: properties.size, properties: propertyList,
     notice: properties.size

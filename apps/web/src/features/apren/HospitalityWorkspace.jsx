@@ -59,6 +59,7 @@ export default function HospitalityWorkspace() {
       if (response.status === 401 && token) {
         setToken(""); setUser(null);
         try { sessionStorage.removeItem("seven_access_token"); sessionStorage.removeItem("seven_user"); } catch {}
+        window.dispatchEvent(new Event("apren:auth-changed"));
       }
       throw new Error(data.error || "Request failed (" + response.status + ")");
     }
@@ -189,6 +190,7 @@ export default function HospitalityWorkspace() {
       if (!response.ok) throw new Error(data.error || "Account request failed");
       setToken(data.accessToken); setUser(data.user); setShowAccount(false);
       try { sessionStorage.setItem("seven_access_token", data.accessToken); sessionStorage.setItem("seven_user", JSON.stringify(data.user)); } catch {}
+      window.dispatchEvent(new Event("apren:auth-changed"));
       setNotice("Signed in as " + (data.user?.name || data.user?.email) + ".");
       setAuthForm({ name: "", email: authForm.email, password: "" });
     } catch (err) { setError(messageOf(err)); }
@@ -318,6 +320,7 @@ export default function HospitalityWorkspace() {
     try { if (token) await api("/api/auth/logout", { method: "POST", body: JSON.stringify({}) }); } catch {}
     setToken(""); setUser(null); setBookings([]); setProperties([]); setPartnerReservations([]); setRooms([]);
     try { sessionStorage.removeItem("seven_access_token"); sessionStorage.removeItem("seven_user"); } catch {}
+    window.dispatchEvent(new Event("apren:auth-changed"));
     setNotice("You have signed out.");
   }
 

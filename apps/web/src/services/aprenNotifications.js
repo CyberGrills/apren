@@ -1,38 +1,8 @@
 
-const NOTIFICATION_URL="http://localhost:4007";
-
-
-export async function getNotifications(userId=1){
-
-try{
-
-const res =
-await fetch(
-`${NOTIFICATION_URL}/notifications/${userId}`
-);
-
-
-if(!res.ok){
-throw new Error("notification failed");
-}
-
-
-return await res.json();
-
-
-}catch(error){
-
-console.error(
-"Notification service unavailable",
-error
-);
-
-
-return {
-notifications:[]
-};
-
-}
-
+// Notifications do not have a dedicated API service yet. Port 4007 belongs
+// to the hospitality service, so do not send notification requests there.
+// Keep the UI contract stable until a real notification endpoint is added.
+export async function getNotifications(_userId = 1) {
+  return { notifications: [] };
 }
 
