@@ -9,7 +9,8 @@
     "services/wallet",
     "services/gateway",
     "services/market",
-    "services/trade"
+    "services/trade",
+    "services/hospitality"
   ],
   "scripts": {
     "install": "npm install",
@@ -24,7 +25,12 @@
     "start:wallet": "npm --workspace services/wallet run start",
     "start:market": "npm --workspace services/market run start",
     "start:trade": "npm --workspace services/trade run start",
-    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:assets\" \"npm run start:intelligence\" \"npm run start:identity\" \"npm run start:wallet\" \"npm run start:market\" \"npm run start:trade\" \"npm run start:web\""
+    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:assets\" \"npm run start:intelligence\" \"npm run start:identity\" \"npm run start:wallet\" \"npm run start:market\" \"npm run start:trade\" \"npm run start:web\" \"npm run start:hospitality\"",
+    "start:hospitality": "npm --workspace services/hospitality run start",
+    "migrate:hospitality": "npm --workspace services/hospitality run migrate",
+    "test:hospitality": "npm --workspace services/hospitality run test",
+    "import:uyo-directory": "npm --workspace services/hospitality run import:uyo-directory",
+    "pull:uyo-directory": "npm --workspace services/hospitality run pull:uyo-directory"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
