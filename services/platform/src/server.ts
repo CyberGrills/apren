@@ -3,7 +3,7 @@ import { runRecovery } from './worker.ts';
 
 const runtime = createApp();
 const port = Number(process.env.PORT ?? 7077);
-const server = runtime.app.listen(port, '127.0.0.1', () =>
+const server = runtime.app.listen(port, '0.0.0.0', () =>
   console.log(`7even API listening on port ${port}. Payment mode: ${runtime.provider.mode}.`),
 );
 let running = false;
