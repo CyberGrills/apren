@@ -1,0 +1,138 @@
+APREN REPOSITORY REVIEW
+
+Reviewed 16 October 2026
+Repository: https://github.com/CyberGrills/apren.git
+Clone: /home/inimfon-udoh/7even/apren
+Commit: 26d61a4aaf0ee87411b57df2ac94a5e5ad607e33
+Latest commit: 29 September 2026 — fix: normalize agent asset identity resolution
+
+Apren is an early food-economy prototype. It treats food items as assets with a value, owner, freshness score, origin/passport and market demand. It wants to connect consumers, kitchens and farms; support purchases and barter; reward participation with a currency called ə; and use a “food brain” to recommend how food should move before value is lost through spoilage.
+
+The strongest current result is a recognizable product concept and some working read APIs. It does not yet establish a reliable end-to-end marketplace, genuine image verification, learned prediction or safe money movement. Production-readiness advisory: DO NOT SHIP the current implementation for real-money or food-safety decisions. This review did not run a production release gate or make a deployment change.
+
+Coverage is complete for the checked-out source inventory: all 486 tracked files have one entry in APREN_FILE_GUIDE.txt, with no duplicate or missing paths. APREN_REVIEW_DATA.json preserves individual file descriptions, hashes, all reviewer findings and structured probe results. This is comprehensive source coverage, not a claim that every possible runtime state has been proven. Historical copies were examined through all unique changes; generated dependency locks were parsed; binary images were inspected as assets. Git's internal object database, installed dependencies and generated build/database/cache files are outside that tracked-file inventory.
+
+WHAT THE PRODUCT IS TRYING TO ACHIEVE
+
+1. Give food a persistent digital identity. An item should carry its origin, ownership, evidence, freshness, lifecycle and value rather than exist only as an anonymous listing.
+2. Make that food discoverable and exchangeable. Users should find assets and kitchens, compare value, buy or exchange food, and hold the resulting assets in a portfolio.
+3. Combine ordinary cash and ə. The UI distinguishes a cash wallet from the food/contribution currency and describes rewards for feedback, discovery, kitchen support and sustainability.
+4. Reduce waste through decisions. Freshness, demand, supply, trust and price signals are intended to drive actions such as hold, sell, promote, redistribute or trade.
+5. Record and improve decisions. “Brain” layers add prediction, scenarios, agent opinions, memory, governance, execution, verification and learning histories.
+
+Those goals are inferred from actual screens, routes, module implementations and scripts. The README primarily describes packages and commands; it is not a complete business specification. The repository does not specify a complete currency issuance/redemption model, cash-provider settlement, physical delivery/custody process or independently validated freshness model. Names such as wallet, passport and agent express intended responsibilities; they do not by themselves establish those properties.
+
+ARCHITECTURE AND SERVICE RESPONSIBILITIES
+
+apps/web — Vite + React mobile-style single-page interface. Home/wallet, asset details, market, kitchen discovery, intelligence, exchange and contribution rewards mostly live in one 1,495-line AprenApp.jsx. AssetContext and hooks provide part of the live data. Several parallel API-client generations remain in source; many are not imported by the active entry point.
+
+gateway:4000 — Express/Axios proxy. /api/assets, /api/passport, /api/ownership and /api/asset-profile target assets:4003. /api/users targets identity:4001; /api/wallet targets wallet:4002; /api/brain targets intelligence:4005; market/trade target their separate demo services. Its health response summarizes downstream success/failure, but is not a readiness guarantee. The active frontend mostly bypasses it with browser-local service URLs.
+
+identity:4001 — PostgreSQL users and currency-preference reads. It is not an authentication implementation: no login, signup, token or session boundary appears in its server.
+
+wallet:4002 — PostgreSQL wallet reads by supplied user ID. Actual funding/transfer code lives in assets, not this service. It returns currency, type, status and locked-balance fields, but its only route is GET.
+
+assets:4003 — The real center of the system. It contains food records, evidence/passports, market value, holdings, economy transactions and hundreds of brain-related modules. Its entry point mixes SQLite-backed legacy reads, PostgreSQL-backed economy/brain operations, imported router modules and accumulated inline handlers.
+
+market:4004 — Fixed market summary, recommendation and price fixtures. This is explicitly a demo/stub rather than a changing market feed.
+
+intelligence:4005 — Older standalone asset scoring. It fetches an asset from assets:4003 and computes a weighted score from freshness, demand and fixed trust/liquidity values. It also holds uploaded evidence metadata in process memory. This service is distinct from the much larger assets-service brain.
+
+trade:4006 — Two static trade opportunities and an execution endpoint that returns executed:true without changing holdings, balances or persistent transactions. This is different from assets/src/transactions/tradeEngine.js.
+
+notification:4007 — Three shared in-memory notifications and read flags. No package manifest, workspace entry, all-service start command, persistence, user isolation or CORS middleware is supplied.
+
+services/shared/db.js configures identity/wallet using PG* variables. assets/src/postgres.js configures the assets database using POSTGRES_* variables. Both default to a local development database, but the separate environment families can direct services to different databases. The required PostgreSQL base schema is not fully supplied as a canonical reproducible migration/bootstrap.
+
+HOW THE MAIN FLOWS ACTUALLY WORK
+
+Food discovery: the web context requests assets directly from port4003. SQLite db.js creates an empty local database and seeds Chicken Rice Bowl, Heirloom Tomatoes and Jasmine Rice 5kg. Mappers adapt these rows for the cards. Browser verification showed all three on Home and Market. Some journey/history/change fields are fabricated or empty rather than derived from a full event stream.
+
+Asset detail: the UI combines asset information with the older port4005 brain, not the new Agent Kernel. That older score is 35% freshness,30% demand,20% fixed trust50,15% fixed liquidity40. With bounded scores, its maximum is81, so the ≥90 ACCUMULATE branch cannot be reached through ordinary valid input. Meanwhile richer evidence, live passport and new brain endpoints exist in assets but are mostly disconnected from the UI.
+
+Creation: POST /assets calls assetCreationService and inserts into PostgreSQL, then optionally writes holdings/ownership history and an event through separate statements without a shared transaction. GET /assets reads SQLite. No synchronization connects them. A created PostgreSQL asset need not appear in the listing. The alternative /economy/create wraps related PostgreSQL inserts in one transaction, but is still a separate write path.
+
+Settlement: /economy/trade locks a seller's PostgreSQL holding, checks its quantity, calculates current_value×quantity, calls walletTransfer, changes holdings and appends transaction/event records within BEGIN/COMMIT/ROLLBACK. Transactions, parameterized SQL and row locks are valuable existing safeguards. However, amount validation, requester authorization, currency selection, durable idempotency and reconciliation are not established.
+
+Exchange UI: selecting review/confirmation only advances local React state and appends an in-memory exchange. It does not call the available executeTrade client. Thus the UI's “complete” state does not prove an asset or money transfer; even the separate trade service's execute endpoint is a fixture response.
+
+Evidence/passport: callers can record file/type strings and receive confidence/freshness values, but there is no genuine pixel analysis. Several functions generate random scores or increase confidence merely because an image/video reference exists. verifyFood can return VERIFIED with file:null. GET /asset-profile even creates a new random verification memory record while reading a profile. Some lifecycle/evidence/verification histories disappear on process restart because they are arrays/objects in memory.
+
+Latest Agent Kernel: resolve an asset by numeric ID or asset code; create a UUID run; journal context; perform prediction, simulation, five heuristic agent functions, decision, strategy, optional authorization/execution, verification and learning. Assisted mode skips execution pending human approval. Autonomous mode explicitly calls the gateway with executionMode:SIMULATED. Its verifier checks the simulated status/action contract; it does not establish that food or money moved. The run goal is required and stored but does not guide policy. Prediction, simulation and agent branches are mostly independently computed from the same input and included as explanation, while a separate decision loop selects the action.
+
+Learning: many modules record feedback, average scores, count histories or assign confidence labels. The latest kernel journals a reward and lesson. The review found no trained inference model, image model, model-fitting/evaluation pipeline, or policy update based on those kernel learning events. Calling several functions “agents” does not make them independent autonomous workers. These are understandable prototype rules and journals, with several broken contracts between generations.
+
+HOW WELL IT ACHIEVES THE GOAL
+
+Product clarity: the UI communicates a coherent connection between food ownership, freshness, kitchens and value. The domain names and screen flow make the intended experience understandable. This is its strongest area.
+
+Working discovery prototype: basic SQLite listing, profile and older brain reads work, and the frontend builds. Market filtering after data arrival displays the sample assets. This supports a demonstration, but not claims of live nearby demand, genuine reward earnings, verified provenance or historical pricing.
+
+End-to-end commerce: incomplete. UI confirmation is local; standalone trade is a stub; PostgreSQL economic writes do not feed SQLite listings; user/currency/settlement controls are missing. The current system cannot be treated as a working exchange merely because it has a trade API.
+
+Intelligence: broad plumbing and audit concepts, weak decision validity. Most outputs are thresholds, fixed confidences, arithmetic or constants. Some modules disagree about input/output shape or overwrite meanings introduced by older layers. Freshness zero can produce SELL_NOW with confidence90, and a different simulation resets zero freshness to100 using a || default. Current kernel execution remains simulated; the unsafe advice is still material if presented to people or connected to real effects later.
+
+Maintainability: the code's small modules can be easy to read individually, but the system has too many overlapping generations. Separate brain/intelligence/decision, autonomy/execution, governor/governance, orchestrator/orchestration and memory/graph families use similar names with different contracts. A conservative literal-require graph reaches 190 of 248 canonical assets-source JS files from server.js and leaves 58 outside that chain. Reachability includes nested/error-path imports and is not proof of functioning routes. The active web entry similarly leaves 20 source JS/JSX helpers outside its import graph.
+
+Reproducibility: weak. The root install lifecycle calls npm install recursively. There is no complete documented database setup, environment example, test suite or CI configuration. The125 shell scripts are historical installers/patchers, not a trustworthy ordered migration system. They often target ~/apren and an existing apren-postgres container, overwrite shared modules, patch strings/regexes and kill broad process matches. Replaying them can undo current code or mutate a different checkout. None were executed during this review.
+
+MOST CONSEQUENTIAL FINDINGS
+
+Critical — Caller authorization and funding proof are absent in source. Direct assets:4003 accepts money/asset identifiers and funding amounts from the request, with only JSON/CORS middleware. Identity/wallet reads similarly accept arbitrary user IDs. Finding a holding for the supplied seller proves that holding exists, not that the caller may sell it. Funding has no provider-confirmed source or durable duplicate protection. These mutations are directly on the assets service; they are not all exposed through gateway /api/wallet.
+
+Critical — Settlement ignores per-currency and amount invariants. Negative quantities and amounts pass local logic. walletTransfer selects/updates by user_id, so every matching wallet can be changed while only the first wallet ID is journaled. If the external schema permits multiple wallets per user, cash and ə can be debited together. Locked balances, wallet status and currency are not enforced. Price uses binary Number and there is no durable request idempotency. Isolated probes show acceptance and SQL construction; external database constraints and concurrency were not exercised.
+
+High — Main UI routes crash. Actual browser navigation to Intelligence and Kitchens produced ReferenceError and a blank page; opening the exchange asset picker did likewise. liveAssets/tradeAssets are referenced out of scope/without declarations. No error boundary contains the failure.
+
+High — Wallet balances are mapped as {cash,food}, while UI reads wallet.wallets. An isolated source probe mapped EUR125/ə88 but the screen calculation displayed0/42. Browser Home showed the hardcoded42 card beside a brief saying0 ə. This is a data-contract defect beyond the unavailable PostgreSQL service.
+
+High — Read/write databases diverge, as described above. POST /assets can also partially commit its multi-statement creation. The atomic /economy/create alternative is a positive foundation but does not resolve the two read models.
+
+High — 41 inline routes register inside memory-recall error handling. There are 88 inline GET/POST declarations, but only 47 register at startup; 41 are inside a catch beginning at server.js:3014 and ending near4036. A successful recall does not register them; a failed recall does, repeatedly. Mounted modular routers overlap some paths, so this is not a claim that 41 unique URLs are all inaccessible. Actual GET /brain/feedback/1 returned404 at startup.
+
+High — /verify handlers call undeclared verification rather than the imported verificationEngine. Actual GET /verify/1 returned500. Separately, random VERIFIED results without media cannot establish authenticity or freshness.
+
+High — Food rules can promote expired food, and simulated results contaminate some learning metrics. A zero-freshness input produced SELL_NOW90. Other probes showed failed outcome objects counted as experience and SIMULATED status treated as successful positive feedback. Kernel goal/input handling and current simulation boundary must not be confused with demonstrated autonomous food decisions.
+
+High — Shared generators overwrite incompatible APIs/schemas. Examples include handlers still calling evaluateAsset/history/recordFeedback methods that current modules do not export. Permission callers omit await after storage became async and return{} rather than permissions. Prediction/strategy tables appear in generators with incompatible TEXT/JSONB definitions; CREATE TABLE IF NOT EXISTS does not reconcile an existing type. Syntax checks do not detect these problems.
+
+Medium — Gateway routing bypasses new functionality. /api/brain goes to the older4005 service rather than new brain routes on4003; /api/wallet goes to4002 rather than assets portfolio/intelligence handlers. Active browser clients use hardcoded localhost URLs, which also prevents ordinary hosted-browser deployment without reconfiguration.
+
+Medium — Async and display contracts hide data. Market memoization omits marketAssets from its dependencies, so opening it before the fetch finishes can leave an empty listing until a filter changes. Detail reads tradeData.trades after useTrades already returns an array. API failures become null/default data without a useful error state. Nearby demand, rewards, contributions, kitchens and past exchanges mix fixed samples with live asset reads.
+
+Medium — Several older brain facades are broken or predetermined. communication.broadcast does not exist; council expects vote fields agents no longer return; numeric-versus-object forecasts and missing memory fields disagree. Scenario constants favor REDIRECT and evolution constants favor PROMOTE. These are execution/contract defects and illustrative rules, not measured optimizer performance. Dormant helpers should be distinguished from reachable handlers; individual file notes record their context.
+
+Accessibility — Important clickable cards are div elements without keyboard activation, and several controls lack programmatic labels. This was identified in source; a complete accessibility audit was not performed.
+
+VERIFICATION AND ITS LIMITS
+
+Clone and source integrity: confirmed origin, commit and486 tracked files. git status --short remained empty after inspection; application source was not edited. Installed dependencies, local SQLite seed data and frontend outputs are ignored runtime artifacts.
+
+Dependency setup: npm ci with --ignore-scripts downloaded the locked packages. An offline cached ci completed and enabled the build; ordinary recursive installation was deliberately bypassed. Dependency vulnerability, secret, static-security and API penetration scans were not performed. This is not a dependency-security certification.
+
+Production frontend build: npm run build passed with Vite 8.1.5 on Node 24.21.0, transforming 1,802 modules and producing a 254.46 KB JS bundle (74.15 KB gzip). A successful bundle does not catch the undefined names reached only when rendering other screens.
+
+JavaScript syntax: node --check passed all 293 tracked .js files. JSX was compiled by the Vite build. Shell syntax: bash -n passed all 125 tracked scripts; no installer/repair/restart script ran. Static comparison of 278 complete installer outputs found 239 equal to their current targets and 39 different, with no missing targets.
+
+Repository tests: npm test --workspaces --if-present failed because identity and wallet both run “Error: no test specified” and exit1. No substantive tracked automated test suite was found. Those failing placeholders must not be reported as application tests that discovered a code regression.
+
+Browser: temporarily started the cloned assets/gateway/intelligence services and web. Existing local apps occupied5173/5174; Apren used5175. Home and Market displayed three seed assets. Intelligence, Kitchens and exchange picker each crashed with the source-predicted ReferenceError. Wallet/notification/preferences requests failed because the corresponding complete services/database environment was not running; the independent wallet-shape probe demonstrates its separate defect. No real transaction, funding or external purchase was submitted. Temporary processes and test tab were closed.
+
+HTTP: assets list/detail/profile and older brain returned200; gateway /api/assets returned200; /verify/1 returned500 with verification is not defined; /brain/feedback/1 returned404; gateway new-brain example went to4005 and returned404. Gateway wallet-portfolio request failed connecting to absent4002; source confirms that separate wallet service has no portfolio route. HTTP bodies are retained in APREN_REVIEW_DATA.json.
+
+Isolated probes: actual source ran in Node VM with fake SQL/Express adapters. Root probes reproduced route registration, missing verification identifier, empty-media verification and negative wallet transfer.23 additional brain probes reproduced unsafe zero-freshness decisions, missing exports/awaits, forecast/memory contracts, fixed outcomes and simulated gateway behavior. The root reviewer reran and inspected those probes. These establish local behavior and SQL parameters; they do not prove live PostgreSQL schema compatibility, transactional concurrency, provider agreement or production safety.
+
+Not verified: full PostgreSQL-backed workflows, complete schema installation, provider sandbox payments/webhooks, concurrent withdrawals/trades, durable retry/recovery/reconciliation, production configuration or deployment, real food recognition, real-world prediction accuracy and full responsive/accessibility coverage. No database server/schema was provisioned and no historical migration scripts were applied to invent that missing environment.
+
+WHAT TO FIX FIRST
+
+1. Define one bounded, honest demo flow and make Home→asset→market→exchange render correctly. Repair scope/shape mismatches and display loading/errors. Clearly identify fixtures and simulations.
+2. Choose the authoritative food/holding database and align read/write schemas. Provide a reproducible baseline schema/configuration and one controlled migration path; preserve historical scripts as history.
+3. Before any real-money use, implement caller authorization, exact monetary representation, positive/bounded input validation, currency-specific wallet identity, durable idempotency, auditable balanced movement, locked-fund rules and recovery/reconciliation. Keep provider-confirmed funding separate from a public balance-credit function. Require qualified review and isolated adversarial tests.
+4. Register routes deterministically at startup, reconcile module contracts and remove ambiguity between old/new services. Make the gateway and active frontend use the intended APIs.
+5. Keep food verification and autonomous decisions explicitly experimental. Expired food must not become a sale recommendation. Establish an evidence model and evaluation data before presenting confidence numbers as validated intelligence.
+6. Add focused behavioral tests around the chosen flow, then expand to concurrency/restart/failure cases where persistence and money are involved. Consolidate overlapping brain generations around tested interfaces rather than adding another numbered layer.
+
+The project can become a useful prototype by narrowing and connecting what already exists. Its current quantity of named intelligence layers is not the measure of progress; reliable food records, truthful UX and a proven end-to-end transaction are the next meaningful milestones.
+
+No implementation change, commit, merge or deployment was made. Edirae Learn skip condition applies: this task inspected existing code and produced review artifacts; it did not add or change application logic.

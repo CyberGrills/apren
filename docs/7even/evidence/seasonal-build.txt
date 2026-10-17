@@ -1,0 +1,31 @@
+
+> 7even@0.1.0 build
+> npm run typecheck && npm --workspace @7even/web run build
+
+
+> 7even@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @7even/web@1.0.0 build
+> vite build
+
+vite v8.1.5 building client environment for production...
+[2Ktransforming...✓ 1842 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                           0.80 kB │ gzip:   0.47 kB
+dist/assets/manrope-latin-500-normal-BYYD-dBL.woff2      14.04 kB
+dist/assets/manrope-latin-400-normal-PaqtzbVb.woff2      14.10 kB
+dist/assets/manrope-latin-600-normal-4f0koTD-.woff2      14.17 kB
+dist/assets/manrope-latin-500-normal-DMZssgOp.woff       18.24 kB
+dist/assets/manrope-latin-400-normal-8tf8FM3T.woff       18.29 kB
+dist/assets/manrope-latin-600-normal-BqgrALkZ.woff       18.38 kB
+dist/assets/newsreader-latin-400-normal-BFBkh4jY.woff2   22.48 kB
+dist/assets/newsreader-latin-400-italic-CEihAR-f.woff2   24.34 kB
+dist/assets/newsreader-latin-400-normal-gRTjlS2D.woff    28.28 kB
+dist/assets/newsreader-latin-400-italic-CNZoH1hn.woff    30.87 kB
+dist/assets/index-CqXWxGd9.css                           56.82 kB │ gzip:  10.78 kB
+dist/assets/index-93IcCEMR.js                           401.76 kB │ gzip: 116.29 kB │ map: 1,712.40 kB
+
+✓ built in 668ms
