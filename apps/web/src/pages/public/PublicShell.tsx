@@ -1,0 +1,125 @@
+import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Brand } from '../../components/Brand.tsx';
+import { useSession } from '../../context/SessionContext.tsx';
+
+export { editorialImages } from '../../lib/editorialImages.ts';
+
+export function PublicHeader() {
+  const { user } = useSession();
+  const [open, setOpen] = useState(false);
+  const workspace =
+    user?.role === 'BUSINESS_OWNER'
+      ? { label: 'Your business', href: '/business' }
+      : user?.role === 'RECEPTION'
+        ? { label: 'Open reception', href: '/reception' }
+        : user?.role === 'ADMIN'
+          ? { label: 'Platform admin', href: '/admin' }
+          : { label: 'For business', href: '/business/apply' };
+  return (
+    <header className="public-header">
+      <div className="public-container public-nav">
+        <Link to="/" aria-label="7even home" className="public-brand">
+          <Brand />
+        </Link>
+        <nav className="public-nav-desktop" aria-label="Main navigation">
+          <Link to="/explore?kind=STAY">Stays</Link>
+          <Link to="/explore?kind=DINING">Dining</Link>
+          <Link to="/explore?kind=EXPERIENCE">Experiences</Link>
+        </nav>
+        <div className="public-nav-actions">
+          <Link to={user ? '/app/bookings' : '/login'} className="public-account-link">
+            {user ? 'Your plans' : 'Sign in'}
+          </Link>
+          <Link to={workspace.href} className="public-business-link">
+            {workspace.label} <ArrowUpRight size={15} aria-hidden="true" />
+          </Link>
+          <button
+            type="button"
+            className="public-menu-button"
+            aria-label={open ? 'Close navigation' : 'Open navigation'}
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+      </div>
+      {open && (
+        <nav className="public-mobile-nav public-container" aria-label="Mobile navigation">
+          <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
+            Stays
+          </Link>
+          <Link to="/explore?kind=DINING" onClick={() => setOpen(false)}>
+            Dining
+          </Link>
+          <Link to="/explore?kind=EXPERIENCE" onClick={() => setOpen(false)}>
+            Experiences
+          </Link>
+          <Link to={workspace.href} onClick={() => setOpen(false)}>
+            {workspace.label}
+          </Link>
+        </nav>
+      )}
+    </header>
+  );
+}
+
+export function PublicFooter() {
+  return (
+    <footer className="public-footer">
+      <div className="public-container">
+        <div className="public-footer-top">
+          <Link to="/" aria-label="7even home">
+            <Brand />
+          </Link>
+          <p>
+            Good places.
+            <br />
+            Worth your time.
+          </p>
+          <nav aria-label="Footer">
+            <Link to="/explore">Find a place</Link>
+            <Link to="/business/apply">Bring your business</Link>
+            <Link to="/app/points">Your points</Link>
+            <Link to="/help">Help</Link>
+            <Link to="/booking-rules">Booking and points</Link>
+          </nav>
+        </div>
+        <div className="public-footer-bottom">
+          <p>© {new Date().getFullYear()} 7even · Nigeria first.</p>
+          <a href="/media/SOURCES.txt">Photography and design sources</a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+export function localDateNow() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Lagos',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  return ['year', 'month', 'day']
+    .map((name) => parts.find((part) => part.type === name)?.value)
+    .join('-');
+}
+
+export function addDays(date: string, days: number) {
+  const value = new Date(`${date}T12:00:00Z`);
+  if (!Number.isFinite(value.getTime())) return '';
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+export function friendlyDate(date: string) {
+  return new Intl.DateTimeFormat('en-NG', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Africa/Lagos',
+  }).format(new Date(date.length === 10 ? `${date}T12:00:00Z` : date));
+}

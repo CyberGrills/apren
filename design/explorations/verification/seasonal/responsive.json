@@ -1,0 +1,24 @@
+[
+  {
+    "buttonSize": {
+      "height": 90.984375,
+      "width": 344.5
+    },
+    "captionSize": "13px",
+    "labelSize": "13px",
+    "overflow": false,
+    "primary": "rgb(43, 74, 51)",
+    "width": 768
+  },
+  {
+    "buttonSize": {
+      "height": 86.796875,
+      "width": 167.5
+    },
+    "captionSize": "13px",
+    "labelSize": "13px",
+    "overflow": false,
+    "primary": "rgb(43, 74, 51)",
+    "width": 390
+  }
+]

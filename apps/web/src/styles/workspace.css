@@ -1,0 +1,396 @@
+.workspace {
+  display: grid;
+  grid-template-columns: 238px minmax(0, 1fr);
+  min-height: 100dvh;
+}
+.workspace-sidebar {
+  padding: 1.4rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+}
+.workspace-sidebar .brand {
+  width: 155px;
+  margin: 0 0 2.3rem;
+}
+.workspace-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  margin: 0 0.7rem 1rem;
+}
+.workspace-nav {
+  display: grid;
+  gap: 0.3rem;
+}
+.workspace-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 0.7rem;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+  border-left: 2px solid transparent;
+}
+.workspace-nav a:hover {
+  background: var(--surface-subtle);
+  color: var(--ink);
+}
+.workspace-nav a.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--surface-active);
+}
+.workspace-sidebar-bottom {
+  margin-top: auto;
+  padding-top: 2rem;
+}
+.workspace-user {
+  border-top: 1px solid var(--line);
+  padding-top: 1.2rem;
+  font-size: 0.8rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.workspace-user small {
+  display: block;
+  color: var(--muted);
+}
+.workspace-main {
+  min-width: 0;
+}
+.workspace-topbar {
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 3rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.75rem;
+}
+.workspace-topbar > div {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.connection-indicator {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  color: var(--muted);
+}
+.connection-indicator:before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--positive);
+}
+.connection-indicator.offline:before {
+  background: var(--warning);
+}
+.workspace-content {
+  max-width: 1500px;
+  padding: 3rem;
+  margin: auto;
+}
+.workspace-mobile-menu {
+  display: none;
+}
+.workspace-mode {
+  color: var(--accent);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.workspace-section {
+  margin-top: 3rem;
+}
+.work-offering-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.work-offering {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.work-offering img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+.work-offering-copy {
+  padding: 1.3rem;
+}
+.work-offering-copy h2 {
+  font-size: 1.7rem;
+  margin: 0.8rem 0;
+}
+.work-offering-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+}
+.work-offering-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+  flex-wrap: wrap;
+}
+.demand-card {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 2rem;
+  padding: 1.8rem 0;
+  border-top: 1px solid var(--line);
+}
+.demand-card h2 {
+  font-size: 1.8rem;
+}
+.demand-evidence {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+.demand-evidence div {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.demand-evidence strong {
+  display: block;
+  color: var(--ink);
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+}
+.recommendation {
+  border-left: 2px solid var(--accent);
+  padding-left: 1.2rem;
+  margin: 1rem 0;
+}
+.recommendation h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.recommendation p {
+  font-size: 0.8rem;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+.reception-clock {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+}
+.reception-date {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.desk-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.desk-tabs button {
+  background: transparent;
+  border: 1px solid var(--control-border);
+  padding: 0.6rem 0.9rem;
+  min-height: 40px;
+  font-size: 0.75rem;
+}
+.desk-tabs button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+.queue-panel {
+  border: 1px solid var(--warning);
+  background: var(--warning-surface);
+  padding: 1.3rem;
+  margin-bottom: 2rem;
+}
+.queue-panel h2 {
+  font-size: 1.5rem;
+}
+.queue-item {
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+}
+.queue-item p {
+  margin: 0;
+}
+.availability-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-top: 1.2rem;
+}
+.availability-day {
+  padding: 0.7rem 0.4rem;
+  border: 1px solid var(--line);
+  text-align: center;
+  font-size: 0.7rem;
+  line-height: 1.8;
+}
+.availability-day strong {
+  display: block;
+  font-size: 1rem;
+}
+.business-list {
+  display: grid;
+  gap: 1rem;
+}
+.business-card {
+  padding: 1.6rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.business-card-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.business-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+.business-card p {
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.business-card .row-actions {
+  justify-content: flex-start;
+  margin-top: 1.2rem;
+}
+.settings-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.2rem;
+}
+.settings-summary dt {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+.settings-summary dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.workspace-alerts {
+  display: grid;
+  gap: 1rem;
+}
+.alert-row {
+  border-left: 3px solid var(--warning);
+  padding: 1rem 1.2rem;
+  background: var(--warning-surface);
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+.alert-row strong {
+  display: block;
+}
+.alert-row p {
+  margin: 0.5rem 0 0;
+}
+.permission-screen {
+  max-width: 600px;
+  padding: 5rem 1.5rem;
+  margin: auto;
+}
+.permission-screen h1 {
+  font: 3rem var(--font-display);
+}
+@media (min-width: 1600px) {
+  .workspace-content {
+    padding-top: 4rem;
+  }
+}
+@media (max-width: 1150px) {
+  .workspace {
+    grid-template-columns: 205px minmax(0, 1fr);
+  }
+  .workspace-content {
+    padding: 2rem;
+  }
+  .workspace-topbar {
+    padding: 0 2rem;
+  }
+  .work-offering-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 800px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  .workspace-sidebar {
+    display: none;
+    position: fixed;
+    z-index: 90;
+    inset: 0 auto 0 0;
+    width: min(300px, 85vw);
+    box-shadow: 20px 0 100px var(--shadow);
+  }
+  .workspace-sidebar.is-open {
+    display: flex;
+  }
+  .workspace-mobile-menu {
+    display: inline-flex;
+  }
+  .workspace-topbar {
+    height: 65px;
+    padding: 0 1.2rem;
+  }
+  .workspace-content {
+    padding: 2rem 1.2rem;
+  }
+  .workspace-mode {
+    font-size: 0.55rem;
+  }
+  .demand-card {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .work-offering-grid {
+    grid-template-columns: 1fr;
+  }
+  .workspace-topbar time {
+    display: none;
+  }
+  .business-card {
+    padding: 1.2rem;
+  }
+  .availability-calendar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.workspace-menu-close {
+  align-self: flex-end;
+  margin-bottom: 1rem;
+}
+
+.workspace-sidebar {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

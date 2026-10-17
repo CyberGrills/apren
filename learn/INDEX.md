@@ -1,0 +1,2 @@
+- [2026-10-16] [Automatic seasonal campaigns with a fixed brand](2026-10-16-automatic-seasonal-themes.md): Lagos calendar changes campaign colors, copy and photography while preserving the core palette.
+- [2026-10-16] [Rebuilding 7even around one hospitality record](2026-10-16-rebuild-seven.md): One engine connects bookings, verified payments, rewards and pop-up feedback across the app.
