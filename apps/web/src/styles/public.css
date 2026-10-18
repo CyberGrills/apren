@@ -1410,3 +1410,28 @@
     white-space: nowrap;
   }
 }
+
+
+/* Arrival discovery: keep directory leads separate from verified/bookable offerings. */
+.arrival-discovery { margin: 2rem 0 2.5rem; padding: clamp(1.25rem, 3vw, 2.5rem); border: 1px solid var(--line); background: var(--surface, #f8f6f1); }
+.arrival-discovery-copy { max-width: 48rem; }
+.arrival-discovery-copy h2 { margin: .6rem 0; font-size: clamp(2rem, 4vw, 3.3rem); line-height: 1.04; }
+.arrival-discovery-copy p, .arrival-discovery-note, .arrival-lead-warning { color: var(--muted); line-height: 1.6; font-size: .9rem; }
+.arrival-discovery-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.arrival-discovery-form > div { display: grid; gap: .45rem; min-width: 0; }
+.arrival-discovery-form label { font-size: .76rem; font-weight: 650; }
+.arrival-discovery-form input, .arrival-discovery-form select { width: 100%; min-height: 48px; border: 1px solid var(--public-rule-strong); border-radius: .25rem; padding: .7rem .8rem; background: var(--paper, #fff); color: inherit; font: inherit; }
+.arrival-discovery-form > .btn { grid-column: 1 / -1; justify-self: start; }
+.arrival-discovery-note { margin: 1rem 0 0; }
+.arrival-lead-results { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.arrival-lead-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.arrival-lead-heading h3 { margin: .35rem 0; font-size: 1.7rem; }
+.arrival-unverified-label { display: inline-block; padding: .45rem .65rem; border: 1px solid #b78c53; color: #77511f; font-size: .72rem; font-weight: 700; }
+.arrival-lead-warning { border-left: 3px solid #b78c53; padding-left: .8rem; }
+.arrival-lead-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+.arrival-lead-card { min-width: 0; padding: 1.1rem; border: 1px solid var(--line); background: var(--paper, #fff); }
+.arrival-lead-card h4 { margin: 0 0 .6rem; font-size: 1.05rem; }
+.arrival-lead-card p { overflow-wrap: anywhere; font-size: .82rem; line-height: 1.5; color: var(--muted); }
+.arrival-lead-card a { display: inline-block; margin-top: .4rem; font-size: .8rem; font-weight: 650; text-decoration: underline; text-underline-offset: .2em; }
+@media (max-width: 800px) { .arrival-lead-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .arrival-discovery-form, .arrival-lead-grid { grid-template-columns: 1fr; } .arrival-discovery-form > .btn { width: 100%; } .arrival-lead-heading { align-items: start; flex-direction: column; } }
