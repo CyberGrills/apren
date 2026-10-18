@@ -36,7 +36,7 @@ npm run build
 npm start
 ```
 
-Integration tests require a separate `TEST_DATABASE_URL` whose database name ends in `_test_db`. They reset only its `seven` schema and run serially. Set `TEST_RUNTIME_DATABASE_URL` to a restricted `seven_app` login for that same test database; the fixture administrator migrates/seeds while HTTP requests run under the restricted login. Tests cover inventory races, provider doubles, balanced journals, account recovery, receipt replay, actual worker termination and transaction rollback. They do not certify Flutterwave or bank behavior.
+Integration tests require a separate `TEST_DATABASE_URL` whose database name ends in `_test_db`. They reset only its `seven` schema and run serially. Set `TEST_RUNTIME_DATABASE_URL` to a restricted login for that same test database. The login must have `INHERIT` enabled and be a member of `seven_app` (for example, `GRANT seven_app TO seven_runtime WITH INHERIT TRUE;`). The fixture administrator migrates/seeds while HTTP requests run under the restricted login; the platform acceptance test now checks effective schema and group privileges before starting HTTP requests. Tests cover inventory races, provider doubles, balanced journals, account recovery, receipt replay, actual worker termination and transaction rollback. They do not certify Flutterwave or bank behavior.
 
 `npm start` serves the built SPA and API on 7077. Set `APP_ORIGIN=http://127.0.0.1:7077` for a standalone local built-app check. All frontend calls use same-origin `/api` paths. Production needs an HTTPS reverse proxy, production credentials and the release review described below. No deployment has been made.
 

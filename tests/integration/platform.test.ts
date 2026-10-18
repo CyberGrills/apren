@@ -86,6 +86,24 @@ test('7even real PostgreSQL API and invariant acceptance', {
   const appPool = process.env.TEST_RUNTIME_DATABASE_URL
     ? createPool(process.env.TEST_RUNTIME_DATABASE_URL)
     : pool;
+  if (process.env.TEST_RUNTIME_DATABASE_URL) {
+    const runtimePrivileges = await one(
+      appPool,
+      `SELECT current_user AS role,
+              has_schema_privilege(current_user, 'seven', 'USAGE') AS schema_usage,
+              pg_has_role(current_user, 'seven_app', 'USAGE') AS app_privileges`,
+    );
+    assert.equal(
+      runtimePrivileges?.schema_usage,
+      true,
+      `TEST_RUNTIME_DATABASE_URL login ${runtimePrivileges?.role ?? '(unknown)'} must inherit seven_app so it has USAGE on schema seven.`,
+    );
+    assert.equal(
+      runtimePrivileges?.app_privileges,
+      true,
+      `TEST_RUNTIME_DATABASE_URL login ${runtimePrivileges?.role ?? '(unknown)'} must inherit the seven_app group role.`,
+    );
+  }
   const provider = new MockProvider();
   const runtime = createApp({ pool: appPool, provider, environment: 'test', publicOrigin: origin });
   const server = await new Promise<Server>((resolve) => {
