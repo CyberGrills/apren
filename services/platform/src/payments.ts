@@ -1,6 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
-import type { Checkout, Payment, SessionUser } from '@7even/contracts';
+import type {
+  Checkout,
+  Payment,
+  SessionUser,
+  PaymentMethod,
+  PaymentOptions,
+  PaymentProviderId,
+} from '@7even/contracts';
 import { one, rows, fail, transaction } from './db.ts';
 import type { Connection } from './db.ts';
 import {
@@ -15,14 +22,104 @@ import {
 } from './store.ts';
 import { releaseAllocation, reservationAccess } from './reservations.ts';
 import { decimalToMinor } from './provider.ts';
+import { fiatPaymentRoute, LIGHT_PAYMENT_LIMIT_MINOR, PAYMENT_ROUTING_POLICY } from '@7even/engine';
+import {
+  ProviderRegistry,
+  providerFor,
+  providerCode,
+  providerIds,
+  executionModeIds,
+  cryptoFor,
+  paymentMode,
+} from './providerRegistry.ts';
+import type { ProviderSource } from './providerRegistry.ts';
+import type { CryptoQuoteData } from './cryptoProvider.ts';
 import type { PaymentProvider, ProviderReceipt, ProviderRefund } from './provider.ts';
+import { reconcilePaystackSettlements } from './paystackSettlement.ts';
+
+export async function paymentOptions(
+  pool: Pool,
+  source: ProviderSource,
+  actor: SessionUser,
+  reservationId: string,
+): Promise<PaymentOptions> {
+  const r = await reservationProjection(pool, reservationId);
+  if (!r) return fail(404, 'NOT_FOUND', 'Reservation not found.');
+  await reservationAccess(pool, actor, r);
+  const route = fiatPaymentRoute(r.price.totalMinor);
+  const accounts = await rows(
+    pool,
+    `SELECT a.* FROM seven.business_payment_accounts a JOIN seven.businesses b USING(business_id) WHERE a.business_id=$1 AND a.workflow_state_id=${sid('APPROVED')} AND b.workflow_state_id=${sid('APPROVED')}`,
+    [r.businessId],
+  );
+  const modeFor = (id: PaymentProviderId) => {
+    try {
+      return executionModeIds[paymentMode(source, id)];
+    } catch {
+      return null;
+    }
+  };
+  const eligible = (id: PaymentProviderId) =>
+    accounts.some(
+      (a) =>
+        Number(a.payment_provider_id) === providerIds[id] &&
+        Number(a.execution_mode_id) === modeFor(id),
+    );
+  const existing = await one(
+    pool,
+    'SELECT payment_attempt_id FROM seven.payment_attempts WHERE reservation_id=$1 ORDER BY created_at LIMIT 1',
+    [r.id],
+  );
+  const available = eligible(route.provider);
+  const gateway =
+    source instanceof ProviderRegistry
+      ? source.crypto
+      : source.mode === 'mock'
+        ? cryptoFor(source)
+        : null;
+  const activeChainId =
+    gateway && 'chainId' in gateway
+      ? Number(gateway.chainId)
+      : Number(process.env.CRYPTO_CHAIN_ID ?? '84532');
+  const cryptoAvailable = Boolean(
+    gateway?.enabled &&
+      eligible('crypto') &&
+      accounts.some(
+        (a) => Number(a.payment_provider_id) === 3 && Number(a.details.chainId) === activeChainId,
+      ),
+  );
+  return {
+    fiat: {
+      provider: route.provider,
+      available,
+      reason: available ? null : 'The business has not enabled this payment provider.',
+    },
+    crypto: {
+      available: cryptoAvailable,
+      reason: cryptoAvailable
+        ? null
+        : 'USDC checkout needs an approved business wallet and a configured Base connection.',
+      asset: 'USDC',
+      network: 'Base',
+      chainId:
+        gateway && 'chainId' in gateway
+          ? Number(gateway.chainId)
+          : Number(process.env.CRYPTO_CHAIN_ID ?? '84532'),
+    },
+    routingPolicyVersion: PAYMENT_ROUTING_POLICY,
+    thresholdMinor: LIGHT_PAYMENT_LIMIT_MINOR,
+    existingPaymentId: existing?.payment_attempt_id ?? null,
+    mode: source.mode === 'mock' ? 'mock' : 'live',
+  };
+}
 
 export async function checkout(
   pool: Pool,
-  provider: PaymentProvider,
+  source: ProviderSource,
   actor: SessionUser,
   reservationId: string,
   publicOrigin: string,
+  input: { method: PaymentMethod; payerAddress?: string } = { method: 'FIAT' },
 ): Promise<Checkout> {
   const attempt = await transaction(pool, async (db) => {
     await one(
@@ -33,69 +130,120 @@ export async function checkout(
     const r = await reservationProjection(db, reservationId);
     if (!r) return fail(404, 'NOT_FOUND', 'Reservation not found.');
     await reservationAccess(db, actor, r);
-    if (
-      r.status !== 'HELD' ||
-      !r.holdExpiresAt ||
-      new Date(r.holdExpiresAt).getTime() - Date.now() < 60000
-    )
-      return fail(
-        409,
-        'HOLD_EXPIRED',
-        'This hold is too close to expiry for a new checkout. Request a new quote.',
-      );
+    if (r.status !== 'HELD' || !r.holdExpiresAt || Date.parse(r.holdExpiresAt) - Date.now() < 60000)
+      return fail(409, 'HOLD_EXPIRED', 'This hold is too close to expiry. Request a new quote.');
     const previous = await one(
       db,
-      'SELECT * FROM seven.payment_attempts WHERE reservation_id=$1 ORDER BY created_at DESC LIMIT 1',
+      'SELECT * FROM seven.payment_attempts WHERE reservation_id=$1 ORDER BY created_at LIMIT 1',
       [reservationId],
     );
     if (previous) {
-      if (previous.provider_details.mode !== provider.mode)
+      const savedProvider = providerCode(previous.payment_provider_id);
+      const savedMethod = savedProvider === 'crypto' ? 'USDC_BASE' : 'FIAT';
+      if (savedMethod !== input.method)
+        return fail(
+          409,
+          'PAYMENT_METHOD_LOCKED',
+          'A checkout already exists. Review it before changing the payment method.',
+        );
+      if (previous.provider_details.mode !== paymentMode(source, savedProvider))
         return fail(
           409,
           'PROVIDER_MODE_CHANGED',
-          'This checkout belongs to a different provider mode.',
+          'This checkout belongs to a different execution mode.',
         );
-      return { row: previous, dispatch: false, customer: r };
+      return { row: previous, dispatch: false, customer: r, providerId: savedProvider };
     }
+    const route = fiatPaymentRoute(r.price.totalMinor);
+    const providerId: PaymentProviderId = input.method === 'USDC_BASE' ? 'crypto' : route.provider;
+    const mode = paymentMode(source, providerId);
     const business = await one(
       db,
       `SELECT * FROM seven.businesses WHERE business_id=$1 AND workflow_state_id=${sid('APPROVED')}`,
       [r.businessId],
     );
-    if (!business?.subaccount_id || business.details.subaccountMode !== provider.mode)
+    const account = business
+      ? await one(
+          db,
+          `SELECT * FROM seven.business_payment_accounts WHERE business_id=$1 AND payment_provider_id=$2 AND workflow_state_id=${sid('APPROVED')}`,
+          [r.businessId, providerIds[providerId]],
+        )
+      : null;
+    if (!account || Number(account.execution_mode_id) !== executionModeIds[mode])
       return fail(
         409,
         'PAYMENTS_UNAVAILABLE',
-        'This business is not ready to accept checkout payments in this provider mode.',
+        'This business has not enabled the selected payment method in this execution mode.',
       );
+    if (providerId === 'crypto') {
+      const gateway = cryptoFor(source);
+      const chainId =
+        'chainId' in gateway
+          ? Number(gateway.chainId)
+          : Number(process.env.CRYPTO_CHAIN_ID ?? '84532');
+      if (Number(account.details.chainId) !== chainId)
+        return fail(
+          409,
+          'PAYMENTS_UNAVAILABLE',
+          'The business wallet needs approval for this Base network.',
+        );
+    }
     const id = randomUUID();
-    const row = await one(
+    const reference = `seven-${id}`;
+    let cryptoQuote: CryptoQuoteData | null = null;
+    if (providerId === 'crypto') {
+      if (!input.payerAddress)
+        return fail(422, 'WALLET_REQUIRED', 'Connect the wallet you will pay from.');
+      cryptoQuote = await cryptoFor(source).prepare({
+        reference,
+        amountMinor: r.price.totalMinor,
+        payerAddress: input.payerAddress,
+        recipientAddress: account.account_code,
+        expiresAt: r.holdExpiresAt,
+      });
+    }
+    const row = (await one(
       db,
-      `INSERT INTO seven.payment_attempts(payment_attempt_id,reservation_id,merchant_reference,workflow_state_id,settlement_state_id,currency_code,amount_minor,commission_minor,business_subaccount,bank_revision,provider_details) VALUES($1,$2,$3,${sid('PENDING')},${sid('UNSETTLED')},'NGN',$4,$5,$6,$7,$8) RETURNING *`,
+      `INSERT INTO seven.payment_attempts(payment_attempt_id,reservation_id,merchant_reference,workflow_state_id,settlement_state_id,currency_code,amount_minor,commission_minor,business_subaccount,bank_revision,provider_details,payment_provider_id,payment_method_id,routing_policy_version,checkout_url) VALUES($1,$2,$3,${sid('PENDING')},${sid('UNSETTLED')},'NGN',$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [
         id,
         reservationId,
-        `seven-${id}`,
+        reference,
         r.price.totalMinor,
         r.price.commissionMinor,
-        business.subaccount_id,
-        business.bank_revision,
+        account.account_code,
+        account.revision,
         {
-          mode: provider.mode,
+          mode,
           checkoutDispatched: true,
-          settlementAccount: business.details.settlementAccount ?? null,
-          settlementBankCode: business.details.settlementBankCode ?? null,
+          settlementAccount: account.details.settlementAccount ?? null,
+          settlementBankCode: account.details.settlementBankCode ?? null,
         },
+        providerIds[providerId],
+        providerId === 'crypto' ? 2 : 1,
+        route.policyVersion,
+        providerId === 'crypto' ? `/checkout/crypto/${id}` : null,
       ],
-    );
+    ))!;
+    if (cryptoQuote) {
+      await db.query(
+        'INSERT INTO seven.crypto_payment_quotes(crypto_payment_quote_id,payment_attempt_id,amount_atoms,quote_data) VALUES($1,$2,$3,$4)',
+        [randomUUID(), id, cryptoQuote.amountAtoms, cryptoQuote],
+      );
+      await db.query(
+        "UPDATE seven.reservations SET expires_at=GREATEST(expires_at,now()+interval '60 minutes'),updated_at=now() WHERE reservation_id=$1",
+        [reservationId],
+      );
+    }
     await db.query(
       `UPDATE seven.reservations SET payment_state_id=${sid('PENDING')},updated_at=now() WHERE reservation_id=$1`,
       [reservationId],
     );
     await audit(db, actor, r.businessId, 'payment.checkout_requested', id);
-    return { row: row!, dispatch: true, customer: r };
+    return { row, dispatch: providerId !== 'crypto', customer: r, providerId };
   });
-  if (attempt.dispatch) {
+  const provider = attempt.providerId === 'crypto' ? null : providerFor(source, attempt.providerId);
+  if (attempt.dispatch && provider) {
     try {
       const link =
         provider.mode === 'mock'
@@ -129,16 +277,14 @@ export async function checkout(
     }
   }
   if (!attempt.row.checkout_url)
-    return fail(
-      409,
-      'PAYMENT_PENDING',
-      'This checkout is being reconciled. Please check its status.',
-    );
+    return fail(409, 'PAYMENT_PENDING', 'This checkout is being reconciled. Check its status.');
   return {
     paymentId: attempt.row.payment_attempt_id,
     reference: attempt.row.merchant_reference,
     checkoutUrl: attempt.row.checkout_url,
-    mode: provider.mode,
+    mode: attempt.row.provider_details.mode,
+    provider: attempt.providerId,
+    method: attempt.providerId === 'crypto' ? 'USDC_BASE' : 'FIAT',
   };
 }
 
@@ -146,13 +292,29 @@ export async function applyReceipt(
   db: Connection,
   receipt: ProviderReceipt,
   actor: SessionUser | null = null,
+  providerId: PaymentProviderId = 'flutterwave',
 ): Promise<Payment> {
+  if (providerId === 'crypto')
+    await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
+      `crypto-transfer:${receipt.id.toLowerCase()}`,
+    ]);
   const p = await one(
     db,
     'SELECT * FROM seven.payment_attempts WHERE merchant_reference=$1 FOR UPDATE',
     [receipt.reference],
   );
   if (!p) return fail(404, 'PAYMENT_NOT_FOUND', 'The payment reference is not recognized.');
+  if (Number(p.payment_provider_id) !== providerIds[providerId])
+    return fail(409, 'WRONG_PROVIDER', 'The receipt belongs to another provider.');
+  if (
+    providerId === 'crypto' &&
+    (await one(
+      db,
+      'SELECT refund_id FROM seven.refunds WHERE payment_provider_id=3 AND provider_refund_id=$1',
+      [receipt.id],
+    ))
+  )
+    return fail(409, 'TRANSFER_REUSED', 'This transfer has already delivered a refund.');
   if (receipt.status !== 'successful') {
     if (!p.provider_transaction_id && receipt.status === 'failed') {
       await db.query(
@@ -168,8 +330,8 @@ export async function applyReceipt(
   }
   const existing = await one(
     db,
-    'SELECT * FROM seven.payment_attempts WHERE provider_transaction_id=$1',
-    [receipt.id],
+    'SELECT * FROM seven.payment_attempts WHERE provider_transaction_id=$1 AND payment_provider_id=$2',
+    [receipt.id, providerIds[providerId]],
   );
   if (existing) {
     const original = existing.payment_attempt_id === p.payment_attempt_id;
@@ -203,7 +365,7 @@ export async function applyReceipt(
   if (p.provider_transaction_id) {
     const duplicateId = randomUUID();
     await db.query(
-      `INSERT INTO seven.payment_attempts(payment_attempt_id,reservation_id,merchant_reference,provider_transaction_id,workflow_state_id,settlement_state_id,currency_code,amount_minor,commission_minor,business_subaccount,bank_revision,provider_details) VALUES($1,$2,$3,$4,${sid('REVIEW_REQUIRED')},${sid('UNSETTLED')},$5,$6,0,$7,$8,$9)`,
+      `INSERT INTO seven.payment_attempts(payment_attempt_id,reservation_id,merchant_reference,provider_transaction_id,workflow_state_id,settlement_state_id,currency_code,amount_minor,commission_minor,business_subaccount,bank_revision,provider_details,payment_provider_id,payment_method_id,routing_policy_version) VALUES($1,$2,$3,$4,${sid('REVIEW_REQUIRED')},${sid('UNSETTLED')},$5,$6,0,$7,$8,$9,$10,$11,$12)`,
       [
         duplicateId,
         p.reservation_id,
@@ -220,13 +382,26 @@ export async function applyReceipt(
           feeMinor: String(receipt.feeMinor),
           exception: 'Duplicate successful customer charge',
         },
+        p.payment_provider_id,
+        p.payment_method_id,
+        p.routing_policy_version,
       ],
     );
-    if (receipt.currency === 'NGN')
-      await moneyJournal(db, `receipt:${receipt.id}`, 'Duplicate customer charge requires review', [
-        { account: 'provider-clearing', amount: String(receipt.amountMinor) },
-        { account: `unallocated:${duplicateId}`, amount: String(-receipt.amountMinor) },
-      ]);
+    if (receipt.currency === 'NGN') {
+      await moneyJournal(
+        db,
+        `receipt:${providerId}:${receipt.id}`,
+        'Duplicate customer charge requires review',
+        [
+          { account: 'provider-clearing', amount: String(receipt.amountMinor) },
+          { account: `unallocated:${duplicateId}`, amount: String(-receipt.amountMinor) },
+        ],
+      );
+      await db.query(
+        'UPDATE seven.payment_attempts SET receipt_journal_reference=$2 WHERE payment_attempt_id=$1',
+        [duplicateId, `receipt:${providerId}:${receipt.id}`],
+      );
+    }
     await audit(db, actor, r.businessId, 'payment.duplicate_charge', duplicateId);
     return (await paymentProjection(db, duplicateId))!;
   }
@@ -252,16 +427,41 @@ export async function applyReceipt(
   if (receipt.currency === 'NGN') {
     const amount = BigInt(receipt.amountMinor);
     const commission = matched ? BigInt(p.commission_minor) : 0n;
-    await moneyJournal(db, `receipt:${receipt.id}`, 'Provider-verified hospitality payment', [
-      { account: 'provider-clearing', amount: amount.toString() },
-      {
-        account: matched ? `business:${r.businessId}` : `unallocated:${p.payment_attempt_id}`,
-        amount: (-amount + commission).toString(),
-      },
-      { account: 'platform-commission', amount: (-commission).toString() },
-    ]);
+    const postings =
+      providerId === 'crypto' && matched
+        ? [
+            { account: `crypto-value-delivered:${r.businessId}`, amount: amount.toString() },
+            { account: `business-direct-crypto:${r.businessId}`, amount: (-amount).toString() },
+            { account: `commission-receivable:${r.businessId}`, amount: commission.toString() },
+            { account: 'platform-commission', amount: (-commission).toString() },
+          ]
+        : [
+            { account: 'provider-clearing', amount: amount.toString() },
+            {
+              account: matched ? `business:${r.businessId}` : `unallocated:${p.payment_attempt_id}`,
+              amount: (-amount + commission).toString(),
+            },
+            { account: 'platform-commission', amount: (-commission).toString() },
+          ];
+    await moneyJournal(
+      db,
+      `receipt:${providerId}:${receipt.id}`,
+      providerId === 'crypto'
+        ? 'NGN book value of direct business USDC receipt; platform commission receivable, no platform crypto custody'
+        : 'Provider-verified hospitality payment',
+      postings,
+    );
+    await db.query(
+      'UPDATE seven.payment_attempts SET receipt_journal_reference=$2 WHERE payment_attempt_id=$1',
+      [p.payment_attempt_id, `receipt:${providerId}:${receipt.id}`],
+    );
+    if (providerId === 'crypto' && matched)
+      await db.query(
+        `UPDATE seven.payment_attempts SET settlement_state_id=${sid('SETTLED')} WHERE payment_attempt_id=$1`,
+        [p.payment_attempt_id],
+      );
     if (receipt.feeMinor)
-      await moneyJournal(db, `fee:${receipt.id}`, 'Provider fee borne by merchant', [
+      await moneyJournal(db, `fee:${providerId}:${receipt.id}`, 'Provider fee borne by merchant', [
         { account: 'provider-clearing', amount: String(-receipt.feeMinor) },
         {
           account: matched ? `business:${r.businessId}` : `unallocated:${p.payment_attempt_id}`,
@@ -286,7 +486,9 @@ export async function applyReceipt(
     r.customerId,
     valid ? 'Payment confirmed' : 'Your payment needs review',
     valid
-      ? 'Your reservation is confirmed. Bank settlement is tracked separately.'
+      ? providerId === 'crypto'
+        ? 'Your reservation is confirmed. USDC was delivered to the business wallet.'
+        : 'Your reservation is confirmed. Bank settlement is tracked separately.'
       : 'We received a payment record but could not allocate this reservation. The team must review it.',
   );
   return (await paymentProjection(db, p.payment_attempt_id))!;
@@ -294,31 +496,98 @@ export async function applyReceipt(
 
 export async function verifyPayment(
   pool: Pool,
-  provider: PaymentProvider,
+  source: ProviderSource,
   actor: SessionUser | null,
   reference: string,
   transactionId?: string,
+  walletSignature?: string,
 ): Promise<Payment> {
-  const p = await one(
-    pool,
-    'SELECT payment_attempt_id,reservation_id,provider_details FROM seven.payment_attempts WHERE merchant_reference=$1',
-    [reference],
-  );
+  const p = await one(pool, 'SELECT * FROM seven.payment_attempts WHERE merchant_reference=$1', [
+    reference,
+  ]);
   if (!p) return fail(404, 'NOT_FOUND', 'Payment not found.');
-  if (p.provider_details.mode !== provider.mode)
-    return fail(409, 'PROVIDER_MODE_CHANGED', 'This payment belongs to a different provider mode.');
-  if (actor)
-    await reservationAccess(pool, actor, (await reservationProjection(pool, p.reservation_id))!);
-  const receipt = await provider.verify(reference, transactionId);
-  if (transactionId && receipt.id !== transactionId)
+  const providerId = providerCode(p.payment_provider_id);
+  if (p.provider_details.mode !== paymentMode(source, providerId))
     return fail(
       409,
-      'PAYMENT_MISMATCH',
-      'The provider transaction identity does not match the request.',
+      'PROVIDER_MODE_CHANGED',
+      'This payment belongs to a different execution mode.',
     );
-  if (receipt.reference !== reference)
-    return fail(409, 'PAYMENT_MISMATCH', 'The provider reference does not match this checkout.');
-  return transaction(pool, (db) => applyReceipt(db, receipt, actor));
+  if (actor)
+    await reservationAccess(pool, actor, (await reservationProjection(pool, p.reservation_id))!);
+  if (providerId === 'crypto') {
+    const gateway = cryptoFor(source);
+    let quote = await one(
+      pool,
+      'SELECT * FROM seven.crypto_payment_quotes WHERE payment_attempt_id=$1',
+      [p.payment_attempt_id],
+    );
+    if (!quote) return fail(409, 'CRYPTO_QUOTE_MISSING', 'The stored crypto quote needs review.');
+    if (!quote.payer_verified_at) {
+      if (
+        !actor ||
+        !walletSignature ||
+        !(await gateway.verifySignature(quote.quote_data, walletSignature))
+      )
+        return fail(
+          403,
+          'WALLET_PROOF_REQUIRED',
+          'Sign the payment message with the quoted payer wallet.',
+        );
+      await pool.query(
+        'UPDATE seven.crypto_payment_quotes SET payer_verified_at=now(),updated_at=now() WHERE payment_attempt_id=$1 AND payer_verified_at IS NULL',
+        [p.payment_attempt_id],
+      );
+    }
+    const hash = transactionId ?? quote.transaction_hash;
+    if (!hash || !/^0x[a-fA-F0-9]{64}$/.test(hash))
+      return fail(422, 'TRANSACTION_REQUIRED', 'Supply the USDC transaction hash.');
+    await transaction(pool, async (db) => {
+      const locked = (await one(
+        db,
+        'SELECT * FROM seven.crypto_payment_quotes WHERE payment_attempt_id=$1 FOR UPDATE',
+        [p.payment_attempt_id],
+      ))!;
+      if (locked.transaction_hash && locked.transaction_hash !== hash.toLowerCase())
+        return fail(
+          409,
+          'TRANSACTION_LOCKED',
+          'A different transaction is already being checked. Do not send another payment.',
+        );
+      await db.query(
+        'UPDATE seven.crypto_payment_quotes SET transaction_hash=$2,updated_at=now() WHERE payment_attempt_id=$1 AND transaction_hash IS NULL',
+        [p.payment_attempt_id, hash.toLowerCase()],
+      );
+    });
+    const evidence = await gateway.verify(quote.quote_data, hash.toLowerCase());
+    return transaction(pool, async (db) => {
+      await db.query(
+        'UPDATE seven.crypto_payment_quotes SET transfer_evidence=$2,updated_at=now() WHERE payment_attempt_id=$1',
+        [p.payment_attempt_id, evidence],
+      );
+      if (evidence.status === 'pending')
+        return (await paymentProjection(db, p.payment_attempt_id))!;
+      const matched = evidence.status === 'successful';
+      return applyReceipt(
+        db,
+        {
+          id: `${quote.quote_data.chainId}:${hash.toLowerCase()}`,
+          reference,
+          status: 'successful',
+          currency: matched ? 'NGN' : 'USDC',
+          amountMinor: matched ? Number(p.amount_minor) : 0,
+          feeMinor: 0,
+        },
+        actor,
+        'crypto',
+      );
+    });
+  }
+  const provider = providerFor(source, providerId);
+  const receipt = await provider.verify(reference, transactionId);
+  if ((transactionId && receipt.id !== transactionId) || receipt.reference !== reference)
+    return fail(409, 'PAYMENT_MISMATCH', 'The verified transaction does not match this checkout.');
+  return transaction(pool, (db) => applyReceipt(db, receipt, actor, providerId));
 }
 
 async function applyRefund(
@@ -334,6 +603,8 @@ async function applyRefund(
   if (!refund) throw new Error('Refund intent not found.');
   if (refund.workflow_state_code === 'DELIVERED') {
     if (
+      result.id !== refund.provider_refund_id ||
+      result.amountMinor !== Number(refund.amount_minor) ||
       ![
         'completed-bank-transfer',
         'completed-momo',
@@ -348,7 +619,7 @@ async function applyRefund(
           refundId,
           JSON.stringify({
             exception:
-              'A later provider observation contradicts confirmed refund delivery. Review without repeating the refund.',
+              'A later provider observation contradicts the confirmed refund identity, amount or delivery status. Review without repeating the refund.',
           }),
         ],
       );
@@ -392,7 +663,7 @@ async function applyRefund(
   const originalPostings = await rows(
     db,
     'SELECT mp.account_code,mp.amount_minor FROM seven.money_postings mp JOIN seven.money_journals j USING(money_journal_id) WHERE j.source_reference=$1',
-    [`receipt:${p.provider_transaction_id}`],
+    [p.receipt_journal_reference ?? `receipt:${p.provider_transaction_id}`],
   );
   if (!originalPostings.length)
     return fail(
@@ -437,7 +708,7 @@ async function applyRefund(
 
 export async function requestRefund(
   pool: Pool,
-  provider: PaymentProvider,
+  source: ProviderSource,
   actor: SessionUser,
   reservationId: string,
   reason: string,
@@ -469,7 +740,7 @@ export async function requestRefund(
       );
     if (!p?.provider_transaction_id)
       return fail(409, 'PAYMENT_UNVERIFIED', 'There is no verified provider charge to refund.');
-    if (p.provider_details.mode !== provider.mode)
+    if (p.provider_details.mode !== paymentMode(source, providerCode(p.payment_provider_id)))
       return fail(
         409,
         'PROVIDER_MODE_CHANGED',
@@ -496,13 +767,14 @@ export async function requestRefund(
     const id = randomUUID();
     const refund = (await one(
       db,
-      `INSERT INTO seven.refunds(refund_id,payment_attempt_id,amount_minor,workflow_state_id,reason,operation_reference) VALUES($1,$2,$3,${sid('DISPATCHED')},$4,$5) RETURNING *`,
+      `INSERT INTO seven.refunds(refund_id,payment_attempt_id,amount_minor,workflow_state_id,reason,operation_reference,payment_provider_id) VALUES($1,$2,$3,${sid('DISPATCHED')},$4,$5,$6) RETURNING *`,
       [
         id,
         p.payment_attempt_id,
         p.provider_details.actualAmountMinor ?? p.amount_minor,
         reason,
         `refund:${p.payment_attempt_id}`,
+        p.payment_provider_id,
       ],
     ))!;
     await db.query(
@@ -517,8 +789,29 @@ export async function requestRefund(
     await audit(db, actor, r.businessId, 'refund.dispatched', id, reason);
     return { refund, payment: p, dispatch: true };
   });
+  if (providerCode(intent.payment.payment_provider_id) === 'crypto') {
+    if (intent.dispatch) {
+      const quote = (await one(
+        pool,
+        'SELECT amount_atoms FROM seven.crypto_payment_quotes WHERE payment_attempt_id=$1',
+        [intent.payment.payment_attempt_id],
+      ))!;
+      await pool.query(
+        `UPDATE seven.refunds SET workflow_state_id=${sid('REQUESTED')},provider_details=provider_details||$2::jsonb,updated_at=now() WHERE refund_id=$1`,
+        [
+          intent.refund.refund_id,
+          {
+            cryptoAmountAtoms: quote.amount_atoms,
+            deliveryKind: 'MERCHANT_WALLET_RETURN_REQUIRED',
+          },
+        ],
+      );
+    }
+    return (await paymentProjection(pool, intent.payment.payment_attempt_id))!;
+  }
   if (intent.dispatch) {
     try {
+      const provider = providerFor(source, providerCode(intent.payment.payment_provider_id));
       const result = await provider.refund(
         intent.payment.provider_transaction_id,
         Number(intent.refund.amount_minor),
@@ -538,21 +831,172 @@ export async function requestRefund(
   return (await paymentProjection(pool, intent.payment.payment_attempt_id))!;
 }
 
+export async function verifyCryptoRefund(
+  pool: Pool,
+  source: ProviderSource,
+  actor: SessionUser | null,
+  paymentId: string,
+  hash?: string,
+  simulate = false,
+): Promise<Payment> {
+  const payment = await one(
+    pool,
+    'SELECT * FROM seven.payment_attempts WHERE payment_attempt_id=$1',
+    [paymentId],
+  );
+  if (!payment || providerCode(payment.payment_provider_id) !== 'crypto')
+    return fail(404, 'NOT_FOUND', 'Crypto payment not found.');
+  if (payment.provider_details.mode !== paymentMode(source, 'crypto'))
+    return fail(
+      409,
+      'PROVIDER_MODE_CHANGED',
+      'This payment belongs to a different execution mode.',
+    );
+  const reservation = (await reservationProjection(pool, payment.reservation_id))!;
+  if (actor) requireTenant(actor, reservation.businessId, true);
+  const refund = await one(
+    pool,
+    'SELECT f.*,s.workflow_state_code FROM seven.refunds f JOIN seven.workflow_states s USING(workflow_state_id) WHERE payment_attempt_id=$1 ORDER BY created_at LIMIT 1',
+    [paymentId],
+  );
+  if (!refund)
+    return fail(
+      409,
+      'REFUND_NOT_REQUESTED',
+      'Request the refund before supplying a wallet return transfer.',
+    );
+  if (refund.workflow_state_code === 'DELIVERED')
+    return (await paymentProjection(pool, paymentId))!;
+  const original = (await one(
+    pool,
+    'SELECT * FROM seven.crypto_payment_quotes WHERE payment_attempt_id=$1',
+    [paymentId],
+  ))!;
+  const quote: CryptoQuoteData = {
+    ...original.quote_data,
+    reference: refund.operation_reference,
+    payerAddress: original.quote_data.recipientAddress,
+    recipientAddress: original.quote_data.payerAddress,
+    createdAt: new Date(refund.created_at).toISOString(),
+    expiresAt: new Date(new Date(refund.created_at).getTime() + 30 * 86400000).toISOString(),
+    message: '',
+  };
+  const gateway = cryptoFor(source);
+  if (simulate) {
+    const { MockCryptoGateway } = await import('./cryptoProvider.ts');
+    if (
+      !actor ||
+      !(gateway instanceof MockCryptoGateway) ||
+      source.mode !== 'mock' ||
+      process.env.NODE_ENV === 'production'
+    )
+      return fail(404, 'NOT_FOUND', 'Local test refund is unavailable.');
+    hash = gateway.completeReturn(quote, hash);
+  }
+  const candidate = hash ?? refund.provider_details.pendingHash;
+  if (!candidate || !/^0x[a-fA-F0-9]{64}$/.test(candidate))
+    return fail(422, 'TRANSACTION_REQUIRED', 'Supply the business wallet refund transaction hash.');
+  await transaction(pool, async (db) => {
+    const locked = (await one(db, 'SELECT * FROM seven.refunds WHERE refund_id=$1 FOR UPDATE', [
+      refund.refund_id,
+    ]))!;
+    if (
+      locked.provider_details.pendingHash &&
+      locked.provider_details.pendingHash !== candidate.toLowerCase()
+    )
+      return fail(
+        409,
+        'TRANSACTION_LOCKED',
+        'A return transfer is already being checked. Do not send another refund.',
+      );
+    await db.query(
+      'UPDATE seven.refunds SET provider_details=provider_details||$2::jsonb,updated_at=now() WHERE refund_id=$1',
+      [refund.refund_id, { pendingHash: candidate.toLowerCase() }],
+    );
+  });
+  const evidence = await gateway.verifyReturn(quote, candidate.toLowerCase());
+  await transaction(pool, async (db) => {
+    await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
+      `crypto-transfer:${quote.chainId}:${candidate.toLowerCase()}`,
+    ]);
+    const locked = (await one(
+      db,
+      'SELECT f.*,s.workflow_state_code FROM seven.refunds f JOIN seven.workflow_states s USING(workflow_state_id) WHERE refund_id=$1 FOR UPDATE OF f',
+      [refund.refund_id],
+    ))!;
+    if (locked.workflow_state_code === 'DELIVERED') return;
+    await db.query(
+      'UPDATE seven.refunds SET provider_details=provider_details||$2::jsonb,updated_at=now() WHERE refund_id=$1',
+      [refund.refund_id, { cryptoEvidence: evidence }],
+    );
+    if (evidence.status === 'pending') return;
+    if (evidence.status !== 'successful') {
+      await db.query(
+        `UPDATE seven.refunds SET workflow_state_id=${sid('UNKNOWN')},provider_details=provider_details||$2::jsonb WHERE refund_id=$1`,
+        [
+          refund.refund_id,
+          { exception: evidence.exception ?? 'The wallet return requires review.' },
+        ],
+      );
+      return;
+    }
+    const identity = `${quote.chainId}:${candidate.toLowerCase()}`;
+    if (
+      await one(
+        db,
+        'SELECT payment_attempt_id FROM seven.payment_attempts WHERE payment_provider_id=3 AND provider_transaction_id=$1',
+        [identity],
+      )
+    )
+      return fail(409, 'TRANSFER_REUSED', 'This transfer has already funded a payment.');
+    await db.query(
+      'INSERT INTO seven.crypto_refund_proofs(crypto_refund_proof_id,refund_id,amount_atoms,recipient_address,transaction_hash,transfer_evidence) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(refund_id) DO NOTHING',
+      [
+        randomUUID(),
+        refund.refund_id,
+        quote.amountAtoms,
+        quote.recipientAddress,
+        candidate.toLowerCase(),
+        evidence,
+      ],
+    );
+    await applyRefund(db, refund.refund_id, {
+      id: identity,
+      status: 'completed-offline',
+      amountMinor: Number(refund.amount_minor),
+    });
+    await audit(
+      db,
+      actor,
+      reservation.businessId,
+      'refund.crypto_return_verified',
+      refund.refund_id,
+    );
+  });
+  return (await paymentProjection(pool, paymentId))!;
+}
+
 export async function reconcile(
   pool: Pool,
-  provider: PaymentProvider,
+  source: ProviderSource,
 ): Promise<{ processed: number; pending: number; exceptions: number }> {
   let processed = 0;
   let exceptions = 0;
   const pending = await rows(
     pool,
-    `SELECT p.* FROM seven.payment_attempts p WHERE workflow_state_id IN (${sid('PENDING')},${sid('UNKNOWN')}) ORDER BY created_at LIMIT 25`,
+    `SELECT p.* FROM seven.payment_attempts p WHERE workflow_state_id IN (${sid('PENDING')},${sid('UNKNOWN')}) AND (p.payment_provider_id<>3 OR EXISTS(SELECT 1 FROM seven.crypto_payment_quotes q WHERE q.payment_attempt_id=p.payment_attempt_id AND q.payer_verified_at IS NOT NULL AND q.transaction_hash IS NOT NULL)) AND coalesce((provider_details->>'verificationChecks')::integer,0)<120 AND coalesce((provider_details->>'nextVerificationAt')::timestamptz,now())<=now() ORDER BY created_at LIMIT 25`,
   );
   for (const p of pending) {
+    const claimed = await one(
+      pool,
+      `UPDATE seven.payment_attempts SET provider_details=provider_details||jsonb_build_object('verificationChecks',coalesce((provider_details->>'verificationChecks')::integer,0)+1,'nextVerificationAt',now()+interval '30 seconds') WHERE payment_attempt_id=$1 AND coalesce((provider_details->>'nextVerificationAt')::timestamptz,now())<=now() RETURNING payment_attempt_id`,
+      [p.payment_attempt_id],
+    );
+    if (!claimed) continue;
     try {
       await verifyPayment(
         pool,
-        provider,
+        source,
         null,
         p.merchant_reference,
         p.provider_transaction_id ?? undefined,
@@ -564,27 +1008,74 @@ export async function reconcile(
   }
   const refunds = await rows(
     pool,
-    `SELECT * FROM seven.refunds WHERE workflow_state_id IN (${sid('INITIATED')},${sid('UNKNOWN')}) ORDER BY created_at LIMIT 25`,
+    `SELECT * FROM seven.refunds WHERE workflow_state_id IN (${sid('REQUESTED')},${sid('INITIATED')},${sid('UNKNOWN')},${sid('DISPATCHED')}) AND (workflow_state_id<>${sid('DISPATCHED')} OR created_at<now()-interval '2 minutes') AND coalesce((provider_details->>'recoveryChecks')::integer,0)<120 AND coalesce((provider_details->>'nextRecoveryAt')::timestamptz,now())<=now() ORDER BY created_at LIMIT 25`,
   );
   for (const r of refunds) {
-    if (!r.provider_refund_id) {
-      exceptions++;
+    if (Number(r.payment_provider_id) === 3 && !r.provider_details.pendingHash) continue;
+    const claimed = await one(
+      pool,
+      `UPDATE seven.refunds SET provider_details=provider_details||jsonb_build_object('recoveryChecks',coalesce((provider_details->>'recoveryChecks')::integer,0)+1,'nextRecoveryAt',now()+interval '30 seconds') WHERE refund_id=$1 AND coalesce((provider_details->>'nextRecoveryAt')::timestamptz,now())<=now() RETURNING refund_id`,
+      [r.refund_id],
+    );
+    if (!claimed) continue;
+    if (providerCode(r.payment_provider_id) === 'crypto') {
+      if (r.provider_details.pendingHash) {
+        try {
+          await verifyCryptoRefund(pool, source, null, r.payment_attempt_id);
+          processed++;
+        } catch {
+          exceptions++;
+        }
+      }
       continue;
     }
     try {
-      const result = await provider.refundStatus(r.provider_refund_id);
-      await transaction(pool, (db) => applyRefund(db, r.refund_id, result));
-      processed++;
+      const adapter = providerFor(source, providerCode(r.payment_provider_id));
+      let result: ProviderRefund | null;
+      if (r.provider_refund_id) result = await adapter.refundStatus(r.provider_refund_id);
+      else {
+        const payment = await one(
+          pool,
+          'SELECT provider_transaction_id FROM seven.payment_attempts WHERE payment_attempt_id=$1',
+          [r.payment_attempt_id],
+        );
+        result =
+          payment?.provider_transaction_id && adapter.findRefund
+            ? await adapter.findRefund(payment.provider_transaction_id, Number(r.amount_minor))
+            : null;
+      }
+      if (result) {
+        await transaction(pool, (db) => applyRefund(db, r.refund_id, result));
+        processed++;
+      } else exceptions++;
     } catch {
       exceptions++;
     }
   }
-  const settlement = await reconcileSettlements(pool, provider);
+  await pool.query(
+    `UPDATE seven.payment_attempts SET workflow_state_id=${sid('UNKNOWN')},provider_details=provider_details||jsonb_build_object('recoveryException','Payment verification limit reached. Review the saved transaction before any new payment.','verificationExhaustedAt',now()),updated_at=now() WHERE workflow_state_id IN (${sid('PENDING')},${sid('UNKNOWN')}) AND coalesce((provider_details->>'verificationChecks')::integer,0)>=120 AND NOT(provider_details ? 'verificationExhaustedAt')`,
+  );
+  await pool.query(
+    `UPDATE seven.refunds SET workflow_state_id=${sid('UNKNOWN')},provider_details=provider_details||jsonb_build_object('recoveryException','Refund verification limit reached. Review the existing return before any new refund.','recoveryExhaustedAt',now()),updated_at=now() WHERE workflow_state_id IN (${sid('REQUESTED')},${sid('INITIATED')},${sid('UNKNOWN')},${sid('DISPATCHED')}) AND coalesce((provider_details->>'recoveryChecks')::integer,0)>=120 AND NOT(provider_details ? 'recoveryExhaustedAt')`,
+  );
+  const settlement =
+    source instanceof ProviderRegistry
+      ? await reconcileSettlements(
+          pool,
+          source.adapters.flutterwave ?? new (await import('./provider.ts')).MockProvider(),
+        )
+      : await reconcileSettlements(pool, source);
   processed += settlement.processed;
   exceptions += settlement.exceptions;
+  const paystackSettlement = await reconcilePaystackSettlements(pool, source);
+  processed += paystackSettlement.processed;
+  exceptions += paystackSettlement.exceptions;
   return {
     processed,
-    pending: Math.max(0, pending.length + refunds.length - processed) + settlement.pending,
+    pending:
+      Math.max(0, pending.length + refunds.length - processed) +
+      settlement.pending +
+      paystackSettlement.pending,
     exceptions,
   };
 }
@@ -594,7 +1085,7 @@ export async function reconcileSettlements(
   pool: Pool,
   provider: PaymentProvider,
 ): Promise<{ processed: number; pending: number; exceptions: number }> {
-  if (provider.mode === 'mock') return { processed: 0, pending: 0, exceptions: 0 };
+  if (provider.mode !== 'flutterwave') return { processed: 0, pending: 0, exceptions: 0 };
   const attempts = await rows(
     pool,
     `SELECT p.*,r.business_id FROM seven.payment_attempts p JOIN seven.reservations r USING(reservation_id) WHERE p.workflow_state_id=${sid('PAID')} AND p.provider_details->>'mode'=$1 AND p.settlement_state_id<>${sid('SETTLED')} AND p.settlement_checks<12 AND p.next_settlement_check_at<=now() ORDER BY p.created_at LIMIT 25`,

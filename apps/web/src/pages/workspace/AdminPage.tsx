@@ -1,5 +1,5 @@
 import { useFeedback } from '../../components/Feedback.tsx';
-import type { AdminOverview, Business, Payment } from '@7even/contracts';
+import type { AdminOverview, Business, BusinessPaymentAccount, Payment } from '@7even/contracts';
 import { Check, RefreshCw, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -13,6 +13,7 @@ import {
 } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
+import { CryptoRefundDialog } from './CryptoRefundDialog.tsx';
 import {
   ActivityList,
   dateLabel,
@@ -25,6 +26,7 @@ type Tab = 'overview' | 'businesses' | 'payments' | 'policy' | 'audit';
 type Editor =
   | { kind: 'status'; business: Business; status: 'APPROVED' | 'SUSPENDED' }
   | { kind: 'subaccount'; business: Business }
+  | { kind: 'cryptoWallet'; business: Business; account: BusinessPaymentAccount }
   | { kind: 'policy' };
 const titles: Record<Tab, string> = {
   overview: 'Keep the whole picture.',
@@ -41,6 +43,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [command, setCommand] = useState<ReservationCommand | null>(null);
+  const [cryptoRefundId, setCryptoRefundId] = useState<string | null>(null);
   async function reconcile() {
     setReconciling(true);
     setActionError(null);
@@ -60,6 +63,10 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
     }
   }
   function refund(payment: Payment) {
+    if (payment.crypto?.refund) {
+      setCryptoRefundId(payment.id);
+      return;
+    }
     const reservation = data?.reservations.find((item) => item.id === payment.reservationId);
     if (reservation) setCommand({ reservation, action: 'REFUND', paymentId: payment.id });
     else setActionError('Load the reservation before requesting its refund.');
@@ -71,7 +78,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
         title={titles[tab]}
         description={
           tab === 'payments'
-            ? 'Verified receipts, processing fees and bank settlement are recorded separately.'
+            ? 'Verified receipts, processing fees, bank settlement and wallet delivery are recorded separately.'
             : undefined
         }
         actions={
@@ -184,6 +191,38 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
                           ? `Bank mapping: ${b.accountLabel}`
                           : 'No verified bank subaccount.'}
                       </p>
+                      {(b.paymentAccounts ?? []).map((account) => (
+                        <div className="admin-payment-account" key={account.id}>
+                          <p>
+                            <strong>
+                              {account.provider === 'crypto'
+                                ? 'USDC business wallet'
+                                : account.provider === 'paystack'
+                                  ? 'Paystack'
+                                  : 'Flutterwave'}
+                            </strong>{' '}
+                            · <StatusBadge status={account.status} />{' '}
+                            {account.mode === 'mock' && <span className="tag">Local test</span>}
+                          </p>
+                          <code className="crypto-address">{account.accountCode}</code>
+                          {account.provider === 'crypto' && account.status === 'PENDING' && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-small"
+                              onClick={() =>
+                                setEditor({ kind: 'cryptoWallet', business: b, account })
+                              }
+                            >
+                              Review wallet ownership
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {b.cryptoCommissionOwedMinor && (
+                        <p>
+                          USDC commission owed: <Money minor={b.cryptoCommissionOwedMinor} />
+                        </p>
+                      )}
                       <div className="row-actions">
                         {b.status !== 'APPROVED' ? (
                           <button
@@ -240,7 +279,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
                       <th>7even</th>
                       <th>Provider fee</th>
                       <th>Business expected</th>
-                      <th>Payment / settlement</th>
+                      <th>Payment / delivery</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -256,8 +295,15 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
                             <strong>{p.reference}</strong>
                             <small>
                               {p.mode === 'mock'
-                                ? 'Local test provider'
-                                : (p.providerTransactionId ?? 'Provider ID pending')}
+                                ? `Local test · ${p.provider === 'paystack' ? 'Paystack' : p.provider === 'crypto' ? 'USDC on Base' : 'Flutterwave'}`
+                                : p.provider === 'crypto'
+                                  ? 'USDC on Base'
+                                  : p.provider === 'paystack'
+                                    ? 'Paystack'
+                                    : 'Flutterwave'}
+                            </small>
+                            <small className="crypto-address">
+                              {p.providerTransactionId ?? 'Provider ID pending'}
                             </small>
                             <small>{dateLabel(p.createdAt)}</small>
                           </td>
@@ -266,6 +312,11 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
                           </td>
                           <td>
                             <Money minor={p.commissionMinor} />
+                            {p.provider === 'crypto' && (
+                              <small>
+                                Owed: <Money minor={p.commissionOwedMinor} />
+                              </small>
+                            )}
                           </td>
                           <td>
                             {p.feeMinor === null ? 'Not confirmed' : <Money minor={p.feeMinor} />}
@@ -276,15 +327,20 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
                           <td>
                             <StatusBadge status={p.status} />
                             <small>
+                              {p.settlementKind === 'WALLET'
+                                ? 'Wallet delivery: '
+                                : 'Bank settlement: '}
                               <StatusBadge status={p.settlementStatus} />
                             </small>
-                            {['PAID', 'REVIEW_REQUIRED'].includes(p.status) && (
+                            {['PAID', 'REVIEW_REQUIRED', 'REFUND_PENDING'].includes(p.status) && (
                               <button
                                 type="button"
                                 className="text-button"
                                 onClick={() => refund(p)}
                               >
-                                Review refund
+                                {p.status === 'REFUND_PENDING'
+                                  ? 'Continue refund'
+                                  : 'Review refund'}
                               </button>
                             )}
                           </td>
@@ -295,7 +351,8 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
               </div>
               <p className="small-copy">
                 Expected business amount is an accounting allocation. Marking a payment successful
-                does not mark it bank settled. Reconciliation requires matching provider evidence.
+                does not prove bank or wallet delivery. Direct-wallet commission is owed by the
+                business, not collected cash. Reconciliation requires matching provider evidence.
               </p>
             </>
           )}
@@ -356,6 +413,13 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
           onDone={reload}
         />
       )}
+      {cryptoRefundId && (
+        <CryptoRefundDialog
+          paymentId={cryptoRefundId}
+          onClose={() => setCryptoRefundId(null)}
+          onDone={reload}
+        />
+      )}
     </>
   );
 }
@@ -390,6 +454,7 @@ function AdminEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [key] = useState(crypto.randomUUID());
+  const [provider, setProvider] = useState<'flutterwave' | 'paystack'>('flutterwave');
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
@@ -407,7 +472,21 @@ function AdminEditor({
         await api(`/admin/businesses/${editor.business.id}/subaccount`, {
           method: 'POST',
           idempotencyKey: key,
-          body: { subaccountCode: get('subaccountCode'), accountLabel: get('accountLabel') },
+          body: {
+            provider,
+            subaccountCode: get('subaccountCode'),
+            accountLabel: get('accountLabel'),
+          },
+        });
+      else if (editor.kind === 'cryptoWallet')
+        await api(`/admin/businesses/${editor.business.id}/crypto-wallet/approve`, {
+          method: 'POST',
+          idempotencyKey: key,
+          body: {
+            expectedRevision: editor.account.revision,
+            approved: get('decision') === 'APPROVE',
+            reason: get('reason'),
+          },
         });
       else
         await api('/admin/policy', {
@@ -436,7 +515,9 @@ function AdminEditor({
           ? `${editor.status === 'APPROVED' ? 'Approve' : 'Suspend'} ${editor.business.businessName}?`
           : editor.kind === 'subaccount'
             ? 'Set verified bank mapping'
-            : 'Publish a new earning policy'
+            : editor.kind === 'cryptoWallet'
+              ? 'Review this business wallet'
+              : 'Publish a new earning policy'
       }
       onClose={onClose}
       busy={busy}
@@ -459,15 +540,27 @@ function AdminEditor({
         {editor.kind === 'subaccount' && (
           <>
             <p className="notice">
-              The server checks the Flutterwave subaccount before activating live checkout. Confirm
-              the business bank details through your onboarding process.
+              The server checks the selected provider’s subaccount before activating live checkout.
+              Confirm the business bank details through your onboarding process.
             </p>
-            <Field label="Flutterwave subaccount code">
+            <Field label="Payment provider">
+              <select
+                value={provider}
+                onChange={(event) => setProvider(event.target.value as 'flutterwave' | 'paystack')}
+              >
+                <option value="flutterwave">Flutterwave · above ₦50,000</option>
+                <option value="paystack">Paystack · ₦50,000 and below</option>
+              </select>
+            </Field>
+            <Field
+              label={`${provider === 'paystack' ? 'Paystack' : 'Flutterwave'} subaccount code`}
+            >
               <input
+                key={provider}
                 name="subaccountCode"
-                placeholder="RS_…"
+                placeholder={provider === 'paystack' ? 'ACCT_…' : 'RS_…'}
                 required
-                pattern="RS_[A-Za-z0-9_]+"
+                pattern={provider === 'paystack' ? 'ACCT_[A-Za-z0-9_]+' : 'RS_[A-Za-z0-9_]+'}
                 maxLength={100}
               />
             </Field>
@@ -479,6 +572,26 @@ function AdminEditor({
                 maxLength={100}
                 defaultValue={editor.business.accountLabel ?? ''}
               />
+            </Field>
+          </>
+        )}
+        {editor.kind === 'cryptoWallet' && (
+          <>
+            <p>{editor.business.businessName}</p>
+            <code className="crypto-address">{editor.account.accountCode}</code>
+            <p className="small-copy">
+              The business signed its ownership message. Review its business identity and approved
+              destination before enabling direct USDC payment. Existing quotes keep their original
+              destination.
+            </p>
+            <Field label="Decision">
+              <select name="decision" required>
+                <option value="APPROVE">Approve this wallet</option>
+                <option value="REJECT">Reject this wallet</option>
+              </select>
+            </Field>
+            <Field label="Review reason">
+              <textarea name="reason" minLength={5} maxLength={500} required />
             </Field>
           </>
         )}

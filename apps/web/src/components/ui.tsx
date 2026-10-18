@@ -11,6 +11,7 @@ import {
   useRef,
   type ReactElement,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 export function PageHeader({
@@ -116,11 +117,13 @@ export function Modal({
   children,
   onClose,
   busy = false,
+  returnFocusRef,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   busy?: boolean;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -130,10 +133,11 @@ export function Modal({
     return () => {
       dialog?.close();
       queueMicrotask(() => {
-        if (opener?.isConnected && !opener.hasAttribute('disabled')) opener.focus();
+        const target = returnFocusRef?.current ?? opener;
+        if (target?.isConnected && !target.hasAttribute('disabled')) target.focus();
       });
     };
-  }, []);
+  }, [returnFocusRef]);
   return (
     <dialog
       ref={ref}

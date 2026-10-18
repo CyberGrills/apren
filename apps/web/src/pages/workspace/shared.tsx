@@ -1,8 +1,9 @@
 import { useFeedback } from '../../components/Feedback.tsx';
-import type { Activity, Metrics, Reservation } from '@7even/contracts';
+import type { Activity, Metrics, Payment, Reservation } from '@7even/contracts';
 import { useState } from 'react';
 import { ErrorNotice, Field, Metric, Modal, Money, StatusBadge } from '../../components/ui.tsx';
 import { api } from '../../lib/api.ts';
+import { CryptoRefundDialog } from './CryptoRefundDialog.tsx';
 export function dateLabel(value: string | null) {
   if (!value) return 'No date';
   return new Intl.DateTimeFormat('en-NG', {
@@ -23,7 +24,7 @@ export function MetricsStrip({ metrics, admin = false }: { metrics: Metrics; adm
       <Metric
         label="Verified payments"
         value={<Money minor={metrics.grossMinor} />}
-        note="Payment success is separate from bank settlement"
+        note="Payment success is separate from bank or wallet delivery"
       />
       <Metric
         label={admin ? '7even commission' : 'Arrivals today'}
@@ -152,15 +153,16 @@ export function ReservationTable({
                         Cancel
                       </button>
                     )}
-                    {showRefund && ['PAID', 'REVIEW_REQUIRED'].includes(r.paymentStatus) && (
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() => onAction({ reservation: r, action: 'REFUND' })}
-                      >
-                        Refund
-                      </button>
-                    )}
+                    {showRefund &&
+                      ['PAID', 'REVIEW_REQUIRED', 'REFUND_PENDING'].includes(r.paymentStatus) && (
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => onAction({ reservation: r, action: 'REFUND' })}
+                        >
+                          {r.paymentStatus === 'REFUND_PENDING' ? 'Continue refund' : 'Refund'}
+                        </button>
+                      )}
                   </div>
                 )}
               </td>
@@ -189,6 +191,7 @@ export function ReservationActionDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [key] = useState(crypto.randomUUID());
+  const [cryptoRefundId, setCryptoRefundId] = useState<string | null>(null);
   const { reservation: r, action } = command;
   const title =
     action === 'CHECK_IN'
@@ -205,15 +208,24 @@ export function ReservationActionDialog({
     const reason = String(new FormData(event.currentTarget).get('reason') ?? '');
     try {
       if (execute) await execute(command, reason, key);
-      else
-        await api(`/reservations/${r.id}/${action === 'REFUND' ? 'refunds' : 'actions'}`, {
-          method: 'POST',
-          idempotencyKey: key,
-          body:
-            action === 'REFUND'
-              ? { reason, ...(command.paymentId ? { paymentId: command.paymentId } : {}) }
-              : { action, expectedRevision: r.revision, ...(reason ? { reason } : {}) },
-        });
+      else {
+        const result = await api<Payment | Reservation>(
+          `/reservations/${r.id}/${action === 'REFUND' ? 'refunds' : 'actions'}`,
+          {
+            method: 'POST',
+            idempotencyKey: key,
+            body:
+              action === 'REFUND'
+                ? { reason, ...(command.paymentId ? { paymentId: command.paymentId } : {}) }
+                : { action, expectedRevision: r.revision, ...(reason ? { reason } : {}) },
+          },
+        );
+        if (action === 'REFUND' && 'crypto' in result && result.crypto?.refund) {
+          setCryptoRefundId(result.id);
+          onDone();
+          return;
+        }
+      }
       showSuccess(
         action === 'REFUND'
           ? 'The refund request has been recorded. The payment record shows its provider status.'
@@ -230,6 +242,8 @@ export function ReservationActionDialog({
       setBusy(false);
     }
   }
+  if (cryptoRefundId)
+    return <CryptoRefundDialog paymentId={cryptoRefundId} onClose={onClose} onDone={onDone} />;
   return (
     <Modal title={title} onClose={onClose} busy={busy}>
       <p>
@@ -247,7 +261,8 @@ export function ReservationActionDialog({
       {action === 'REFUND' && (
         <p className="notice">
           The server will check eligibility and the provider response. A request does not mean that
-          the bank has delivered the refund. Uncertain requests remain under review.
+          the bank or business wallet has delivered the refund. Uncertain requests remain under
+          review.
         </p>
       )}
       <form className="form-stack" onSubmit={submit}>

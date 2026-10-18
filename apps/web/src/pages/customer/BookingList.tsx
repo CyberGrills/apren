@@ -1,7 +1,8 @@
-import type { Checkout, Reservation } from '@7even/contracts';
+import type { Reservation } from '@7even/contracts';
 import { ArrowUpRight, CalendarDays } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { PaymentMethodDialog } from '../../components/PaymentMethodDialog.tsx';
 import {
   EmptyState,
   ErrorNotice,
@@ -13,7 +14,6 @@ import {
 } from '../../components/ui.tsx';
 import { api, ApiError } from '../../lib/api.ts';
 import { friendlyDate } from '../public/PublicShell.tsx';
-import { openCheckout } from './checkout.ts';
 
 export function BookingList({
   reservations,
@@ -23,7 +23,7 @@ export function BookingList({
   reload: () => void;
 }) {
   const { showSuccess } = useFeedback();
-  const navigate = useNavigate();
+  const [paying, setPaying] = useState<Reservation | null>(null);
   const [cancel, setCancel] = useState<Reservation | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [reason, setReason] = useState('');
@@ -32,25 +32,6 @@ export function BookingList({
   function key(action: string) {
     attempt.current[action] ??= crypto.randomUUID();
     return attempt.current[action];
-  }
-  async function pay(reservation: Reservation) {
-    setError(null);
-    setBusy(reservation.id);
-    try {
-      const checkout = await api<Checkout>(`/reservations/${reservation.id}/checkout`, {
-        method: 'POST',
-        idempotencyKey: key(`checkout:${reservation.id}`),
-      });
-      openCheckout(checkout, navigate);
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : 'We could not open payment. Check this booking before trying again.',
-      );
-    } finally {
-      setBusy(null);
-    }
   }
   async function cancelBooking(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -149,7 +130,7 @@ export function BookingList({
                   </dd>
                 </div>
                 <div>
-                  <dt>Settlement</dt>
+                  <dt>Payment delivery</dt>
                   <dd>
                     <StatusBadge status={reservation.settlementStatus} />
                   </dd>
@@ -176,7 +157,7 @@ export function BookingList({
                       type="button"
                       className="btn btn-primary"
                       disabled={busy === reservation.id}
-                      onClick={() => pay(reservation)}
+                      onClick={() => setPaying(reservation)}
                     >
                       {busy === reservation.id ? 'Opening payment…' : 'Continue to payment'}
                     </button>
@@ -202,6 +183,7 @@ export function BookingList({
           </article>
         ))}
       </div>
+      {paying && <PaymentMethodDialog reservation={paying} onClose={() => setPaying(null)} />}
       {cancel && (
         <Modal
           title="Cancel this booking?"

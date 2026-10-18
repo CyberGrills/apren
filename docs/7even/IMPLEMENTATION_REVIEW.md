@@ -1,5 +1,11 @@
 # 7even implementation review
 
+## 18 October 2026 payment feature addendum
+
+The current worktree adds Paystack for fiat totals at or below ₦50,000, Flutterwave above that boundary, and native USDC delivered directly to an approved business wallet. Direct-wallet commission is an NGN receivable. The feature includes customer, reception, business and admin UI, provider-scoped financial identities, migration 009, verified merchant returns and bounded recovery. See [payment verification](PAYMENT_VERIFICATION.md) for current evidence and release limits; the historical tables below retain their original dates and results.
+
+The earlier package-download blocker is resolved. Nodemailer and viem are installed and the current lockfile has a successful dependency advisory response. Real SMTP, provider sandboxes, bank delivery and Base wallet transactions remain unverified. The canonical [threat model](../security/tma.md) now describes this feature worktree. No real-money release or deployment approval is claimed.
+
 Refreshed 16 October 2026. Base repository commit: `26d61a4aaf0ee87411b57df2ac94a5e5ad607e33`.
 
 This reviews the uncommitted rebuild, not that original commit. The original Apren source is retained under `legacy/` and excluded from the active npm workspaces. The original rebuilt implementation has SHA-256 `07db2067adeedb97f0b1fb0315f0a33328f088cf8b0c8bbbaa85815ad659ff47`, with the reproducible 105-file algorithm in the threat model. That hash and the original verification table below are the pre-seasonal-feature baseline, not a hash or certification of the later working tree. This document does not certify production readiness.

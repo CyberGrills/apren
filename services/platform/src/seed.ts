@@ -177,6 +177,34 @@ export async function seed(
         }
       }
     }
+    for (const business of (
+      await db.query(
+        "SELECT business_id,subaccount_id,bank_revision,details FROM seven.businesses WHERE details->>'isSample'='true'",
+      )
+    ).rows) {
+      for (const [provider, code] of [
+        [1, business.subaccount_id],
+        [2, `ACCT_sample_${business.business_id.replaceAll('-', '')}`],
+        [3, '0x2222222222222222222222222222222222222222'],
+      ] as const) {
+        await db.query(
+          `INSERT INTO seven.business_payment_accounts(business_payment_account_id,business_id,payment_provider_id,account_code,account_label,execution_mode_id,revision,workflow_state_id,details,verified_at) VALUES($1,$2,$3,$4,'Local sample destination',1,1,${sid('APPROVED')},$5,now()) ON CONFLICT(business_id,payment_provider_id) DO NOTHING`,
+          [
+            randomUUID(),
+            business.business_id,
+            provider,
+            code,
+            {
+              isSample: true,
+              ...(provider === 3 ? { chainId: 84532 } : {}),
+              settlementAccount: business.details.settlementAccount ?? null,
+              settlementBankCode: business.details.settlementBankCode ?? null,
+            },
+          ],
+        );
+      }
+    }
+    await db.query("UPDATE seven.business_payment_accounts SET details=details||'{\"chainId\":84532}'::jsonb,updated_at=now() WHERE payment_provider_id=3 AND execution_mode_id=1 AND details->>'isSample'='true' AND NOT(details ? 'chainId')");
     for (const email of ['guest@seven.test', 'friend@seven.test']) {
       const user = (await one(db, 'SELECT user_id FROM seven.users WHERE email=$1', [email]))!;
       await pointsJournal(

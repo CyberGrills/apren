@@ -25,11 +25,12 @@ export interface ProviderRefund {
   amountMinor: number;
 }
 export interface PaymentProvider {
-  mode: 'mock' | 'flutterwave';
+  mode: 'mock' | 'flutterwave' | 'paystack' | 'crypto';
   checkout(input: ProviderCheckout): Promise<string>;
   verify(reference: string, transactionId?: string): Promise<ProviderReceipt>;
   refund(transactionId: string, amountMinor: number, reason: string): Promise<ProviderRefund>;
   refundStatus(id: string): Promise<ProviderRefund>;
+  findRefund?(transactionId: string, amountMinor: number): Promise<ProviderRefund | null>;
   settlements(subaccountId: string): Promise<Record<string, unknown>[]>;
   subaccount(id: string): Promise<Record<string, unknown>>;
 }
