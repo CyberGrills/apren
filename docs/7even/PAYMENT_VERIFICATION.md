@@ -45,7 +45,7 @@ The existing green/ivory/sand brand and native dialog patterns were retained, in
 
 Saved console output has trailing whitespace trimmed; test results and diagnostics are retained.
 
-The source manifest is regenerated for the unified `main` tree after the merge. It hashes sorted unique repository-relative paths, a NUL separator, exact file bytes and another NUL. Its scope includes active source, public assets, migrations, tests, scripts and named workspace/configuration files, including the promoted Apren engine. Private environment state, generated output, dependencies, historical `legacy/` source and documentation are excluded.
+The [387-file active-source manifest](evidence/payments-source-manifest.json) records SHA-256 `3088a011ebd33f89289c6d5051daa51efc809fe2478279fe2e2869add230c154` for source state at commit `9a3a29f9933bb5eefe48348619a845beae09c23f`. It hashes sorted unique repository-relative paths, a NUL separator, exact file bytes and another NUL. Its scope includes active source, public assets, migrations, tests, scripts, workflow and named workspace/configuration files, including the promoted Apren engine. Private environment state, generated output, dependencies, historical `legacy/` source and documentation are excluded. Regenerate it with `node scripts/build-source-manifest.mjs` after changing active source or configuration.
 
 A limited offline check inspected 111 active source/migration/test files for long live Paystack keys, Flutterwave test keys and private-key headers, finding no matching file. This is a narrow pattern check, not a complete secret scan.
 
