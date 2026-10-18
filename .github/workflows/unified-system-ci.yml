@@ -44,6 +44,8 @@ jobs:
       - name: Run isolated PostgreSQL integration suite
         run: npm run test:integration
         env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/apren_test_db
+          MIGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/apren_test_db
           TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/apren_test_db
           PAYMENT_MODE: mock
           APP_ORIGIN: http://127.0.0.1:5177

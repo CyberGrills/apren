@@ -1,6 +1,6 @@
 # Multi-provider payments
 
-Implementation brief, 18 October 2026. Base: `2394f1a`. Work remains on a feature branch and requires independent review before real-money release.
+Implementation brief, Integrated into `main` on 18 October 2026 (merge commit `a4f33ae`, based on the 7even rebuild already present in main). The payment implementation is in the unified system; it is not approval to move real funds or deploy. Provider sandbox evidence, independent review and the release gates below still apply.
 
 ## Agreed behavior
 

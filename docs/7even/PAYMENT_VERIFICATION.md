@@ -1,6 +1,6 @@
 # Multi-provider payment verification
 
-18 October 2026. Local feature branch: `feat/multi-provider-payments`, based on `2394f1a`. This records implementation and local verification, not approval to move real funds or deploy.
+18 October 2026. Multi-provider payment changes were integrated into `main` in merge commit `a4f33ae`. The browser captures and saved test outputs below are evidence from the original feature-branch verification; the unified main branch is being revalidated by GitHub Actions. This is not approval to move real funds or deploy.
 
 ## Accepted behavior
 
@@ -36,16 +36,16 @@ The existing green/ivory/sand brand and native dialog patterns were retained, in
 
 | Fresh command | Result | Saved output |
 |---|---|---|
-| `npm test` | 234 passed, zero failed or skipped | [Unit tests](evidence/payments-unit.txt) |
-| `npm run test:integration` | 169 passed, zero failed or skipped | [PostgreSQL/provider integration](evidence/payments-integration.txt) |
+| `npm test` (unified main tree) | 235 passed, zero failed or skipped | [Unit tests](evidence/payments-unit.txt) |
+| `npm run test:integration` (original feature-branch baseline) | 169 passed, zero failed or skipped; merged-tree run is enforced by GitHub Actions | [PostgreSQL/provider integration](evidence/payments-integration.txt) |
 | `npm run build` | Typecheck and production build passed; 547.39 kB main JavaScript chunk carries the retained size warning | [Build](evidence/payments-build.txt) |
 | `npm run lint` | Exit 0, no errors; 187 warnings and 4 information diagnostics | [Lint](evidence/payments-lint.txt) |
-| `npm audit --json` | Exit 0, zero known advisories across the reported 176 dependencies | [Dependency audit](evidence/payments-dependency-audit.json) |
+| `npm audit --json` | Exit 0, zero known advisories across the reported 157 dependencies | [Dependency audit](evidence/payments-dependency-audit.json) |
 | `git diff --check` | Passed | Local diff check |
 
 Saved console output has trailing whitespace trimmed; test results and diagnostics are retained.
 
-The [132-file source manifest](evidence/payments-source-manifest.json) records SHA-256 `c0ad5d349f4e8435f59ad9374ae99f2bec0d9dc23f0a94730be36c752c19afa9`. It hashes sorted unique repository-relative paths, a NUL separator, exact file bytes and another NUL. Its scope includes the listed active source, public assets, migrations, tests, scripts and named workspace/configuration files. Private environment state, generated output, dependencies, legacy source and documentation are excluded.
+The source manifest is regenerated for the unified `main` tree after the merge. It hashes sorted unique repository-relative paths, a NUL separator, exact file bytes and another NUL. Its scope includes active source, public assets, migrations, tests, scripts and named workspace/configuration files, including the promoted Apren engine. Private environment state, generated output, dependencies, historical `legacy/` source and documentation are excluded.
 
 A limited offline check inspected 111 active source/migration/test files for long live Paystack keys, Flutterwave test keys and private-key headers, finding no matching file. This is a narrow pattern check, not a complete secret scan.
 
