@@ -40,7 +40,7 @@ dist/assets/accessKey-CKkRMxQy.js                       251.65 kB │ gzip:  37.
 dist/assets/chains-C_CEvhNG.js                          319.74 kB │ gzip:  63.89 kB │ map: 1,029.75 kB
 dist/assets/index-CrDkPhqE.js                           547.39 kB │ gzip: 137.22 kB │ map: 1,950.38 kB
 
-✓ built in 695ms
+✓ built in 4.21s
 [plugin builtin:vite-reporter]
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application

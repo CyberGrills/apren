@@ -2,6 +2,90 @@
 > 7even@0.1.0 lint
 > biome lint apps/web/src services/platform/src packages tests
 
+tests/integration/recovery-mailer.test.ts:36:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    34 │   });
+    35 │   assert.ok(message);
+  > 36 │   assert.equal(message['to'], 'guest@example.test');
+       │                        ^^^^
+    37 │   assert.equal(message['disableUrlAccess'], true);
+    38 │   assert.equal(message['disableFileAccess'], true);
+
+  i Unsafe fix: Use a literal key instead.
+
+    34 34 │     });
+    35 35 │     assert.ok(message);
+    36    │ - ··assert.equal(message['to'],·'guest@example.test');
+       36 │ + ··assert.equal(message.to,·'guest@example.test');
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+
+
+tests/integration/recovery-mailer.test.ts:37:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    35 │   assert.ok(message);
+    36 │   assert.equal(message['to'], 'guest@example.test');
+  > 37 │   assert.equal(message['disableUrlAccess'], true);
+       │                        ^^^^^^^^^^^^^^^^^^
+    38 │   assert.equal(message['disableFileAccess'], true);
+    39 │   assert.match(String(message['text']), /fixture-only/);
+
+  i Unsafe fix: Use a literal key instead.
+
+    35 35 │     assert.ok(message);
+    36 36 │     assert.equal(message['to'], 'guest@example.test');
+    37    │ - ··assert.equal(message['disableUrlAccess'],·true);
+       37 │ + ··assert.equal(message.disableUrlAccess,·true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+    39 39 │     assert.match(String(message['text']), /fixture-only/);
+
+
+tests/integration/recovery-mailer.test.ts:38:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    36 │   assert.equal(message['to'], 'guest@example.test');
+    37 │   assert.equal(message['disableUrlAccess'], true);
+  > 38 │   assert.equal(message['disableFileAccess'], true);
+       │                        ^^^^^^^^^^^^^^^^^^^
+    39 │   assert.match(String(message['text']), /fixture-only/);
+    40 │ });
+
+  i Unsafe fix: Use a literal key instead.
+
+    36 36 │     assert.equal(message['to'], 'guest@example.test');
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38    │ - ··assert.equal(message['disableFileAccess'],·true);
+       38 │ + ··assert.equal(message.disableFileAccess,·true);
+    39 39 │     assert.match(String(message['text']), /fixture-only/);
+    40 40 │   });
+
+
+tests/integration/recovery-mailer.test.ts:39:31 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    37 │   assert.equal(message['disableUrlAccess'], true);
+    38 │   assert.equal(message['disableFileAccess'], true);
+  > 39 │   assert.match(String(message['text']), /fixture-only/);
+       │                               ^^^^^^
+    40 │ });
+    41 │ test('complete TLS configuration creates a lazy sender without connecting', () => {
+
+  i Unsafe fix: Use a literal key instead.
+
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+    39    │ - ··assert.match(String(message['text']),·/fixture-only/);
+       39 │ + ··assert.match(String(message.text),·/fixture-only/);
+    40 40 │   });
+    41 41 │   test('complete TLS configuration creates a lazy sender without connecting', () => {
+
+
 apps/web/src/hooks/useApi.ts:33:35 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   ! Forbidden non-null assertion.
@@ -14,379 +98,251 @@ apps/web/src/hooks/useApi.ts:33:35 lint/style/noNonNullAssertion ━━━━━
     35 │           setData(next);
 
 
-apps/web/src/main.tsx:16:12 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+tests/integration/recovery-crash.test.ts:25:18 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
 
   ! Forbidden non-null assertion.
 
-    14 │ import './styles/workspace.css';
-    15 │ document.documentElement.dataset.season = seasonAt(new Date());
-  > 16 │ createRoot(document.getElementById('root')!).render(
-       │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    17 │   <StrictMode>
-    18 │     <SeasonProvider>
-
-
-apps/web/src/styles/customer.css:183:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 2, 0)
-
-    181 │   margin-left: auto;
-    182 │ }
-  > 183 │ .customer-booking-content > .public-small {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    184 │   max-width: 65ch;
-    185 │   font-size: 0.72rem;
-
-  i This selector specificity is (0, 3, 0)
-
-    82 │   line-height: 1.75;
-    83 │ }
-  > 84 │ .customer-page .modal .public-small {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    85 │   font-size: 0.82rem;
-    86 │ }
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:200:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    198 │   border-right: 1px solid var(--line);
-    199 │ }
-  > 200 │ .customer-points-balance > p {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    201 │   font-family: var(--font-display);
-    202 │   font-size: 5.5rem;
-
-  i This selector specificity is (0, 2, 1)
-
-    78 │   margin-top: 2rem;
-    79 │ }
-  > 80 │ .customer-page .modal p {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^
-    81 │   font-size: 0.95rem;
-    82 │   line-height: 1.75;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:276:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    274 │   color: var(--accent);
-    275 │ }
-  > 276 │ .customer-reward-heading > span {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    277 │   font-size: 0.9rem;
-    278 │   font-weight: 600;
-
-  i This selector specificity is (0, 1, 2)
-
-    206 │   font-variant-numeric: tabular-nums;
-    207 │ }
-  > 208 │ .customer-points-balance > p > span {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    209 │   font-family: var(--font-body);
-    210 │   font-size: 0.9rem;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:285:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    283 │   margin: 1rem 0;
-    284 │ }
-  > 285 │ .customer-reward > p {
-        │ ^^^^^^^^^^^^^^^^^^^^
-    286 │   font-size: 0.84rem;
-    287 │   color: var(--muted);
-
-  i This selector specificity is (0, 2, 1)
-
-    78 │   margin-top: 2rem;
-    79 │ }
-  > 80 │ .customer-page .modal p {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^
-    81 │   font-size: 0.95rem;
-    82 │   line-height: 1.75;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:339:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    337 │   border-bottom: 1px solid var(--line);
-    338 │ }
-  > 339 │ .customer-ledger p {
-        │ ^^^^^^^^^^^^^^^^^^
-    340 │   font-size: 0.86rem;
-    341 │   margin-bottom: 0.4rem;
-
-  i This selector specificity is (0, 2, 1)
-
-    78 │   margin-top: 2rem;
-    79 │ }
-  > 80 │ .customer-page .modal p {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^
-    81 │   font-size: 0.95rem;
-    82 │   line-height: 1.75;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:343:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    341 │   margin-bottom: 0.4rem;
-    342 │ }
-  > 343 │ .customer-ledger span {
-        │ ^^^^^^^^^^^^^^^^^^^^^
-    344 │   font-size: 0.7rem;
-    345 │   color: var(--muted);
-
-  i This selector specificity is (0, 1, 2)
-
-    206 │   font-variant-numeric: tabular-nums;
-    207 │ }
-  > 208 │ .customer-points-balance > p > span {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    209 │   font-family: var(--font-body);
-    210 │   font-size: 0.9rem;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:383:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    381 │   margin: 1rem 0;
-    382 │ }
-  > 383 │ .customer-benefit > p {
-        │ ^^^^^^^^^^^^^^^^^^^^^
-    384 │   font-size: 0.87rem;
-    385 │   color: var(--muted);
-
-  i This selector specificity is (0, 2, 1)
-
-    78 │   margin-top: 2rem;
-    79 │ }
-  > 80 │ .customer-page .modal p {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^
-    81 │   font-size: 0.95rem;
-    82 │   line-height: 1.75;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:417:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    415 │   margin-top: 1rem;
-    416 │ }
-  > 417 │ .customer-benefit-code p {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^
-    418 │   font-size: 0.72rem;
-    419 │   line-height: 1.7;
-
-  i This selector specificity is (0, 2, 1)
-
-    78 │   margin-top: 2rem;
-    79 │ }
-  > 80 │ .customer-page .modal p {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^
-    81 │   font-size: 0.95rem;
-    82 │   line-height: 1.75;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:452:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    450 │   overflow-wrap: anywhere;
-    451 │ }
-  > 452 │ .customer-benefit-reference p {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    453 │   font-size: 0.7rem;
-    454 │   line-height: 1.7;
-
-  i This selector specificity is (0, 2, 1)
-
-    78 │   margin-top: 2rem;
-    79 │ }
-  > 80 │ .customer-page .modal p {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^
-    81 │   font-size: 0.95rem;
-    82 │   line-height: 1.75;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:490:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    488 │   color: var(--accent);
-    489 │ }
-  > 490 │ .customer-exchange-pair span {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    491 │   font-size: 0.7rem;
-    492 │   color: var(--muted);
-
-  i This selector specificity is (0, 1, 2)
-
-    206 │   font-variant-numeric: tabular-nums;
-    207 │ }
-  > 208 │ .customer-points-balance > p > span {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    209 │   font-family: var(--font-body);
-    210 │   font-size: 0.9rem;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:519:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    517 │   margin: 1rem 0 2rem;
-    518 │ }
-  > 519 │ .customer-profile form {
-        │ ^^^^^^^^^^^^^^^^^^^^^^
-    520 │   display: grid;
-    521 │   gap: 1.5rem;
-
-  i This selector specificity is (0, 2, 1)
-
-    85 │   font-size: 0.82rem;
-    86 │ }
-  > 87 │ .customer-page .modal form {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^
-    88 │   display: grid;
-    89 │   gap: 1rem;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:530:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 2)
-
-    528 │   padding-left: 3rem;
-    529 │ }
-  > 530 │ .customer-profile > aside > p {
-        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    531 │   font-size: 0.9rem;
-    532 │   line-height: 1.85;
-
-  i This selector specificity is (0, 2, 1)
-
-    78 │   margin-top: 2rem;
-    79 │ }
-  > 80 │ .customer-page .modal p {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^
-    81 │   font-size: 0.95rem;
-    82 │   line-height: 1.75;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-apps/web/src/styles/customer.css:559:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
-
-    557 │   font-size: 0.9rem;
-    558 │ }
-  > 559 │ .payment-mode-notice p {
-        │ ^^^^^^^^^^^^^^^^^^^^^^
-    560 │   font-size: 0.8rem;
-    561 │   line-height: 1.8;
-
-  i This selector specificity is (0, 2, 1)
-
-    78 │   margin-top: 2rem;
-    79 │ }
-  > 80 │ .customer-page .modal p {
-       │ ^^^^^^^^^^^^^^^^^^^^^^^
-    81 │   font-size: 0.95rem;
-    82 │   line-height: 1.75;
-
-  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
-
-
-packages/engine/src/demand.ts:90:39 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    23 │   assert.match((await one(pool,'SELECT current_database() AS db'))?.db,/_test_db$/,'Destructive fixture reset is restricted to the isolated test database.');
+    24 │   await pool.query('DROP SCHEMA IF EXISTS seven CASCADE'); await migrate(pool); await seed(pool,'Crash-fixture-only-passphrase-42!');
+  > 25 │   const guestRow=(await one(pool,'SELECT user_id FROM seven.users WHERE email=$1',['guest@seven.test']))!;
+       │                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    26 │   const actor=(await userProjection(pool,guestRow.user_id))!;
+    27 │   const base=(await one(pool,"SELECT b.business_id,v.venue_id FROM seven.businesses b JOIN seven.venues v USING(business_id) WHERE b.slug='the-haven-lagos'"))!;
+
+
+tests/integration/recovery-crash.test.ts:26:15 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
 
   ! Forbidden non-null assertion.
 
-    88 │   } else if (evidence.allocated === evidence.capacity) {
-    89 │     reason = 'All supplied capacity is allocated. Do not promote unavailable inventory.';
-  > 90 │   } else if ((goal === 'OCCUPANCY' && evidence.occupancyBps! < 8000)
-       │                                       ^^^^^^^^^^^^^^^^^^^^^^
-    91 │     || (goal === 'BALANCED' && evidence.occupancyBps! < 6000)) {
-    92 │     action = 'PROMOTE_AVAILABLE_CAPACITY'; title = 'Review an offer for available dates';
+    24 │   await pool.query('DROP SCHEMA IF EXISTS seven CASCADE'); await migrate(pool); await seed(pool,'Crash-fixture-only-passphrase-42!');
+    25 │   const guestRow=(await one(pool,'SELECT user_id FROM seven.users WHERE email=$1',['guest@seven.test']))!;
+  > 26 │   const actor=(await userProjection(pool,guestRow.user_id))!;
+       │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    27 │   const base=(await one(pool,"SELECT b.business_id,v.venue_id FROM seven.businesses b JOIN seven.venues v USING(business_id) WHERE b.slug='the-haven-lagos'"))!;
+    28 │
 
 
-packages/engine/src/demand.ts:91:32 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Forbidden non-null assertion.
-
-    89 │     reason = 'All supplied capacity is allocated. Do not promote unavailable inventory.';
-    90 │   } else if ((goal === 'OCCUPANCY' && evidence.occupancyBps! < 8000)
-  > 91 │     || (goal === 'BALANCED' && evidence.occupancyBps! < 6000)) {
-       │                                ^^^^^^^^^^^^^^^^^^^^^^
-    92 │     action = 'PROMOTE_AVAILABLE_CAPACITY'; title = 'Review an offer for available dates';
-    93 │     reason = `${evidence.capacity - evidence.allocated} units remain available. The ${goal.toLowerCase()} goal favors filling existing capacity within approved price limits.`;
-
-
-packages/engine/src/demand.ts:94:38 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+tests/integration/recovery-crash.test.ts:27:14 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
 
   ! Forbidden non-null assertion.
 
-    92 │     action = 'PROMOTE_AVAILABLE_CAPACITY'; title = 'Review an offer for available dates';
-    93 │     reason = `${evidence.capacity - evidence.allocated} units remain available. The ${goal.toLowerCase()} goal favors filling existing capacity within approved price limits.`;
-  > 94 │   } else if ((goal === 'REVENUE' && (evidence.occupancyBps! >= 7000 || (evidence.conversionBps ?? 0) >= 1500))
-       │                                      ^^^^^^^^^^^^^^^^^^^^^^
-    95 │     || (goal === 'BALANCED' && evidence.occupancyBps! >= 8500 && (evidence.conversionBps ?? 0) >= 1500)) {
-    96 │     action = 'REVIEW_RATE'; title = 'Review rates for the remaining capacity';
+    25 │   const guestRow=(await one(pool,'SELECT user_id FROM seven.users WHERE email=$1',['guest@seven.test']))!;
+    26 │   const actor=(await userProjection(pool,guestRow.user_id))!;
+  > 27 │   const base=(await one(pool,"SELECT b.business_id,v.venue_id FROM seven.businesses b JOIN seven.venues v USING(business_id) WHERE b.slug='the-haven-lagos'"))!;
+       │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    28 │
+    29 │   async function start(configuration:CrashConfiguration):Promise<ChildRun>{
 
 
-packages/engine/src/demand.ts:95:32 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Forbidden non-null assertion.
-
-    93 │     reason = `${evidence.capacity - evidence.allocated} units remain available. The ${goal.toLowerCase()} goal favors filling existing capacity within approved price limits.`;
-    94 │   } else if ((goal === 'REVENUE' && (evidence.occupancyBps! >= 7000 || (evidence.conversionBps ?? 0) >= 1500))
-  > 95 │     || (goal === 'BALANCED' && evidence.occupancyBps! >= 8500 && (evidence.conversionBps ?? 0) >= 1500)) {
-       │                                ^^^^^^^^^^^^^^^^^^^^^^
-    96 │     action = 'REVIEW_RATE'; title = 'Review rates for the remaining capacity';
-    97 │     reason = `${evidence.allocated} of ${evidence.capacity} units are allocated, with ${evidence.confirmed} confirmations and ${evidence.searches} searches. Review rates within business limits; no increase is assumed.`;
-
-
-packages/engine/src/money.ts:15:25 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+tests/integration/recovery-crash.test.ts:64:48 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━━
 
   ! Forbidden non-null assertion.
 
-    13 │   }
-    14 │   const [whole, fraction = ''] = decimal.split('.');
-  > 15 │   return bounded(BigInt(whole!) * 100n + BigInt(fraction.padEnd(2, '0')));
-       │                         ^^^^^^
-    16 │ }
-    17 │
+    62 │   async function assertUncommitted(fixture:Awaited<ReturnType<typeof held>>):Promise<void>{
+    63 │     assert.equal((await reservationProjection(pool,fixture.reservation.id))?.status,'HELD');
+  > 64 │     assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+       │                                                ^^^^^^^^^^^^^^^^
+    65 │     assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+    66 │     assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.payment!.provider}:${fixture.receipt!.id}`])).length,0);
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     62  62 │     async function assertUncommitted(fixture:Awaited<ReturnType<typeof held>>):Promise<void>{
+     63  63 │       assert.equal((await reservationProjection(pool,fixture.reservation.id))?.status,'HELD');
+     64     │ - ····assert.equal((await·paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+         64 │ + ····assert.equal((await·paymentProjection(pool,fixture.payment?.paymentId))?.status,'PENDING');
+     65  65 │       assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+     66  66 │       assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.payment!.provider}:${fixture.receipt!.id}`])).length,0);
+
+
+tests/integration/recovery-crash.test.ts:66:125 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    64 │     assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+    65 │     assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+  > 66 │     assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.payment!.provider}:${fixture.receipt!.id}`])).length,0);
+       │                                                                                                                             ^^^^^^^^^^^^^^^^
+    67 │     assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[fixture.windowId]))?.allocated_count,1);
+    68 │     assert.equal((await one(pool,'SELECT processed_at FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]))?.processed_at,null);
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     64  64 │       assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+     65  65 │       assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+     66     │ - ····assert.equal((await·rows(pool,'SELECT·money_journal_id·FROM·seven.money_journals·WHERE·source_reference=$1',[`receipt:${fixture.payment!.provider}:${fixture.receipt!.id}`])).length,0);
+         66 │ + ····assert.equal((await·rows(pool,'SELECT·money_journal_id·FROM·seven.money_journals·WHERE·source_reference=$1',[`receipt:${fixture.payment?.provider}:${fixture.receipt!.id}`])).length,0);
+     67  67 │       assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[fixture.windowId]))?.allocated_count,1);
+     68  68 │       assert.equal((await one(pool,'SELECT processed_at FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]))?.processed_at,null);
+
+
+tests/integration/recovery-crash.test.ts:66:154 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    64 │     assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+    65 │     assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+  > 66 │     assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.payment!.provider}:${fixture.receipt!.id}`])).length,0);
+       │                                                                                                                                                          ^^^^^^^^^^^^^^^^
+    67 │     assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[fixture.windowId]))?.allocated_count,1);
+    68 │     assert.equal((await one(pool,'SELECT processed_at FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]))?.processed_at,null);
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     64  64 │       assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+     65  65 │       assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+     66     │ - ····assert.equal((await·rows(pool,'SELECT·money_journal_id·FROM·seven.money_journals·WHERE·source_reference=$1',[`receipt:${fixture.payment!.provider}:${fixture.receipt!.id}`])).length,0);
+         66 │ + ····assert.equal((await·rows(pool,'SELECT·money_journal_id·FROM·seven.money_journals·WHERE·source_reference=$1',[`receipt:${fixture.payment!.provider}:${fixture.receipt?.id}`])).length,0);
+     67  67 │       assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[fixture.windowId]))?.allocated_count,1);
+     68  68 │       assert.equal((await one(pool,'SELECT processed_at FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]))?.processed_at,null);
+
+
+tests/integration/recovery-crash.test.ts:71:23 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    69 │   }
+    70 │   async function assertPaidOnce(reservationId:string,paymentId:string,windowId:string,receipt:ProviderReceipt):Promise<void>{
+  > 71 │     const reservation=(await reservationProjection(pool,reservationId))!;assert.equal(reservation.status,'CONFIRMED');assert.equal(reservation.paymentId,paymentId);
+       │                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    72 │     const payment=(await paymentProjection(pool,paymentId))!;assert.equal(payment.status,'PAID');assert.equal(payment.providerTransactionId,receipt.id);assert.ok(['UNSETTLED','PENDING'].includes(payment.settlementStatus),'Provider receipt alone never proves bank settlement');
+    73 │     assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
+
+
+tests/integration/recovery-crash.test.ts:72:19 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    70 │   async function assertPaidOnce(reservationId:string,paymentId:string,windowId:string,receipt:ProviderReceipt):Promise<void>{
+    71 │     const reservation=(await reservationProjection(pool,reservationId))!;assert.equal(reservation.status,'CONFIRMED');assert.equal(reservation.paymentId,paymentId);
+  > 72 │     const payment=(await paymentProjection(pool,paymentId))!;assert.equal(payment.status,'PAID');assert.equal(payment.providerTransactionId,receipt.id);assert.ok(['UNSETTLED','PENDING'].includes(payment.settlementStatus),'Provider receipt alone never proves bank settlement');
+       │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    73 │     assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
+    74 │     const journal=(await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${payment.provider}:${receipt.id}`]));assert.equal(journal.length,1);
+
+
+tests/integration/recovery-crash.test.ts:75:124 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    73 │     assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
+    74 │     const journal=(await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${payment.provider}:${receipt.id}`]));assert.equal(journal.length,1);
+  > 75 │     const postings=await rows(pool,'SELECT account_code,amount_minor FROM seven.money_postings WHERE money_journal_id=$1',[journal[0]!.money_journal_id]);assert.equal(postings.length,3);assert.equal(postings.reduce((sum,posting)=>sum+BigInt(posting.amount_minor),0n),0n);
+       │                                                                                                                            ^^^^^^^^^^^
+    76 │     assert.deepEqual(postings.map(posting=>[posting.account_code,posting.amount_minor]).sort(),[['provider-clearing',String(receipt.amountMinor)],[`business:${base.business_id}`,String(-BigInt(receipt.amountMinor)+BigInt(receipt.amountMinor)/10n)],['platform-commission',String(-BigInt(receipt.amountMinor)/10n)]].sort());
+    77 │     assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[windowId]))?.allocated_count,1);
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     73  73 │       assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
+     74  74 │       const journal=(await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${payment.provider}:${receipt.id}`]));assert.equal(journal.length,1);
+     75     │ - ····const·postings=await·rows(pool,'SELECT·account_code,amount_minor·FROM·seven.money_postings·WHERE·money_journal_id=$1',[journal[0]!.money_journal_id]);assert.equal(postings.length,3);assert.equal(postings.reduce((sum,posting)=>sum+BigInt(posting.amount_minor),0n),0n);
+         75 │ + ····const·postings=await·rows(pool,'SELECT·account_code,amount_minor·FROM·seven.money_postings·WHERE·money_journal_id=$1',[journal[0]?.money_journal_id]);assert.equal(postings.length,3);assert.equal(postings.reduce((sum,posting)=>sum+BigInt(posting.amount_minor),0n),0n);
+     76  76 │       assert.deepEqual(postings.map(posting=>[posting.account_code,posting.amount_minor]).sort(),[['provider-clearing',String(receipt.amountMinor)],[`business:${base.business_id}`,String(-BigInt(receipt.amountMinor)+BigInt(receipt.amountMinor)/10n)],['platform-commission',String(-BigInt(receipt.amountMinor)/10n)]].sort());
+     77  77 │       assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[windowId]))?.allocated_count,1);
+
+
+tests/integration/recovery-crash.test.ts:83:122 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    81 │   try{
+    82 │     await t.test('SIGKILL after financial writes rolls back and a new worker claims the expired lease',async()=>{
+  > 83 │       const fixture=await held('Process kill before commit');const child=await start({mode:'pause-before-commit',receipt:fixture.receipt!});
+       │                                                                                                                          ^^^^^^^^^^^^^^^^
+    84 │       const paused=await child.wait('paused');assert.ok(paused.backendPid);assert.equal(paused.postingCount,3);assert.equal(child.process.kill('SIGKILL'),true);const exit=await child.exited;assert.equal(exit.signal,'SIGKILL');
+    85 │       for(let attempt=0;attempt<50;attempt++){if(!(await one(pool,'SELECT 1 FROM pg_stat_activity WHERE pid=$1',[paused.backendPid])))break;await new Promise(resolve=>setTimeout(resolve,20));}
+
+
+tests/integration/recovery-crash.test.ts:91:60 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    89 │       // Explicit test-time advance only; production waits for the real two-minute lease.
+    90 │       await pool.query("UPDATE seven.provider_events SET lease_expires_at=now()-interval '1 second',next_attempt_at=now() WHERE provider_event_id=$1",[fixture.eventId]);
+  > 91 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
+       │                                                            ^^^^^^^^^^^^^^^^
+    92 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+    93 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+
+
+tests/integration/recovery-crash.test.ts:92:51 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    90 │       await pool.query("UPDATE seven.provider_events SET lease_expires_at=now()-interval '1 second',next_attempt_at=now() WHERE provider_event_id=$1",[fixture.eventId]);
+    91 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
+  > 92 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+       │                                                   ^^^^^^^^^^^^^^^^
+    93 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+    94 │       const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_re...
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     90  90 │         await pool.query("UPDATE seven.provider_events SET lease_expires_at=now()-interval '1 second',next_attempt_at=now() WHERE provider_event_id=$1",[fixture.eventId]);
+     91  91 │         assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
+     92     │ - ······await·assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+         92 │ + ······await·assertPaidOnce(fixture.reservation.id,fixture.payment?.paymentId,fixture.windowId,fixture.receipt!);
+     93  93 │         const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+     94  94 │   ...!.provider!]]);assert.equal(duplicate.rowCount,0);
+
+
+tests/integration/recovery-crash.test.ts:92:95 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    90 │       await pool.query("UPDATE seven.provider_events SET lease_expires_at=now()-interval '1 second',next_attempt_at=now() WHERE provider_event_id=$1",[fixture.eventId]);
+    91 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
+  > 92 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+       │                                                                                               ^^^^^^^^^^^^^^^^
+    93 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+    94 │       const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_re...
+
+
+tests/integration/recovery-crash.test.ts:94:267 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    92 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+    93 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+  > 94 │ ...OTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.recei...
+       │                                              ^^^^^^^^^^^^^^^^
+    95 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
+    96 │       // Even an independently identified redelivery of the same receipt cannot repost it.
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     92  92 │         await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+     93  93 │         const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+     94     │ - ...,[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,...
+         94 │ + ...,[randomUUID(),`charge.completed:${fixture.receipt?.id}`,'charge.completed',{id:fixture.receipt!.id,...
+     95  95 │         assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
+     96  96 │         // Even an independently identified redelivery of the same receipt cannot repost it.
+
+
+tests/integration/recovery-crash.test.ts:94:312 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    92 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+    93 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+  > 94 │ ...ture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference},...
+       │                                              ^^^^^^^^^^^^^^^^
+    95 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
+    96 │       // Even an independently identified redelivery of the same receipt cannot repost it.
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     92  92 │         await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+     93  93 │         const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+     94     │ - ...ceipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference},provide...
+         94 │ + ...ceipt!.id}`,'charge.completed',{id:fixture.receipt?.id,reference:fixture.receipt!.reference},provide...
+     95  95 │         assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
+     96  96 │         // Even an independently identified redelivery of the same receipt cannot repost it.
 
 
 The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
 Diagnostics not shown: 171.
-Checked 106 files in 70ms. No fixes applied.
+Checked 107 files in 777ms. No fixes applied.
 Found 187 warnings.
 Found 4 infos.

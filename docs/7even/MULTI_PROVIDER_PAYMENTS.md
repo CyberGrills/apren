@@ -1,6 +1,6 @@
 # Multi-provider payments
 
-Implementation brief, 18 October 2026. Base: `2394f1a`. Work remains on a feature branch and requires independent review before real-money release.
+Implementation brief integrated into `main` on 18 October 2026 by merge commit `ec1ed67`. PostgreSQL-backed payment integration tests were added to CI in commit `0a6fb86`. The payment code is in the unified system; it is not approval to move real funds or deploy. Provider sandbox evidence, independent review and the release gates below still apply.
 
 ## Agreed behavior
 
