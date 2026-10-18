@@ -4139,10 +4139,21 @@ console.log("NO ROUTER STACK FOUND");
 
 }
 
-app.listen(4003,()=>{
-
-console.log(
-"āprən Food Asset Engine running on 4003"
-);
-
+app.get("/healthz", (_req, res) => {
+  res.json({
+    service: "apren-engine",
+    status: "ok",
+    capabilities: ["food-assets", "food-intelligence", "food-economy", "food-brain"]
+  });
 });
+
+if (require.main === module) {
+  const port = Number(process.env.APREN_ENGINE_PORT ?? process.env.PORT ?? 4003);
+  const server = app.listen(port, "0.0.0.0", () => {
+    const address = server.address();
+    const actualPort = address && typeof address === "object" ? address.port : port;
+    console.log(`Apren engine listening on ${actualPort}`);
+  });
+}
+
+module.exports = app;

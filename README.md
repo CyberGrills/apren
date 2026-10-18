@@ -1,15 +1,15 @@
 # 7even
 
-Rooms, dining and experiences in Nigeria, connected to the same reception, availability, payment and rewards engine.
+7even is the user-facing hospitality brand for rooms, dining and experiences in Nigeria. Apren is the underlying intelligence engine; 7even owns the hospitality experience and reservation/payment workflows, while Apren provides food-asset, food-intelligence and food-economy capabilities behind a service boundary. The 7even rebuild UI remains the product users see.
 
-7even includes a public site, customer account, business dashboard, reception workspace and platform admin. The new application replaces Apren’s food-specific runtime. The original code and generators are retained in `legacy/` for reference.
+The root workspace runs the 7even web app, the 7even platform API, and the Apren engine together. `packages/engine` contains 7even-specific pricing/lifecycle rules; `services/apren-engine` exposes Apren’s existing food-intelligence API. Remaining original services and generators are preserved in `legacy/` as historical reference, not as competing active runtimes.
 
 ## Run locally
 
 Tested with Node.js 24.21 and PostgreSQL 18. Install from the root workspace:
 
 ```sh
-npm ci --ignore-scripts
+npm ci
 cp .env.example .env
 ```
 
@@ -59,9 +59,10 @@ The optional SMTP path is implemented with Nodemailer 10.1.2, pinned to the offi
 ## Project map and review
 
 - `apps/web`: responsive React interfaces and popup feedback.
-- `packages/engine`: exact pricing, dates, lifecycle and measured demand rules.
+- `packages/engine`: 7even-specific exact pricing, dates, lifecycle and measured demand rules.
 - `packages/contracts`: shared request validation and response types.
-- `services/platform`: authentication, catalog, inventory, payments, rewards, sync and recovery.
+- `services/platform`: 7even authentication, catalog, inventory, payments, rewards, sync and recovery.
+- `services/apren-engine`: Apren food assets, food intelligence, food economy and food-brain API, promoted from the former legacy assets service.
 - `database/migrations`: ordered, checksummed PostgreSQL schema changes.
 - `tests`: unit, integration, concurrency and fault checks.
 - `design/explorations`: three visual directions, sources and browser evidence.

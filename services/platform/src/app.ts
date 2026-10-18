@@ -328,6 +328,18 @@ export function createApp(options: AppOptions = {}) {
     await pool.query('SELECT 1 FROM seven.migrations LIMIT 1');
     return { status: 'ready', storage: 'postgresql', paymentMode: provider.mode };
   });
+  route('get', '/engine/apren/health', async () => {
+    const engineUrl = process.env.APREN_ENGINE_URL;
+    if (!engineUrl) return { engine: 'apren', status: 'not_configured' };
+    try {
+      const response = await fetch(new URL('/healthz', engineUrl), { signal: AbortSignal.timeout(2000) });
+      if (!response.ok) return { engine: 'apren', status: 'unavailable' };
+      const payload = await response.json() as { status?: string };
+      return { engine: 'apren', status: payload.status === 'ok' ? 'ok' : 'unavailable' };
+    } catch {
+      return { engine: 'apren', status: 'unavailable' };
+    }
+  });
   route('get', '/auth/session', async (_req, res) => sessionData(res));
   route('post', '/auth/register', async (req, res) => {
     const input = parse(C.registerInput, req);

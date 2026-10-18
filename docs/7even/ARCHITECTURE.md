@@ -4,7 +4,7 @@
 
 ## One authority, five surfaces
 
-The landing site, customer account, business dashboard, reception workspace and admin dashboard are routes in one responsive React application. They use the same relative `/api` service and PostgreSQL records. A small TypeScript engine contains exact arithmetic, dates, lifecycle and demand rules without network or database effects. Shared contracts validate requests and describe response projections. Backend modules coordinate authorized transactions and external provider work.
+The landing site, customer account, business dashboard, reception workspace and admin dashboard are routes in one responsive React application branded 7even. They use the same relative `/api` service and PostgreSQL records. The 7even-specific TypeScript engine contains exact arithmetic, dates, lifecycle and hospitality demand rules without network or database effects. Apren is a separate internal food-intelligence service, exposed at `services/apren-engine`; the platform can check its health through `APREN_ENGINE_URL`. Shared contracts validate requests and describe response projections. Backend modules coordinate authorized transactions and external provider work.
 
 ```mermaid
 flowchart LR
@@ -14,7 +14,8 @@ flowchart LR
   Reception[Reception PWA] --> API
   Admin[Admin dashboard] --> API
   API --> Contracts[Validated shared contracts]
-  API --> Engine[Pure engine rules]
+  API --> Engine[7even booking rules]
+  API -. internal service boundary .-> Apren[Apren food-intelligence engine]
   API <--> DB[(PostgreSQL authority)]
   Worker[Recovery and notification worker] <--> DB
   API --> Checkout[Flutterwave hosted checkout]
@@ -24,7 +25,7 @@ flowchart LR
   Checkout --> Bank[Business bank account]
 ```
 
-This replaces Apren's disconnected services and conflicting generations. The historical source remains in `legacy/`, outside the four npm workspaces. Keeping that history is not a claim that its food, wallet, vision or agent APIs remain live.
+The active root workspace runs five packages: the 7even web app, 7even platform API, Apren engine service, shared contracts and 7even booking rules. The former assets service was promoted from `legacy/services/assets` to `services/apren-engine` without changing the 7even rebuild branch. Remaining historical services, old web source and generators stay under `legacy/` and are not started by the active runtime. The Apren health boundary is operational; production persistence and a domain-specific hospitality-to-Apren intelligence contract remain release gates.
 
 ## Reservation and value flow
 
@@ -60,7 +61,7 @@ This is a transparent baseline, not a trained forecasting model or proof of pred
 
 ## Adding sectors and hotel integrations
 
-The implemented sector vocabulary is `STAY`, `DINING` and `EXPERIENCE`. The engine separates common money, dates and lifecycle rules from backend/provider effects. Offerings, availability, quote snapshots, reservations, business/venue ownership, rewards and event observations are shared concepts. That separation makes another sector possible without a second wallet, payment authority or customer identity system.
+The 7even booking engine implements the sector vocabulary `STAY`, `DINING` and `EXPERIENCE`. It separates common money, dates and lifecycle rules from backend/provider effects. Apren remains the separate food-intelligence and food-economy engine; do not collapse the two codebases merely because both use the word “engine”. Offerings, availability, quote snapshots, reservations, business/venue ownership, rewards and event observations are shared concepts. That separation makes another sector possible without a second wallet, payment authority or customer identity system.
 
 A new sector is a deliberate versioned change, not a runtime plugin switch. Define its capacity unit, date/window semantics, fulfillment and cancellation rules, tax display, reward eligibility and demand observations. Extend strict contracts and lookup data, add a forward migration where persisted vocabulary changes, then implement sector presentation and adversarial inventory/authorization tests. Preserve accepted quote/policy snapshots for existing bookings. Do not pass arbitrary sector JSON through to financial or inventory decisions.
 

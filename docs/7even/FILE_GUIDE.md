@@ -192,7 +192,8 @@ Apply these path translations to inspect an original file now:
 
 | Original path family | Current location or disposition |
 |---|---|
-| `services/assets`, `gateway`, `identity`, `intelligence`, `market`, `notification`, `shared`, `trade`, `wallet` | Same relative paths beneath `legacy/services/` |
+| `services/assets` | Promoted to the active `services/apren-engine/` service; source modules retain their internal relative layout |
+| `services/gateway`, `identity`, `intelligence`, `market`, `notification`, `shared`, `trade`, `wallet` | Same relative paths beneath `legacy/services/`; historical implementations only |
 | Root historical `*.sh` installers/restarts/patchers | `legacy/scripts/<original filename>` |
 | `debug/` | `legacy/debug/` |
 | `config/` | `legacy/config/` |
@@ -204,7 +205,7 @@ Apply these path translations to inspect an original file now:
 | Original active package/entry/build configuration replaced in place | Original bytes remain retrievable at the pinned Git commit; the active table describes each replacement |
 | `legacy/README.md` | New quarantine explanation; not an original Apren file |
 
-Do not execute historical shell scripts as a migration sequence. They retain author-specific paths and overwrite/kill behavior documented in the original review. The active runtime does not repair those historical scripts or claim that old food/evidence/intelligence interfaces remain supported. There is no legacy customer-data migration in this rebuild.
+Do not execute historical shell scripts as a migration sequence. They retain author-specific paths and overwrite/kill behavior documented in the original review; archived engine-maintenance scripts are under `legacy/scripts/apren-engine-maintenance/`. The active Apren service retains the former assets API for local compatibility, but its SQLite storage is not production-durable. The remaining historical services and old web source are not active runtime components. There is no legacy customer-data migration in this rebuild.
 
 ## How to read the code
 
