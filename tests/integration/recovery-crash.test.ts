@@ -10,6 +10,7 @@ import { seed } from '../../services/platform/src/seed.ts';
 import { createQuote, createReservation } from '../../services/platform/src/reservations.ts';
 import { checkout } from '../../services/platform/src/payments.ts';
 import { MockProvider } from '../../services/platform/src/provider.ts';
+import { providerIds } from '../../services/platform/src/providerRegistry.ts';
 import { userProjection, reservationProjection, paymentProjection } from '../../services/platform/src/store.ts';
 import type { ProviderReceipt } from '../../services/platform/src/provider.ts';
 import type { CrashConfiguration } from '../fixtures/recovery-child.ts';
@@ -46,22 +47,23 @@ test('financial recovery survives actual process death and PostgreSQL rollback',
   async function finish(configuration:CrashConfiguration):Promise<Message>{
     const run=await start(configuration);const done=await run.wait('done');const exit=await run.exited;assert.equal(exit.code,0);assert.equal(exit.signal,null);return done;
   }
-  async function held(label:string,initialize=true){
+  async function held(label:string,initialize=true,amountMinor=10000){
     const offeringId=randomUUID();const windowId=randomUUID();const date=new Date(Date.now()+7*86400000).toISOString().slice(0,10);const endDate=new Date(Date.parse(`${date}T00:00:00Z`)+86400000).toISOString().slice(0,10);
-    await pool.query("INSERT INTO seven.offerings(offering_id,business_id,venue_id,sector_id,title,description,city,price_minor,is_published,details) VALUES($1,$2,$3,(SELECT sector_id FROM seven.sectors WHERE sector_code='STAY'),$4,'Synthetic crash recovery fixture','Lagos',10000,true,$5)",[offeringId,base.business_id,base.venue_id,label,{capacity:1,cancellationHours:24}]);
+    await pool.query("INSERT INTO seven.offerings(offering_id,business_id,venue_id,sector_id,title,description,city,price_minor,is_published,details) VALUES($1,$2,$3,(SELECT sector_id FROM seven.sectors WHERE sector_code='STAY'),$4,'Synthetic crash recovery fixture','Lagos',$5,true,$6)",[offeringId,base.business_id,base.venue_id,label,amountMinor,{capacity:1,cancellationHours:24}]);
     await pool.query('INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity) VALUES($1,$2,$3,$4,1)',[windowId,offeringId,`${date}T00:00:00+01:00`,`${endDate}T00:00:00+01:00`]);
     const reservation=await transaction(pool,async db=>{const quote=await createQuote(db,actor,{offeringId,startDate:date,endDate,quantity:1});return createReservation(db,actor,quote.id);});
     if(!initialize)return {reservation,windowId};
     const payment=await checkout(pool,new MockProvider(),actor,reservation.id,'http://localhost:5177');
-    const receipt:ProviderReceipt={id:`fixture-${randomUUID()}`,reference:payment.reference,status:'successful',currency:'NGN',amountMinor:10000,feeMinor:0};
-    const eventId=randomUUID();await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4)',[eventId,`charge.completed:${receipt.id}`,'charge.completed',{id:receipt.id,reference:receipt.reference}]);
+    assert.ok(payment.provider);
+    const receipt:ProviderReceipt={id:`fixture-${randomUUID()}`,reference:payment.reference,status:'successful',currency:'NGN',amountMinor,feeMinor:0};
+    const eventId=randomUUID();await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details,payment_provider_id) VALUES($1,$2,$3,$4,$5)',[eventId,`charge.completed:${receipt.id}`,'charge.completed',{id:receipt.id,reference:receipt.reference},providerIds[payment.provider]]);
     return {reservation,windowId,payment,receipt,eventId};
   }
   async function assertUncommitted(fixture:Awaited<ReturnType<typeof held>>):Promise<void>{
     assert.equal((await reservationProjection(pool,fixture.reservation.id))?.status,'HELD');
     assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
     assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
-    assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.receipt!.id}`])).length,0);
+    assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.payment!.provider}:${fixture.receipt!.id}`])).length,0);
     assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[fixture.windowId]))?.allocated_count,1);
     assert.equal((await one(pool,'SELECT processed_at FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]))?.processed_at,null);
   }
@@ -69,9 +71,9 @@ test('financial recovery survives actual process death and PostgreSQL rollback',
     const reservation=(await reservationProjection(pool,reservationId))!;assert.equal(reservation.status,'CONFIRMED');assert.equal(reservation.paymentId,paymentId);
     const payment=(await paymentProjection(pool,paymentId))!;assert.equal(payment.status,'PAID');assert.equal(payment.providerTransactionId,receipt.id);assert.ok(['UNSETTLED','PENDING'].includes(payment.settlementStatus),'Provider receipt alone never proves bank settlement');
     assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
-    const journal=(await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${receipt.id}`]));assert.equal(journal.length,1);
+    const journal=(await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${payment.provider}:${receipt.id}`]));assert.equal(journal.length,1);
     const postings=await rows(pool,'SELECT account_code,amount_minor FROM seven.money_postings WHERE money_journal_id=$1',[journal[0]!.money_journal_id]);assert.equal(postings.length,3);assert.equal(postings.reduce((sum,posting)=>sum+BigInt(posting.amount_minor),0n),0n);
-    assert.deepEqual(postings.map(posting=>[posting.account_code,posting.amount_minor]).sort(),[['provider-clearing','10000'],[`business:${base.business_id}`,'-9000'],['platform-commission','-1000']].sort());
+    assert.deepEqual(postings.map(posting=>[posting.account_code,posting.amount_minor]).sort(),[['provider-clearing',String(receipt.amountMinor)],[`business:${base.business_id}`,String(-BigInt(receipt.amountMinor)+BigInt(receipt.amountMinor)/10n)],['platform-commission',String(-BigInt(receipt.amountMinor)/10n)]].sort());
     assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[windowId]))?.allocated_count,1);
     assert.equal((await rows(pool,'SELECT allocation_id FROM seven.allocations WHERE reservation_id=$1 AND is_active',[reservationId])).length,1);
     assert.equal((await rows(pool,'SELECT payment_attempt_id FROM seven.payment_attempts WHERE reservation_id=$1',[reservationId])).length,1);
@@ -89,10 +91,10 @@ test('financial recovery survives actual process death and PostgreSQL rollback',
       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
-      const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4) ON CONFLICT(event_reference) DO NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+      const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details,payment_provider_id) VALUES($1,$2,$3,$4,$5) ON CONFLICT(payment_provider_id,event_reference) DO NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference},providerIds[fixture.payment!.provider!]]);assert.equal(duplicate.rowCount,0);
       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
       // Even an independently identified redelivery of the same receipt cannot repost it.
-      await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4)',[randomUUID(),`redelivery:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);
+      await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details,payment_provider_id) VALUES($1,$2,$3,$4,$5)',[randomUUID(),`redelivery:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference},providerIds[fixture.payment!.provider!]]);
       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
     });
@@ -105,18 +107,19 @@ test('financial recovery survives actual process death and PostgreSQL rollback',
       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
     });
     await t.test('initialization timeout with a possible charge survives restart without repeating checkout',async()=>{
-      const fixture=await held('Checkout timeout recovery',false);
-      await pool.query("UPDATE seven.businesses SET details=details||'{\"subaccountMode\":\"flutterwave\"}'::jsonb WHERE business_id=$1",[base.business_id]);
+      const fixture=await held('Checkout timeout recovery',false,10000000);
+      const account=(await one(pool,'SELECT execution_mode_id FROM seven.business_payment_accounts WHERE business_id=$1 AND payment_provider_id=$2',[base.business_id,providerIds.flutterwave]))!;
+      await pool.query("UPDATE seven.business_payment_accounts SET execution_mode_id=(SELECT execution_mode_id FROM seven.execution_modes WHERE execution_mode_code='flutterwave') WHERE business_id=$1 AND payment_provider_id=$2",[base.business_id,providerIds.flutterwave]);
       try{
         const timeout=await finish({mode:'checkout-timeout',reservationId:fixture.reservation.id,actorId:actor.id,transactionId:`timeout-${randomUUID()}`});
         assert.equal(timeout.result?.errorCode,'PAYMENT_UNKNOWN');assert.equal(timeout.result?.checkoutCalls,1);const receipt=timeout.result!.receipt!;assert.ok(receipt);
         const pending=await one(pool,"SELECT p.payment_attempt_id,s.workflow_state_code FROM seven.payment_attempts p JOIN seven.workflow_states s USING(workflow_state_id) WHERE reservation_id=$1",[fixture.reservation.id]);assert.equal(pending?.workflow_state_code,'UNKNOWN');
-        assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${receipt.id}`])).length,0);
+        assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:flutterwave:${receipt.id}`])).length,0);
         const restarted=await finish({mode:'reconcile',receipt,providerMode:'flutterwave'});assert.equal(restarted.result?.processed,1);assert.equal(restarted.result?.verifyCalls,1);assert.equal(restarted.result?.checkoutCalls,0);
         await assertPaidOnce(fixture.reservation.id,pending!.payment_attempt_id,fixture.windowId,receipt);
         const replay=await finish({mode:'reconcile',receipt,providerMode:'flutterwave'});assert.equal(replay.result?.checkoutCalls,0);assert.equal(replay.result?.verifyCalls,0);
         await assertPaidOnce(fixture.reservation.id,pending!.payment_attempt_id,fixture.windowId,receipt);
-      }finally{await pool.query("UPDATE seven.businesses SET details=details||'{\"subaccountMode\":\"mock\"}'::jsonb WHERE business_id=$1",[base.business_id]);}
+      }finally{await pool.query('UPDATE seven.business_payment_accounts SET execution_mode_id=$3 WHERE business_id=$1 AND payment_provider_id=$2',[base.business_id,providerIds.flutterwave,account.execution_mode_id]);}
     });
   }finally{for(const child of children)child.kill('SIGKILL');await pool.end();}
 });

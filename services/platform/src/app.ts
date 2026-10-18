@@ -10,8 +10,18 @@ import { serviceDates, assessDemand } from '@7even/engine';
 import { createPool, transaction, one, rows, ApiError, fail, string } from './db.ts';
 import type { Connection } from './db.ts';
 import { hashPassword, verifyPassword, newToken, digestToken } from './auth.ts';
-import { FlutterwaveProvider, MockProvider, validWebhookSecret } from './provider.ts';
+import { MockProvider, validWebhookSecret, parseProviderJson } from './provider.ts';
 import type { PaymentProvider } from './provider.ts';
+import {
+  ProviderRegistry,
+  providerFor,
+  providerIds,
+  executionModeIds,
+  paymentMode,
+} from './providerRegistry.ts';
+import { MockCryptoGateway } from './cryptoProvider.ts';
+import { validPaystackWebhook } from './paystackProvider.ts';
+import { mountPaymentAccounts } from './paymentAccounts.ts';
 import * as S from './store.ts';
 import * as R from './reservations.ts';
 import * as P from './payments.ts';
@@ -25,6 +35,7 @@ import { processInbox, processOutbox } from './worker.ts';
 export interface AppOptions {
   pool?: Pool;
   provider?: PaymentProvider;
+  providers?: ProviderRegistry;
   publicOrigin?: string;
   environment?: string;
   webhookSecret?: string;
@@ -51,22 +62,25 @@ export function createApp(options: AppOptions = {}) {
   const pool = options.pool ?? createPool();
   const environment = options.environment ?? process.env.NODE_ENV ?? 'development';
   const publicOrigin = options.publicOrigin ?? process.env.APP_ORIGIN ?? 'http://127.0.0.1:5177';
-  const mode = process.env.PAYMENT_MODE ?? 'mock';
-  const provider =
-    options.provider ??
-    (mode === 'flutterwave'
-      ? new FlutterwaveProvider(process.env.FLUTTERWAVE_SECRET_KEY ?? '')
-      : new MockProvider());
+  const provider = options.providers ?? options.provider ?? new ProviderRegistry();
   if (
     environment === 'production' &&
-    (provider.mode !== 'flutterwave' ||
+    (provider.mode === 'mock' ||
       !process.env.FLUTTERWAVE_SECRET_KEY ||
       !process.env.FLUTTERWAVE_WEBHOOK_SECRET ||
+      !process.env.PAYSTACK_SECRET_KEY ||
       !publicOrigin.startsWith('https://'))
   )
     throw new Error(
-      'Production needs HTTPS and configured Flutterwave credentials; local test payments are forbidden.',
+      'Production requires HTTPS and both configured fiat providers. Mock payments are forbidden.',
     );
+  if (
+    environment === 'production' &&
+    process.env.CRYPTO_ENABLED === 'true' &&
+    process.env.BASE_RPC_URL &&
+    process.env.CRYPTO_CHAIN_ID !== '8453'
+  )
+    throw new Error('Production crypto must use native USDC on Base mainnet after release review.');
   if (
     process.env.FLUTTERWAVE_WEBHOOK_SCHEME &&
     process.env.FLUTTERWAVE_WEBHOOK_SCHEME !== 'v3-verif-hash'
@@ -90,6 +104,7 @@ export function createApp(options: AppOptions = {}) {
     express.json({
       limit: '128kb',
       verify: (req, _res, buffer) => {
+        (req as Request & { rawBody?: Buffer }).rawBody = Buffer.from(buffer);
         (req as Request & { payloadHash?: string }).payloadHash = digestToken(
           buffer.toString('utf8'),
         );
@@ -119,7 +134,7 @@ export function createApp(options: AppOptions = {}) {
       }
       if (
         !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
-        req.path !== '/api/webhooks/flutterwave'
+        !['/api/webhooks/flutterwave', '/api/webhooks/paystack'].includes(req.path)
       ) {
         if (req.get('Origin') !== publicOrigin)
           return fail(403, 'ORIGIN_REJECTED', 'This request must come from the 7even app.');
@@ -448,14 +463,54 @@ export function createApp(options: AppOptions = {}) {
     const input = parse(C.reservationActionInput, req);
     return mutate(req, res, (db, actor) => R.actOnReservation(db, actor, id(req), input));
   });
-  route('post', '/reservations/:id/checkout', async (req, res) =>
-    financialMutation(
+  route('get', '/reservations/:id/payment-options', async (req, res) =>
+    P.paymentOptions(pool, provider, actorFor(res), id(req)),
+  );
+  route('post', '/reservations/:id/checkout', async (req, res) => {
+    const input = parse(C.checkoutInput, req);
+    return financialMutation(
       req,
       res,
       (actor) => authorizeReservation(actor, id(req)),
-      (actor) => P.checkout(pool, provider, actor, id(req), publicOrigin),
-    ),
-  );
+      (actor) => P.checkout(pool, provider, actor, id(req), publicOrigin, input),
+    );
+  });
+  route('get', '/payments/:id/checkout', async (req, res) => {
+    const row = await one(
+      pool,
+      'SELECT * FROM seven.payment_attempts WHERE payment_attempt_id=$1',
+      [id(req)],
+    );
+    if (!row) return fail(404, 'NOT_FOUND', 'Payment not found.');
+    await authorizeReservation(actorFor(res), row.reservation_id);
+    const payment = (await S.paymentProjection(pool, row.payment_attempt_id))!;
+    if (payment.mode !== paymentMode(provider, payment.provider))
+      return fail(
+        409,
+        'PROVIDER_MODE_CHANGED',
+        'This payment belongs to a different execution mode.',
+      );
+    if (['PAID', 'REFUNDED', 'REFUND_PENDING', 'REVIEW_REQUIRED'].includes(payment.status))
+      return fail(
+        409,
+        'PAYMENT_RECORDED',
+        'This payment already has a recorded outcome. Open your booking to review it.',
+      );
+    if (!row.checkout_url)
+      return fail(
+        409,
+        'PAYMENT_PENDING',
+        'Checkout is being reconciled. Check its status before another payment.',
+      );
+    return {
+      paymentId: row.payment_attempt_id,
+      reference: row.merchant_reference,
+      checkoutUrl: row.checkout_url,
+      mode: payment.mode,
+      provider: payment.provider,
+      method: payment.method,
+    } satisfies C.Checkout;
+  });
   route('get', '/payments/:id', async (req, res) => {
     const p = await S.paymentProjection(pool, id(req));
     if (!p) return fail(404, 'NOT_FOUND', 'Payment not found.');
@@ -480,11 +535,19 @@ export function createApp(options: AppOptions = {}) {
         if (!payment) return fail(404, 'NOT_FOUND', 'Payment not found.');
         await authorizeReservation(actor, payment.reservation_id);
       },
-      (actor) => P.verifyPayment(pool, provider, actor, input.reference, input.transactionId),
+      (actor) =>
+        P.verifyPayment(
+          pool,
+          provider,
+          actor,
+          input.reference,
+          input.transactionId,
+          input.walletSignature,
+        ),
     );
   });
   route('post', '/payments/:id/dev-complete', async (req, res) => {
-    if (!(provider instanceof MockProvider) || environment === 'production')
+    if (provider.mode !== 'mock' || environment === 'production')
       return fail(404, 'NOT_FOUND', 'This route is unavailable.');
     const outcome = z
       .strictObject({ outcome: z.enum(['SUCCESS', 'FAILURE']) })
@@ -496,7 +559,38 @@ export function createApp(options: AppOptions = {}) {
       res,
       (actor) => authorizeReservation(actor, payment.reservationId),
       async (actor) => {
-        provider.receipts.set(payment.reference, {
+        if (payment.provider === 'crypto') {
+          if (
+            !(provider instanceof ProviderRegistry) ||
+            !(provider.crypto instanceof MockCryptoGateway) ||
+            !payment.crypto
+          )
+            return fail(404, 'NOT_FOUND', 'Mock crypto is unavailable.');
+          if (outcome === 'FAILURE') {
+            await pool.query(
+              `UPDATE seven.payment_attempts SET workflow_state_id=${S.sid('FAILED')} WHERE payment_attempt_id=$1`,
+              [payment.id],
+            );
+            await pool.query(
+              `UPDATE seven.reservations SET payment_state_id=${S.sid('FAILED')} WHERE reservation_id=$1`,
+              [payment.reservationId],
+            );
+            return S.paymentProjection(pool, payment.id);
+          }
+          const hash = provider.crypto.complete(
+            payment.crypto.quote,
+            payment.crypto.transactionHash ?? undefined,
+          );
+          await pool.query(
+            'UPDATE seven.crypto_payment_quotes SET payer_verified_at=coalesce(payer_verified_at,now()) WHERE payment_attempt_id=$1',
+            [payment.id],
+          );
+          return P.verifyPayment(pool, provider, actor, payment.reference, hash);
+        }
+        const adapter = providerFor(provider, payment.provider);
+        if (!(adapter instanceof MockProvider))
+          return fail(404, 'NOT_FOUND', 'Mock completion is unavailable.');
+        adapter.receipts.set(payment.reference, {
           id: `local-${payment.id}`,
           reference: payment.reference,
           status: outcome === 'SUCCESS' ? 'successful' : 'failed',
@@ -506,6 +600,35 @@ export function createApp(options: AppOptions = {}) {
         });
         return P.verifyPayment(pool, provider, actor, payment.reference);
       },
+    );
+  });
+  route('post', '/payments/:id/dev-refund-complete', async (req, res) => {
+    if (provider.mode !== 'mock' || environment === 'production')
+      return fail(404, 'NOT_FOUND', 'This route is unavailable.');
+    return financialMutation(
+      req,
+      res,
+      async (actor) => {
+        const p = await S.paymentProjection(pool, id(req));
+        if (!p) return fail(404, 'NOT_FOUND', 'Payment not found.');
+        await authorizeReservation(actor, p.reservationId);
+      },
+      (actor) => P.verifyCryptoRefund(pool, provider, actor, id(req), undefined, true),
+    );
+  });
+  route('post', '/payments/:id/crypto-refund', async (req, res) => {
+    const input = parse(C.cryptoRefundInput, req);
+    return financialMutation(
+      req,
+      res,
+      async (actor) => {
+        const payment = await S.paymentProjection(pool, id(req));
+        if (!payment) return fail(404, 'NOT_FOUND', 'Payment not found.');
+        await authorizeReservation(actor, payment.reservationId);
+        const reservation = (await S.reservationProjection(pool, payment.reservationId))!;
+        S.requireTenant(actor, reservation.businessId, true);
+      },
+      (actor) => P.verifyCryptoRefund(pool, provider, actor, id(req), input.transactionHash),
     );
   });
   route('post', '/reservations/:id/refunds', async (req, res) => {
@@ -523,38 +646,61 @@ export function createApp(options: AppOptions = {}) {
       (actor) => P.requestRefund(pool, provider, actor, id(req), input.reason, input.paymentId),
     );
   });
-  route('post', '/webhooks/flutterwave', async (req, res) => {
-    if (
-      provider.mode !== 'flutterwave' ||
-      !validWebhookSecret(
-        req.get('verif-hash'),
-        options.webhookSecret ?? process.env.FLUTTERWAVE_WEBHOOK_SECRET ?? '',
-      )
-    )
-      return fail(401, 'WEBHOOK_REJECTED', 'Webhook authentication failed.');
+  async function receiveWebhook(
+    req: Request,
+    res: Response,
+    providerId: 'flutterwave' | 'paystack',
+  ) {
+    const adapter = providerFor(provider, providerId);
+    const raw = (req as Request & { rawBody?: Buffer }).rawBody ?? Buffer.alloc(0);
+    const authenticated =
+      adapter.mode === providerId &&
+      (providerId === 'flutterwave'
+        ? validWebhookSecret(
+            req.get('verif-hash'),
+            options.webhookSecret ?? process.env.FLUTTERWAVE_WEBHOOK_SECRET ?? '',
+          )
+        : validPaystackWebhook(
+            raw,
+            req.get('x-paystack-signature'),
+            process.env.PAYSTACK_SECRET_KEY ?? '',
+          ));
+    if (!authenticated) return fail(401, 'WEBHOOK_REJECTED', 'Webhook authentication failed.');
     const event = z
       .object({
         event: z.string().max(100),
         data: z.object({
           id: z.union([z.string(), z.number()]),
-          tx_ref: z.string().max(150),
+          tx_ref: z.string().max(150).optional(),
+          reference: z.string().max(150).optional(),
           status: z.string().max(80),
         }),
       })
-      .parse(req.body);
-    const eventId = randomUUID();
-    const reference = `${event.event}:${event.data.id}:${event.data.status}`;
+      .parse(parseProviderJson(raw.toString('utf8')));
+    if (providerId === 'paystack' && event.event !== 'charge.success')
+      return { received: true, ignored: true };
+    const reference = providerId === 'paystack' ? event.data.reference : event.data.tx_ref;
+    if (!reference || !/^[1-9]\d{0,39}$/.test(String(event.data.id)))
+      return fail(422, 'INVALID_EVENT', 'Provider event identity is invalid.');
+    const payment = await one(
+      pool,
+      'SELECT payment_provider_id FROM seven.payment_attempts WHERE merchant_reference=$1',
+      [reference],
+    );
+    if (!payment || Number(payment.payment_provider_id) !== providerIds[providerId])
+      return fail(409, 'WRONG_PROVIDER', 'The event does not match a payment for this provider.');
     await pool.query(
-      'INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4) ON CONFLICT(event_reference) DO NOTHING',
+      'INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details,payment_provider_id) VALUES($1,$2,$3,$4,$5) ON CONFLICT(payment_provider_id,event_reference) DO NOTHING',
       [
-        eventId,
-        reference,
+        randomUUID(),
+        `${event.event}:${event.data.id}:${event.data.status}`,
         event.event,
         {
           id: String(event.data.id),
-          reference: event.data.tx_ref,
+          reference,
           fingerprint: (req as Request & { payloadHash?: string }).payloadHash,
         },
+        providerIds[providerId],
       ],
     );
     res.json({ data: { received: true } });
@@ -562,8 +708,9 @@ export function createApp(options: AppOptions = {}) {
       void processInbox(pool, provider).catch(() => undefined);
     });
     return undefined;
-  });
-
+  }
+  route('post', '/webhooks/flutterwave', (req, res) => receiveWebhook(req, res, 'flutterwave'));
+  route('post', '/webhooks/paystack', (req, res) => receiveWebhook(req, res, 'paystack'));
   route('get', '/me/overview', async (_req, res): Promise<C.CustomerOverview> => {
     const actor = actorFor(res);
     const rs = await rows(
@@ -1053,7 +1200,14 @@ export function createApp(options: AppOptions = {}) {
       [actor.id, actor.businessId],
     );
     return {
-      business: await S.businessProjection(pool, actor.businessId!),
+      business: await (async () => {
+        const business = await S.businessProjection(pool, actor.businessId!);
+        if (!business) return null;
+        const view = { ...business };
+        delete view.paymentAccounts;
+        delete view.cryptoCommissionOwedMinor;
+        return view;
+      })(),
       offerings: (await businessOffers(actor.businessId!)).filter(
         (offer) => actor.role !== 'RECEPTION' || actor.venueIds.includes(offer.venueId),
       ),
@@ -1224,7 +1378,7 @@ export function createApp(options: AppOptions = {}) {
     ))!;
     const refunds = await rows(
       pool,
-      `SELECT r.*,s.workflow_state_code FROM seven.refunds r JOIN seven.workflow_states s USING(workflow_state_id) WHERE s.workflow_state_code IN ('UNKNOWN','FAILED','DISPATCHED')`,
+      `SELECT r.*,s.workflow_state_code FROM seven.refunds r JOIN seven.workflow_states s USING(workflow_state_id) WHERE s.workflow_state_code IN ('UNKNOWN','FAILED','DISPATCHED') OR r.provider_details->>'exception' IS NOT NULL ORDER BY r.created_at DESC LIMIT 100`,
     );
     const exceptions = [
       ...payments
@@ -1238,7 +1392,7 @@ export function createApp(options: AppOptions = {}) {
       ...refunds.map((r) => ({
         id: r.refund_id,
         kind: 'REFUND',
-        message: `Refund ${r.workflow_state_code}. Never blindly retry a dispatched refund.`,
+        message: `Refund ${r.workflow_state_code}. ${r.provider_details.exception ?? 'Never blindly retry a dispatched refund.'}`,
         createdAt: S.iso(r.created_at),
       })),
     ];
@@ -1310,43 +1464,76 @@ export function createApp(options: AppOptions = {}) {
     const actor = actorFor(res);
     requireRole(actor, ['ADMIN']);
     const input = parse(C.subaccountInput, req);
-    const verified = await provider.subaccount(input.subaccountCode);
+    const adapter = providerFor(provider, input.provider);
+    const verified = await adapter.subaccount(input.subaccountCode);
+    if (String(verified.subaccount_id) !== input.subaccountCode)
+      return fail(409, 'SUBACCOUNT_MISMATCH', 'Provider did not verify this business subaccount.');
     if (
-      provider.mode === 'flutterwave' &&
+      adapter.mode !== 'mock' &&
       (!/^\d{10}$/.test(String(verified.account_number ?? '')) ||
-        !verified.account_bank ||
-        (verified.country && verified.country !== 'NG'))
+        (verified.currency && verified.currency !== 'NGN') ||
+        (verified.country && verified.country !== 'NG') ||
+        verified.active === false ||
+        (input.provider === 'paystack' &&
+          verified.domain !== (environment === 'production' ? 'live' : 'test')))
     )
       return fail(
         409,
         'SUBACCOUNT_REVIEW',
-        'Provider bank mapping must identify an eligible Nigerian settlement account.',
+        'Review the active Nigerian settlement account and provider environment.',
       );
-    if (String(verified.subaccount_id) !== input.subaccountCode)
-      return fail(409, 'SUBACCOUNT_MISMATCH', 'Provider did not verify this business subaccount.');
     return mutate(req, res, async (db) => {
-      const found = await one(
+      const business = await one(
         db,
-        'UPDATE seven.businesses SET subaccount_id=$2,bank_revision=bank_revision+1,details=details||$3::jsonb,updated_at=now() WHERE business_id=$1 RETURNING business_id',
+        'SELECT business_id FROM seven.businesses WHERE business_id=$1 FOR UPDATE',
+        [id(req)],
+      );
+      if (!business) return fail(404, 'NOT_FOUND', 'Business not found.');
+      const details = {
+        settlementAccount: verified.account_number ?? null,
+        settlementBankCode: verified.account_bank ?? null,
+        providerRawId: verified.providerRawId ?? null,
+        bankName: verified.bankName ?? null,
+        providerBankId: verified.providerBankId ?? null,
+      };
+      await db.query(
+        `INSERT INTO seven.business_payment_accounts(business_payment_account_id,business_id,payment_provider_id,account_code,account_label,execution_mode_id,revision,workflow_state_id,details,verified_at) VALUES($1,$2,$3,$4,$5,$6,1,${S.sid('APPROVED')},$7,now()) ON CONFLICT(business_id,payment_provider_id) DO UPDATE SET account_code=excluded.account_code,account_label=excluded.account_label,execution_mode_id=excluded.execution_mode_id,revision=seven.business_payment_accounts.revision+1,workflow_state_id=excluded.workflow_state_id,details=excluded.details,verified_at=now(),updated_at=now()`,
         [
+          randomUUID(),
           id(req),
+          providerIds[input.provider],
           input.subaccountCode,
-          JSON.stringify({
-            accountLabel: input.accountLabel,
-            subaccountVerifiedAt: new Date().toISOString(),
-            subaccountMode: provider.mode,
-            settlementAccount:
-              typeof verified.account_number === 'string' ? verified.account_number : null,
-            settlementBankCode:
-              typeof verified.account_bank === 'string' ? verified.account_bank : null,
-          }),
+          input.accountLabel,
+          executionModeIds[adapter.mode],
+          details,
         ],
       );
-      if (!found) return fail(404, 'NOT_FOUND', 'Business not found.');
-      await S.audit(db, actor, id(req), 'business.subaccount_verified', id(req));
+      if (input.provider === 'flutterwave')
+        await db.query(
+          'UPDATE seven.businesses SET subaccount_id=$2,bank_revision=bank_revision+1,details=details||$3::jsonb,updated_at=now() WHERE business_id=$1',
+          [
+            id(req),
+            input.subaccountCode,
+            JSON.stringify({
+              accountLabel: input.accountLabel,
+              subaccountVerifiedAt: new Date().toISOString(),
+              subaccountMode: adapter.mode,
+              ...details,
+            }),
+          ],
+        );
+      await S.audit(
+        db,
+        actor,
+        id(req),
+        'business.payment_account_verified',
+        id(req),
+        input.provider,
+      );
       return S.businessProjection(db, id(req));
     });
   });
+  mountPaymentAccounts({ route, mutate, pool, source: provider, actorFor, requireRole, id });
   route('post', '/admin/policy', async (req, res) => {
     requireRole(actorFor(res), ['ADMIN']);
     const input = parse(C.policyInput, req);
