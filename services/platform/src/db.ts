@@ -3,11 +3,13 @@ import type { Pool, PoolClient, QueryResultRow } from 'pg';
 
 export function createPool(connectionString = process.env.DATABASE_URL): Pool {
   if (!connectionString) throw new Error('DATABASE_URL is required.');
+  const serverless = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
   return new pg.Pool({
     connectionString,
-    max: 12,
-    connectionTimeoutMillis: 5000,
+    max: serverless ? 1 : 12,
+    connectionTimeoutMillis: serverless ? 10000 : 5000,
     idleTimeoutMillis: 10000,
+    allowExitOnIdle: serverless,
   });
 }
 
