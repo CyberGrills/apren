@@ -1,4 +1,4 @@
-npm warn audit request to https://registry.npmjs.org/-/npm/v1/security/advisories/bulk failed, reason: 
+npm warn audit request to https://registry.npmjs.org/-/npm/v1/security/advisories/bulk failed, reason:
 npm error audit endpoint returned an error
 {
   "message": "request to https://registry.npmjs.org/-/npm/v1/security/advisories/bulk failed, reason: ",
