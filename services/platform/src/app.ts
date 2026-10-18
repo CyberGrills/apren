@@ -61,7 +61,28 @@ const requireRole = (actor: C.SessionUser, allowed: C.Role[]): void => {
 export function createApp(options: AppOptions = {}) {
   const pool = options.pool ?? createPool();
   const environment = options.environment ?? process.env.NODE_ENV ?? 'development';
-  const publicOrigin = options.publicOrigin ?? process.env.APP_ORIGIN ?? 'http://127.0.0.1:5177';
+  const deploymentOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+  const publicOrigin =
+    options.publicOrigin ?? process.env.APP_ORIGIN ?? deploymentOrigin ?? 'http://127.0.0.1:5177';
+  const allowedOrigins = new Set<string>(
+    [
+      publicOrigin,
+      process.env.APP_ORIGIN,
+      process.env.VERCEL_URL,
+      process.env.VERCEL_BRANCH_URL,
+      process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    ]
+      .filter((value): value is string => typeof value === 'string' && value.length > 0)
+      .map((value) => {
+        const url = value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
+        try {
+          return new URL(url).origin;
+        } catch {
+          return '';
+        }
+      })
+      .filter((value) => value.length > 0),
+  );
   const provider = options.providers ?? options.provider ?? new ProviderRegistry();
   if (
     environment === 'production' &&
@@ -136,7 +157,8 @@ export function createApp(options: AppOptions = {}) {
         !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
         !['/api/webhooks/flutterwave', '/api/webhooks/paystack'].includes(req.path)
       ) {
-        if (req.get('Origin') !== publicOrigin)
+        const requestOrigin = req.get('Origin');
+        if (!requestOrigin || !allowedOrigins.has(requestOrigin))
           return fail(403, 'ORIGIN_REJECTED', 'This request must come from the 7even app.');
         if (
           res.locals.actor &&
@@ -172,7 +194,7 @@ export function createApp(options: AppOptions = {}) {
     );
     res.cookie('seven_session', token, {
       httpOnly: true,
-      secure: environment === 'production',
+      secure: environment !== 'development' && environment !== 'test',
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 86400000,
