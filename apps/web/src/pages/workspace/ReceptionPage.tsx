@@ -1,14 +1,7 @@
 import { useFeedback } from '../../components/Feedback.tsx';
-import type {
-  Checkout,
-  Offering,
-  Quote,
-  ReceptionOverview,
-  Reservation,
-  SyncResult,
-} from '@7even/contracts';
+import type { Offering, Quote, ReceptionOverview, Reservation, SyncResult } from '@7even/contracts';
 import { Plus, RefreshCw, TicketCheck, WifiOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { PaymentMethodDialog } from '../../components/PaymentMethodDialog.tsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   EmptyState,
@@ -30,7 +23,6 @@ import {
   appendQueue,
   type StoredAction,
 } from '../../lib/receptionQueue.ts';
-import { openCheckout } from '../customer/checkout.ts';
 import { PaymentNotesDialog } from './PaymentNotesDialog.tsx';
 import { localDateNow } from '../public/PublicShell.tsx';
 import {
@@ -331,11 +323,11 @@ function WalkInDialog({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const navigate = useNavigate();
   const [offeringId, setOfferingId] = useState(offerings[0]?.id ?? '');
   const offer = offerings.find((item) => item.id === offeringId);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [reservation, setReservation] = useState<Reservation | null>(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const { showSuccess } = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -389,21 +381,8 @@ function WalkInDialog({
       setBusy(false);
     }
   }
-  async function checkout() {
-    if (!reservation) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await api<Checkout>(`/reservations/${reservation.id}/checkout`, {
-        method: 'POST',
-        idempotencyKey: `checkout-${key}`,
-      });
-      openCheckout(result, navigate);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not open payment.');
-      setBusy(false);
-    }
-  }
+  if (paymentOpen && reservation)
+    return <PaymentMethodDialog reservation={reservation} onClose={() => setPaymentOpen(false)} />;
   return (
     <Modal
       title={
@@ -499,7 +478,10 @@ function WalkInDialog({
             type="button"
             className="btn btn-primary"
             disabled={busy}
-            onClick={() => void (reservation ? checkout() : reserve())}
+            onClick={() => {
+              if (reservation) setPaymentOpen(true);
+              else void reserve();
+            }}
           >
             {busy ? 'Working…' : reservation ? 'Continue to payment' : 'Hold this visit'}
           </button>

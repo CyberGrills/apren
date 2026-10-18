@@ -69,8 +69,8 @@ export function TestCheckoutPage() {
           <div>
             <strong>Local test checkout</strong>
             <p>
-              No real money moves here. This is a development payment double, not Flutterwave
-              sandbox evidence.
+              No real money moves here. This is a local development payment double. It does not
+              prove provider sandbox or bank behavior.
             </p>
           </div>
         </div>
@@ -98,6 +98,17 @@ export function TestCheckoutPage() {
               </div>
               <dl className="payment-details">
                 <div>
+                  <dt>Provider</dt>
+                  <dd>
+                    {payment.provider === 'paystack'
+                      ? 'Paystack'
+                      : payment.provider === 'crypto'
+                        ? 'USDC on Base'
+                        : 'Flutterwave'}{' '}
+                    · local test
+                  </dd>
+                </div>
+                <div>
                   <dt>Reference</dt>
                   <dd>{payment.reference}</dd>
                 </div>
@@ -108,7 +119,9 @@ export function TestCheckoutPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Settlement</dt>
+                  <dt>
+                    {payment.settlementKind === 'WALLET' ? 'Wallet delivery' : 'Bank settlement'}
+                  </dt>
                   <dd>
                     <StatusBadge status={payment.settlementStatus} />
                   </dd>
@@ -156,7 +169,7 @@ export function TestCheckoutPage() {
 export function PaymentReturnPage() {
   const { showSuccess, showError } = useFeedback();
   const [params] = useSearchParams();
-  const reference = params.get('tx_ref') ?? params.get('reference');
+  const reference = params.get('tx_ref') ?? params.get('reference') ?? params.get('trxref');
   const transactionId = params.get('transaction_id');
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(!!reference);
@@ -241,6 +254,16 @@ export function PaymentReturnPage() {
               </div>
               <dl className="payment-details">
                 <div>
+                  <dt>Provider</dt>
+                  <dd>
+                    {payment.provider === 'paystack'
+                      ? 'Paystack'
+                      : payment.provider === 'crypto'
+                        ? 'USDC on Base'
+                        : 'Flutterwave'}
+                  </dd>
+                </div>
+                <div>
                   <dt>Reference</dt>
                   <dd>{payment.reference}</dd>
                 </div>
@@ -251,7 +274,9 @@ export function PaymentReturnPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Settlement</dt>
+                  <dt>
+                    {payment.settlementKind === 'WALLET' ? 'Wallet delivery' : 'Bank settlement'}
+                  </dt>
                   <dd>
                     <StatusBadge status={payment.settlementStatus} />
                   </dd>

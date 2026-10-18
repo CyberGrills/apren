@@ -1,3 +1,4 @@
+import { providerCode, executionModeCode } from './providerRegistry.ts';
 import { randomUUID } from 'node:crypto';
 import type { QueryResultRow } from 'pg';
 import type {
@@ -181,6 +182,31 @@ export async function businessProjection(db: Connection, id: string): Promise<Bu
     accountLabel: r.details.accountLabel ?? null,
     createdAt: iso(r.created_at),
     isSample: !!r.details.isSample,
+    paymentAccounts: (
+      await rows(
+        db,
+        'SELECT a.*,s.workflow_state_code FROM seven.business_payment_accounts a JOIN seven.workflow_states s USING(workflow_state_id) WHERE business_id=$1 ORDER BY payment_provider_id',
+        [id],
+      )
+    ).map((a) => ({
+      id: a.business_payment_account_id,
+      provider: providerCode(a.payment_provider_id),
+      accountCode: a.account_code,
+      accountLabel: a.account_label,
+      mode: executionModeCode(a.execution_mode_id),
+      revision: a.revision,
+      status: a.workflow_state_code,
+      verifiedAt: a.verified_at ? iso(a.verified_at) : null,
+    })),
+    cryptoCommissionOwedMinor: String(
+      (
+        await one(
+          db,
+          'SELECT coalesce(sum(amount_minor),0) AS total FROM seven.money_postings WHERE account_code=$1',
+          [`commission-receivable:${id}`],
+        )
+      )?.total ?? '0',
+    ),
   };
 }
 export async function offeringProjection(db: Connection, id: string): Promise<Offering | null> {
@@ -290,6 +316,18 @@ export async function paymentProjection(db: Connection, id: string): Promise<Pay
     [id],
   );
   if (!r) return null;
+  const provider = providerCode(r.payment_provider_id);
+  const quote =
+    provider === 'crypto'
+      ? await one(db, 'SELECT * FROM seven.crypto_payment_quotes WHERE payment_attempt_id=$1', [id])
+      : null;
+  const refund = quote
+    ? await one(
+        db,
+        'SELECT f.*,s.workflow_state_code,p.transaction_hash AS proof_hash FROM seven.refunds f JOIN seven.workflow_states s USING(workflow_state_id) LEFT JOIN seven.crypto_refund_proofs p USING(refund_id) WHERE f.payment_attempt_id=$1 ORDER BY f.created_at LIMIT 1',
+        [id],
+      )
+    : null;
   return {
     id: r.payment_attempt_id,
     reservationId: r.reservation_id,
@@ -300,15 +338,43 @@ export async function paymentProjection(db: Connection, id: string): Promise<Pay
     amountMinor: r.amount_minor,
     commissionMinor: r.commission_minor,
     feeMinor: r.provider_details.feeMinor ?? null,
-    merchantExpectedMinor: (
-      BigInt(r.amount_minor) -
-      BigInt(r.commission_minor) -
-      BigInt(r.provider_details.feeMinor ?? '0')
-    ).toString(),
+    merchantExpectedMinor:
+      provider === 'crypto'
+        ? r.amount_minor
+        : (
+            BigInt(r.amount_minor) -
+            BigInt(r.commission_minor) -
+            BigInt(r.provider_details.feeMinor ?? '0')
+          ).toString(),
     currency: 'NGN',
     createdAt: iso(r.created_at),
     verifiedAt: r.provider_details.verifiedAt ?? null,
     mode: r.provider_details.mode ?? 'mock',
+    provider,
+    method: provider === 'crypto' ? 'USDC_BASE' : 'FIAT',
+    routingPolicyVersion: r.routing_policy_version,
+    settlementKind: provider === 'crypto' ? 'WALLET' : 'BANK',
+    commissionOwedMinor:
+      provider === 'crypto' && ['PAID', 'REFUND_PENDING'].includes(r.state_code)
+        ? r.commission_minor
+        : '0',
+    crypto: quote
+      ? {
+          quote: quote.quote_data,
+          transactionHash: quote.transaction_hash,
+          payerVerified: !!quote.payer_verified_at,
+          evidence: quote.transfer_evidence,
+          refund: refund
+            ? {
+                id: refund.refund_id,
+                amountAtoms: refund.provider_details.cryptoAmountAtoms ?? quote.amount_atoms,
+                recipientAddress: quote.quote_data.payerAddress,
+                transactionHash: refund.proof_hash ?? refund.provider_details.pendingHash ?? null,
+                status: refund.workflow_state_code,
+              }
+            : null,
+        }
+      : null,
   };
 }
 export async function rewardProjection(db: Connection, id: string): Promise<Reward | null> {

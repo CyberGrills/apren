@@ -13,7 +13,12 @@ import { FeedbackProvider } from './components/Feedback.tsx';
 import { WorkspaceShell } from './components/WorkspaceShell.tsx';
 import { ErrorNotice, Loading, PageHeader } from './components/ui.tsx';
 import { SessionProvider, useSession } from './context/SessionContext.tsx';
-import { AccountPage, PaymentReturnPage, TestCheckoutPage } from './pages/customer/index.ts';
+import {
+  AccountPage,
+  CryptoCheckoutPage,
+  PaymentReturnPage,
+  TestCheckoutPage,
+} from './pages/customer/index.ts';
 import {
   AuthPage,
   BusinessApplicationPage,
@@ -163,6 +168,7 @@ export function App() {
                 <Route path="/app/profile" element={<AccountPage tab="profile" />} />
                 <Route path="/app/activity" element={<AccountPage tab="activity" />} />
                 <Route path="/checkout/test/:paymentId" element={<TestCheckoutPage />} />
+                <Route path="/checkout/crypto/:paymentId" element={<CryptoCheckoutPage />} />
                 <Route path="/payment/return" element={<PaymentReturnPage />} />
               </Route>
               <Route element={<Protected roles={['BUSINESS_OWNER']} />}>

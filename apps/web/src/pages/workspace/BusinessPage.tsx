@@ -17,6 +17,7 @@ import {
 import { useSession } from '../../context/SessionContext.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
+import { BusinessPayments } from './BusinessPayments.tsx';
 import {
   ActivityList,
   dateLabel,
@@ -387,14 +388,15 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                   taxes.
                 </p>
                 <p className="small-copy">
-                  Flutterwave’s actual processing fee comes from the business share. Customers see
-                  the full price before reserving. Provider records establish settlement to the
-                  bank.
+                  The payment provider’s actual processing fee comes from the business share.
+                  Customers see the full price before reserving. Bank delivery is tracked separately
+                  from a successful charge.
                 </p>
                 <p className="small-copy">
                   Bank mapping is reviewed by 7even before live checkout is available.
                 </p>
               </div>
+              <BusinessPayments />
             </div>
           )}
         </>

@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import { rows, one, transaction } from './db.ts';
-import type { PaymentProvider } from './provider.ts';
+import { providerCode, providerFor } from './providerRegistry.ts';
+import type { ProviderSource } from './providerRegistry.ts';
 import { applyReceipt, reconcile } from './payments.ts';
 import { expireHolds } from './reservations.ts';
 import { expireTrades } from './benefits.ts';
@@ -37,6 +38,8 @@ export async function recoverClaims(pool: Pool): Promise<number> {
             reference: payment.merchant_reference,
             checkoutUrl: payment.checkout_url,
             mode: payment.provider_details.mode,
+            provider: providerCode(payment.payment_provider_id),
+            method: Number(payment.payment_provider_id) === 3 ? 'USDC_BASE' : 'FIAT',
           };
       } else if (development) {
         const payment = await paymentProjection(db, development[1]!);
@@ -76,7 +79,7 @@ export async function recoverClaims(pool: Pool): Promise<number> {
   });
 }
 
-export async function processInbox(pool: Pool, provider: PaymentProvider): Promise<number> {
+export async function processInbox(pool: Pool, provider: ProviderSource): Promise<number> {
   const leaseId = randomUUID();
   const events = await transaction(pool, async (db) =>
     rows(
@@ -88,7 +91,18 @@ export async function processInbox(pool: Pool, provider: PaymentProvider): Promi
   let processed = 0;
   for (const event of events) {
     try {
-      const receipt = await provider.verify(
+      const providerId = providerCode(event.payment_provider_id);
+      const payment = await one(
+        pool,
+        'SELECT payment_provider_id,provider_details FROM seven.payment_attempts WHERE merchant_reference=$1',
+        [String(event.details.reference)],
+      );
+      if (!payment || Number(payment.payment_provider_id) !== Number(event.payment_provider_id))
+        throw new Error('Provider does not match the saved attempt.');
+      const adapter = providerFor(provider, providerId);
+      if (payment.provider_details.mode !== adapter.mode)
+        throw new Error('Provider execution mode does not match the attempt.');
+      const receipt = await adapter.verify(
         String(event.details.reference),
         String(event.details.id),
       );
@@ -101,7 +115,7 @@ export async function processInbox(pool: Pool, provider: PaymentProvider): Promi
           [event.provider_event_id, leaseId],
         );
         if (!owned) return false;
-        await applyReceipt(db, receipt);
+        await applyReceipt(db, receipt, null, providerId);
         await db.query(
           'UPDATE seven.provider_events SET processed_at=now(),lease_id=NULL,lease_expires_at=NULL,last_error=NULL WHERE provider_event_id=$1',
           [event.provider_event_id],
@@ -185,7 +199,7 @@ export async function processOutbox(pool: Pool): Promise<number> {
   });
 }
 
-export async function runRecovery(pool: Pool, provider: PaymentProvider): Promise<void> {
+export async function runRecovery(pool: Pool, provider: ProviderSource): Promise<void> {
   await recoverClaims(pool);
   await transaction(pool, async (db) => {
     await expireHolds(db);

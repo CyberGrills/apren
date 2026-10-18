@@ -1,16 +1,15 @@
-import type { Checkout, Offering, Quote, Reservation } from '@7even/contracts';
+import type { Offering, Quote, Reservation } from '@7even/contracts';
 import { ArrowUpRight, LockKeyhole } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { PaymentMethodDialog } from '../../components/PaymentMethodDialog.tsx';
 import { ErrorNotice, Field, Money } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
-import { openCheckout } from '../customer/checkout.ts';
 import { addDays, friendlyDate, localDateNow } from './PublicShell.tsx';
 
 export function BookingPanel({ offering }: { offering: Offering }) {
   const { user } = useSession();
-  const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const requestedDate = searchParams.get('startDate') ?? '';
@@ -39,8 +38,10 @@ export function BookingPanel({ offering }: { offering: Offering }) {
   const [quantity, setQuantity] = useState('1');
   const [quote, setQuote] = useState<Quote | null>(null);
   const [held, setHeld] = useState<Reservation | null>(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const paymentButtonRef = useRef<HTMLButtonElement>(null);
   const keys = useRef({
     quote: crypto.randomUUID(),
     reserve: crypto.randomUUID(),
@@ -96,11 +97,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
           idempotencyKey: keys.current.reserve,
         }));
       setHeld(reservation);
-      const result = await api<Checkout>(`/reservations/${reservation.id}/checkout`, {
-        method: 'POST',
-        idempotencyKey: keys.current.checkout,
-      });
-      openCheckout(result, navigate);
+      setPaymentOpen(true);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -261,6 +258,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
           <button
             type="button"
             className="btn btn-primary booking-cta"
+            ref={paymentButtonRef}
             onClick={checkout}
             disabled={busy}
           >
@@ -286,6 +284,13 @@ export function BookingPanel({ offering }: { offering: Offering }) {
         Cancellation rules: {offering.cancellationHours} hours before the booking starts. The
         business's policy applies.
       </p>
+      {paymentOpen && held && (
+        <PaymentMethodDialog
+          reservation={held}
+          onClose={() => setPaymentOpen(false)}
+          returnFocusRef={paymentButtonRef}
+        />
+      )}
     </aside>
   );
 }

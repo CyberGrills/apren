@@ -52,8 +52,8 @@ export function PaymentNotesDialog({
         {reservation.reference} · {reservation.customerName}
       </p>
       <p className="notice">
-        A note records what reception observed. It does not mark a Flutterwave payment paid,
-        establish settlement or earn points. Keep bank and card details out of notes.
+        A note records what reception observed. It does not mark a checkout payment paid, establish
+        settlement or earn points. Keep bank and card details out of notes.
       </p>
       {loading && <Loading />}
       {error && <ErrorNotice message={error} />}
