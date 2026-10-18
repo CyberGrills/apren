@@ -1,3 +1,5 @@
+import { uyoHotelDirectoryLeads } from './uyoHotelDirectory.ts';
+
 export type ArrivalDiscoveryLead = {
   name: string;
   address: string;
@@ -201,8 +203,6 @@ const curatedArrivalDiscoveryLeads: ArrivalDiscoveryLead[] = [
   }
 ];
 
-
-import { uyoHotelDirectoryLeads } from './uyoHotelDirectory.ts';
 
 const normalizeLeadName = (name: string): string => name.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const curatedLeadNames = new Set(curatedArrivalDiscoveryLeads.map((lead) => normalizeLeadName(lead.name)));
