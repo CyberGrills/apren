@@ -8,8 +8,8 @@ export type ArrivalDiscoveryLead = {
   notes: string;
 };
 
-// Imported from PR #2's directory research. These are discovery leads, not vetted partners or bookable inventory.
-export const arrivalDiscoveryLeads: ArrivalDiscoveryLead[] = [
+// Curated leads from PR #2. Directory records are unverified and are not bookable inventory.
+const curatedArrivalDiscoveryLeads: ArrivalDiscoveryLead[] = [
   {
     "name": "Monty Suites Uyo",
     "address": "37 General Edet Akpan Avenue, Uyo, Akwa Ibom, Nigeria",
@@ -199,4 +199,15 @@ export const arrivalDiscoveryLeads: ArrivalDiscoveryLead[] = [
     "status": "unverified_lead",
     "notes": "Guest house; classify property type and confirm current operation."
   }
+];
+
+
+import { uyoHotelDirectoryLeads } from './uyoHotelDirectory.ts';
+
+const normalizeLeadName = (name: string): string => name.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const curatedLeadNames = new Set(curatedArrivalDiscoveryLeads.map((lead) => normalizeLeadName(lead.name)));
+
+export const arrivalDiscoveryLeads: ArrivalDiscoveryLead[] = [
+  ...curatedArrivalDiscoveryLeads,
+  ...uyoHotelDirectoryLeads.filter((lead) => !curatedLeadNames.has(normalizeLeadName(lead.name))),
 ];
