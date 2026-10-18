@@ -88,97 +88,97 @@ Status: Active/imported
 1,494 newline characters; mobile-width 440px shell with warm paper/green theme, Fraunces/Inter/IBM Plex Mono from Google Fonts. Five bottom tabs plus asset/kitchen detail and rewards. Defines six sample assets, four kitchens, market pulse, past exchanges, recommendations and rewards. Wallet and market partially use live asset context; wallet requests balances/preferences and notifications for fixed user 1; asset details request legacy brain scores/trades. Intelligence and kitchen views contain undeclared identifiers. Exchange and support actions update component state only. All price history/journey logs/rewards/recommendation rationale are fixtures or mapper placeholders. Navigation is local component state, with no URL routing, login, checkout, persisted exchange or upload UI.
 Size: 63875 bytes; 1495 lines.
 
-015. apps/web/src/features/apren/AprenApp.jsx.asset-context-backup.1785677033
+015. legacy/web-src/features/apren/AprenApp.jsx.asset-context-backup.1785677033
 Role: Historical source backup
 Status: Tracked but not imported or built
 Before adopting context: imports useAssetIntelligence directly in WalletScreen; market uses fixtures. Deterministic comparison to current: {'replace': 11, 'insert': 156}; SHA-256 5fbca8186350a8702afb9fd9de3c34e687f5aa6f160d835822d4e6143f5e5535. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60826 bytes; 1337 lines.
 
-016. apps/web/src/features/apren/AprenApp.jsx.asset-v2-backup.1785676973
+016. legacy/web-src/features/apren/AprenApp.jsx.asset-v2-backup.1785676973
 Role: Historical source backup
 Status: Tracked but not imported or built
 Before direct asset-intelligence hook: WalletScreen renders backendAssets fetched with getMappedAssets; market and other views remain fixtures. Deterministic comparison to current: {'insert': 164, 'replace': 8}; SHA-256 45ddae584f0b63c9ddb951495b5efde2b417e9d7b796c3c28c57676ec5f65471. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60702 bytes; 1331 lines.
 
-017. apps/web/src/features/apren/AprenApp.jsx.before-wallet-api.1785674690
+017. legacy/web-src/features/apren/AprenApp.jsx.before-wallet-api.1785674690
 Role: Historical source backup
 Status: Tracked but not imported or built
 Fully static early UI with fixed Jul 30 date and 42 ə balance; no API effects. Same bytes as before-wallet-upgrade, wallet-home-live and wallet-intelligence backups. Deterministic comparison to current: {'replace': 139, 'insert': 187}; SHA-256 affac19a4b8ac64a719adf9a0e650f8d2086cb503a4ac33f1a48a1307847abc5. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 58615 bytes; 1185 lines.
 
-018. apps/web/src/features/apren/AprenApp.jsx.before-wallet-upgrade.1785674515
+018. legacy/web-src/features/apren/AprenApp.jsx.before-wallet-upgrade.1785674515
 Role: Historical source backup
 Status: Tracked but not imported or built
 Fully static early UI; same bytes as before-wallet-api, wallet-home-live and wallet-intelligence backups. Deterministic comparison to current: {'replace': 139, 'insert': 187}; SHA-256 affac19a4b8ac64a719adf9a0e650f8d2086cb503a4ac33f1a48a1307847abc5. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 58615 bytes; 1185 lines.
 
-019. apps/web/src/features/apren/AprenApp.jsx.food-intelligence-v3-backup.1785677217
+019. legacy/web-src/features/apren/AprenApp.jsx.food-intelligence-v3-backup.1785677217
 Role: Historical source backup
 Status: Tracked but not imported or built
 Market uses live context but IntelligenceScreen and KitchenDetail still use correctly scoped static assets; later replacement introduced undeclared liveAssets. Deterministic comparison to current: {'insert': 153, 'replace': 6}; SHA-256 62712c68de2f0ce4d2d8c896ba70d094f2a65dfb03f20e23722795fd83eecd3e. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60849 bytes; 1342 lines.
 
-020. apps/web/src/features/apren/AprenApp.jsx.import-fix-backup.1785675989
+020. legacy/web-src/features/apren/AprenApp.jsx.import-fix-backup.1785675989
 Role: Historical source backup
 Status: Tracked but not imported or built
 Contains two imports declaring getWallet (api/walletApi and aprenWallet), which would make this historical file fail compilation if activated; also references undeclared displayAssets. Deterministic comparison to current: {'replace': 68, 'insert': 156}; SHA-256 b7a96b7b3663181cce4d71f795538e1dd58d100b386cb4c8a77a9476b18d7f9c. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60168 bytes; 1286 lines.
 
-021. apps/web/src/features/apren/AprenApp.jsx.logo-backup.1785725744
+021. legacy/web-src/features/apren/AprenApp.jsx.logo-backup.1785725744
 Role: Historical source backup
 Status: Tracked but not imported or built
 Immediate predecessor to current file, identical except current adds AprenLogo import and 10-line brand block. All major current runtime/contract defects already present. Deterministic comparison to current: {'insert': 11}; SHA-256 0e65769d39b1f26888922524dd2c1e5d99a16220e1f4a029f67c0662a9485ecc. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 63553 bytes; 1484 lines.
 
-022. apps/web/src/features/apren/AprenApp.jsx.mapper-backup.1785676565
+022. legacy/web-src/features/apren/AprenApp.jsx.mapper-backup.1785676565
 Role: Historical source backup
 Status: Tracked but not imported or built
 Direct wallet loader plus notification effects and undeclared displayAssets in wallet asset list. Same bytes as wallet-screen-v3 and wallet-v2 backups. Deterministic comparison to current: {'replace': 67, 'insert': 156}; SHA-256 b18278c60e352956ebb51b9b3d4da01502ef92be6c1c86f2b1c477f98a6dd655. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60112 bytes; 1286 lines.
 
-023. apps/web/src/features/apren/AprenApp.jsx.market-context-v1-backup.1785677126
+023. legacy/web-src/features/apren/AprenApp.jsx.market-context-v1-backup.1785677126
 Role: Historical source backup
 Status: Tracked but not imported or built
 Wallet adopts AssetContext useAssets while MarketScreen still renders fixtures; all detail/intelligence/trade UI is fixture based. Deterministic comparison to current: {'insert': 158, 'replace': 7}; SHA-256 2091a0583a887488ddf03218652c2e0e5dcf1e36b544e9af4c4c33096ec9747b. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60798 bytes; 1337 lines.
 
-024. apps/web/src/features/apren/AprenApp.jsx.trade-context-v4-backup.1785677251
+024. legacy/web-src/features/apren/AprenApp.jsx.trade-context-v4-backup.1785677251
 Role: Historical source backup
 Status: Tracked but not imported or built
 IntelligenceScreen and KitchenDetail reference undeclared liveAssets; exchange/kitchen list still use static assets instead of later undeclared tradeAssets. No useBrain/useTrades detail integration yet. Deterministic comparison to current: {'insert': 153, 'replace': 3}; SHA-256 256d6752e25b26d3c24044d3ae1a202dbab507def5ecd77b649de1d4216bad0a. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60861 bytes; 1342 lines.
 
-025. apps/web/src/features/apren/AprenApp.jsx.wallet-currency-v4-backup.1785676923
+025. legacy/web-src/features/apren/AprenApp.jsx.wallet-currency-v4-backup.1785676923
 Role: Historical source backup
 Status: Tracked but not imported or built
 Introduces useWalletIntelligence and mapped backend assets into wallet; still lacks cash wallet, currency formatter and live assets context; wallet shape mismatch already present. Deterministic comparison to current: {'insert': 165, 'replace': 47}; SHA-256 996832f97f3245bccca9346632c2ba68df87fef8cebcfad85427ccd5a8b63770. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60282 bytes; 1293 lines.
 
-026. apps/web/src/features/apren/AprenApp.jsx.wallet-home-live-backup.1785674967
+026. legacy/web-src/features/apren/AprenApp.jsx.wallet-home-live-backup.1785674967
 Role: Historical source backup
 Status: Tracked but not imported or built
 Same fully static early UI as before-wallet-api, before-wallet-upgrade and wallet-intelligence backups. Deterministic comparison to current: {'replace': 139, 'insert': 187}; SHA-256 affac19a4b8ac64a719adf9a0e650f8d2086cb503a4ac33f1a48a1307847abc5. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 58615 bytes; 1185 lines.
 
-027. apps/web/src/features/apren/AprenApp.jsx.wallet-intelligence-backup.1785674885
+027. legacy/web-src/features/apren/AprenApp.jsx.wallet-intelligence-backup.1785674885
 Role: Historical source backup
 Status: Tracked but not imported or built
 Same fully static early UI as before-wallet-api, before-wallet-upgrade and wallet-home-live backups. Deterministic comparison to current: {'replace': 139, 'insert': 187}; SHA-256 affac19a4b8ac64a719adf9a0e650f8d2086cb503a4ac33f1a48a1307847abc5. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 58615 bytes; 1185 lines.
 
-028. apps/web/src/features/apren/AprenApp.jsx.wallet-live-backup.1785675939
+028. legacy/web-src/features/apren/AprenApp.jsx.wallet-live-backup.1785675939
 Role: Historical source backup
 Status: Tracked but not imported or built
 Early direct aprenWallet and notification effects, local date and real/fallback schwa balance; still uses static asset list. Deterministic comparison to current: {'insert': 164, 'replace': 62}; SHA-256 36b553e67aa18cd07ce2821739784ebf07e3feea6ab0e62749e1cd831bb41c64. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60045 bytes; 1283 lines.
 
-029. apps/web/src/features/apren/AprenApp.jsx.wallet-screen-v3-backup.1785676670
+029. legacy/web-src/features/apren/AprenApp.jsx.wallet-screen-v3-backup.1785676670
 Role: Historical source backup
 Status: Tracked but not imported or built
 Same bytes as mapper-backup and wallet-v2; imports API wallet client, uses undeclared displayAssets. Deterministic comparison to current: {'replace': 67, 'insert': 156}; SHA-256 b18278c60e352956ebb51b9b3d4da01502ef92be6c1c86f2b1c477f98a6dd655. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
 Size: 60112 bytes; 1286 lines.
 
-030. apps/web/src/features/apren/AprenApp.jsx.wallet-v2-backup.1785676382
+030. legacy/web-src/features/apren/AprenApp.jsx.wallet-v2-backup.1785676382
 Role: Historical source backup
 Status: Tracked but not imported or built
 Same bytes as mapper-backup and wallet-screen-v3; historical wallet screen and API imports, undeclared displayAssets. Deterministic comparison to current: {'replace': 67, 'insert': 156}; SHA-256 b18278c60e352956ebb51b9b3d4da01502ef92be6c1c86f2b1c477f98a6dd655. Unchanged spans reuse reviewed active/adjacent backup content; every unique changed span was read.
