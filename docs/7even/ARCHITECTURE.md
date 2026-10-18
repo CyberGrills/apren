@@ -1,6 +1,6 @@
 # 7even architecture
 
-16 October 2026. This describes the implemented local rebuild and the boundaries that later work must preserve. [Build proposal](BUILD_PROPOSAL.md), [API contract](API_CONTRACT.md), [file guide](FILE_GUIDE.md), [operations](OPERATIONS.md) and [threat model](../security/tma.md) provide the detailed contracts and release limits.
+18 October 2026. This describes the implemented local rebuild and multi-provider feature. [Build proposal](BUILD_PROPOSAL.md), [API contract](API_CONTRACT.md), [file guide](FILE_GUIDE.md), [operations](OPERATIONS.md), [payment verification](PAYMENT_VERIFICATION.md) and [threat model](../security/tma.md) provide detailed contracts and release limits.
 
 ## One authority, five surfaces
 
@@ -17,11 +17,15 @@ flowchart LR
   API --> Engine[Pure engine rules]
   API <--> DB[(PostgreSQL authority)]
   Worker[Recovery and notification worker] <--> DB
-  API --> Checkout[Flutterwave hosted checkout]
-  API --> Verify[Flutterwave verification]
+  API --> Checkout[Paystack / Flutterwave hosted checkout]
+  API --> Verify[Saved-provider verification]
   Worker --> Verify
   Worker --> Settlement[Provider settlement evidence]
   Checkout --> Bank[Business bank account]
+  Customer --> Wallet[Customer wallet]
+  Wallet --> Merchant[Approved business wallet]
+  API --> Base[Read-only Base verifier]
+  Worker --> Base
 ```
 
 This replaces Apren's disconnected services and conflicting generations. The historical source remains in `legacy/`, outside the four npm workspaces. Keeping that history is not a claim that its food, wallet, vision or agent APIs remain live.
@@ -30,11 +34,11 @@ This replaces Apren's disconnected services and conflicting generations. The his
 
 1. An approved business publishes an offering and availability at an active venue. A stay reserves each night in a half-open date range; dining and experiences use explicit service windows. Inventory is shared by online and reception bookings.
 2. The server loads current offering and policy terms and creates an immutable exact quote. A reservation locks every required inventory window in stable order, checks available capacity and allocates a temporary hold atomically.
-3. Checkout records durable intent, provider mode, exact amount, commission, merchant reference and approved bank/subaccount revision before dispatching to the provider. A timeout can remain uncertain; another request cannot simply issue another checkout effect.
-4. Authenticated provider notification enters a durable inbox. The server independently queries transaction status and checks amount, currency and identity. The committed receipt changes payment/reservation state and creates balanced journal postings. Browser claims never do this.
+3. Checkout records durable intent, provider/method/mode, exact amount, commission, merchant reference and approved destination revision. Fiat totals through ₦50,000 select Paystack; larger totals select Flutterwave. USDC instead freezes exact token atoms, network, payer, destination and indicative valuation. A timeout stays uncertain; another request cannot simply issue another financial effect.
+4. Authenticated fiat notification enters a durable inbox and independent provider verification. USDC requires quoted payer ownership and a canonical finalized exact transfer to the business. Committed results change payment/reservation state and create balanced NGN journals. Direct-wallet book value and commission receivable are distinct from platform cash. Browser claims never establish funding.
 5. Reception changes service state through the same revisioned lifecycle. Verified funding plus completed service grants points once under the accepted earning-policy snapshot. An external-payment note is an operational note, not provider proof or a points grant.
 6. Points can redeem a published business-funded reward. The resulting benefit is separate from the reservation. Only eligible benefits can be gifted/swapped; acceptance locks ownership, checks revisions and rotates the claim code. The issuing business can consume it once.
-7. Settlement reconciliation remains separate from payment verification. It checks per-transaction bank destination, completed provider status, actual fees and business net. Refunds and points reversals create compensating history. An extra receipt or contradiction remains recorded for review.
+7. Settlement reconciliation remains separate from payment verification. Bank confirmation requires per-transaction destination, completed provider status, actual fees and business net. Paystack reports currently provide observations only, so bank delivery remains unconfirmed. USDC tracks wallet delivery; merchant-controlled returns require independently verified proof before compensating journals and points reversals. Extra receipts and contradictory completed refund observations remain visible for review.
 
 ## Boundaries and invariants
 
@@ -72,4 +76,4 @@ The client-supplied Forest Green, Warm Ivory, Sand / Champagne, Deep Charcoal an
 
 ## Deliberate local limits
 
-Flutterwave test credentials/subaccounts and real SMTP delivery are unavailable. Local provider and transport doubles prove code properties, not real gateway or mailbox behavior. Nodemailer is locked but its new package download was blocked by registry access in this session. The PWA has no native installer and cannot repopulate private reception data after a cold offline restart. Administrators have no second factor, and bank changes have no independent maker-checker approval. Production security scans, provider agreement, monitoring, restore exercises, qualified review and applicable Nigerian obligations remain release gates. No production deployment or merger of this working tree has occurred.
+Flutterwave/Paystack sandboxes, bank credit, Base wallet transactions and real SMTP delivery remain unverified. Installed provider libraries and local doubles prove code properties, not external delivery. The PWA has no native installer and cannot repopulate private reception data after a cold offline restart. Administrators have no second factor, and bank changes have no independent maker-checker approval. Production security scans, provider agreement, monitoring, restore exercises, qualified review and applicable Nigerian obligations remain release gates. No production deployment or merge of this feature has occurred.

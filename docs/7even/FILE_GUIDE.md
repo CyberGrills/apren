@@ -1,6 +1,6 @@
 # Active file guide
 
-Refreshed 16 October 2026 during the uncommitted 7even rebuild. Base commit: `26d61a4aaf0ee87411b57df2ac94a5e5ad607e33`. Paths are relative to the repository. The active runtime consists of `apps/web`, `services/platform`, `packages/contracts` and `packages/engine`; `legacy/` is historical and is not an npm workspace.
+Refreshed 18 October 2026 for multi-provider payments, based on `2394f1a`. The original rebuild inventory remains pinned to `26d61a4aaf0ee87411b57df2ac94a5e5ad607e33`. Paths are relative to the repository. The active runtime consists of `apps/web`, `services/platform`, `packages/contracts` and `packages/engine`; `legacy/` is historical and is not an npm workspace.
 
 This table began as a 152-file snapshot of active source, configuration, tests, design assets and documentation at the rebuild baseline. The 16 October seasonal-theme additions below extend that snapshot; later verification artifacts can be added independently, so the original count is not a claim of a complete current-tree inventory. `node_modules`, build output, `.env`, `.local`, database files and caches are excluded because they are generated/private runtime state. Their exclusion is not permission to commit them. Runtime dependencies are recorded by package manifests and the root lock, rather than individually documenting downloaded third-party files.
 
@@ -44,7 +44,7 @@ This table began as a 152-file snapshot of active source, configuration, tests, 
 | `apps/web/src/pages/customer/PointsView.tsx` | Available points, earning/reversal entries, shortfall explanation and merchant-published reward redemption. |
 | `apps/web/src/pages/customer/ProfileView.tsx` | Current account profile editing and identity/session controls. |
 | `apps/web/src/pages/customer/checkout.test.ts` | Proves local mock routing and rejection of malformed or untrusted checkout destinations. |
-| `apps/web/src/pages/customer/checkout.ts` | Validates checkout destinations before internal navigation or redirecting to the exact approved Flutterwave origin. |
+| `apps/web/src/pages/customer/checkout.ts` | Keeps crypto local and validates the recorded provider against the exact approved Flutterwave or Paystack HTTPS checkout origin. |
 | `apps/web/src/pages/customer/index.ts` | Exports the customer route and payment components. |
 | `apps/web/src/pages/public/AuthPage.tsx` | Sign-in and customer registration forms, validation and safe return navigation. |
 | `apps/web/src/pages/public/BookingPanel.tsx` | Date/window/quantity selection and the server quote, hold and checkout flow. |
@@ -158,7 +158,7 @@ This table began as a 152-file snapshot of active source, configuration, tests, 
 | `services/platform/src/operations.ts` | Venue and external payment-note APIs, operational queue/source health and admin moderation. |
 | `services/platform/src/payments.ts` | Durable checkout/refund intents, independent receipt application, duplicate/late payments, compensating records and bounded settlement reconciliation. |
 | `services/platform/src/provider.ts` | Explicit Flutterwave v3 HTTPS adapter, exact decimal parsing, hosted split request, verification/refund/settlement reads and isolated mock provider. |
-| `services/platform/src/recoveryMailer.ts` | Optional lazily loaded Nodemailer TLS SMTP adapter with text-only recipient delivery; package installation and real external delivery remain unverified. |
+| `services/platform/src/recoveryMailer.ts` | Optional lazily loaded installed Nodemailer TLS SMTP adapter with text-only recipient delivery; actual external delivery remains unverified. |
 | `services/platform/src/reservations.ts` | Authoritative quotes, service windows, locked capacity allocation, hold expiry, access checks, lifecycle transitions and once-only point earning. |
 | `services/platform/src/seed.ts` | Explicit nonproduction synthetic accounts, merchants, hospitality inventory and sample points; no implicit production defaults. |
 | `services/platform/src/server.ts` | Local API listener and bounded periodic recovery loop with graceful-shutdown hooks. |
@@ -183,6 +183,39 @@ This table began as a 152-file snapshot of active source, configuration, tests, 
 | `design/explorations/verification/seasonal/reception.json` | Reception palette, absence of test clock, dialog Escape and focus restoration measurements. |
 | `design/explorations/verification/seasonal/reception-dialog.jpg` | Reception benefit dialog with supplied core palette; no benefit consumed. |
 | `learn/2026-10-16-automatic-seasonal-themes.md` | Learning breakdown of the automatic clock, core/season separation and verification limits. |
+
+## Multi-provider additions, 18 October 2026
+
+The older `final-*` and `seasonal-*` evidence rows above describe their recorded runs, not current verification totals. Current payment changes and limits are specified in `MULTI_PROVIDER_PAYMENTS.md`.
+
+| File | Purpose |
+|---|---|
+| `apps/web/src/components/PaymentMethodDialog.tsx` | Shared read-only options and guarded fiat/USDC selection for customer booking, booking continuation and reception walk-ins. |
+| `apps/web/src/lib/paymentWallet.ts` | Exact USDC display, Base/account checks, message signing and gas review before wallet-controlled transfers; no transport retry for uncertain sends. |
+| `apps/web/src/lib/paymentWallet.test.ts` | Exact token formatting, network/payer boundaries and structured wallet rejection classification. |
+| `apps/web/src/pages/customer/CryptoCheckoutPage.tsx` | Frozen quote, business destination, indicative valuation, ETH-fee review, wallet proof, finality refresh and original-hash recovery. |
+| `apps/web/src/pages/workspace/BusinessPayments.tsx` | Provider-account status, business-wallet ownership submission and crypto commission owed. |
+| `apps/web/src/pages/workspace/CryptoRefundDialog.tsx` | Merchant-controlled token return, fee review, original-payer destination, hash/finality checks and explicit mock completion. |
+| `database/migrations/009_multi_provider_payments.sql` | Provider/method/mode lookups, historical route/journal backfill, provider-scoped uniqueness, account revisions and immutable crypto financial evidence. |
+| `docs/7even/MULTI_PROVIDER_PAYMENTS.md` | Agreed routing, direct-wallet commission model, invariants, interfaces, external sources and release limits. |
+| `packages/engine/src/paymentRouting.ts` | Exact NGN threshold and fixed routing revision; at most ₦50,000 uses Paystack, strictly above uses Flutterwave. |
+| `packages/engine/test/payment-routing.test.ts` | Threshold equality/adjacency and malformed amount checks against the routing contract. |
+| `services/platform/src/providerRegistry.ts` | Resolves each saved provider and execution mode; separates live adapters from isolated mocks and configured crypto. |
+| `services/platform/src/paystackProvider.ts` | Integer-kobo hosted split checkout, server verification, normalized refunds, raw HMAC webhooks and bounded settlement reads. |
+| `services/platform/src/cryptoProvider.ts` | Native-USDC/Base quotes, indicative FX freshness, EOA signatures, canonical/finalized exact transfer evidence and mock gateway. |
+| `services/platform/src/paymentAccounts.ts` | Business wallet challenges, signed destination registration, admin review and provider-account/commission projections. |
+| `tests/integration/crypto-provider.test.ts` | Exact quote arithmetic and injected Base/rate/signature/transfer/finality contracts; no real wallet transaction proof. |
+| `tests/integration/paystack-provider.test.ts` | Injected Paystack initialization, response normalization, webhook authentication and provider failure contracts. |
+| `tests/integration/multi-provider.test.ts` | Isolated PostgreSQL acceptance for provider routing, identities, receipts, crypto commission and refunds. |
+| `tests/integration/payment-wallet.test.ts` | Signed business-wallet ownership, expiry, revision and admin/tenant boundaries against an isolated database. |
+
+| `services/platform/src/paystackSettlement.ts` | Bounded report-only settlement reconciliation, whitelisted observations, durable exhaustion and no invented bank confirmation. |
+| `tests/integration/paystack-settlement.test.ts` | Restricted-runtime evidence, mismatches, worker claims, lookup bounds and interrupted final-check recovery. |
+| `tests/integration/payment-boundaries.test.ts` | Direct returns, spent-points shortfall, execution mode/network boundaries, reception privacy, shared transfer claims and wallet revision races. |
+| `tests/integration/refund-observations.test.ts` | Concurrent contradictory completed refund evidence preserves accounting and appears in the authenticated admin exception queue. |
+| `docs/7even/PAYMENT_VERIFICATION.md` | Accepted payment behavior, local command/browser evidence and explicit external release gaps. |
+
+Existing `app.ts`, `payments.ts`, `store.ts`, `worker.ts`, shared contracts, seed, customer/reception entry points, admin and business screens use these interfaces. viem 2.57.7 is installed in the frontend/platform manifests and root lockfile. Real provider sandboxes, Base wallet transfers and SMTP delivery remain unverified.
 
 ## Original files and current historical paths
 
