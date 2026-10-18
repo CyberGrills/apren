@@ -17,6 +17,15 @@ const activePrefixes = [
 ];
 const namedFiles = new Set(['.env.example', 'biome.json', 'package.json', 'package-lock.json', 'tsconfig.json']);
 
+const dirtySource = execFileSync(
+  'git',
+  ['status', '--porcelain', '--untracked-files=all', '--', '.', ':(exclude)docs/**'],
+  { cwd: root, encoding: 'utf8' },
+).trim();
+if (dirtySource) {
+  throw new Error('Commit active source/configuration changes before generating the source manifest.');
+}
+
 const paths = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
   .split('\0')
   .filter(Boolean)
@@ -39,7 +48,11 @@ for (const path of paths) {
   hash.update(Buffer.from([0]));
 }
 
-const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+const sourceCommit = execFileSync(
+  'git',
+  ['log', '-1', '--format=%H', '--', '.', ':(exclude)docs/**'],
+  { cwd: root, encoding: 'utf8' },
+).trim();
 const output = {
   sourceCommit,
   generatedFor: 'main',
