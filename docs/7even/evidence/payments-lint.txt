@@ -343,6 +343,6 @@ tests/integration/recovery-crash.test.ts:94:312 lint/style/noNonNullAssertion  F
 
 The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
 Diagnostics not shown: 171.
-Checked 107 files in 388ms. No fixes applied.
+Checked 107 files in 777ms. No fixes applied.
 Found 187 warnings.
 Found 4 infos.
