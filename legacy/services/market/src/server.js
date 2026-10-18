@@ -34,6 +34,10 @@ app.get("/market/prices", (req, res) => {
   });
 });
 
-app.listen(4004, () => {
-  console.log("āprən Market Engine running on 4004");
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(4004, () => {
+    console.log("āprən Market Engine running on 4004");
+  });
+}
+
+module.exports = app;

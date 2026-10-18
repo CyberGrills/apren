@@ -84,6 +84,10 @@ app.use("/api/brain", (req, res) => forwardRequest(req, res, SERVICES.intelligen
 app.use("/api/market", (req, res) => forwardRequest(req, res, SERVICES.market));
 app.use("/api/trade", (req, res) => forwardRequest(req, res, SERVICES.trade));
 
-app.listen(4000, () => {
-  console.log("āprən Gateway running on 4000");
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(4000, () => {
+    console.log("āprən Gateway running on 4000");
+  });
+}
+
+module.exports = app;

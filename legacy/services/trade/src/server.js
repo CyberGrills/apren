@@ -49,6 +49,10 @@ app.post("/trade/execute", (req, res) => {
   });
 });
 
-app.listen(4006, () => {
-  console.log("āprən Trade Engine running on 4006");
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(4006, () => {
+    console.log("āprən Trade Engine running on 4006");
+  });
+}
+
+module.exports = app;

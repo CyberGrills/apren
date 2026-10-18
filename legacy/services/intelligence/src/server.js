@@ -154,8 +154,10 @@ getEvidence(req.params.assetId)
 });
 
 
-app.listen(4005,()=>{
- console.log(
- "āprən Intelligence Engine running on 4005"
- );
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(4005, () => {
+    console.log("āprən Intelligence Engine running on 4005");
+  });
+}
+
+module.exports = app;

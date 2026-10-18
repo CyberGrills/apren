@@ -4139,10 +4139,10 @@ console.log("NO ROUTER STACK FOUND");
 
 }
 
-app.listen(4003,()=>{
+if (process.env.VERCEL !== "1") {
+  app.listen(4003, () => {
+    console.log("āprən Food Asset Engine running on 4003");
+  });
+}
 
-console.log(
-"āprən Food Asset Engine running on 4003"
-);
-
-});
+module.exports = app;

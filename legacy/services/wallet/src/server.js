@@ -51,6 +51,10 @@ app.get("/wallet/:userId", async (req,res)=>{
 });
 
 
-app.listen(4002,()=>{
- console.log("āprən Wallet Service running on 4002");
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(4002, () => {
+    console.log("āprən Wallet Service running on 4002");
+  });
+}
+
+module.exports = app;

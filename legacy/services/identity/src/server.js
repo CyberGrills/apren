@@ -151,6 +151,10 @@ app.get("/users/:id/preferences", async(req,res)=>{
 
 
 
-app.listen(4001,()=>{
- console.log("āprən Identity Service running on 4001");
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(4001, () => {
+    console.log("āprən Identity Service running on 4001");
+  });
+}
+
+module.exports = app;
