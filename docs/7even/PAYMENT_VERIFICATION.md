@@ -1,6 +1,6 @@
 # Multi-provider payment verification
 
-18 October 2026. Multi-provider payment code was merged into `main` by `ec1ed67`; PostgreSQL integration CI was added in `0a6fb86`. This verification log includes refreshed dependency checks for source commit `7ea37c6`. It is not approval to move real funds or deploy.
+18 October 2026. Multi-provider payment code was merged into `main` by `ec1ed67`; PostgreSQL integration CI was added in `0a6fb86`. This verification log includes refreshed dependency checks for source commit `570a8df`. It is not approval to move real funds or deploy.
 
 ## Accepted behavior
 
@@ -45,7 +45,7 @@ The existing green/ivory/sand brand and native dialog patterns were retained, in
 
 Saved console output has trailing whitespace trimmed; test results and diagnostics are retained. A clean `npm ci` succeeded against the regenerated package lock under Node.js 24.22.0. The updated lock preserves registry URLs and integrity hashes for installed packages. `services/platform` now declares Zod directly because its source imports it, and both importing workspaces use Zod 4.6.7. `apps/web` continues to use the root overrides for transitive `nanoid` and `source-map-js` rather than duplicating them as direct workspace dependencies.
 
-The [387-file active-source manifest](evidence/payments-source-manifest.json) records SHA-256 `e2e9cac0a8509fc20499210a163abbaf0d1beb86e782d34b31aa223a50070d70` for active source at commit `7ea37c6ccb42f787be6e7b777c72f2938f081b3a`. The manifest generator is `scripts/build-source-manifest.mjs`. It hashes sorted unique repository-relative paths, a NUL separator, exact file bytes and another NUL. Its scope includes active source, public assets, migrations, tests, scripts, workflows and named workspace/configuration files, including the promoted Apren engine. Private environment state, generated output, dependencies, historical `legacy/` source and documentation are excluded.
+The [387-file active-source manifest](evidence/payments-source-manifest.json) records SHA-256 `a3c24a20570c623c482e0081ea2b9b1918bcdc6c4068f593de4b12ef903dbf15` for active source at commit `570a8dfa0efd4e572be27ee2e9ecfbe9f23e2629`. The manifest generator is `scripts/build-source-manifest.mjs`. It hashes sorted unique repository-relative paths, a NUL separator, exact file bytes and another NUL. Its scope includes active source, public assets, migrations, tests, scripts, workflows and named workspace/configuration files, including the promoted Apren engine. Private environment state, generated output, dependencies, historical `legacy/` source and documentation are excluded.
 
 A limited offline check inspected 111 active source/migration/test files for long live Paystack keys, Flutterwave test keys and private-key headers, finding no matching file. This is a narrow pattern check, not a complete secret scan.
 
