@@ -2,27 +2,27 @@
 
 ## Intended routing
 
-- Public ingress: the Vite web service only (`/` and SPA deep links).
-- Private services: `platform`, `assets`, `gateway`, `identity`, `intelligence`, `market`, `trade`, and `wallet`. There are intentionally no public rewrite rules to these services.
-- The legacy gateway has bindings to the six services it already calls. Its existing `ASSETS_URL`, `IDENTITY_URL`, `WALLET_URL`, `MARKET_URL`, `INTELLIGENCE_URL`, and `TRADE_URL` environment-variable reads match the binding names.
+- Public ingress: the Vite web service only. Its local rewrite provides SPA deep-link fallback to `/index.html`.
+- Private services: `platform`, `assets`, `gateway`, `identity`, `intelligence`, `market`, `trade`, and `wallet`. The top-level public rewrite table intentionally targets only `web`.
+- The legacy gateway has bindings to the six legacy services it already calls. The binding environment names match the existing `ASSETS_URL`, `IDENTITY_URL`, `WALLET_URL`, `MARKET_URL`, `INTELLIGENCE_URL`, and `TRADE_URL` reads.
+- The active web and platform workspaces use explicit `file:../../packages/...` dependencies. Their Vercel service install commands install from the repository workspace root, and the web build command targets the `@7even/web` workspace.
 
-The web-only preview is intentionally a visual/frontend preview. Browser requests to `/api/*` are not routed to the private platform API in this mode, so API-backed screens are not expected to work until a separately approved public API route or a server-side web proxy is designed.
+This is a frontend-only preview. Browser requests to `/api/*` intentionally do not reach the private platform service, so API-backed screens are not expected to work in this preview.
 
-## Validation status
+## Runtime changes
 
-This file records the intended Vercel Services topology; it is **not a verified successful deployment**. Vercel Services must be enabled as the project's framework in Vercel project settings as well as defined in this file.
+- `services/platform/src/server.ts` exports the Express app for Vercel. The local HTTP listener and 15-second recovery timer run only outside Vercel; process-local timers are not treated as durable scheduled jobs.
+- `scripts/validate-vercel-services.mjs` checks service roots, entrypoints, bindings, and the web-only public ingress policy.
+- `.github/workflows/vercel-services-validation.yml` runs the static validator, TypeScript typecheck, web build, and legacy entrypoint syntax checks using Node 24.
 
-Static repository inspection found runtime integration blockers that must be resolved before treating the services as deployable:
+## Deployment prerequisites and remaining production gates
 
-1. The active `services/platform/src/server.ts` starts an HTTP listener and a periodic recovery worker. A normal Express/serverless entrypoint needs an exported request handler; the worker also needs a durable scheduled/background execution design rather than relying on a function process staying alive.
-2. The active platform package depends on root workspaces `@7even/contracts` and `@7even/engine`. A service rooted at `services/platform` must be built with those workspace packages available, not installed as an isolated package with unresolved `*` dependencies.
-3. Legacy service entrypoints call `app.listen(...)` instead of exporting an Express app/handler. The assets service also depends on `better-sqlite3` and initializes local database state. These require a compatible runtime and persistence plan; an entrypoint path alone does not make them serverless-compatible.
-4. The platform API enforces production payment configuration and HTTPS origin requirements. Production secrets must be configured in Vercel environment settings; never commit them to this repository.
+1. In Vercel project settings, set the project framework to **Services**. The repository file alone cannot change that account-level setting.
+2. Vercel Services must be enabled for the account/project. If the project does not have access, the configuration cannot deploy until access is granted.
+3. Set required environment variables in Vercel project settings. The platform API enforces production payment configuration and HTTPS origin requirements. Do not commit secrets.
+4. The legacy assets service initializes a local SQLite database using `better-sqlite3`. Its write data is not durable on ephemeral function filesystems. Before exposing legacy writes, migrate to a persistent database or provide a supported durable storage layer and validate its schema/data migration.
+5. The recovery worker is intentionally disabled in Vercel request processes. Before production use, schedule it through a durable job/queue mechanism and add retry/idempotency monitoring.
+6. The identity and wallet services import `legacy/services/shared/db.js` from outside their individual service roots. Their config includes `../shared/**`; the platform service similarly includes the two workspace packages. Confirm these files are present in the actual Vercel bundles during the first real build.
+7. Run the new GitHub Actions checks, then a real Vercel preview. Verify the root and deep links, ensure no backend has public ingress, and test the gateway bindings from inside its runtime. A successful static check is not proof of a successful deployment.
 
-## Next validation gates
-
-- Enable the Vercel Services framework for the project.
-- Add runtime adapters/build configuration for each service and decide the legacy SQLite/Postgres persistence model.
-- Run a clean build for each service, then run `vercel dev -L` or a real Vercel preview deployment.
-- Verify the public web root and deep links, confirm private services have no public ingress, and test each gateway binding from within the gateway runtime.
-- Only call this ready after a real deployment and smoke tests succeed.
+No live preview is claimed until Vercel reports a successful deployment and runtime smoke tests pass.

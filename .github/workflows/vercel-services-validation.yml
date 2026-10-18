@@ -1,0 +1,68 @@
+name: Vercel Services validation
+
+on:
+  pull_request:
+    paths:
+      - 'vercel.json'
+      - 'apps/web/**'
+      - 'services/platform/**'
+      - 'legacy/services/**'
+      - 'legacy/services/shared/**'
+      - 'packages/**'
+      - 'scripts/validate-vercel-services.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/vercel-services-validation.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'vercel.json'
+      - 'apps/web/**'
+      - 'services/platform/**'
+      - 'legacy/services/**'
+      - 'legacy/services/shared/**'
+      - 'packages/**'
+      - 'scripts/validate-vercel-services.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/vercel-services-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run validate:vercel-services
+      - run: npm run typecheck
+      - run: npm run build --workspace @7even/web
+      - run: npm test
+      - name: Check legacy Express entrypoint syntax
+        run: |
+          set -eu
+          for file in legacy/services/{assets,gateway,identity,intelligence,market,trade,wallet}/src/server.js; do
+            node --check "$file"
+          done
+
+  legacy-service-install:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [assets, gateway, identity, intelligence, market, trade, wallet]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install service dependencies
+        working-directory: legacy/services/${{ matrix.service }}
+        run: npm install --no-audit --no-fund

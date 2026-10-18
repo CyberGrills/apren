@@ -12,8 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@7even/contracts": "*",
-    "@7even/engine": "*",
+    "@7even/contracts": "file:../../packages/contracts",
+    "@7even/engine": "file:../../packages/engine",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router-dom": "7.18.4",

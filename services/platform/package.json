@@ -11,8 +11,8 @@
     "test": "node --test --test-isolation=none ../../tests/integration/*.test.ts"
   },
   "dependencies": {
-    "@7even/contracts": "*",
-    "@7even/engine": "*",
+    "@7even/contracts": "file:../../packages/contracts",
+    "@7even/engine": "file:../../packages/engine",
     "express": "5.2.1",
     "pg": "8.23.0",
     "nodemailer": "10.1.2"

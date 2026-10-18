@@ -9,12 +9,19 @@
           "source": "/(.*)",
           "destination": "/index.html"
         }
-      ]
+      ],
+      "installCommand": "npm ci --prefix ../..",
+      "buildCommand": "npm run build --workspace @7even/web --prefix ../.."
     },
     "platform": {
       "root": "services/platform",
       "framework": "express",
-      "entrypoint": "src/server.ts"
+      "entrypoint": "src/server.ts",
+      "installCommand": "npm ci --prefix ../..",
+      "includeFiles": [
+        "../../packages/contracts/**",
+        "../../packages/engine/**"
+      ]
     },
     "assets": {
       "root": "legacy/services/assets",
@@ -67,7 +74,10 @@
     "identity": {
       "root": "legacy/services/identity",
       "framework": "express",
-      "entrypoint": "src/server.js"
+      "entrypoint": "src/server.js",
+      "includeFiles": [
+        "../shared/**"
+      ]
     },
     "intelligence": {
       "root": "legacy/services/intelligence",
@@ -87,7 +97,10 @@
     "wallet": {
       "root": "legacy/services/wallet",
       "framework": "express",
-      "entrypoint": "src/server.js"
+      "entrypoint": "src/server.js",
+      "includeFiles": [
+        "../shared/**"
+      ]
     }
   },
   "rewrites": [
