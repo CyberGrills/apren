@@ -242,7 +242,14 @@ export class PaystackProvider implements PaymentProvider {
     if (!Array.isArray(result.data)) throw new Error('Invalid Paystack refund lookup response.');
     if (result.data.length !== 1 || result.meta === undefined) return null;
     const meta = record(result.meta);
-    if (meta.total !== '1' || meta.page !== '1' || meta.pageCount !== '1') return null;
+    // Paystack's JSON metadata is numeric in some responses and numeric text in others.
+    // Normalize the scalar representation before comparing the complete one-item result.
+    if (
+      String(meta.total) !== '1' ||
+      String(meta.page) !== '1' ||
+      String(meta.pageCount) !== '1'
+    )
+      return null;
     const data = record(result.data[0]);
     const returnedTransaction =
       typeof data.transaction === 'object' ? record(data.transaction).id : data.transaction;
