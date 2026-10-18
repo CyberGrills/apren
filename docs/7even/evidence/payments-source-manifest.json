@@ -1,11 +1,11 @@
 {
-  "sourceCommit": "570a8dfa0efd4e572be27ee2e9ecfbe9f23e2629",
+  "sourceCommit": "a672e59512b57251ca9549ba3debbdf131b1942c",
   "generatedFor": "main",
   "date": "2026-10-18",
   "algorithm": "SHA-256 of sorted unique relative path + NUL + file bytes + NUL",
   "scope": "All tracked active source, public assets, migrations, tests, scripts, workflows and named root/workspace configuration files; excludes node_modules/dist/coverage, local/private state, historical legacy source and documentation.",
   "files": 387,
-  "sha256": "a3c24a20570c623c482e0081ea2b9b1918bcdc6c4068f593de4b12ef903dbf15",
+  "sha256": "8f8f91c2094a8a251dd903b31113f82d3838edb37887a4e31651c234fb9247b3",
   "paths": [
     ".env.example",
     ".github/workflows/unified-system-ci.yml",

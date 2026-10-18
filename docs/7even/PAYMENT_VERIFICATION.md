@@ -1,6 +1,6 @@
 # Multi-provider payment verification
 
-18 October 2026. Multi-provider payment code was merged into `main` by `ec1ed67`; PostgreSQL integration CI was added in `0a6fb86`. This verification log includes refreshed dependency checks for source commit `570a8df`. It is not approval to move real funds or deploy.
+18 October 2026. Multi-provider payment code was merged into `main` by `ec1ed67`; PostgreSQL integration CI was added in `0a6fb86`. This verification log includes refreshed dependency checks for source commit `a672e59`. It is not approval to move real funds or deploy.
 
 ## Accepted behavior
 
@@ -40,12 +40,12 @@ The existing green/ivory/sand brand and native dialog patterns were retained, in
 | `npm run test:integration` | Original feature-branch PostgreSQL baseline: 169 passed, zero failed or skipped. GitHub Actions now provisions PostgreSQL 16 and reruns the integration suite on every PR; current dependency-review PR checks that same suite. | [PostgreSQL/provider integration](evidence/payments-integration.txt) |
 | `npm run build` | Typecheck and production build passed on Node.js 24.22.0; 547.39 kB main JavaScript chunk retains its size warning | [Build](evidence/payments-build.txt) |
 | `npm run lint` | Exit 0, no errors; 187 warnings and 4 information diagnostics | [Lint](evidence/payments-lint.txt) |
-| `npm audit --json` | Exit 0, zero known advisories across the reported 184 dependencies | [Dependency audit](evidence/payments-dependency-audit.json) |
+| `npm audit --json` | Exit 0, zero known advisories across the reported 182 dependencies | [Dependency audit](evidence/payments-dependency-audit.json) |
 | `git diff --check` | Passed | Local diff check |
 
-Saved console output has trailing whitespace trimmed; test results and diagnostics are retained. A clean `npm ci` succeeded against the regenerated package lock under Node.js 24.22.0. The updated lock preserves registry URLs and integrity hashes for installed packages. `services/platform` now declares Zod directly because its source imports it, and both importing workspaces use Zod 4.6.7. `apps/web` continues to use the root overrides for transitive `nanoid` and `source-map-js` rather than duplicating them as direct workspace dependencies.
+Saved console output has trailing whitespace trimmed; test results and diagnostics are retained. A clean `npm ci` succeeded against the regenerated package lock under Node.js 24.22.0. The updated lock preserves registry URLs and integrity hashes for installed packages. Zod is aligned at 4.6.7 for `packages/contracts` and `services/platform`, both of which import it directly. The root test toolchain also declares Zod as a dev dependency because `tests/integration/accounts.test.ts` imports it from the repository root; this prevents npm 11 from relying on an optional peer dependency to expose the module. `apps/web` continues to use the root overrides for transitive `nanoid` and `source-map-js` rather than duplicating them as direct workspace dependencies.
 
-The [387-file active-source manifest](evidence/payments-source-manifest.json) records SHA-256 `a3c24a20570c623c482e0081ea2b9b1918bcdc6c4068f593de4b12ef903dbf15` for active source at commit `570a8dfa0efd4e572be27ee2e9ecfbe9f23e2629`. The manifest generator is `scripts/build-source-manifest.mjs`. It hashes sorted unique repository-relative paths, a NUL separator, exact file bytes and another NUL. Its scope includes active source, public assets, migrations, tests, scripts, workflows and named workspace/configuration files, including the promoted Apren engine. Private environment state, generated output, dependencies, historical `legacy/` source and documentation are excluded.
+The [387-file active-source manifest](evidence/payments-source-manifest.json) records SHA-256 `8f8f91c2094a8a251dd903b31113f82d3838edb37887a4e31651c234fb9247b3` for active source at commit `a672e59512b57251ca9549ba3debbdf131b1942c`. The manifest generator is `scripts/build-source-manifest.mjs`. It hashes sorted unique repository-relative paths, a NUL separator, exact file bytes and another NUL. Its scope includes active source, public assets, migrations, tests, scripts, workflows and named workspace/configuration files, including the promoted Apren engine. Private environment state, generated output, dependencies, historical `legacy/` source and documentation are excluded.
 
 A limited offline check inspected 111 active source/migration/test files for long live Paystack keys, Flutterwave test keys and private-key headers, finding no matching file. This is a narrow pattern check, not a complete secret scan.
 
