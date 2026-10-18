@@ -1,0 +1,101 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "web": {
+      "root": "apps/web",
+      "framework": "vite",
+      "rewrites": [
+        {
+          "source": "/(.*)",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    "platform": {
+      "root": "services/platform",
+      "framework": "express",
+      "entrypoint": "src/server.ts"
+    },
+    "assets": {
+      "root": "legacy/services/assets",
+      "framework": "express",
+      "entrypoint": "src/server.js"
+    },
+    "gateway": {
+      "root": "legacy/services/gateway",
+      "framework": "express",
+      "entrypoint": "src/server.js",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "assets",
+          "format": "url",
+          "env": "ASSETS_URL"
+        },
+        {
+          "type": "service",
+          "service": "identity",
+          "format": "url",
+          "env": "IDENTITY_URL"
+        },
+        {
+          "type": "service",
+          "service": "wallet",
+          "format": "url",
+          "env": "WALLET_URL"
+        },
+        {
+          "type": "service",
+          "service": "market",
+          "format": "url",
+          "env": "MARKET_URL"
+        },
+        {
+          "type": "service",
+          "service": "intelligence",
+          "format": "url",
+          "env": "INTELLIGENCE_URL"
+        },
+        {
+          "type": "service",
+          "service": "trade",
+          "format": "url",
+          "env": "TRADE_URL"
+        }
+      ]
+    },
+    "identity": {
+      "root": "legacy/services/identity",
+      "framework": "express",
+      "entrypoint": "src/server.js"
+    },
+    "intelligence": {
+      "root": "legacy/services/intelligence",
+      "framework": "express",
+      "entrypoint": "src/server.js"
+    },
+    "market": {
+      "root": "legacy/services/market",
+      "framework": "express",
+      "entrypoint": "src/server.js"
+    },
+    "trade": {
+      "root": "legacy/services/trade",
+      "framework": "express",
+      "entrypoint": "src/server.js"
+    },
+    "wallet": {
+      "root": "legacy/services/wallet",
+      "framework": "express",
+      "entrypoint": "src/server.js"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "web"
+      }
+    }
+  ]
+}
