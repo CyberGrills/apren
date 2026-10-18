@@ -1,25 +1,28 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import test from 'node:test';
 import type * as C from '@7even/contracts';
+import { createApp } from '../../services/platform/src/app.ts';
 import { createPool, one, rows, transaction } from '../../services/platform/src/db.ts';
 import { migrate } from '../../services/platform/src/migrate.ts';
-import { seed } from '../../services/platform/src/seed.ts';
-import { createApp } from '../../services/platform/src/app.ts';
-import { MockProvider, minorToDecimal } from '../../services/platform/src/provider.ts';
 import {
   applyReceipt,
-  requestRefund,
+  checkout as createCheckout,
   reconcileSettlements,
+  requestRefund,
+  verifyPayment,
 } from '../../services/platform/src/payments.ts';
+import type { PaymentProvider } from '../../services/platform/src/provider.ts';
+import { MockProvider, minorToDecimal } from '../../services/platform/src/provider.ts';
+import { providerIds } from '../../services/platform/src/providerRegistry.ts';
+import { seed } from '../../services/platform/src/seed.ts';
 import {
   pointsProjection,
-  safePoints,
   reservationProjection,
+  safePoints,
 } from '../../services/platform/src/store.ts';
-import type { PaymentProvider } from '../../services/platform/src/provider.ts';
 import { processInbox, processOutbox, recoverClaims } from '../../services/platform/src/worker.ts';
 
 const origin = 'http://localhost:5177';
@@ -239,7 +242,7 @@ test('7even real PostgreSQL API and invariant acceptance', {
         const jr = await rows(
           pool,
           'SELECT * FROM seven.money_journals WHERE source_reference=$1',
-          [`receipt:local-${pay.id}`],
+          [`receipt:${pay.provider}:local-${pay.id}`],
         );
         assert.equal(jr.length, 1);
         await admin.request('/admin/policy', 'POST', {
@@ -467,11 +470,13 @@ test('7even real PostgreSQL API and invariant acceptance', {
           amountMinor: Number(pay.amountMinor),
           feeMinor: 0,
         };
-        const extra = await transaction(appPool, (db) => applyReceipt(db, receipt));
+        const extra = await transaction(appPool, (db) =>
+          applyReceipt(db, receipt, null, pay.provider),
+        );
         assert.equal(extra.status, 'REVIEW_REQUIRED');
         assert.equal((await reservationProjection(pool, reservation.id))?.paymentId, pay.id);
         assert.equal(
-          (await transaction(appPool, (db) => applyReceipt(db, receipt))).id,
+          (await transaction(appPool, (db) => applyReceipt(db, receipt, null, pay.provider))).id,
           extra.id,
           'Redelivery of an already recorded excess charge resolves to that same payment.',
         );
@@ -554,12 +559,13 @@ test('7even real PostgreSQL API and invariant acceptance', {
           feeMinor: 0,
         });
         await pool.query(
-          'INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4)',
+          'INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details,payment_provider_id) VALUES($1,$2,$3,$4,$5)',
           [
             eventId,
             `charge.completed:${extraId}`,
             'charge.completed',
             { id: extraId, reference: pay.reference },
+            providerIds[pay.provider],
           ],
         );
         const processed = await Promise.all([
@@ -580,7 +586,7 @@ test('7even real PostgreSQL API and invariant acceptance', {
         assert.equal(
           (
             await rows(pool, 'SELECT * FROM seven.money_journals WHERE source_reference=$1', [
-              `receipt:${extraId}`,
+              `receipt:${pay.provider}:${extraId}`,
             ])
           ).length,
           1,
@@ -740,116 +746,189 @@ test('7even real PostgreSQL API and invariant acceptance', {
     await t.test(
       'settlement requires exact transaction, approved bank and net fee evidence',
       async () => {
-        await pool.query(
-          'UPDATE seven.payment_attempts SET provider_details=provider_details||$2::jsonb,next_settlement_check_at=now() WHERE payment_attempt_id=$1',
-          [
-            pay.id,
-            JSON.stringify({
-              mode: 'flutterwave',
-              settlementAccount: '0000000001',
-              settlementBankCode: '044',
-            }),
-          ],
+        const created = await host.request<C.Offering>('/business/offerings', 'POST', {
+          title: 'Flutterwave settlement evidence fixture',
+          description: 'A synthetic high-value stay with an approved frozen bank destination.',
+          kind: 'STAY',
+          city: 'Lagos',
+          address: 'Isolated test venue, Lagos',
+          priceMinor: '10000000',
+          capacity: 1,
+          published: true,
+        });
+        assert.equal(created.status, 200, JSON.stringify(created));
+        const startDate = new Date(Date.now() + 22 * 86400000).toISOString().slice(0, 10);
+        const endDate = new Date(Date.now() + 23 * 86400000).toISOString().slice(0, 10);
+        assert.equal(
+          (
+            await host.request(`/business/offerings/${created.data.id}/availability`, 'POST', {
+              startDate,
+              endDate,
+              capacity: 1,
+            })
+          ).status,
+          200,
         );
+        const quote = await guest.request<C.Quote>('/quotes', 'POST', {
+          offeringId: created.data.id,
+          startDate,
+          endDate,
+          quantity: 1,
+        });
+        assert.equal(quote.status, 200, JSON.stringify(quote));
+        const held = await guest.request<C.Reservation>('/reservations', 'POST', {
+          quoteId: quote.data.id,
+        });
+        assert.equal(held.status, 200, JSON.stringify(held));
+        const account = await one(
+          pool,
+          'SELECT * FROM seven.business_payment_accounts WHERE business_id=$1 AND payment_provider_id=$2',
+          [hostUser.businessId, providerIds.flutterwave],
+        );
+        assert.ok(account);
         const fixture = Object.create(provider) as PaymentProvider;
         fixture.mode = 'flutterwave';
-        let lookupCalls = 0;
-        fixture.settlements = async () => {
-          lookupCalls++;
-          throw new Error('Synthetic provider outage.');
-        };
-        assert.equal((await reconcileSettlements(pool, fixture)).exceptions, 1);
-        const failedLookup = await one(
-          pool,
-          'SELECT settlement_checks,next_settlement_check_at,provider_details FROM seven.payment_attempts WHERE payment_attempt_id=$1',
-          [pay.id],
-        );
-        assert.equal(
-          failedLookup?.settlement_checks,
-          1,
-          'A failed external lookup consumes its durable attempt.',
-        );
-        assert.ok(
-          new Date(failedLookup?.next_settlement_check_at).getTime() > Date.now() + 14 * 60000,
-        );
-        await reconcileSettlements(pool, fixture);
-        assert.equal(lookupCalls, 1, 'The next worker tick respects persisted provider backoff.');
         await pool.query(
-          'UPDATE seven.payment_attempts SET next_settlement_check_at=now() WHERE payment_attempt_id=$1',
-          [pay.id],
-        );
-        const detail: Record<string, unknown> = {
-          id: 'test-settlement',
-          currency: 'NGN',
-          status: 'completed',
-          queriedSubaccount: (await one(
-            pool,
-            'SELECT business_subaccount FROM seven.payment_attempts WHERE payment_attempt_id=$1',
-            [pay.id],
-          ))!.business_subaccount,
-          settlement_account: '0000000001',
-          bank_code: '044',
-          destination: 'account',
-          disburse_ref: 'test-disbursement',
-          processed_date: new Date().toISOString(),
-          transactions: [
-            {
-              id: pay.providerTransactionId,
-              tx_ref: pay.reference,
-              currency: 'NGN',
-              status: 'successful',
-              app_fee: '1.00',
-              merchant_fee: 0,
-              stampduty_charge: 0,
-              settlement_amount: '0.01',
-            },
+          "UPDATE seven.business_payment_accounts SET execution_mode_id=(SELECT execution_mode_id FROM seven.execution_modes WHERE execution_mode_code='flutterwave'),revision=revision+1,details=details||$3::jsonb WHERE business_id=$1 AND payment_provider_id=$2",
+          [
+            hostUser.businessId,
+            providerIds.flutterwave,
+            { settlementAccount: '0000000001', settlementBankCode: '044' },
           ],
-        };
-        fixture.settlements = async () => [detail];
-        assert.equal((await reconcileSettlements(pool, fixture)).exceptions, 1);
-        assert.equal(
-          (
-            await one(
-              pool,
-              'SELECT s.workflow_state_code FROM seven.payment_attempts p JOIN seven.workflow_states s ON s.workflow_state_id=p.settlement_state_id WHERE payment_attempt_id=$1',
+        );
+        try {
+          const checkout = await createCheckout(appPool, fixture, guestUser, held.data.id, origin);
+          assert.equal(checkout.provider, 'flutterwave');
+          const transactionId = `settlement-fixture-${randomUUID()}`;
+          provider.receipts.set(checkout.reference, {
+            id: transactionId,
+            reference: checkout.reference,
+            status: 'successful',
+            currency: 'NGN',
+            amountMinor: Number(held.data.price.totalMinor),
+            feeMinor: 0,
+          });
+          const pay = await verifyPayment(appPool, fixture, guestUser, checkout.reference);
+          assert.equal(pay.status, 'PAID');
+          await assert.rejects(
+            appPool.query(
+              'UPDATE seven.payment_attempts SET provider_details=provider_details||\'{"mode":"mock"}\'::jsonb WHERE payment_attempt_id=$1',
               [pay.id],
-            )
-          )?.workflow_state_code,
-          'FLAGGED',
-        );
-        (detail.transactions as Record<string, unknown>[])[0]!.settlement_amount = minorToDecimal(
-          Number(pay.amountMinor) - Number(pay.commissionMinor) - 100,
-        );
-        await pool.query(
-          'UPDATE seven.payment_attempts SET next_settlement_check_at=now() WHERE payment_attempt_id=$1',
-          [pay.id],
-        );
-        assert.equal((await reconcileSettlements(pool, fixture)).processed, 1);
-        const settled = await guest.request<C.Payment>(`/payments/${pay.id}`);
-        assert.equal(settled.data.settlementStatus, 'SETTLED');
-        assert.equal(settled.data.feeMinor, '100');
-        assert.equal(
-          (
-            await one(
+            ),
+            /immutable/,
+          );
+          await assert.rejects(
+            appPool.query(
+              'UPDATE seven.payment_attempts SET provider_details=provider_details||\'{"settlementAccount":"9999999999"}\'::jsonb WHERE payment_attempt_id=$1',
+              [pay.id],
+            ),
+            /immutable/,
+          );
+          let lookupCalls = 0;
+          fixture.settlements = async () => {
+            lookupCalls++;
+            throw new Error('Synthetic provider outage.');
+          };
+          assert.equal((await reconcileSettlements(pool, fixture)).exceptions, 1);
+          const failedLookup = await one(
+            pool,
+            'SELECT settlement_checks,next_settlement_check_at,provider_details FROM seven.payment_attempts WHERE payment_attempt_id=$1',
+            [pay.id],
+          );
+          assert.equal(
+            failedLookup?.settlement_checks,
+            1,
+            'A failed external lookup consumes its durable attempt.',
+          );
+          assert.ok(
+            new Date(failedLookup?.next_settlement_check_at).getTime() > Date.now() + 14 * 60000,
+          );
+          await reconcileSettlements(pool, fixture);
+          assert.equal(lookupCalls, 1, 'The next worker tick respects persisted provider backoff.');
+          await pool.query(
+            'UPDATE seven.payment_attempts SET next_settlement_check_at=now() WHERE payment_attempt_id=$1',
+            [pay.id],
+          );
+          const detail: Record<string, unknown> = {
+            id: 'test-settlement',
+            currency: 'NGN',
+            status: 'completed',
+            queriedSubaccount: (await one(
               pool,
-              'SELECT sum(p.amount_minor) AS total FROM seven.money_postings p JOIN seven.money_journals j USING(money_journal_id) WHERE p.account_code=$1 AND j.source_reference=ANY($2::varchar[])',
-              [
-                `business:${hostUser.businessId}`,
+              'SELECT business_subaccount FROM seven.payment_attempts WHERE payment_attempt_id=$1',
+              [pay.id],
+            ))!.business_subaccount,
+            settlement_account: '0000000001',
+            bank_code: '044',
+            destination: 'account',
+            disburse_ref: 'test-disbursement',
+            processed_date: new Date().toISOString(),
+            transactions: [
+              {
+                id: pay.providerTransactionId,
+                tx_ref: pay.reference,
+                currency: 'NGN',
+                status: 'successful',
+                app_fee: '1.00',
+                merchant_fee: 0,
+                stampduty_charge: 0,
+                settlement_amount: '0.01',
+              },
+            ],
+          };
+          fixture.settlements = async () => [detail];
+          assert.equal((await reconcileSettlements(pool, fixture)).exceptions, 1);
+          assert.equal(
+            (
+              await one(
+                pool,
+                'SELECT s.workflow_state_code FROM seven.payment_attempts p JOIN seven.workflow_states s ON s.workflow_state_id=p.settlement_state_id WHERE payment_attempt_id=$1',
+                [pay.id],
+              )
+            )?.workflow_state_code,
+            'FLAGGED',
+          );
+          (detail.transactions as Record<string, unknown>[])[0]!.settlement_amount = minorToDecimal(
+            Number(pay.amountMinor) - Number(pay.commissionMinor) - 100,
+          );
+          await pool.query(
+            'UPDATE seven.payment_attempts SET next_settlement_check_at=now() WHERE payment_attempt_id=$1',
+            [pay.id],
+          );
+          assert.equal((await reconcileSettlements(pool, fixture)).processed, 1);
+          const settled = await guest.request<C.Payment>(`/payments/${pay.id}`);
+          assert.equal(settled.data.settlementStatus, 'SETTLED');
+          assert.equal(settled.data.feeMinor, '100');
+          assert.equal(
+            (
+              await one(
+                pool,
+                'SELECT sum(p.amount_minor) AS total FROM seven.money_postings p JOIN seven.money_journals j USING(money_journal_id) WHERE p.account_code=$1 AND j.source_reference=ANY($2::varchar[])',
                 [
-                  `receipt:local-${pay.id}`,
-                  `fee:local-${pay.id}`,
-                  `settlement-fee:${pay.id}`,
-                  `settlement:test-settlement:${pay.id}`,
+                  `business:${hostUser.businessId}`,
+                  [
+                    `receipt:flutterwave:${pay.providerTransactionId}`,
+                    `fee:flutterwave:${pay.providerTransactionId}`,
+                    `settlement-fee:${pay.id}`,
+                    `settlement:test-settlement:${pay.id}`,
+                  ],
                 ],
-              ],
-            )
-          )?.total,
-          '0',
-        );
-        await pool.query(
-          'UPDATE seven.payment_attempts SET provider_details=provider_details||$2::jsonb WHERE payment_attempt_id=$1',
-          [pay.id, JSON.stringify({ mode: 'mock' })],
-        );
+              )
+            )?.total,
+            '0',
+          );
+        } finally {
+          await pool.query(
+            'UPDATE seven.business_payment_accounts SET execution_mode_id=$3,revision=$4,details=$5 WHERE business_id=$1 AND payment_provider_id=$2',
+            [
+              hostUser.businessId,
+              providerIds.flutterwave,
+              account.execution_mode_id,
+              account.revision,
+              account.details,
+            ],
+          );
+        }
       },
     );
     await t.test(
@@ -946,8 +1025,17 @@ test('7even real PostgreSQL API and invariant acceptance', {
         );
         const reception = (await receptionist.request<C.ReceptionOverview>('/reception/overview'))
           .data;
-        const offering = reception.offerings.find((o) => o.kind === 'STAY' && o.id !== offered.id)!;
-        const window = offering.windows.find((w) => Date.parse(w.startAt) > Date.now() + 86400000)!;
+        const offering = reception.offerings.find(
+          (o) =>
+            o.kind === 'STAY' &&
+            o.id !== offered.id &&
+            o.windows.some((w) => w.remaining > 0 && Date.parse(w.startAt) > Date.now() + 86400000),
+        );
+        assert.ok(offering, 'The walk-in fixture needs an unallocated future room.');
+        const window = offering.windows.find(
+          (w) => w.remaining > 0 && Date.parse(w.startAt) > Date.now() + 86400000,
+        );
+        assert.ok(window);
         const endDate = new Date(Date.parse(`${window.serviceDate}T00:00:00Z`) + 86400000)
           .toISOString()
           .slice(0, 10);

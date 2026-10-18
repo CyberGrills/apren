@@ -1,0 +1,48 @@
+
+> 7even@0.1.0 build
+> npm run typecheck && npm --workspace @7even/web run build
+
+
+> 7even@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @7even/web@1.0.0 build
+> vite build
+
+vite v8.1.5 building client environment for production...
+[2Ktransforming...✓ 3102 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                           0.80 kB │ gzip:   0.47 kB
+dist/assets/manrope-latin-500-normal-BYYD-dBL.woff2      14.04 kB
+dist/assets/manrope-latin-400-normal-PaqtzbVb.woff2      14.10 kB
+dist/assets/manrope-latin-600-normal-4f0koTD-.woff2      14.17 kB
+dist/assets/manrope-latin-500-normal-DMZssgOp.woff       18.24 kB
+dist/assets/manrope-latin-400-normal-8tf8FM3T.woff       18.29 kB
+dist/assets/manrope-latin-600-normal-BqgrALkZ.woff       18.38 kB
+dist/assets/newsreader-latin-400-normal-BFBkh4jY.woff2   22.48 kB
+dist/assets/newsreader-latin-400-italic-CEihAR-f.woff2   24.34 kB
+dist/assets/newsreader-latin-400-normal-gRTjlS2D.woff    28.28 kB
+dist/assets/newsreader-latin-400-italic-CNZoH1hn.woff    30.87 kB
+dist/assets/index-NGQNDwpj.css                           61.78 kB │ gzip:  11.68 kB
+dist/assets/native-BKj27wfc.js                            0.35 kB │ gzip:   0.21 kB │ map:     1.05 kB
+dist/assets/ccip-BZyKoUk4.js                              4.71 kB │ gzip:   2.05 kB │ map:    17.88 kB
+dist/assets/internal-C9tYbtXW.js                          5.76 kB │ gzip:   2.21 kB │ map:    30.30 kB
+dist/assets/utils-DTYGldG0.js                             7.24 kB │ gzip:   2.75 kB │ map:    36.63 kB
+dist/assets/verifyHash-BesCB4m_.js                        7.73 kB │ gzip:   2.84 kB │ map:    57.23 kB
+dist/assets/secp256k1-D3mt1LdS.js                        30.85 kB │ gzip:  13.14 kB │ map:   171.75 kB
+dist/assets/resolveError-aDAEfasH.js                     65.63 kB │ gzip:  14.31 kB │ map:   399.05 kB
+dist/assets/formatUnits-DGO6BAAp.js                      74.65 kB │ gzip:  21.52 kB │ map:   382.06 kB
+dist/assets/_esm-BAaJS3Uq.js                            109.72 kB │ gzip:  36.13 kB │ map:   606.01 kB
+dist/assets/call-NBm9G4R9.js                            129.87 kB │ gzip:  34.73 kB │ map:   467.77 kB
+dist/assets/accessKey-CKkRMxQy.js                       251.65 kB │ gzip:  37.60 kB │ map:   905.30 kB
+dist/assets/chains-C_CEvhNG.js                          319.74 kB │ gzip:  63.89 kB │ map: 1,029.75 kB
+dist/assets/index-CrDkPhqE.js                           547.39 kB │ gzip: 137.22 kB │ map: 1,950.38 kB
+
+✓ built in 695ms
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
