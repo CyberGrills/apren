@@ -1,0 +1,51 @@
+7even photography and visual references
+Verified 16 October 2026.
+
+This file records the editorial stock photography used by the public pages and their generic fallback images. Photos are illustrative. They do not describe named partner inventory, guests, endorsements or a bookable excursion. Published business listings must use images the business is entitled to publish.
+
+The supplied 7even logo is shown from /brand/7even-logo.jpeg through an SVG viewBox crop. Its source artwork was supplied by the user and is preserved.
+
+PHOTOGRAPHY
+All image pages and the standard Unsplash License were checked on 16 October 2026. Each page explicitly identified the creator and the image as free under that license. The license permits downloading and commercial/noncommercial use, with restrictions on selling unmodified images and creating a competing image service. No Unsplash+ images are used. https://unsplash.com/license
+Images are loaded from the exact images.unsplash.com assets linked on those pages, resized for the page. The app retains text when imagery is unavailable; viewing the remote images requires browser access to images.unsplash.com.
+
+1. Francesca Saraco, published 16 February 2016.
+A white multi-story hotel building with balconies and palm trees in a courtyard.
+https://unsplash.com/photos/hotel-building-with-balconies-and-palms-_dS27XGgRyQ
+Asset: https://images.unsplash.com/photo-1455587734955-081b22074882
+This is stock hospitality imagery and does not represent a Nigerian partner or named property.
+
+2. Vojtech Bruzek, published 18 April 2021.
+White bed linen with throw pillows, titled Hotel Room.
+https://unsplash.com/photos/white-bed-linen-with-throw-pillows-Yrxr3bsPdS0
+Asset: https://images.unsplash.com/photo-1618773928121-c32242e63f39
+This is stock imagery, not a participating property's room.
+
+3. Jason Leung, published 17 February 2026.
+A dimly lit restaurant interior with bottles visible.
+https://unsplash.com/photos/a-dimly-lit-restaurant-interior-with-bottles-visible-LSTHwvcInZM
+Asset: https://images.unsplash.com/photo-1771308356423-6f27b4030ed0
+This is stock dining imagery. It is not asserted to be a Nigerian merchant or an offered venue.
+
+4. Ben Iwara, published 4 January 2026.
+Two women on a beach near the ocean, listed as Lagos, Nigeria by its creator.
+https://unsplash.com/photos/two-women-on-a-beach-near-the-ocean-eD9Ou5HXuhQ
+Asset: https://images.unsplash.com/photo-1767487226522-7abbfd782659
+The people are not described as customers, endorsers or participants. The beach photograph is a sense-of-place reference, not a bookable excursion or promised experience. Production use still needs checks appropriate to recognizable people, property and merchant representations.
+
+SEASONAL CAMPAIGNS
+The landing hero rotates these existing stock photographs with 7even's calendar campaigns: spring uses Francesca Saraco's courtyard, summer uses Ben Iwara's Lagos coast, autumn uses Jason Leung's restaurant and winter uses Vojtech Bruzek's hotel room. Every hero includes the applicable creator credit and an illustrative-stock caption. These are campaign names, not claims about Nigeria's weather, a named business or live availability. There are no additional seasonal assets or photography licenses.
+
+
+DESIGN REFERENCES
+These creators' work informed typographic hierarchy, layout and operational clarity. Their artwork, screenshots, logos and source code were not copied into the app.
+https://dribbble.com/shots/25931965-Valora-Heights-Luxury-Hotel-Landing-Page-Design
+https://www.behance.net/gallery/132009079/Kigoma-Hotels-A-UI-Design-Project
+https://www.behance.net/gallery/247189897/Dukagjini-Resort
+https://dribbble.com/shots/27045434-Dashboard-Design-for-Hotel-Booking-Management-System
+https://dribbble.com/shots/27709660-Horizone-Hotel-Management-Dashboard
+
+AVAILABILITY
+Editorial image requests currently go directly to images.unsplash.com. They are not bundled for offline use. Actual desktop/mobile browser inspection on 16 October 2026 confirmed all editorial images loaded. A future production asset pipeline should create appropriately sized, licensed local derivatives with these credits retained.
+
+Local development listings are marked Sample place. They are not participating merchants or a claim of live Nigerian property inventory. This register covers the four editorial/fallback assets above; any additional listing image must have its own verified provenance before production use.

@@ -1,0 +1,1767 @@
+{
+ "url": "http://127.0.0.1:7078",
+ "at": "2026-10-16T21:49:51.674Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 4,
+   "filled": [
+    0.45,
+    0.53,
+    0.81,
+    0.22
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 1,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 3585,
+     "screens": 4,
+     "words": 339,
+     "img": 5,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 4,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 5,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [
+      "photo-1771308356423-6f27b4030ed0?auto=format&fit",
+      "photo-1611892440504-42a792e24d32?auto=format&fit",
+      "photo-1414235077428-338989a2e8c0?auto=format&fit",
+      "photo-1565193566173-7a0ee3dbe261?auto=format&fit",
+      "photo-1767487226522-7abbfd782659?auto=format&fit"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "Rooms, tables and days out.",
+     "words": 5,
+     "chars": 27,
+     "lines": 2,
+     "size": 112.3,
+     "vw": 7.8,
+     "font": "Newsreader",
+     "weight": 400,
+     "tracking": -0.065,
+     "leading": 0.94,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "left",
+     "widthRatio": 0.46,
+     "top": 299,
+     "mixedFonts": [
+      "Newsreader",
+      "Newsreader italic"
+     ],
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "Rooms, tables and days out.",
+     "words": 5,
+     "lines": 2,
+     "size": 112.3,
+     "font": "Newsreader"
+    },
+    "headings": [
+     {
+      "text": "Rooms, tables and days out.",
+      "words": 5,
+      "chars": 27,
+      "lines": 2,
+      "size": 112.3,
+      "vw": 7.8,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.065,
+      "leading": 0.94,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.46,
+      "top": 299,
+      "mixedFonts": [
+       "Newsreader",
+       "Newsreader italic"
+      ],
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "07",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 0.9,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.04,
+      "top": 666,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "A little room for a good weekend.",
+      "words": 7,
+      "chars": 33,
+      "lines": 2,
+      "size": 69.1,
+      "vw": 4.8,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.3,
+      "top": 1104,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "A quiet room above the city",
+      "words": 6,
+      "chars": 27,
+      "lines": 1,
+      "size": 30.4,
+      "vw": 2.1,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 1.1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.33,
+      "top": 1673,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "A table worth taking your time at",
+      "words": 7,
+      "chars": 33,
+      "lines": 2,
+      "size": 30.4,
+      "vw": 2.1,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 1.1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.26,
+      "top": 1701,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Clay, conversation and something to keep",
+      "words": 6,
+      "chars": 40,
+      "lines": 2,
+      "size": 30.4,
+      "vw": 2.1,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 1.1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.29,
+      "top": 1720,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "A change of scene. Close to home.",
+      "words": 7,
+      "chars": 33,
+      "lines": 2,
+      "size": 66.2,
+      "vw": 4.6,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.42,
+      "top": 2143,
+      "mixedFonts": [
+       "Newsreader",
+       "Newsreader italic"
+      ],
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "More time for your guests.",
+      "words": 5,
+      "chars": 26,
+      "lines": 2,
+      "size": 64.8,
+      "vw": 4.5,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.42,
+      "top": 2965,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Good places. Worth your time.",
+      "words": 5,
+      "chars": 29,
+      "lines": 2,
+      "size": 33.6,
+      "vw": 2.3,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.03,
+      "leading": 1.12,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.29,
+      "top": 3327,
+      "tag": "p",
+      "kind": "statement"
+     }
+    ],
+    "headingSummary": {
+     "count": 9,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 1,
+     "centered": 0,
+     "medianWords": 6,
+     "mixedFontHeadings": 2
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Manrope",
+       "share": 0.86,
+       "mono": false
+      },
+      {
+       "family": "Newsreader",
+       "share": 0.14,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      16,
+      17,
+      18,
+      30,
+      34,
+      48,
+      65,
+      66,
+      69,
+      112
+     ],
+     "sizeCount": 16,
+     "notLoaded": [],
+     "body": {
+      "font": "Manrope",
+      "size": 16.5,
+      "leading": 1.85,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.6
+     },
+     "measureChars": 52,
+     "max": {
+      "size": 112.3,
+      "vw": 7.8,
+      "font": "Newsreader",
+      "text": "Rooms, tablesand"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 17,
+     "microLabelShare": 0.167,
+     "microSamples": [
+      "Good places. Nigeria first.",
+      "Autumn edit",
+      "A table for a slower evening · Illustrat",
+      "Photo: Jason Leung / Unsplash",
+      "Your plan",
+      "Where"
+     ],
+     "upperShare": 0.19,
+     "centerShare": 0.01,
+     "smallText": 24
+    },
+    "eyebrows": [
+     {
+      "text": "Autumn edit",
+      "above": "Rooms, tables and days out.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 236
+     },
+     {
+      "text": "Worth a look / 01",
+      "above": "A little room for a good weekend.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 1068
+     },
+     {
+      "text": "A place to stay",
+      "above": "A quiet room above the city",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.4,
+      "top": 1649
+     },
+     {
+      "text": "At the table",
+      "above": "A table worth taking your time at",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.4,
+      "top": 1677
+     },
+     {
+      "text": "Something to do",
+      "above": "Clay, conversation and something to keep",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.4,
+      "top": 1695
+     },
+     {
+      "text": "Go a little further / 02",
+      "above": "A change of scene. Close to home.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 2101
+     },
+     {
+      "text": "For the people behind the place / 03",
+      "above": "More time for your guests.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 2924
+     }
+    ],
+    "numbered": [
+     {
+      "text": "07",
+      "size": 48,
+      "top": 666
+     }
+    ],
+    "color": {
+     "bodyBg": "#fffdf8",
+     "bodyBgHsl": {
+      "h": 43,
+      "s": 1,
+      "l": 0.99
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#fffdf8",
+       "top": 0,
+       "hsl": {
+        "h": 43,
+        "s": 1,
+        "l": 0.99
+       }
+      },
+      {
+       "color": "#fcfaf3",
+       "top": 1986,
+       "hsl": {
+        "h": 47,
+        "s": 0.6,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#7a7161",
+       "share": 0.68
+      },
+      {
+       "color": "#2b4a33",
+       "share": 0.2
+      },
+      {
+       "color": "#241f18",
+       "share": 0.09
+      },
+      {
+       "color": "#fffdf8",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#241f18",
+      "hsl": {
+       "h": 35,
+       "s": 0.2,
+       "l": 0.12
+      },
+      "fg": "#fffdf8"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 1,
+     "radius": 0,
+     "height": 54,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Skip to content"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 8,
+     "hairlineSamples": [
+      "header.public-header 1440px",
+      "form.landing-search 1328px",
+      "div.offering-price 474px",
+      "div.offering-price 373px",
+      "div.offering-price 423px"
+     ],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 0,
+     "boxRadius": 0,
+     "squareMedia": 5,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [
+     {
+      "type": "img",
+      "ratio": 0.28
+     }
+    ],
+    "nav": {
+     "links": 6,
+     "fixed": false,
+     "height": 107,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "manrope",
+     "newsreader"
+    ]
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 4,
+   "filled": [
+    0.4,
+    0.55,
+    0.56,
+    0.37
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 1,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 3364,
+     "screens": 3.3,
+     "words": 317,
+     "img": 5,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 4,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 4,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [
+      "photo-1771308356423-6f27b4030ed0?auto=format&fit",
+      "photo-1611892440504-42a792e24d32?auto=format&fit",
+      "photo-1414235077428-338989a2e8c0?auto=format&fit",
+      "photo-1767487226522-7abbfd782659?auto=format&fit"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "Rooms, tables and days out.",
+     "words": 5,
+     "chars": 27,
+     "lines": 4,
+     "size": 80,
+     "vw": 10.4,
+     "font": "Newsreader",
+     "weight": 400,
+     "tracking": -0.065,
+     "leading": 0.94,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "left",
+     "widthRatio": 0.44,
+     "top": 246,
+     "mixedFonts": [
+      "Newsreader",
+      "Newsreader italic"
+     ],
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "Rooms, tables and days out.",
+     "words": 5,
+     "lines": 4,
+     "size": 80,
+     "font": "Newsreader"
+    },
+    "headings": [
+     {
+      "text": "Rooms, tables and days out.",
+      "words": 5,
+      "chars": 27,
+      "lines": 4,
+      "size": 80,
+      "vw": 10.4,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.065,
+      "leading": 0.94,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.44,
+      "top": 246,
+      "mixedFonts": [
+       "Newsreader",
+       "Newsreader italic"
+      ],
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "07",
+      "words": 1,
+      "chars": 2,
+      "lines": 1,
+      "size": 40,
+      "vw": 5.2,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 0.9,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.06,
+      "top": 661,
+      "tag": "span",
+      "kind": "heading"
+     },
+     {
+      "text": "A little room for a good weekend.",
+      "words": 7,
+      "chars": 33,
+      "lines": 2,
+      "size": 48,
+      "vw": 6.3,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.39,
+      "top": 1056,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "A quiet room above the city",
+      "words": 6,
+      "chars": 27,
+      "lines": 2,
+      "size": 30.4,
+      "vw": 4,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 1.1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.44,
+      "top": 1486,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "A table worth taking your time at",
+      "words": 7,
+      "chars": 33,
+      "lines": 2,
+      "size": 30.4,
+      "vw": 4,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 1.1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.44,
+      "top": 1574,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "A change of scene. Close to home.",
+      "words": 7,
+      "chars": 33,
+      "lines": 3,
+      "size": 57.6,
+      "vw": 7.5,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.43,
+      "top": 1939,
+      "mixedFonts": [
+       "Newsreader",
+       "Newsreader italic"
+      ],
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "More time for your guests.",
+      "words": 5,
+      "chars": 26,
+      "lines": 2,
+      "size": 48,
+      "vw": 6.3,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.42,
+      "top": 2753,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Good places. Worth your time.",
+      "words": 5,
+      "chars": 29,
+      "lines": 3,
+      "size": 33.6,
+      "vw": 4.4,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.03,
+      "leading": 1.12,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.26,
+      "top": 3100,
+      "tag": "p",
+      "kind": "statement"
+     }
+    ],
+    "headingSummary": {
+     "count": 8,
+     "maxLines": 4,
+     "over2Lines": 2,
+     "statements": 1,
+     "centered": 0,
+     "medianWords": 6,
+     "mixedFontHeadings": 2
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Manrope",
+       "share": 0.87,
+       "mono": false
+      },
+      {
+       "family": "Newsreader",
+       "share": 0.13,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      8,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      30,
+      34,
+      40,
+      48,
+      58,
+      80
+     ],
+     "sizeCount": 15,
+     "notLoaded": [],
+     "body": {
+      "font": "Manrope",
+      "size": 16.8,
+      "leading": 1.85,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.7
+     },
+     "measureChars": 38,
+     "max": {
+      "size": 80,
+      "vw": 10.4,
+      "font": "Newsreader",
+      "text": "Rooms, tablesand"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 15,
+     "microLabelShare": 0.169,
+     "microSamples": [
+      "Good places. Nigeria first.",
+      "Autumn edit",
+      "A table for a slower evening · Illustrat",
+      "Photo: Jason Leung / Unsplash",
+      "Your plan",
+      "Where"
+     ],
+     "upperShare": 0.18,
+     "centerShare": 0.01,
+     "smallText": 22
+    },
+    "eyebrows": [
+     {
+      "text": "Autumn edit",
+      "above": "Rooms, tables and days out.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 183
+     },
+     {
+      "text": "Worth a look / 01",
+      "above": "A little room for a good weekend.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 1020
+     },
+     {
+      "text": "A place to stay",
+      "above": "A quiet room above the city",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.4,
+      "top": 1461
+     },
+     {
+      "text": "At the table",
+      "above": "A table worth taking your time at",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.4,
+      "top": 1549
+     },
+     {
+      "text": "Go a little further / 02",
+      "above": "A change of scene. Close to home.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 1896
+     },
+     {
+      "text": "For the people behind the place / 03",
+      "above": "More time for your guests.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 2712
+     }
+    ],
+    "numbered": [
+     {
+      "text": "07",
+      "size": 40,
+      "top": 661
+     }
+    ],
+    "color": {
+     "bodyBg": "#fffdf8",
+     "bodyBgHsl": {
+      "h": 43,
+      "s": 1,
+      "l": 0.99
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#fffdf8",
+       "top": 0,
+       "hsl": {
+        "h": 43,
+        "s": 1,
+        "l": 0.99
+       }
+      },
+      {
+       "color": "#fcfaf3",
+       "top": 1816,
+       "hsl": {
+        "h": 47,
+        "s": 0.6,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#7a7161",
+       "share": 0.71
+      },
+      {
+       "color": "#2b4a33",
+       "share": 0.16
+      },
+      {
+       "color": "#241f18",
+       "share": 0.09
+      },
+      {
+       "color": "#fffdf8",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#241f18",
+      "hsl": {
+       "h": 35,
+       "s": 0.2,
+       "l": 0.12
+      },
+      "fg": "#fffdf8"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 1,
+     "radius": 0,
+     "height": 54,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Skip to content"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 10,
+     "hairlineSamples": [
+      "header.public-header 768px",
+      "form.landing-search 704px",
+      "div.landing-search-kind 352px",
+      "div 352px",
+      "div 352px"
+     ],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 0,
+     "boxRadius": 0,
+     "squareMedia": 4,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [
+     {
+      "type": "img",
+      "ratio": 0.18
+     }
+    ],
+    "nav": {
+     "links": 2,
+     "fixed": false,
+     "height": 91,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "manrope",
+     "newsreader"
+    ]
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 7,
+   "filled": [
+    0.49,
+    0.67,
+    0.6,
+    0.84,
+    0.93,
+    0.41,
+    0.38
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 1,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 5151,
+     "screens": 6.1,
+     "words": 316,
+     "img": 5,
+     "video": 0,
+     "canvas": 0,
+     "svg": 17,
+     "sections": 4,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 5,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [
+      "photo-1771308356423-6f27b4030ed0?auto=format&fit",
+      "photo-1611892440504-42a792e24d32?auto=format&fit",
+      "photo-1414235077428-338989a2e8c0?auto=format&fit",
+      "photo-1565193566173-7a0ee3dbe261?auto=format&fit",
+      "photo-1767487226522-7abbfd782659?auto=format&fit"
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": []
+    },
+    "hero": {
+     "text": "Rooms, tables and days out.",
+     "words": 5,
+     "chars": 27,
+     "lines": 2,
+     "size": 70.4,
+     "vw": 18.1,
+     "font": "Newsreader",
+     "weight": 400,
+     "tracking": -0.065,
+     "leading": 0.94,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "center",
+     "widthRatio": 0.9,
+     "top": 210,
+     "mixedFonts": [
+      "Newsreader",
+      "Newsreader italic"
+     ],
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "Rooms, tables and days out.",
+     "words": 5,
+     "lines": 2,
+     "size": 70.4,
+     "font": "Newsreader"
+    },
+    "headings": [
+     {
+      "text": "Rooms, tables and days out.",
+      "words": 5,
+      "chars": 27,
+      "lines": 2,
+      "size": 70.4,
+      "vw": 18.1,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.065,
+      "leading": 0.94,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 210,
+      "mixedFonts": [
+       "Newsreader",
+       "Newsreader italic"
+      ],
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "A little room for a good weekend.",
+      "words": 7,
+      "chars": 33,
+      "lines": 2,
+      "size": 56,
+      "vw": 14.4,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 1230,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "A quiet room above the city",
+      "words": 6,
+      "chars": 27,
+      "lines": 2,
+      "size": 30.4,
+      "vw": 7.8,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 1.1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 1801,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "A table worth taking your time at",
+      "words": 7,
+      "chars": 33,
+      "lines": 2,
+      "size": 30.4,
+      "vw": 7.8,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 1.1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 2290,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Clay, conversation and something to keep",
+      "words": 6,
+      "chars": 40,
+      "lines": 2,
+      "size": 30.4,
+      "vw": 7.8,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": 0,
+      "leading": 1.1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 2779,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "A change of scene. Close to home.",
+      "words": 7,
+      "chars": 33,
+      "lines": 3,
+      "size": 56,
+      "vw": 14.4,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 3578,
+      "mixedFonts": [
+       "Newsreader",
+       "Newsreader italic"
+      ],
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "More time for your guests.",
+      "words": 5,
+      "chars": 26,
+      "lines": 2,
+      "size": 59.2,
+      "vw": 15.2,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.05,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 4264,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Good places. Worth your time.",
+      "words": 5,
+      "chars": 29,
+      "lines": 3,
+      "size": 30.4,
+      "vw": 7.8,
+      "font": "Newsreader",
+      "weight": 400,
+      "tracking": -0.03,
+      "leading": 1.12,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.41,
+      "top": 4832,
+      "tag": "p",
+      "kind": "statement"
+     }
+    ],
+    "headingSummary": {
+     "count": 8,
+     "maxLines": 3,
+     "over2Lines": 1,
+     "statements": 1,
+     "centered": 0,
+     "medianWords": 6,
+     "mixedFontHeadings": 2
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Manrope",
+       "share": 0.85,
+       "mono": false
+      },
+      {
+       "family": "Newsreader",
+       "share": 0.15,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      30,
+      56,
+      59,
+      70
+     ],
+     "sizeCount": 14,
+     "notLoaded": [],
+     "body": {
+      "font": "Manrope",
+      "size": 15.2,
+      "leading": 1.7,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 4.7
+     },
+     "measureChars": 44,
+     "max": {
+      "size": 70.4,
+      "vw": 18.1,
+      "font": "Newsreader",
+      "text": "Rooms, tablesand"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 17,
+     "microLabelShare": 0.178,
+     "microSamples": [
+      "Good places. Nigeria first.",
+      "Autumn edit",
+      "A table for a slower evening · Illustrat",
+      "Photo: Jason Leung / Unsplash",
+      "Your plan",
+      "Where"
+     ],
+     "upperShare": 0.2,
+     "centerShare": 0.01,
+     "smallText": 23
+    },
+    "eyebrows": [
+     {
+      "text": "Autumn edit",
+      "above": "Rooms, tables and days out.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 157
+     },
+     {
+      "text": "Worth a look / 01",
+      "above": "A little room for a good weekend.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 1198
+     },
+     {
+      "text": "A place to stay",
+      "above": "A quiet room above the city",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.4,
+      "top": 1777
+     },
+     {
+      "text": "At the table",
+      "above": "A table worth taking your time at",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.4,
+      "top": 2266
+     },
+     {
+      "text": "Something to do",
+      "above": "Clay, conversation and something to keep",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.4,
+      "top": 2755
+     },
+     {
+      "text": "Go a little further / 02",
+      "above": "A change of scene. Close to home.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 3535
+     },
+     {
+      "text": "For the people behind the place / 03",
+      "above": "More time for your guests.",
+      "upper": true,
+      "tracked": true,
+      "mono": false,
+      "pill": false,
+      "size": 10.6,
+      "top": 4231
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#fffdf8",
+     "bodyBgHsl": {
+      "h": 43,
+      "s": 1,
+      "l": 0.99
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#fffdf8",
+       "top": 0,
+       "hsl": {
+        "h": 43,
+        "s": 1,
+        "l": 0.99
+       }
+      },
+      {
+       "color": "#fcfaf3",
+       "top": 2999,
+       "hsl": {
+        "h": 47,
+        "s": 0.6,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#7a7161",
+       "share": 0.68
+      },
+      {
+       "color": "#2b4a33",
+       "share": 0.19
+      },
+      {
+       "color": "#241f18",
+       "share": 0.1
+      },
+      {
+       "color": "#fffdf8",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#241f18",
+      "hsl": {
+       "h": 35,
+       "s": 0.2,
+       "l": 0.12
+      },
+      "fg": "#fffdf8"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 2,
+     "inHero": 1,
+     "radius": 0,
+     "height": 54,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Skip to content"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 8,
+     "hairlineSamples": [
+      "header.public-header 390px",
+      "form.landing-search 350px",
+      "div.offering-price 350px",
+      "div.offering-price 350px",
+      "div.offering-price 350px"
+     ],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 0,
+     "boxRadius": 0,
+     "squareMedia": 5,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [
+     {
+      "type": "img",
+      "ratio": 0.17
+     }
+    ],
+    "nav": {
+     "links": 2,
+     "fixed": false,
+     "height": 83,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "manrope",
+     "newsreader"
+    ]
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "WARN",
+   "id": "mixed-font-headline",
+   "width": 1440,
+   "message": "2 headline(s) switch typeface or to italic mid-line (the \"one italic serif word\" move).",
+   "fix": "Set the whole headline in one face. Emphasis comes from the words.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "eyebrow",
+   "width": 1440,
+   "message": "7 eyebrow/kicker label(s) above headings: \"Autumn edit\" above \"Rooms, tables and days out.\"; \"Worth a look / 01\" above \"A little room for a good weekend.\"; \"A place to stay\" above \"A quiet room above the city\"; \"At the table\" above \"A table worth taking your time at\"; \"Something to do\" above \"Clay, conversation and something to keep\"",
+   "fix": "Delete them. If the label carried real information, fold it into the headline or the supporting sentence.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "numbering",
+   "width": 1440,
+   "message": "Decorative index numbers: \"07\"",
+   "fix": "Remove them. If order truly matters, write it into the words (\"First, …\") or use a real <ol>.",
+   "alsoAt": [
+    768
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "micro-label",
+   "width": 1440,
+   "message": "17 tiny uppercase letter-spaced labels (e.g. \"Good places. Nigeria first.\", \"Autumn edit\", \"A table for a slower evening · Illustrat\", \"Photo: Jason Leung / Unsplash\").",
+   "fix": "Use sentence-case text at a readable size, or delete the label.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "hairline",
+   "width": 1440,
+   "message": "8 thin rule(s)/divider line(s): header.public-header 1440px | form.landing-search 1328px | div.offering-price 474px | div.offering-price 373px",
+   "fix": "Delete. Separate with space, a tone change, or scale. Lines are only for real tables and form fields.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "palette-cream",
+   "width": 1440,
+   "message": "Yellow-cream background (page background #fffdf8, section #fffdf8, section #fcfaf3).",
+   "fix": "Use the drawn palette. If you want warmth, take a low-chroma stone or bone, not a yellow cream.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "size-count",
+   "width": 1440,
+   "message": "16 different font sizes (9, 10, 11, 12, 13, 14, 16, 17, 18, 30, 34, 48, 65, 66, 69, 112).",
+   "fix": "A page needs about five: display, heading, lead, body, small.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "grey-body",
+   "width": 1440,
+   "message": "The running text is a soft grey on its ground (4.6:1).",
+   "fix": "Set body copy in the full ink (7:1 or more). Keep the muted ink for secondary notes; pages read thin and unfinished when everything is grey.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "no-footage",
+   "width": 1440,
+   "message": "No video anywhere on the page.",
+   "fix": "Look for one honest clip with scripts/assets.mjs --video (the place, the material, the process) and use it as a muted loop with a poster frame. Defend its absence only if no clip fits the subject."
+  },
+  {
+   "level": "FAIL",
+   "id": "small-text",
+   "width": 1440,
+   "message": "24 text blocks under 13px.",
+   "fix": "Nothing meant to be read goes below 13px.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "still-page",
+   "width": 1440,
+   "message": "Only 1 element(s) moved while the page loaded and scrolled.",
+   "fix": "Build the motion layer (SKILL.md step 9, references/motion.md): the signature move, an entrance for the parts of every section, feedback on every control, and one moving picture. Transform and opacity only, with a reduced-motion fallback."
+  },
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 768,
+   "message": "3 headline(s) wrap past two lines at 768px: \"Rooms, tables and days out.\" → 4 lines (5 words, 80px); \"A change of scene. Close to home.\" → 3 lines (7 words, 57.6px); \"Good places. Worth your time.\" → 3 lines (5 words, 33.6px, a paragraph set above 32px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 32px or less."
+  },
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 390,
+   "message": "2 headline(s) wrap past two lines at 390px: \"A change of scene. Close to home.\" → 3 lines (7 words, 56px); \"Good places. Worth your time.\" → 3 lines (5 words, 30.4px, a paragraph set above 24px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 24px or less."
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "/home/inimfon-udoh/7even/apren/.taste-skill/inspect/seasonal-home/desktop-fold.jpg",
+   "pages": [
+    "/home/inimfon-udoh/7even/apren/.taste-skill/inspect/seasonal-home/desktop-page-01.jpg"
+   ]
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "/home/inimfon-udoh/7even/apren/.taste-skill/inspect/seasonal-home/tablet-fold.jpg",
+   "pages": [
+    "/home/inimfon-udoh/7even/apren/.taste-skill/inspect/seasonal-home/tablet-page-01.jpg"
+   ]
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "/home/inimfon-udoh/7even/apren/.taste-skill/inspect/seasonal-home/mobile-fold.jpg",
+   "pages": [
+    "/home/inimfon-udoh/7even/apren/.taste-skill/inspect/seasonal-home/mobile-page-01.jpg"
+   ]
+  }
+ ]
+}

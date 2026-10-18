@@ -1,7 +1,7 @@
 {
-  "name": "web",
+  "name": "@7even/web",
   "version": "1.0.0",
-  "description": "",
+  "description": "7even hospitality marketplace and operations",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -12,12 +12,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lucide-react": "^1.27.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "@7even/contracts": "*",
+    "@7even/engine": "*",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router-dom": "7.18.4",
+    "lucide-react": "1.27.0",
+    "@fontsource/newsreader": "5.3.0",
+    "@fontsource/manrope": "5.3.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^6.0.4",
-    "vite": "^8.1.5"
-  }
+    "@vitejs/plugin-react": "6.0.4",
+    "vite": "8.1.5"
+  },
+  "private": true,
+  "type": "module"
 }

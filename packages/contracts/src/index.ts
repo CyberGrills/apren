@@ -1,0 +1,90 @@
+import { z } from 'zod';
+
+export const sectors = ['STAY', 'DINING', 'EXPERIENCE'] as const;
+export type Sector = (typeof sectors)[number];
+export type Role = 'CUSTOMER' | 'BUSINESS_OWNER' | 'RECEPTION' | 'ADMIN';
+export type ReservationStatus = 'HELD' | 'CONFIRMED' | 'CHECKED_IN' | 'FULFILLED' | 'CANCELLED' | 'EXPIRED' | 'PAYMENT_REVIEW';
+export type PaymentStatus = 'UNPAID' | 'PENDING' | 'PAID' | 'FAILED' | 'UNKNOWN' | 'REFUND_PENDING' | 'REFUNDED' | 'REVIEW_REQUIRED';
+export type SettlementStatus = 'UNSETTLED' | 'PENDING' | 'SETTLED' | 'FLAGGED' | 'UNKNOWN';
+export type BusinessStatus = 'PENDING' | 'APPROVED' | 'SUSPENDED';
+export type BenefitStatus = 'AVAILABLE' | 'LOCKED' | 'CONSUMED' | 'EXPIRED' | 'REVOKED';
+export type TradeStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'EXPIRED';
+
+const id = z.uuid();
+const localDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a valid date.');
+export const minorUnits = z.string().regex(/^(0|[1-9]\d{0,14})$/, 'Use an exact amount in kobo.');
+const positiveMinor = minorUnits.refine((value) => value !== '0', 'The price must be greater than zero.');
+const email = z.email().max(254).transform((value) => value.trim().toLowerCase());
+const password = z.string().min(12, 'Use at least 12 characters.').max(128);
+const shortText = z.string().trim().min(1).max(160);
+
+export const registerInput = z.strictObject({ email, password, displayName: z.string().trim().min(2).max(100) });
+export const loginInput = z.strictObject({ email, password: z.string().min(1).max(128) });
+export const profileInput = z.strictObject({ displayName: z.string().trim().min(2).max(100), phone: z.string().trim().max(30).optional() });
+export const businessApplicationInput = z.strictObject({ businessName: shortText, city: shortText, address: z.string().trim().min(4).max(300), phone: z.string().trim().min(5).max(30), sector: z.enum(sectors), description: z.string().trim().min(20).max(2000) });
+export const offeringInput = z.strictObject({
+  title: z.string().trim().min(3).max(160), description: z.string().trim().min(20).max(5000), kind: z.enum(sectors),
+  venueId: id.optional(), city: shortText, address: z.string().trim().min(4).max(300), priceMinor: positiveMinor,
+  capacity: z.int().min(1).max(10000), images: z.array(z.url().refine((url) => url.startsWith('https://') || url.startsWith('http://localhost:'))).max(12).default([]),
+  amenities: z.array(z.string().trim().min(1).max(80)).max(20).default([]), cancellationHours: z.int().min(0).max(720).default(24),
+  taxBps: z.int().min(0).max(5000).default(0), discountBps: z.int().min(0).max(9000).default(0), published: z.boolean().default(false),
+});
+export const availabilityInput = z.strictObject({ startDate: localDate, endDate: localDate.optional(), startAt: z.iso.datetime({ offset: true }).optional(), endAt: z.iso.datetime({ offset: true }).optional(), capacity: z.int().min(0).max(10000), expectedRevision: z.int().min(0).optional() });
+export const quoteInput = z.strictObject({ offeringId: id, startDate: localDate, endDate: localDate.optional(), windowId: id.optional(), quantity: z.int().min(1).max(100) });
+export const reservationInput = z.strictObject({ quoteId: id });
+export const reservationActionInput = z.strictObject({ action: z.enum(['CHECK_IN', 'FULFILL', 'CANCEL']), expectedRevision: z.int().min(0), reason: z.string().trim().min(3).max(500).optional() });
+export const walkInInput = z.strictObject({ quoteId: id, customerEmail: email, customerName: z.string().trim().min(2).max(100) });
+export const paymentVerifyInput = z.strictObject({ reference: z.string().min(8).max(150), transactionId: z.string().regex(/^\d+$/).optional() });
+export const rewardInput = z.strictObject({ title: shortText, description: z.string().trim().min(10).max(2000), pointsCost: z.int().min(1).max(100000000), capacity: z.int().min(1).max(100000), expiresAt: z.iso.datetime({ offset: true }), transferable: z.boolean().default(false), published: z.boolean().default(false) });
+export const tradeInput = z.strictObject({ benefitId: id, recipientEmail: email, requestedBenefitId: id.optional() });
+export const tradeActionInput = z.strictObject({ action: z.enum(['ACCEPT', 'DECLINE', 'CANCEL']), expectedRevision: z.int().min(0) });
+export const benefitConsumeInput = z.strictObject({ code: z.string().min(8).max(80), expectedRevision: z.int().min(0) });
+export const staffInput = z.strictObject({ email, displayName: z.string().trim().min(2).max(100), password, venueId: id.optional() });
+export const businessStatusInput = z.strictObject({ status: z.enum(['APPROVED', 'SUSPENDED']), reason: z.string().trim().min(3).max(500) });
+export const subaccountInput = z.strictObject({ subaccountCode: z.string().regex(/^RS_[A-Za-z0-9_]+$/).max(100), accountLabel: z.string().trim().min(3).max(100) });
+export const policyInput = z.strictObject({ earnSpendMinor: positiveMinor, earnPoints: z.int().min(1).max(100000), holdMinutes: z.int().min(5).max(60), reason: z.string().trim().min(5).max(500) });
+export const receptionEventInput = z.strictObject({ sourceId: id, events: z.array(z.strictObject({ eventId: id, schemaVersion: z.literal(1), reservationId: id, expectedRevision: z.int().min(0), action: z.enum(['CHECK_IN', 'FULFILL', 'CANCEL']), occurredAt: z.iso.datetime({ offset: true }), reason: z.string().max(500).optional() })).min(1).max(50) });
+
+export interface ApiErrorBody { error: { code: string; message: string; requestId?: string; fields?: Record<string, string[]> } }
+export interface ApiEnvelope<T> { data: T; pagination?: { page: number; pageSize: number; total: number } }
+export interface SessionUser { id: string; email: string; displayName: string; role: Role; businessId: string | null; venueIds: string[]; phone?: string }
+export interface SessionData { user: SessionUser | null; csrfToken: string | null; environment: string; paymentMode: 'mock' | 'flutterwave' }
+export interface InventoryWindow { id: string; serviceDate: string; startAt: string; endAt: string; capacity: number; remaining: number; revision: number }
+export interface Offering {
+  id: string; businessId: string; venueId: string; businessName: string; title: string; description: string; kind: Sector; city: string; address: string;
+  priceMinor: string; currency: 'NGN'; unitLabel: string; capacity: number; images: string[]; amenities: string[]; cancellationHours: number;
+  taxBps: number; discountBps: number; published: boolean; revision: number; windows: InventoryWindow[]; isSample: boolean;
+}
+export interface PriceBreakdown { subtotalMinor: string; discountMinor: string; serviceMinor: string; taxMinor: string; totalMinor: string; commissionMinor: string; businessGrossMinor: string }
+export interface Quote { id: string; offeringId: string; title: string; startDate: string; endDate: string | null; windowIds: string[]; quantity: number; units: number; price: PriceBreakdown; currency: 'NGN'; expiresAt: string; policyVersion: number }
+export interface Reservation {
+  id: string; reference: string; offeringId: string; businessId: string; title: string; kind: Sector; city: string; image: string | null;
+  customerId: string; customerName: string; customerEmail?: string; startDate: string; endDate: string | null; startAt: string | null; quantity: number;
+  status: ReservationStatus; paymentStatus: PaymentStatus; settlementStatus: SettlementStatus; price: PriceBreakdown;
+  holdExpiresAt: string | null; revision: number; createdAt: string; fulfilledAt: string | null; paymentId: string | null;
+}
+export interface Payment { id: string; reservationId: string; reference: string; providerTransactionId: string | null; status: PaymentStatus; settlementStatus: SettlementStatus; amountMinor: string; commissionMinor: string; feeMinor: string | null; merchantExpectedMinor: string; currency: 'NGN'; createdAt: string; verifiedAt: string | null; mode: 'mock' | 'flutterwave' }
+export interface Checkout { paymentId: string; reference: string; checkoutUrl: string; mode: 'mock' | 'flutterwave' }
+export interface PointEntry { id: string; amount: number; entryType: string; description: string; createdAt: string; sourceId: string }
+export interface PointsAccount { balance: number; available: number; reserved: number; shortfall: number; entries: PointEntry[] }
+export interface Reward { id: string; businessId: string; businessName: string; title: string; description: string; pointsCost: number; remaining: number; capacity: number; expiresAt: string; transferable: boolean; published: boolean; revision: number }
+export interface Benefit { id: string; rewardId: string; businessId: string; businessName: string; ownerId: string; title: string; description: string; status: BenefitStatus; expiresAt: string; transferable: boolean; redemptionCode: string; revision: number }
+export interface Trade { id: string; benefitId: string; benefitTitle: string; requestedBenefitId: string | null; requestedBenefitTitle: string | null; senderId: string; recipientId: string; senderName: string; recipientName: string; status: TradeStatus; revision: number; expiresAt: string; createdAt: string }
+export interface Business { id: string; businessName: string; city: string; address: string; description: string; phone: string; sector: Sector; status: BusinessStatus; subaccountConfigured: boolean; accountLabel: string | null; createdAt: string; isSample: boolean }
+export interface Activity { id: string; action: string; actorName: string; entityType: string; entityId: string; createdAt: string; detail?: string }
+export interface Notification { id: string; title: string; body: string; href: string; createdAt: string; readAt: string | null }
+export interface Metrics { totalReservations: number; confirmedReservations: number; arrivalsToday: number; fulfilledReservations: number; grossMinor: string; commissionMinor: string; availableCapacity: number; pointsIssued: number }
+export interface DemandView { offeringId: string; title: string; assessment: { status: 'READY' | 'INSUFFICIENT_DATA'; goal: string; asOf: string; period: { start: string | null; end: string }; evidence: Record<string, number>; recommendations: { action: string; title: string; reason: string; requiresApproval: boolean }[]; reasons: string[]; policyVersion: string } }
+export interface CustomerOverview { reservations: Reservation[]; points: PointsAccount; benefits: Benefit[]; trades: Trade[]; notifications: Notification[]; payments: Payment[] }
+export interface BusinessOverview { business: Business | null; offerings: Offering[]; reservations: Reservation[]; rewards: Reward[]; metrics: Metrics; demand: DemandView[]; activity: Activity[]; staff: SessionUser[]; notifications: Notification[] }
+export interface ReceptionOverview { business: Business | null; offerings: Offering[]; reservations: Reservation[]; metrics: Metrics; activity: Activity[]; sourceId: string; serverTime: string }
+export interface AdminOverview { businesses: Business[]; metrics: Metrics; reservations: Reservation[]; payments: Payment[]; activity: Activity[]; policy: { version: number; earnSpendMinor: string; earnPoints: number; holdMinutes: number; commissionBps: number }; exceptions: { id: string; kind: string; message: string; createdAt: string }[] }
+export interface SyncResult { serverTime: string; outcomes: { eventId: string; status: 'APPLIED' | 'DUPLICATE' | 'CONFLICT' | 'REJECTED'; message?: string; reservation?: Reservation }[] }
+
+export const venueInput = z.strictObject({ venueName: shortText, address: z.string().trim().min(4).max(300), city: shortText, timeZone: z.literal('Africa/Lagos').default('Africa/Lagos') });
+export const paymentNoteInput = z.strictObject({ amountMinor: positiveMinor, method: z.enum(['CASH', 'BANK_TRANSFER', 'EXTERNAL_POS']), reference: z.string().trim().max(120).optional(), note: z.string().trim().max(500).optional() });
+export const sourceStatusInput = z.strictObject({ active: z.boolean(), reason: z.string().trim().min(3).max(500) });
+export const rewardModerationInput = z.strictObject({ published: z.boolean(), reason: z.string().trim().min(3).max(500) });
+export interface Venue { id: string; businessId: string; venueName: string; address: string; city: string; timeZone: 'Africa/Lagos'; revision: number }
+export interface PaymentNote { id: string; reservationId: string; amountMinor: string; currency: 'NGN'; method: 'CASH' | 'BANK_TRANSFER' | 'EXTERNAL_POS'; reference: string; note: string; recordedBy: string; recordedAt: string }
+export interface AdminOperations { health: { pendingInbox: number; failedInbox: number; pendingOutbox: number; failedOutbox: number; unknownPayments: number; pendingRefunds: number; syncConflicts: number; checkedAt: string }; sources: { id: string; businessId: string; businessName: string; userId: string; displayName: string; isActive: boolean; lastSyncedAt: string | null; eventCount: number }[]; rewards: Reward[] }

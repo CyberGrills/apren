@@ -1,0 +1,15 @@
+{
+  "theme": {
+    "activeNavigation": "rgb(43, 74, 51)",
+    "background": "rgb(255, 253, 248)",
+    "button": "rgb(43, 74, 51)",
+    "overflow": false,
+    "season": "autumn",
+    "testClockPresent": "undefined"
+  },
+  "dialog": {
+    "focus": "Use a benefit",
+    "focusOutline": "rgb(43, 74, 51)",
+    "openDialogs": 0
+  }
+}

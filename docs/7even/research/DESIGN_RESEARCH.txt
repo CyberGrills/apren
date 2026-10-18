@@ -1,0 +1,90 @@
+7even visual research and design directions
+Research date: 16 October 2026, Africa/Lagos
+Scope: read-only direction research. No app files changed, no dependencies installed, no hosted generation or asset upload.
+
+RECOMMENDATION
+Choose Direction 1, The 7even Journal: Nigerian hospitality presented with warm editorial restraint, crisp booking tools, and clear operational data. The supplied black angular 7 and geometric 7EVEN wordmark stay intact. They provide the sharp visual signature; photography and serif headlines provide warmth. The brand should feel like a well-kept city guide that also has a reliable front desk.
+
+This recommendation is a design judgment, not a measured user preference or a rendered design. Do not promise perfection or market-leading conversion. The main quality test is that a customer can find a room, table or experience and understand availability, the full price, merchant, payment state and points without guessing.
+
+CONFIRMED PRODUCT CONTEXT
+Nigeria first. Rooms, dining and experiences in one marketplace. Payments are directed to participating businesses. Points are intended to become redeemable later. Keep the original product's ideas of value, ownership, exchange and rewards, while avoiding food-specific language. Four connected surfaces: public landing page, customer web app, business workspace, platform admin. Future sectors should reuse common foundations with sector-specific labels and inventory workflows.
+
+PRIMARY REFERENCE PAGES ACTUALLY BROWSED
+1. Valora Heights, Phenomenon Labs for Phenomenon Studio, Dribbble
+https://dribbble.com/shots/25931965-Valora-Heights-Luxury-Hotel-Landing-Page-Design
+Opened the real Dribbble project in the browser and inspected its moving visual presentation. Observed oversized serif typography over quiet mountain photography, restrained navigation, a mobile layout, deep photographic tones and rotating presentation panels. Use the typography-to-image contrast and the strong art direction. Do not copy alpine scenery, their brand, rotating 3D presentation panels, full-screen motion or their copy. The animation is portfolio presentation, not evidence of a working booking flow. Publication date was not exposed in the inspected page. Accessed 16 October 2026.
+
+2. Kigoma Hotels: A UI Design Project, Miebaka Joshua, Behance
+https://www.behance.net/gallery/132009079/Kigoma-Hotels-A-UI-Design-Project
+Published 26 November 2021. Browser inspected the homepage image, pool courtyard hero, Rooms & Suites split layout, and room photo grid. The project describes a Nigerian hotel in Bauchi. Useful: place-specific context, photographic storytelling, distinct room information and the path toward reservation. Avoid adopting its older carousel treatment, tiny text in mockups, orange presentation border, generic luxury claims or sparse booking-price information. Concept exploration, not verified live hotel inventory. Accessed 16 October 2026.
+
+3. Dukagjini Resort, Comence and multiple owners, Behance
+https://www.behance.net/gallery/247189897/Dukagjini-Resort
+Published 15 April 2026. Browser inspected the credits/introduction composition, oversized typographic wordmark, physical debossed paper identity and architecture imagery. It is a full branding, book, packaging and website project for an Albanian resort. Useful: one disciplined identity extends across every touchpoint, material colors, patient scale changes, editorial asymmetry. Do not copy their logo, patterns, paper artwork or buildings. Some embedded media stayed blank, so no claim that every digital frame was inspected. Accessed 16 October 2026.
+
+4. Dashboard Design for Hotel Booking Management System, Iqbal Hossain, Dribbble
+https://dribbble.com/shots/27045434-Dashboard-Design-for-Hotel-Booking-Management-System
+Opened actual page and two linked image assets in the browser. Observed a light operations screen with clear navigation, headline metrics, check-in/check-out bars, room inventory summary, booking table, search/filter controls and text status labels. A detail image shows the table fields for room, check-in, check-out, nights, nightly rate, total and status. Useful: put today's work and booking details before decorative charts; ensure amounts and dates can be compared down a column. Avoid tiny type, the staged photographic backdrop, orange as meaning for every metric, donuts when a labeled inventory count is simpler, and charts without source dates. Publication date was not exposed in the inspected page. Accessed 16 October 2026.
+
+5. Horizone, Nebs Creative, Dribbble
+https://dribbble.com/shots/27709660-Horizone-Hotel-Management-Dashboard
+Opened actual page and its linked dashboard image. Observed dark charcoal workspace, yellow/blue comparison bars, green/blue/yellow room statuses, booking table, explicit daily-operation versus administration navigation, four metrics, check-in and new-booking actions. Useful: distinct task groups, action placement, operational density. Avoid its glowing multicolor metric panels and low-contrast tiny table text. This is a reference for hierarchy, not the recommended 7even palette. Publication date was not exposed in the inspected page. Accessed 16 October 2026.
+
+ADDITIONAL PRIMARY SOURCES FOUND, NOT VISUALLY VERIFIED
+https://www.behance.net/gallery/160910009/Admos-Hotel-UIUX-Design-and-Development-Casestudy
+Admos Hotel, Adeola Adekoya and Tunde Adekoya, published 10 January 2023. Creator description identifies a real Nigerian hotel website project. Search-index and page text only in this pass. Do not cite as visually inspected.
+https://dribbble.com/shots/12707135-Signature-Restaurant-Booking-Website-Design
+Signature Restaurant & Booking Website, Shuvo. Identified as a dining/booking reference; page text only. No claim about visual quality from the thumbnail alone.
+https://www.behance.net/gallery/203151147/Luxury-hotel-website-design
+Vasanth M, published 13 July 2024. Search-index metadata available; web text fetch failed. Not part of the selected visual evidence.
+
+DIRECTION 1: THE 7EVEN JOURNAL (RECOMMENDED)
+Personality: warm, local, exact, quietly confident. Nigerian hospitality without stock safari symbols or borrowed European hotel imagery.
+Palette foundation: ivory #F7F2EA, secondary linen #EFE8DC, near-black #17130F, readable secondary text #6E655A, oxblood #742D2C as one brand accent. Actual component and state pairs must be contrast-tested. Semantic success, warning and error colors are allowed for data states and must include text; they do not become decorative palette colors.
+Typography: Newsreader or a similarly expressive licensed serif for selected public/customer display headings, paired with a crisp system sans or licensed equivalent for all navigation, forms and data. Two families maximum. Existing geometric wordmark is artwork, not the body font. Self-host chosen font assets only after license/source verification. Display: clamp from 42px mobile to roughly 96px desktop. Body: 16-18px public, 14-16px operations. Tabular sans numerals for money, dates and metrics.
+Composition: a 12-column desktop grid, off-center hero headline, one large property/dining photograph with a narrow caption rail, prominent useful search form, thin rules, alternating visual rhythm. Rectangular image frames; corner radii chosen for control comfort rather than applied to every surface. No fabricated partner logos, reviews, bookings or growth claims.
+Landing: clear customer path and a quieter business path. First screen explains rooms, dining and experiences. Local editorial section can group Lagos, Abuja and other actual launch cities once inventory exists. A business section explains the operational product with a real measured screen, not a fake AI mockup.
+Customer app: category tabs labelled Stays, Dining, Experiences, with category-specific date/party/capacity filters. Listings show full price basis, merchant, locality, available options and honest review counts. Property detail uses a bounded image gallery with thumbnails, text amenities, policies and a visible price breakdown. Saved items, bookings, exchange eligibility and points history stay legible. No claim of instant confirmation where merchant confirmation is required.
+Business workspace: light linen canvas, compact left navigation, today's exceptions before charts. Show arrivals or reservations due, pending confirmations, available inventory, payment exceptions and demand insights. Booking/room/time-slot tables use the same visual grammar. Engine suggestions have reasons, input window, freshness, confidence/uncertainty and a specific action. Absence of enough data is an explicit state. Operator confirmation before changes to live rates or availability.
+Admin: same tokens and navigation grammar, denser review queues for merchants, listings, disputes, payment exceptions, points adjustments and engine runs. Make the actor, reason and time visible in action history. Restricted actions need explicit outcomes and reviewable details, not a shiny danger button without context.
+Motion: 160-220ms control feedback; 350-500ms scene entrance once per section; image hover is a small bounded crop change only for fine pointers. No scroll hijacking, forced intro, autoplay carousel, parallax or counters that pretend estimates are measured. Reduced motion reveals content immediately.
+Sample copy: "Rooms, tables and days out." / "Find a place in Nigeria, see the full price, and book with the business." / "Find a stay" / "Book a table" / "See experiences" / "Bring your business to 7even". Points copy before redemption exists: "Points earned" and "Redemption is not available yet." Pending state: "Waiting for the business to confirm." Engine empty state: "Not enough booking history yet. Add recent reservations to see a forecast."
+
+DIRECTION 2: THE 7EVEN DESK
+Personality: a precise hospitality network with the warmth of a printed reservation card. Strongest choice if the business engine is the primary product and the public marketplace is secondary.
+Palette: warm white, ink black, stone, dark forest #2E4436 as the sole brand accent. Keep the supplied black mark. Display uses a broad editorial grotesk, while serif appears sparingly in destination titles. Strong label hierarchy and tabular numerals.
+Composition: visible ruled grids, reservation-ticket details, large dates, offset photographic strips, compact dense operational tables. Customer search feels like a useful travel desk. Public hero can show one real booking card beside a destination photograph instead of a software screenshot.
+Motion: crisp 150-200ms feedback and short panel reveals. No luxury video intro. Mobile simplifies to search, saved items, bookings and account; business changes its side nav into a labeled drawer and its task queues into readable rows.
+Copy examples: "A better way to plan a stay." / "A clear view of the days ahead." / "Bookings to confirm" / "Rooms still available" / "Review suggested rates". This direction is less intimate than Direction 1 but scales well across future sectors.
+
+DIRECTION 3: 7EVEN AFTER HOURS
+Personality: Nigeria's city life after work, suited to dining, experiences and staycations. Most distinctive at night, but must not narrow the brand to nightlife.
+Palette: nearly black #17130F, warm cream, stone, one terracotta/oxblood accent. Use real evening interiors and people only with permission. Heading type is a confident serif with very spare italic use; body and product controls remain clear sans. No neon or club-style gradients.
+Composition: very large editorial place titles, full-width carefully cropped image moments, asymmetrical city guide sequences, restrained index navigation. Customer browse may use category-specific editorial collections. Checkout and operations return to clear light surfaces rather than forcing dark photographic backgrounds onto data.
+Motion: a single soft image dissolve for deliberate user navigation, with a static fallback. Never animate pricing or payment status ambiguously.
+Copy examples: "Make a night of it." / "A room nearby. A table worth booking. Something to do this weekend." / "Tonight in Lagos" only when actual inventory and local date logic support it. Risk: can overemphasize leisure and nightlife, so Direction 1 is a better umbrella for the confirmed scope.
+
+ALL TEN INSTALLED UI SOURCES CONSIDERED
+The entire local catalog at /home/inimfon-udoh/.codex/skills/ui-reference-guide/references/catalog.md was read. Snapshots are references, not approved app dependencies.
+1. Superdesign: useful method for three distinct concepts and reusable context. Read installed workflow. No CLI, account login, hosted canvas, project upload or generation used; no canvas result claimed.
+2. Better Design: semantic token system and market-specific form patterns are useful. Inspected local light-marketplace date-picker, field and status-indicator source. Their date picker uses React, date-fns, lucide, calendar and popover dependencies. Do not paste blindly. No Better Design MCP tools were available in this tool inventory, so no hosted review or extracted design system is claimed.
+3. Design Taste: selected foundational judgment, typography/accessibility craft and quiet-luxury genre; inspected quiet-luxury.html. Reuse the asymmetry, restrained palette, type contrast and rule rhythm. Do not copy the example's fake metrics, testimonial brands, tiny labels or copy.
+4. Canvas UI: GPU effects considered and rejected for core product surfaces. They add weight and can obscure booking tasks. Local license is MIT plus Commons Clause, permitting components inside products while restricting selling the components themselves. No effect code selected.
+5. Paper Shaders: considered grain/background textures and rejected as unnecessary. Real hospitality photography and linen color already provide material character. Apache-2.0 with notice requirements if later adopted. No shader/runtime selected.
+6. UI Layouts: inspected thumbnail carousel source. Use the idea of bounded gallery plus manual thumbnails. It relies on an Embla-based wrapper and Tailwind utilities. No new runtime chosen; static CSS scroll snapping/native buttons can cover the initial interaction. Avoid autoplay components.
+7. Hyperiux: navigation/reveal/scroll effects considered; rejected the WebGL/cursor flourishes for task-heavy app. Inspected LICENSE_EFFECTS: free and pro use in products has separate restrictions on standalone redistribution, and pro requires subscription at installation. No effect code copied or subscription used.
+8. Motion Primitives: inspected transition-panel.tsx. Useful conceptual pattern for active-state panel transitions, but requires motion/react and Tailwind utilities; it does not itself provide complete tabs semantics or reduced-motion gating. No import selected. Simple CSS transitions may suffice.
+9. Cursify: cursor spotlight/trails considered and rejected. Preserve native pointer, touch behavior and keyboard focus. Catalog found no license in the snapshot, so source code must not be copied without permission.
+10. Trickle UI Kit: inspected text-reveal.tsx. CSS-led single-block fade can be implemented without adding a motion runtime. Its split-text aria-label/aria-hidden treatment is worth understanding, but ordinary readable text is preferable for the main interface. No decorative character scrambling, wave, shatter or perpetual animations.
+
+RESPONSIVE AND ACCESSIBILITY ACCEPTANCE CRITERIA FOR IMPLEMENTATION
+Use semantic header/nav/main/footer, one h1 and a useful heading outline. Every input has a visible connected label and inline field-specific errors. Keyboard users can open filters, choose dates, read galleries, save items, complete booking and close dialogs; focus returns after dismissal. Preserve browser zoom. Use visible focus indicators and 44px touch targets where practical. Contrast-test body text at 4.5:1 and UI/focus at 3:1. Never indicate status only by color.
+At 360px, 390px, 768px, 1280px and 1440px: no clipped forms, unexpected page-level horizontal scrolling or inaccessible offscreen actions. Wide data tables may have a labelled local scroll container plus a compact row summary on small screens. Sticky booking actions must not cover content, keyboard focus or safe areas. Search becomes a stacked labeled form on mobile, not four compressed fields. Respect 200% zoom and reduced motion. These are required checks, not checks completed by this research task.
+Images require explicit dimensions, responsive sizes and lazy loading below the first viewport. Do not lazy-load the main image. Use actual Nigerian property/merchant imagery with documented rights; sample stock images must never imply named merchant inventory or location. Failed imagery must retain useful text and layout. Route transitions must never hide errors or discard a booking draft. Engine chart summaries need a text/table alternative, date range, units and provenance.
+
+COPY GUARDRAILS
+No em dash. No "seamless", "revolutionary", "unlock", "elevate", "leverage", "curated" as a substitute for evidence, "AI-powered" as filler, vague superlatives, fabricated counts or claims. Use ordinary labels: Stay, Bookings, Points, Business, Confirm, Cancel, Review. Keep availability, merchant confirmation, payment processing and earned points distinct. Explain confidence honestly. A recommendation is not a verified fact. Completed provider-confirmed payment is not the same state as pressing Pay.
+
+LIMITATIONS
+No rendered 7even mockup or implemented UI exists from this research task. Browser inspection proves selected reference artwork was visible, not that their underlying products work. Some Behance embeds did not load; this is recorded above. Reference screenshots/artwork are inspiration only and carry creators' copyright. Better Design MCP unavailable; Superdesign hosted workflow intentionally unused within the read-only/no-upload brief. Font and photo licenses still need verification before any asset adoption. No accessibility compliance or conversion-result claim can be made until actual interfaces are rendered and tested.

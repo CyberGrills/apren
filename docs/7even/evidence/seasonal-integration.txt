@@ -1,0 +1,58 @@
+
+> 7even@0.1.0 test:integration
+> node --env-file-if-exists=.env --test --test-isolation=none --test-concurrency=1 tests/integration/*.test.ts
+
+▶ account recovery and password change use real PostgreSQL and session middleware
+  ✔ existent and unknown emails return the same response without exposing tokens (740.793298ms)
+  ✔ a walk-in guest claims only their own account and revokes every existing session (764.770633ms)
+  ✔ expired, revoked, malformed and weak-password resets leave the password unchanged (1129.149747ms)
+  ✔ concurrent completion consumes a token once and persists no competing password (542.131101ms)
+  ✔ password change verifies current secret, requires CSRF and revokes all sessions and links (832.919955ms)
+  ✔ request limits persist in the database and count unknown accounts identically (1820.267455ms)
+  ✔ failed delivery is audited and its token revoked without changing the generic response (354.31118ms)
+  ✔ login limits bind account and IP independently across concurrent callers (74.883859ms)
+✔ account recovery and password change use real PostgreSQL and session middleware (6329.967617ms)
+✔ production recovery is uniformly unavailable without an injected delivery adapter (612.444615ms)
+✔ password hashing uses unique salts and rejects another password (199.891079ms)
+▶ 7even real PostgreSQL API and invariant acceptance
+  ✔ all overview routes exercise their real SQL and return scoped records (108.726427ms)
+  ✔ 20 independent quote/hold races allocate the last unit once (218.401385ms)
+  ✔ checkout completion, webhook-equivalent requery and once-only accepted-policy points (191.111535ms)
+  ✔ 20 redemptions cannot overspend1000 points and gifts rotate ownership claims (180.745797ms)
+  ✔ points projection never silently rounds an unsafe integer (0.408991ms)
+  ✔ dining and experience slot adapters serialize 20 last-seat requests (251.336986ms)
+  ✔ a held reservation keeps the quote-accepted hold policy when current policy changes (65.088956ms)
+  ✔ extra successful charge preserves funding booking and refunds original suspense accounts (24.624777ms)
+  ✔ late verified payment after expiry never revives capacity (76.742191ms)
+  ✔ a durable inbox survives acknowledgment-before-crash and competing workers (94.306481ms)
+  ✔ reception sync persists application, deduplicates and exposes revision conflicts (167.966504ms)
+  ✔ a provider refund amount mismatch stays unknown and is never blindly reissued (18.016166ms)
+  ✔ settlement requires exact transaction, approved bank and net fee evidence (21.476487ms)
+  ✔ completed-service refund preserves history and records a nonspendable spent-points shortfall (50.250832ms)
+  ✔ venue CRUD, scoped walk-in notes and admin operational controls use real records (175.405493ms)
+  ✔ abandoned durable claims recover observed results without rerunning financial effects (8.271987ms)
+  ✔ venue-restricted reception cannot see or mutate a sibling venue (72.764484ms)
+  ✔ revoked staff cannot replay cached private mutation response (63.349215ms)
+  ✔ committed financial journals reject mutation at the database boundary (5.874956ms)
+  ✔ configured runtime login cannot create schema objects or delete retained business records (2.759625ms)
+✔ 7even real PostgreSQL API and invariant acceptance (2373.907502ms)
+✔ provider amounts convert exact decimal values and reject non-kobo precision (0.591478ms)
+✔ provider JSON retains sub-kobo tokens rather than rounding them into valid payments (2.134306ms)
+✔ Flutterwave hosted checkout freezes server commission as flat service commission (1.526488ms)
+✔ provider success payloads cannot invent missing transaction or refund identities (1.245972ms)
+▶ financial recovery survives actual process death and PostgreSQL rollback
+  ✔ SIGKILL after financial writes rolls back and a new worker claims the expired lease (993.458855ms)
+  ✔ a PostgreSQL exception after ledger writes leaves no partial payment then provider lookup recovers once (500.757701ms)
+  ✔ initialization timeout with a possible charge survives restart without repeating checkout (735.613644ms)
+✔ financial recovery survives actual process death and PostgreSQL rollback (2495.052354ms)
+✔ recovery SMTP remains disabled with no configuration and rejects partial or insecure settings (0.646163ms)
+✔ the recovery adapter addresses only the requested recipient and disables URL/file fetching (0.583719ms)
+✔ complete TLS configuration creates a lazy sender without connecting (0.361118ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12333.088224

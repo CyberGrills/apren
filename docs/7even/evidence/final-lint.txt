@@ -1,0 +1,329 @@
+
+> 7even@0.1.0 lint
+> biome lint apps/web/src services/platform/src packages tests
+
+tests/integration/recovery-mailer.test.ts:36:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    34 │   });
+    35 │   assert.ok(message);
+  > 36 │   assert.equal(message['to'], 'guest@example.test');
+       │                        ^^^^
+    37 │   assert.equal(message['disableUrlAccess'], true);
+    38 │   assert.equal(message['disableFileAccess'], true);
+
+  i Unsafe fix: Use a literal key instead.
+
+    34 34 │     });
+    35 35 │     assert.ok(message);
+    36    │ - ··assert.equal(message['to'],·'guest@example.test');
+       36 │ + ··assert.equal(message.to,·'guest@example.test');
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+
+
+tests/integration/recovery-mailer.test.ts:37:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    35 │   assert.ok(message);
+    36 │   assert.equal(message['to'], 'guest@example.test');
+  > 37 │   assert.equal(message['disableUrlAccess'], true);
+       │                        ^^^^^^^^^^^^^^^^^^
+    38 │   assert.equal(message['disableFileAccess'], true);
+    39 │   assert.match(String(message['text']), /fixture-only/);
+
+  i Unsafe fix: Use a literal key instead.
+
+    35 35 │     assert.ok(message);
+    36 36 │     assert.equal(message['to'], 'guest@example.test');
+    37    │ - ··assert.equal(message['disableUrlAccess'],·true);
+       37 │ + ··assert.equal(message.disableUrlAccess,·true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+    39 39 │     assert.match(String(message['text']), /fixture-only/);
+
+
+tests/integration/recovery-mailer.test.ts:38:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    36 │   assert.equal(message['to'], 'guest@example.test');
+    37 │   assert.equal(message['disableUrlAccess'], true);
+  > 38 │   assert.equal(message['disableFileAccess'], true);
+       │                        ^^^^^^^^^^^^^^^^^^^
+    39 │   assert.match(String(message['text']), /fixture-only/);
+    40 │ });
+
+  i Unsafe fix: Use a literal key instead.
+
+    36 36 │     assert.equal(message['to'], 'guest@example.test');
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38    │ - ··assert.equal(message['disableFileAccess'],·true);
+       38 │ + ··assert.equal(message.disableFileAccess,·true);
+    39 39 │     assert.match(String(message['text']), /fixture-only/);
+    40 40 │   });
+
+
+tests/integration/recovery-mailer.test.ts:39:31 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    37 │   assert.equal(message['disableUrlAccess'], true);
+    38 │   assert.equal(message['disableFileAccess'], true);
+  > 39 │   assert.match(String(message['text']), /fixture-only/);
+       │                               ^^^^^^
+    40 │ });
+    41 │ test('complete TLS configuration creates a lazy sender without connecting', () => {
+
+  i Unsafe fix: Use a literal key instead.
+
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+    39    │ - ··assert.match(String(message['text']),·/fixture-only/);
+       39 │ + ··assert.match(String(message.text),·/fixture-only/);
+    40 40 │   });
+    41 41 │   test('complete TLS configuration creates a lazy sender without connecting', () => {
+
+
+apps/web/src/hooks/useApi.ts:33:35 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    31 │       }
+    32 │       try {
+  > 33 │         const next = await api<T>(path!, { signal: controller.signal });
+       │                                   ^^^^^
+    34 │         if (!controller.signal.aborted) {
+    35 │           setData(next);
+
+
+apps/web/src/main.tsx:13:12 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    11 │ import './styles/customer.css';
+    12 │ import './styles/workspace.css';
+  > 13 │ createRoot(document.getElementById('root')!).render(
+       │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    14 │   <StrictMode>
+    15 │     <App />
+
+
+apps/web/src/styles/customer.css:183:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 2, 0)
+
+    181 │   margin-left: auto;
+    182 │ }
+  > 183 │ .customer-booking-content > .public-small {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    184 │   max-width: 65ch;
+    185 │   font-size: 0.72rem;
+
+  i This selector specificity is (0, 3, 0)
+
+    82 │   line-height: 1.75;
+    83 │ }
+  > 84 │ .customer-page .modal .public-small {
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    85 │   font-size: 0.82rem;
+    86 │ }
+
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+
+
+apps/web/src/styles/customer.css:200:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+
+    198 │   border-right: 1px solid var(--line);
+    199 │ }
+  > 200 │ .customer-points-balance > p {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    201 │   font-family: var(--font-display);
+    202 │   font-size: 5.5rem;
+
+  i This selector specificity is (0, 2, 1)
+
+    78 │   margin-top: 2rem;
+    79 │ }
+  > 80 │ .customer-page .modal p {
+       │ ^^^^^^^^^^^^^^^^^^^^^^^
+    81 │   font-size: 0.95rem;
+    82 │   line-height: 1.75;
+
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+
+
+apps/web/src/styles/customer.css:276:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+
+    274 │   color: var(--accent);
+    275 │ }
+  > 276 │ .customer-reward-heading > span {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    277 │   font-size: 0.9rem;
+    278 │   font-weight: 600;
+
+  i This selector specificity is (0, 1, 2)
+
+    206 │   font-variant-numeric: tabular-nums;
+    207 │ }
+  > 208 │ .customer-points-balance > p > span {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    209 │   font-family: var(--font-body);
+    210 │   font-size: 0.9rem;
+
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+
+
+apps/web/src/styles/customer.css:285:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+
+    283 │   margin: 1rem 0;
+    284 │ }
+  > 285 │ .customer-reward > p {
+        │ ^^^^^^^^^^^^^^^^^^^^
+    286 │   font-size: 0.84rem;
+    287 │   color: var(--muted);
+
+  i This selector specificity is (0, 2, 1)
+
+    78 │   margin-top: 2rem;
+    79 │ }
+  > 80 │ .customer-page .modal p {
+       │ ^^^^^^^^^^^^^^^^^^^^^^^
+    81 │   font-size: 0.95rem;
+    82 │   line-height: 1.75;
+
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+
+
+packages/engine/src/demand.ts:90:39 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    88 │   } else if (evidence.allocated === evidence.capacity) {
+    89 │     reason = 'All supplied capacity is allocated. Do not promote unavailable inventory.';
+  > 90 │   } else if ((goal === 'OCCUPANCY' && evidence.occupancyBps! < 8000)
+       │                                       ^^^^^^^^^^^^^^^^^^^^^^
+    91 │     || (goal === 'BALANCED' && evidence.occupancyBps! < 6000)) {
+    92 │     action = 'PROMOTE_AVAILABLE_CAPACITY'; title = 'Review an offer for available dates';
+
+
+packages/engine/src/demand.ts:91:32 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    89 │     reason = 'All supplied capacity is allocated. Do not promote unavailable inventory.';
+    90 │   } else if ((goal === 'OCCUPANCY' && evidence.occupancyBps! < 8000)
+  > 91 │     || (goal === 'BALANCED' && evidence.occupancyBps! < 6000)) {
+       │                                ^^^^^^^^^^^^^^^^^^^^^^
+    92 │     action = 'PROMOTE_AVAILABLE_CAPACITY'; title = 'Review an offer for available dates';
+    93 │     reason = `${evidence.capacity - evidence.allocated} units remain available. The ${goal.toLowerCase()} goal favors filling existing capacity within approved price limits.`;
+
+
+packages/engine/src/demand.ts:94:38 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    92 │     action = 'PROMOTE_AVAILABLE_CAPACITY'; title = 'Review an offer for available dates';
+    93 │     reason = `${evidence.capacity - evidence.allocated} units remain available. The ${goal.toLowerCase()} goal favors filling existing capacity within approved price limits.`;
+  > 94 │   } else if ((goal === 'REVENUE' && (evidence.occupancyBps! >= 7000 || (evidence.conversionBps ?? 0) >= 1500))
+       │                                      ^^^^^^^^^^^^^^^^^^^^^^
+    95 │     || (goal === 'BALANCED' && evidence.occupancyBps! >= 8500 && (evidence.conversionBps ?? 0) >= 1500)) {
+    96 │     action = 'REVIEW_RATE'; title = 'Review rates for the remaining capacity';
+
+
+packages/engine/src/demand.ts:95:32 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    93 │     reason = `${evidence.capacity - evidence.allocated} units remain available. The ${goal.toLowerCase()} goal favors filling existing capacity within approved price limits.`;
+    94 │   } else if ((goal === 'REVENUE' && (evidence.occupancyBps! >= 7000 || (evidence.conversionBps ?? 0) >= 1500))
+  > 95 │     || (goal === 'BALANCED' && evidence.occupancyBps! >= 8500 && (evidence.conversionBps ?? 0) >= 1500)) {
+       │                                ^^^^^^^^^^^^^^^^^^^^^^
+    96 │     action = 'REVIEW_RATE'; title = 'Review rates for the remaining capacity';
+    97 │     reason = `${evidence.allocated} of ${evidence.capacity} units are allocated, with ${evidence.confirmed} confirmations and ${evidence.searches} searches. Review rates within business limits; no increase is assumed.`;
+
+
+packages/engine/src/money.ts:15:25 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    13 │   }
+    14 │   const [whole, fraction = ''] = decimal.split('.');
+  > 15 │   return bounded(BigInt(whole!) * 100n + BigInt(fraction.padEnd(2, '0')));
+       │                         ^^^^^^
+    16 │ }
+    17 │
+
+
+packages/engine/test/lifecycle.test.ts:26:84 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    24 │     ['CHECKED_IN', 'FULFILL'], ['HELD', 'CANCEL'], ['CONFIRMED', 'CANCEL'], ['HELD', 'EXPIRE'],
+    25 │   ]) {
+  > 26 │     it(`allows ${current} through ${action}`, () => assert.equal(allowedTransition(current!, action!), true));
+       │                                                                                    ^^^^^^^^
+    27 │   }
+    28 │   for (const [current, action] of [
+
+
+packages/engine/test/lifecycle.test.ts:26:94 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    24 │     ['CHECKED_IN', 'FULFILL'], ['HELD', 'CANCEL'], ['CONFIRMED', 'CANCEL'], ['HELD', 'EXPIRE'],
+    25 │   ]) {
+  > 26 │     it(`allows ${current} through ${action}`, () => assert.equal(allowedTransition(current!, action!), true));
+       │                                                                                              ^^^^^^^
+    27 │   }
+    28 │   for (const [current, action] of [
+
+
+packages/engine/test/lifecycle.test.ts:33:85 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    31 │     ['UNKNOWN', 'CANCEL'], ['HELD', 'CONFIRM'], ['HELD', 'toString'], ['PAYMENT_REVIEW', 'PAYMENT_VERIFIED'],
+    32 │   ]) {
+  > 33 │     it(`rejects ${current} through ${action}`, () => assert.equal(allowedTransition(current!, action!), false));
+       │                                                                                     ^^^^^^^^
+    34 │   }
+    35 │ });
+
+
+packages/engine/test/lifecycle.test.ts:33:95 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    31 │     ['UNKNOWN', 'CANCEL'], ['HELD', 'CONFIRM'], ['HELD', 'toString'], ['PAYMENT_REVIEW', 'PAYMENT_VERIFIED'],
+    32 │   ]) {
+  > 33 │     it(`rejects ${current} through ${action}`, () => assert.equal(allowedTransition(current!, action!), false));
+       │                                                                                               ^^^^^^^
+    34 │   }
+    35 │ });
+
+
+packages/engine/test/money.test.ts:16:75 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    14 │ describe('exact NGN conversion and display', () => {
+    15 │   for (const [major, minor] of [['0', '0'], ['0.01', '1'], ['12.3', '1230'], ['9999999999999.99', '999999999999999']]) {
+  > 16 │     it(`converts ${major} naira exactly`, () => assert.equal(majorToMinor(major!), minor));
+       │                                                                           ^^^^^^
+    17 │   }
+    18 │   for (const value of ['.5', '1.', '1.001', '-0.01', '01.00', '1e2', '1\n', '10000000000000.00']) {
+
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 146.
+Checked 77 files in 76ms. No fixes applied.
+Found 162 warnings.
+Found 4 infos.

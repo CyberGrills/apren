@@ -1,0 +1,339 @@
+
+> 7even@0.1.0 lint
+> biome lint apps/web/src services/platform/src packages tests
+
+tests/integration/recovery-mailer.test.ts:36:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    34 │   });
+    35 │   assert.ok(message);
+  > 36 │   assert.equal(message['to'], 'guest@example.test');
+       │                        ^^^^
+    37 │   assert.equal(message['disableUrlAccess'], true);
+    38 │   assert.equal(message['disableFileAccess'], true);
+
+  i Unsafe fix: Use a literal key instead.
+
+    34 34 │     });
+    35 35 │     assert.ok(message);
+    36    │ - ··assert.equal(message['to'],·'guest@example.test');
+       36 │ + ··assert.equal(message.to,·'guest@example.test');
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+
+
+tests/integration/recovery-mailer.test.ts:37:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    35 │   assert.ok(message);
+    36 │   assert.equal(message['to'], 'guest@example.test');
+  > 37 │   assert.equal(message['disableUrlAccess'], true);
+       │                        ^^^^^^^^^^^^^^^^^^
+    38 │   assert.equal(message['disableFileAccess'], true);
+    39 │   assert.match(String(message['text']), /fixture-only/);
+
+  i Unsafe fix: Use a literal key instead.
+
+    35 35 │     assert.ok(message);
+    36 36 │     assert.equal(message['to'], 'guest@example.test');
+    37    │ - ··assert.equal(message['disableUrlAccess'],·true);
+       37 │ + ··assert.equal(message.disableUrlAccess,·true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+    39 39 │     assert.match(String(message['text']), /fixture-only/);
+
+
+tests/integration/recovery-mailer.test.ts:38:24 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    36 │   assert.equal(message['to'], 'guest@example.test');
+    37 │   assert.equal(message['disableUrlAccess'], true);
+  > 38 │   assert.equal(message['disableFileAccess'], true);
+       │                        ^^^^^^^^^^^^^^^^^^^
+    39 │   assert.match(String(message['text']), /fixture-only/);
+    40 │ });
+
+  i Unsafe fix: Use a literal key instead.
+
+    36 36 │     assert.equal(message['to'], 'guest@example.test');
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38    │ - ··assert.equal(message['disableFileAccess'],·true);
+       38 │ + ··assert.equal(message.disableFileAccess,·true);
+    39 39 │     assert.match(String(message['text']), /fixture-only/);
+    40 40 │   });
+
+
+tests/integration/recovery-mailer.test.ts:39:31 lint/complexity/useLiteralKeys  FIXABLE  ━━━━━━━━━━━
+
+  i The computed expression can be simplified without the use of a string literal.
+
+    37 │   assert.equal(message['disableUrlAccess'], true);
+    38 │   assert.equal(message['disableFileAccess'], true);
+  > 39 │   assert.match(String(message['text']), /fixture-only/);
+       │                               ^^^^^^
+    40 │ });
+    41 │ test('complete TLS configuration creates a lazy sender without connecting', () => {
+
+  i Unsafe fix: Use a literal key instead.
+
+    37 37 │     assert.equal(message['disableUrlAccess'], true);
+    38 38 │     assert.equal(message['disableFileAccess'], true);
+    39    │ - ··assert.match(String(message['text']),·/fixture-only/);
+       39 │ + ··assert.match(String(message.text),·/fixture-only/);
+    40 40 │   });
+    41 41 │   test('complete TLS configuration creates a lazy sender without connecting', () => {
+
+
+apps/web/src/hooks/useApi.ts:33:35 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    31 │       }
+    32 │       try {
+  > 33 │         const next = await api<T>(path!, { signal: controller.signal });
+       │                                   ^^^^^
+    34 │         if (!controller.signal.aborted) {
+    35 │           setData(next);
+
+
+apps/web/src/main.tsx:16:12 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    14 │ import './styles/workspace.css';
+    15 │ document.documentElement.dataset.season = seasonAt(new Date());
+  > 16 │ createRoot(document.getElementById('root')!).render(
+       │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    17 │   <StrictMode>
+    18 │     <SeasonProvider>
+
+
+tests/integration/recovery-crash.test.ts:24:18 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    22 │   assert.match((await one(pool,'SELECT current_database() AS db'))?.db,/_test_db$/,'Destructive fixture reset is restricted to the isolated test database.');
+    23 │   await pool.query('DROP SCHEMA IF EXISTS seven CASCADE'); await migrate(pool); await seed(pool,'Crash-fixture-only-passphrase-42!');
+  > 24 │   const guestRow=(await one(pool,'SELECT user_id FROM seven.users WHERE email=$1',['guest@seven.test']))!;
+       │                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    25 │   const actor=(await userProjection(pool,guestRow.user_id))!;
+    26 │   const base=(await one(pool,"SELECT b.business_id,v.venue_id FROM seven.businesses b JOIN seven.venues v USING(business_id) WHERE b.slug='the-haven-lagos'"))!;
+
+
+tests/integration/recovery-crash.test.ts:25:15 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    23 │   await pool.query('DROP SCHEMA IF EXISTS seven CASCADE'); await migrate(pool); await seed(pool,'Crash-fixture-only-passphrase-42!');
+    24 │   const guestRow=(await one(pool,'SELECT user_id FROM seven.users WHERE email=$1',['guest@seven.test']))!;
+  > 25 │   const actor=(await userProjection(pool,guestRow.user_id))!;
+       │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    26 │   const base=(await one(pool,"SELECT b.business_id,v.venue_id FROM seven.businesses b JOIN seven.venues v USING(business_id) WHERE b.slug='the-haven-lagos'"))!;
+    27 │
+
+
+tests/integration/recovery-crash.test.ts:26:14 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    24 │   const guestRow=(await one(pool,'SELECT user_id FROM seven.users WHERE email=$1',['guest@seven.test']))!;
+    25 │   const actor=(await userProjection(pool,guestRow.user_id))!;
+  > 26 │   const base=(await one(pool,"SELECT b.business_id,v.venue_id FROM seven.businesses b JOIN seven.venues v USING(business_id) WHERE b.slug='the-haven-lagos'"))!;
+       │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    27 │
+    28 │   async function start(configuration:CrashConfiguration):Promise<ChildRun>{
+
+
+tests/integration/recovery-crash.test.ts:62:48 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    60 │   async function assertUncommitted(fixture:Awaited<ReturnType<typeof held>>):Promise<void>{
+    61 │     assert.equal((await reservationProjection(pool,fixture.reservation.id))?.status,'HELD');
+  > 62 │     assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+       │                                                ^^^^^^^^^^^^^^^^
+    63 │     assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+    64 │     assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.receipt!.id}`])).length,0);
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     60  60 │     async function assertUncommitted(fixture:Awaited<ReturnType<typeof held>>):Promise<void>{
+     61  61 │       assert.equal((await reservationProjection(pool,fixture.reservation.id))?.status,'HELD');
+     62     │ - ····assert.equal((await·paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+         62 │ + ····assert.equal((await·paymentProjection(pool,fixture.payment?.paymentId))?.status,'PENDING');
+     63  63 │       assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+     64  64 │       assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.receipt!.id}`])).length,0);
+
+
+tests/integration/recovery-crash.test.ts:64:125 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    62 │     assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+    63 │     assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+  > 64 │     assert.equal((await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${fixture.receipt!.id}`])).length,0);
+       │                                                                                                                             ^^^^^^^^^^^^^^^^
+    65 │     assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[fixture.windowId]))?.allocated_count,1);
+    66 │     assert.equal((await one(pool,'SELECT processed_at FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]))?.processed_at,null);
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     62  62 │       assert.equal((await paymentProjection(pool,fixture.payment!.paymentId))?.status,'PENDING');
+     63  63 │       assert.equal((await one(pool,'SELECT funding_payment_attempt_id FROM seven.reservations WHERE reservation_id=$1',[fixture.reservation.id]))?.funding_payment_attempt_id,null);
+     64     │ - ····assert.equal((await·rows(pool,'SELECT·money_journal_id·FROM·seven.money_journals·WHERE·source_reference=$1',[`receipt:${fixture.receipt!.id}`])).length,0);
+         64 │ + ····assert.equal((await·rows(pool,'SELECT·money_journal_id·FROM·seven.money_journals·WHERE·source_reference=$1',[`receipt:${fixture.receipt?.id}`])).length,0);
+     65  65 │       assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[fixture.windowId]))?.allocated_count,1);
+     66  66 │       assert.equal((await one(pool,'SELECT processed_at FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]))?.processed_at,null);
+
+
+tests/integration/recovery-crash.test.ts:69:23 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    67 │   }
+    68 │   async function assertPaidOnce(reservationId:string,paymentId:string,windowId:string,receipt:ProviderReceipt):Promise<void>{
+  > 69 │     const reservation=(await reservationProjection(pool,reservationId))!;assert.equal(reservation.status,'CONFIRMED');assert.equal(reservation.paymentId,paymentId);
+       │                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    70 │     const payment=(await paymentProjection(pool,paymentId))!;assert.equal(payment.status,'PAID');assert.equal(payment.providerTransactionId,receipt.id);assert.ok(['UNSETTLED','PENDING'].includes(payment.settlementStatus),'Provider receipt alone never proves bank settlement');
+    71 │     assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
+
+
+tests/integration/recovery-crash.test.ts:70:19 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    68 │   async function assertPaidOnce(reservationId:string,paymentId:string,windowId:string,receipt:ProviderReceipt):Promise<void>{
+    69 │     const reservation=(await reservationProjection(pool,reservationId))!;assert.equal(reservation.status,'CONFIRMED');assert.equal(reservation.paymentId,paymentId);
+  > 70 │     const payment=(await paymentProjection(pool,paymentId))!;assert.equal(payment.status,'PAID');assert.equal(payment.providerTransactionId,receipt.id);assert.ok(['UNSETTLED','PENDING'].includes(payment.settlementStatus),'Provider receipt alone never proves bank settlement');
+       │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    71 │     assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
+    72 │     const journal=(await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${receipt.id}`]));assert.equal(journal.length,1);
+
+
+tests/integration/recovery-crash.test.ts:73:124 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    71 │     assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
+    72 │     const journal=(await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${receipt.id}`]));assert.equal(journal.length,1);
+  > 73 │     const postings=await rows(pool,'SELECT account_code,amount_minor FROM seven.money_postings WHERE money_journal_id=$1',[journal[0]!.money_journal_id]);assert.equal(postings.length,3);assert.equal(postings.reduce((sum,posting)=>sum+BigInt(posting.amount_minor),0n),0n);
+       │                                                                                                                            ^^^^^^^^^^^
+    74 │     assert.deepEqual(postings.map(posting=>[posting.account_code,posting.amount_minor]).sort(),[['provider-clearing','10000'],[`business:${base.business_id}`,'-9000'],['platform-commission','-1000']].sort());
+    75 │     assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[windowId]))?.allocated_count,1);
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     71  71 │       assert.equal((await rows(pool,"SELECT money_journal_id FROM seven.money_journals WHERE source_reference LIKE $1",[`settlement:%:${paymentId}`])).length,0);
+     72  72 │       const journal=(await rows(pool,'SELECT money_journal_id FROM seven.money_journals WHERE source_reference=$1',[`receipt:${receipt.id}`]));assert.equal(journal.length,1);
+     73     │ - ····const·postings=await·rows(pool,'SELECT·account_code,amount_minor·FROM·seven.money_postings·WHERE·money_journal_id=$1',[journal[0]!.money_journal_id]);assert.equal(postings.length,3);assert.equal(postings.reduce((sum,posting)=>sum+BigInt(posting.amount_minor),0n),0n);
+         73 │ + ····const·postings=await·rows(pool,'SELECT·account_code,amount_minor·FROM·seven.money_postings·WHERE·money_journal_id=$1',[journal[0]?.money_journal_id]);assert.equal(postings.length,3);assert.equal(postings.reduce((sum,posting)=>sum+BigInt(posting.amount_minor),0n),0n);
+     74  74 │       assert.deepEqual(postings.map(posting=>[posting.account_code,posting.amount_minor]).sort(),[['provider-clearing','10000'],[`business:${base.business_id}`,'-9000'],['platform-commission','-1000']].sort());
+     75  75 │       assert.equal((await one(pool,'SELECT allocated_count FROM seven.inventory_windows WHERE inventory_window_id=$1',[windowId]))?.allocated_count,1);
+
+
+tests/integration/recovery-crash.test.ts:81:122 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    79 │   try{
+    80 │     await t.test('SIGKILL after financial writes rolls back and a new worker claims the expired lease',async()=>{
+  > 81 │       const fixture=await held('Process kill before commit');const child=await start({mode:'pause-before-commit',receipt:fixture.receipt!});
+       │                                                                                                                          ^^^^^^^^^^^^^^^^
+    82 │       const paused=await child.wait('paused');assert.ok(paused.backendPid);assert.equal(paused.postingCount,3);assert.equal(child.process.kill('SIGKILL'),true);const exit=await child.exited;assert.equal(exit.signal,'SIGKILL');
+    83 │       for(let attempt=0;attempt<50;attempt++){if(!(await one(pool,'SELECT 1 FROM pg_stat_activity WHERE pid=$1',[paused.backendPid])))break;await new Promise(resolve=>setTimeout(resolve,20));}
+
+
+tests/integration/recovery-crash.test.ts:89:60 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    87 │       // Explicit test-time advance only; production waits for the real two-minute lease.
+    88 │       await pool.query("UPDATE seven.provider_events SET lease_expires_at=now()-interval '1 second',next_attempt_at=now() WHERE provider_event_id=$1",[fixture.eventId]);
+  > 89 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
+       │                                                            ^^^^^^^^^^^^^^^^
+    90 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+    91 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+
+
+tests/integration/recovery-crash.test.ts:90:51 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    88 │       await pool.query("UPDATE seven.provider_events SET lease_expires_at=now()-interval '1 second',next_attempt_at=now() WHERE provider_event_id=$1",[fixture.eventId]);
+    89 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
+  > 90 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+       │                                                   ^^^^^^^^^^^^^^^^
+    91 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+    92 │       const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4) ON CONFLICT(event_reference) DO NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     88  88 │         await pool.query("UPDATE seven.provider_events SET lease_expires_at=now()-interval '1 second',next_attempt_at=now() WHERE provider_event_id=$1",[fixture.eventId]);
+     89  89 │         assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
+     90     │ - ······await·assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+         90 │ + ······await·assertPaidOnce(fixture.reservation.id,fixture.payment?.paymentId,fixture.windowId,fixture.receipt!);
+     91  91 │         const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+     92  92 │         const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4) ON CONFLICT(event_reference) DO NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+
+
+tests/integration/recovery-crash.test.ts:90:95 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    88 │       await pool.query("UPDATE seven.provider_events SET lease_expires_at=now()-interval '1 second',next_attempt_at=now() WHERE provider_event_id=$1",[fixture.eventId]);
+    89 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,1);
+  > 90 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+       │                                                                                               ^^^^^^^^^^^^^^^^
+    91 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+    92 │       const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4) ON CONFLICT(event_reference) DO NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+
+
+tests/integration/recovery-crash.test.ts:92:224 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    90 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+    91 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+  > 92 │       const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4) ON CONFLICT(event_reference) DO NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+       │                                                                                                                                                                                                                                ^^^^^^^^^^^^^^^^
+    93 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
+    94 │       // Even an independently identified redelivery of the same receipt cannot repost it.
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     90  90 │         await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+     91  91 │         const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+     92     │ - ······const·duplicate=await·pool.query('INSERT·INTO·seven.provider_events(provider_event_id,event_reference,event_code,details)·VALUES($1,$2,$3,$4)·ON·CONFLICT(event_reference)·DO·NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+         92 │ + ······const·duplicate=await·pool.query('INSERT·INTO·seven.provider_events(provider_event_id,event_reference,event_code,details)·VALUES($1,$2,$3,$4)·ON·CONFLICT(event_reference)·DO·NOTHING',[randomUUID(),`charge.completed:${fixture.receipt?.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+     93  93 │         assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
+     94  94 │         // Even an independently identified redelivery of the same receipt cannot repost it.
+
+
+tests/integration/recovery-crash.test.ts:92:269 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+
+    90 │       await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+    91 │       const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+  > 92 │       const duplicate=await pool.query('INSERT INTO seven.provider_events(provider_event_id,event_reference,event_code,details) VALUES($1,$2,$3,$4) ON CONFLICT(event_reference) DO NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+       │                                                                                                                                                                                                                                                                             ^^^^^^^^^^^^^^^^
+    93 │       assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
+    94 │       // Even an independently identified redelivery of the same receipt cannot repost it.
+
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+
+     90  90 │         await assertPaidOnce(fixture.reservation.id,fixture.payment!.paymentId,fixture.windowId,fixture.receipt!);
+     91  91 │         const processed=await one(pool,'SELECT * FROM seven.provider_events WHERE provider_event_id=$1',[fixture.eventId]);assert.ok(processed?.processed_at);assert.equal(processed?.lease_id,null);assert.equal(processed?.attempts,2);
+     92     │ - ······const·duplicate=await·pool.query('INSERT·INTO·seven.provider_events(provider_event_id,event_reference,event_code,details)·VALUES($1,$2,$3,$4)·ON·CONFLICT(event_reference)·DO·NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt!.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+         92 │ + ······const·duplicate=await·pool.query('INSERT·INTO·seven.provider_events(provider_event_id,event_reference,event_code,details)·VALUES($1,$2,$3,$4)·ON·CONFLICT(event_reference)·DO·NOTHING',[randomUUID(),`charge.completed:${fixture.receipt!.id}`,'charge.completed',{id:fixture.receipt?.id,reference:fixture.receipt!.reference}]);assert.equal(duplicate.rowCount,0);
+     93  93 │         assert.equal((await finish({mode:'run-inbox',receipt:fixture.receipt!})).result?.processed,0);
+     94  94 │         // Even an independently identified redelivery of the same receipt cannot repost it.
+
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 146.
+Checked 83 files in 76ms. No fixes applied.
+Found 162 warnings.
+Found 4 infos.

@@ -1,0 +1,16 @@
+{
+  "before": {
+    "clock": "2026-11-30T22:59:58.030Z",
+    "label": "Autumn edit",
+    "season": "autumn",
+    "url": "http://127.0.0.1:7078/"
+  },
+  "after": {
+    "clock": "2026-11-30T23:00:00.113Z",
+    "label": "Winter edit",
+    "primary": "rgb(43, 74, 51)",
+    "season": "winter",
+    "url": "http://127.0.0.1:7078/"
+  },
+  "test": "Tab-scoped main-world clock, automatic timer, no navigation"
+}
