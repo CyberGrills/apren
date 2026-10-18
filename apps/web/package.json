@@ -24,7 +24,9 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.0.4",
-    "vite": "8.1.5"
+    "vite": "8.1.5",
+    "nanoid": "3.3.18",
+    "source-map-js": "1.2.2"
   },
   "private": true,
   "type": "module"
