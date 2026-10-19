@@ -1465,3 +1465,8 @@
   line-height: 1.45;
 }
 
+
+.hotel-match-total strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
