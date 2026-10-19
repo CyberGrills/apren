@@ -167,7 +167,7 @@ export function optimizeHotelBookings(
 
   for (const hotel of candidates) {
     const nightlyPrice = validMinor(hotel.priceMinor, 'Hotel base rate');
-    if (nightlyPrice === 0) continue;
+    if (nightlyPrice === 0n) continue;
 
     let dates = selectedDates;
     let checkInDate = criteria.checkInDate;
