@@ -3017,6 +3017,10 @@ res.status(500).json({
 error:error.message
 });
 
+}
+
+});
+
 app.get("/brain/memory/:assetId", async(req,res)=>{
 
 try{
@@ -4024,14 +4028,6 @@ catch(error){
 res.status(500).json({
 error:error.message
 });
-
-}
-
-});
-
-
-
-
 
 }
 
