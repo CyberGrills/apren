@@ -46,6 +46,8 @@ jobs:
           ls -l "$GITHUB_WORKSPACE/package.json" "$GITHUB_WORKSPACE/package-lock.json"
           npm prefix
           npm root
+      - name: Normalize lockfile for the configured workspace set
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - run: npm ci --prefix "$GITHUB_WORKSPACE" --package-lock=true
       - run: npm run typecheck
       - run: npm run build
