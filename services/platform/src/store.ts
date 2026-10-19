@@ -209,7 +209,7 @@ export async function businessProjection(db: Connection, id: string): Promise<Bu
     ),
   };
 }
-export async function offeringProjection(db: Connection, id: string): Promise<Offering | null> {
+export async function offeringProjection(db: Connection, id: string, activeInventoryOnly = false): Promise<Offering | null> {
   const r = await one(
     db,
     `SELECT o.*,s.sector_code,b.business_name,b.details AS business_details FROM seven.offerings o JOIN seven.sectors s USING(sector_id) JOIN seven.businesses b USING(business_id) WHERE offering_id=$1`,
@@ -218,7 +218,9 @@ export async function offeringProjection(db: Connection, id: string): Promise<Of
   if (!r) return null;
   const windows = await rows(
     db,
-    'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 ORDER BY starts_at LIMIT 500',
+    activeInventoryOnly
+      ? 'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 AND ends_at>now() ORDER BY starts_at LIMIT 500'
+      : 'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 ORDER BY starts_at LIMIT 500',
     [id],
   );
   return {

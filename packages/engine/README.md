@@ -20,6 +20,14 @@ The caller supplies approved tax, earning and discount policies. The caller also
 
 `allowedTransition` checks whether a state/action pair is allowed. It does not check actor permissions, provider payment, hold expiry or database revisions. Those checks must occur in the caller's transaction. Expired, cancelled, fulfilled and payment-review states cannot be revived through this helper.
 
+## Hotel booking optimization
+
+`optimizeHotelBookings` ranks published hotel candidates using current inventory windows. A stay only appears when exactly one inventory window exists for every requested night, each window is not expired, and the requested room count remains available across the entire stay. If dates are omitted, each property is checked against its next bookable night.
+
+The policy `7even-hotel-ranking-v1` uses exact base room subtotal competitiveness, room-availability headroom, city match and optional amenity matches. It returns a deterministic 0–100 match score, current inventory evidence, the checked-at timestamp and explicit reasons. It does not invent star ratings, reviews, confidence or a learned demand prediction, and it never mutates hotel rates.
+
+`estimatedBaseTotalMinor` is only the base room subtotal in kobo before tax, approved discounts and provider fees. The platform's quote is authoritative. Search results are not reservations: quote creation checks dates and capacity, and reservation creation locks every room-night row and allocates inventory transactionally. Another guest can book the last room after a search, so the hold path must always handle an explicit capacity conflict.
+
 ## Demand rules
 
 `assessDemand` validates nonnegative event/capacity counts up to one billion, an ISO UTC observation time, an optional source-period start, and an explicit occupancy, revenue or balanced goal. Default readiness requires at least 20 recorded events and nonzero capacity. The evidence preserves counts and the supplied source window; a missing start remains `null`.

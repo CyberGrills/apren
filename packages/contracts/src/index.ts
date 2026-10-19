@@ -252,6 +252,19 @@ export interface InventoryWindow {
   remaining: number;
   revision: number;
 }
+export interface HotelBookingOptimization {
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  roomsRequested: number;
+  roomsAvailable: number;
+  /** Base room subtotal only, before taxes, discounts, and provider fees. */
+  estimatedBaseTotalMinor: string;
+  matchScore: number;
+  reasons: string[];
+  checkedAt: string;
+  policyVersion: '7even-hotel-ranking-v1';
+}
 export interface Offering {
   id: string;
   businessId: string;
@@ -275,6 +288,8 @@ export interface Offering {
   revision: number;
   windows: InventoryWindow[];
   isSample: boolean;
+  /** Present for STAY listings returned by the booking optimizer. */
+  bookingOptimization?: HotelBookingOptimization;
 }
 export interface PriceBreakdown {
   subtotalMinor: string;

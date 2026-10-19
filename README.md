@@ -1,8 +1,10 @@
 # 7even
 
-7even is the user-facing hospitality brand for rooms, dining and experiences in Nigeria. Apren is the underlying intelligence engine; 7even owns the hospitality experience and reservation/payment workflows, while Apren provides food-asset, food-intelligence and food-economy capabilities behind a service boundary. The 7even rebuild UI remains the product users see.
+7even is a Nigeria-first hotel booking platform. Its booking engine evaluates published hotel listings against current room inventory, check-in/check-out dates, requested room count, location and amenities; it removes unavailable stays and ranks the remaining matches on every search. The engine is part of the 7even rules package and reads the same PostgreSQL inventory that quotes and reservations use.
 
-The root workspace runs the 7even web app, the 7even platform API, and the Apren engine together. `packages/engine` contains 7even-specific pricing/lifecycle rules; `services/apren-engine` exposes Apren’s existing food-intelligence API. Remaining original services and generators are preserved in `legacy/` as historical reference, not as competing active runtimes.
+The optimizer is deterministic and explainable, not a trained demand model. It never changes a hotel's rate. Search results show a base-room subtotal estimate; the server calculates the final quote under current tax/discount policy and locks inventory again when a booking hold is created. Hotel availability is checked from live records on each request, and a hold can still fail if another guest books the last room first.
+
+The active runtime consists of the 7even web app, the 7even platform API, and `packages/engine`. No food-branded engine is started by the workspace.
 
 ## Run locally
 
@@ -65,10 +67,9 @@ The optional SMTP adapter uses installed Nodemailer 10.1.2. Its earlier package-
 ## Project map and review
 
 - `apps/web`: responsive React interfaces and popup feedback.
-- `packages/engine`: 7even-specific exact pricing, dates, lifecycle and measured demand rules.
+- `packages/engine`: 7even hotel availability filtering, explainable booking-match ranking, exact pricing, stay dates and lifecycle rules.
 - `packages/contracts`: shared request validation and response types.
 - `services/platform`: 7even authentication, catalog, inventory, payments, rewards, sync and recovery.
-- `services/apren-engine`: Apren food assets, food intelligence, food economy and food-brain API, promoted from the former legacy assets service.
 - `database/migrations`: ordered, checksummed PostgreSQL schema changes.
 - `tests`: unit, integration, concurrency and fault checks.
 - `design/explorations`: three visual directions, sources and browser evidence.

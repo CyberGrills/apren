@@ -24,3 +24,6 @@ export type {
   DemandEvidence,
   DemandAssessment,
 } from './demand.ts';
+
+export { optimizeHotelBookings } from './hotelBooking.ts';
+export type { HotelInventoryWindow, HotelBookingCandidate, HotelBookingCriteria, HotelBookingOptimization } from './hotelBooking.ts';
