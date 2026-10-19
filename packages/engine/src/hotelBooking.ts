@@ -282,5 +282,17 @@ export function optimizeHotelBookings(
     || a.id.localeCompare(b.id),
   );
 
-  return ranked.map(({ totalForSort: _totalForSort, ...option }) => option);
+  return ranked.map((option) => ({
+    id: option.id,
+    checkInDate: option.checkInDate,
+    checkOutDate: option.checkOutDate,
+    nights: option.nights,
+    roomsRequested: option.roomsRequested,
+    roomsAvailable: option.roomsAvailable,
+    estimatedBaseTotalMinor: option.estimatedBaseTotalMinor,
+    matchScore: option.matchScore,
+    reasons: option.reasons,
+    checkedAt: option.checkedAt,
+    policyVersion: option.policyVersion,
+  }));
 }
