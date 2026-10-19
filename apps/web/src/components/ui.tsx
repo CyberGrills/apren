@@ -195,6 +195,15 @@ export function OfferingCard({ offering }: { offering: Offering }) {
           </Link>
         </h3>
         <p className="offering-business">{offering.businessName}</p>
+        {offering.bookingOptimization && (
+          <div className="hotel-match" aria-label={`7even booking match score ${offering.bookingOptimization.matchScore} out of 100`}>
+            <div className="hotel-match-line">
+              <strong>7even match {offering.bookingOptimization.matchScore}/100</strong>
+              <span>{offering.bookingOptimization.roomsAvailable} rooms · {offering.bookingOptimization.nights} night(s)</span>
+            </div>
+            <p>{offering.bookingOptimization.reasons[0]}</p>
+          </div>
+        )}
         <div className="offering-price">
           <Money minor={offering.priceMinor} />
           <span>/ {offering.unitLabel}</span>
