@@ -462,24 +462,31 @@ export function createApp(options: AppOptions = {}) {
         offerings.push(...batch.filter((offer): offer is C.Offering => !!offer));
       }
 
-      const ranked = optimizeHotelBookings(
-        offerings.map((offer) => ({
-          id: offer.id,
-          title: offer.title,
-          city: offer.city,
-          priceMinor: offer.priceMinor,
-          amenities: offer.amenities,
-          windows: offer.windows,
-        })),
-        {
-          checkInDate: startDate,
-          checkOutDate: endDate,
-          rooms,
-          city: city || undefined,
-          amenities,
-          maxBaseTotalMinor,
-        },
-      );
+      let ranked: ReturnType<typeof optimizeHotelBookings>;
+      try {
+        ranked = optimizeHotelBookings(
+          offerings.map((offer) => ({
+            id: offer.id,
+            title: offer.title,
+            city: offer.city,
+            priceMinor: offer.priceMinor,
+            amenities: offer.amenities,
+            windows: offer.windows,
+          })),
+          {
+            checkInDate: startDate,
+            checkOutDate: endDate,
+            rooms,
+            city: city || undefined,
+            amenities,
+            maxBaseTotalMinor,
+          },
+        );
+      } catch (error) {
+        if (error instanceof RangeError)
+          return fail(422, 'INVALID_HOTEL_SEARCH', error.message);
+        throw error;
+      }
       const byId = new Map(offerings.map((offer) => [offer.id, offer]));
       return ranked.slice((page - 1) * size, page * size).flatMap((item) => {
         const hotel = byId.get(item.id);
