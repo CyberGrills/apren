@@ -763,8 +763,16 @@ app.get("/asset-profile/:id",(req,res)=>{
       lifecycle.getEvents(id);
 
 
+   const verificationRecords =
+      verificationEngine.getVerification(id);
    const verificationResult =
-      verificationEngine.verifyFood(asset);
+      verificationRecords.at(-1) || {
+        assetId: Number(id),
+        confidence: null,
+        status: "NOT_VERIFIED",
+        verified: false,
+        reason: "No food evidence verification attempt has been recorded."
+      };
 
 
    res.json({
