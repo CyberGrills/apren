@@ -1,42 +1,34 @@
-# āprən + 7even consolidation audit
+# 7even Source Consolidation Audit
 
-## Canonical runtime
+## Result
 
-- services/apren-engine/ is the āprən decision/engine service.
-- services/platform/ is the 7even platform API and integration boundary. Its /engine/apren/health route probes the engine's /healthz endpoint.
-- apps/web/ is the 7even customer-facing web application. In local development, Vite serves port 5177 and proxies /api to the platform API on port 7077.
-- packages/contracts/ and packages/engine/ are shared workspace packages. The root npm run dev starts the engine, platform API, and web application together; npm start starts the two server-side services for a production deployment where the web bundle is hosted separately.
+The current source tree is organized around one active product: 7even. The root npm package is named 7even, and its workspace list is limited to the application, platform API, shared contracts and engine package. The current branch does not include a second product runtime or the retired prototype's source, brand assets or maintenance scripts.
 
-The workspace has one active implementation for each of those roles. Legacy implementations remain under legacy/ for reference and are not started by the root runtime.
+## Workspace inventory
 
-## Exact duplicate-file review
-
-The hash inventory found exact duplicates only in distinct asset contexts or archived legacy material:
-
-- apps/web/public/brand/7even-logo.jpeg and design/explorations/assets/7even-logo-original.jpeg are identical bytes used from separate production-public and design-exploration paths. Both paths are retained because their consumers and deployment roots differ.
-- legacy/web-icons/1-removebg-preview (1).png and legacy/web-icons/apren-favicon.png, and legacy/web-icons/2-removebg-preview (1).png and legacy/web-icons/apren-logo.png, are duplicate aliases inside the archived legacy bundle. They are not active 7even runtime assets; filenames are retained to avoid breaking historical references.
-- Identical AprenApp.jsx timestamped snapshots are archived under legacy/web-src/features/apren/. They are recovery/audit snapshots, not active imports, and remain preserved rather than being deleted as if they were duplicate runtime modules. The legacy review index paths for these snapshots have been corrected to the actual archive location.
-
-No active engine, platform, contract, or web source module was removed solely because its contents looked similar. Distinct runtime responsibilities and historical evidence are preserved.
-
-## Validation contract
-
-A consolidation release is only considered verified after workspace typecheck, production web build, unit tests, lint, dependency audit, PostgreSQL integration tests where a disposable test database is available, and runtime smoke tests for the engine, platform API, and web proxy.
-
-## Verification snapshot (18 October 2026)
-
-| Check | Result |
+| Workspace | Responsibility |
 |---|---|
-| TypeScript workspace typecheck | Passed |
-| Production web build | Passed; Vite reports the existing 547.39 kB main chunk warning |
-| Unit tests | 235 passed, 0 failed, 0 skipped |
-| Lint | Exit 0; 187 warnings and 4 information diagnostics remain |
-| npm dependency audit | 0 known advisories |
-| Integration suite without a disposable test database | 106 passed, 0 failed, 7 database-backed cases skipped because TEST_DATABASE_URL was not configured |
-| Runtime smoke: Apren engine /healthz | HTTP 200 |
-| Runtime smoke: 7even API /api/health/live | HTTP 200 |
-| Runtime smoke: 7even-to-āprən engine health | HTTP 200, engine status ok |
-| Runtime smoke: web home and Vite /api proxy | HTTP 200 |
-| Runtime smoke: 7even /api/health/ready | HTTP 500 because the local apren database has not been migrated and seven.migrations is absent; no schema was added to the existing database during this smoke test |
+| apps/web | 7even web and installable app interfaces |
+| services/platform | 7even API and authoritative domain workflows |
+| packages/contracts | Shared validated contracts |
+| packages/engine | Hotel availability filtering, explainable ranking, exact money/date/lifecycle rules |
 
-The PostgreSQL-backed cases must pass in GitHub Actions against its isolated PostgreSQL service before the consolidation can be called fully verified. The local smoke confirms process startup and the web/API/engine route between 7even and āprən, but does not claim database readiness against an unmigrated database.
+## Hotel-booking engine boundary
+
+- Hotel matching reads approved, published STAY listings and current PostgreSQL inventory.
+- Every requested night must have unambiguous, non-expired inventory with enough rooms.
+- Ranking happens before pagination so a page is selected from the best matching candidate set.
+- Search totals are base-room subtotal estimates. Quote and reservation transactions remain authoritative for current pricing and room locks.
+- The engine does not fabricate ratings, claim trained demand prediction or alter hotel prices automatically.
+
+## Runtime and data safety
+
+- Local start scripts run the 7even platform API and 7even web app only.
+- Database migrations and fixtures are explicit scripts; seed data is not imported from external or historical records.
+- Executable source and configuration are limited to the current workspaces. Earlier source states remain retrievable in Git commit history, not as a parallel runtime directory.
+
+## Verification boundary
+
+The completed PR #14 checks at head 5971b07e7acf65a211bf41d0a68b3da351e566d6 passed clean installation, typecheck, build, 240 unit tests and 168 PostgreSQL integration tests; one integration case was skipped and no test failed. This documents that pre-cleanup runtime revision. The current source cleanup is documentation and retired-file removal only, so its own post-change GitHub Actions run must still complete before release claims are made.
+
+A successful CI run is not a deployment confirmation. Check current workflow and hosting status separately, and complete live payment provider, mail, wallet, recovery and production-security acceptance checks before enabling real-money traffic.

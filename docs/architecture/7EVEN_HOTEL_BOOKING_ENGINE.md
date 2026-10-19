@@ -26,4 +26,4 @@ Ranking is advisory; it does not reserve inventory. A quote checks the exact sta
 - `npm test`: includes deterministic unit tests for stay coverage, current inventory, room quantity, budget, city/amenity fit, ranking and invalid search criteria.
 - `npm run test:integration`: verifies the platform against an isolated PostgreSQL test database.
 
-No separate food engine or second inventory database is part of the active runtime.
+The booking optimizer lives inside the 7even engine package and uses the platform's PostgreSQL inventory authority.

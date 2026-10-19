@@ -4,7 +4,7 @@
 
 The optimizer is deterministic and explainable, not a trained demand model. It never changes a hotel's rate. Search results show a base-room subtotal estimate; the server calculates the final quote under current tax/discount policy and locks inventory again when a booking hold is created. Hotel availability is checked from live records on each request, and a hold can still fail if another guest books the last room first.
 
-The active runtime consists of the 7even web app, the 7even platform API, and `packages/engine`. No food-branded engine is started by the workspace.
+The active runtime consists of the 7even web app, platform API, shared contracts and hotel-booking engine. The engine is part of the workspace; no separate engine service is required.
 
 ## Run locally
 
