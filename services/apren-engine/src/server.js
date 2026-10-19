@@ -646,8 +646,8 @@ app.post("/verify/:id",(req,res)=>{
 
  lifecycle.createEvent(
     req.params.id,
-    "VERIFIED",
-    "Food evidence verified by āprən intelligence"
+    "VERIFICATION_REVIEW_REQUIRED",
+    "Food evidence was submitted; no configured automated verifier is available, so human review is required."
  );
 
 
