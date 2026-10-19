@@ -1,39 +1,27 @@
-function validate(action){
+const SUPPORTED_SIMULATIONS = new Set([
+  "BLOCK_TRADE",
+  "FAST_MOVE",
+  "DISCOUNT",
+  "BOOST_DISCOVERY",
+  "REQUIRE_REVIEW",
+  "MONITOR"
+]);
 
-const blocked=[
-"DELETE",
-"REMOVE_USER"
-];
+function validate(action) {
+  if (typeof action !== "string" || !SUPPORTED_SIMULATIONS.has(action)) {
+    return {
+      allowed: false,
+      reason: "Unsupported action blocked; no external effect was performed."
+    };
+  }
 
-
-if(
-blocked.includes(action)
-){
-
-return {
-
-allowed:false,
-
-reason:"Unsafe action blocked"
-
-};
-
+  return {
+    allowed: true,
+    reason: "Supported recommendation recorded for simulation only; no external effect was performed."
+  };
 }
 
-
-
-return {
-
-allowed:true,
-
-reason:"Action approved"
-
-};
-
-}
-
-
-
-module.exports={
-validate
+module.exports = {
+  validate,
+  supportedSimulations: [...SUPPORTED_SIMULATIONS]
 };
