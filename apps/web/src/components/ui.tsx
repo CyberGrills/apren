@@ -202,6 +202,9 @@ export function OfferingCard({ offering }: { offering: Offering }) {
               <span>Check-in {offering.bookingOptimization.checkInDate} · {offering.bookingOptimization.roomsAvailable} rooms · {offering.bookingOptimization.nights} night(s)</span>
             </div>
             <p>{offering.bookingOptimization.reasons[0]}</p>
+            <p className="hotel-match-total">
+              Estimated base room total for this stay: <strong><Money minor={offering.bookingOptimization.estimatedBaseTotalMinor} /></strong>
+            </p>
           </div>
         )}
         <div className="offering-price">
