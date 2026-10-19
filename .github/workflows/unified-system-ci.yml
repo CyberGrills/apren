@@ -37,7 +37,11 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci
+      - name: Diagnose and validate npm lockfile configuration
+        run: |
+          node -e "const fs=require('node:fs'); const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8')); if(lock.lockfileVersion!==3) throw new Error('Expected lockfile version 3'); console.log('Root lockfile present; version', lock.lockfileVersion, 'workspaces:', lock.packages[''].workspaces.join(', ')); console.log('npm package-lock config:', process.env.npm_config_package_lock ?? '(default)');"
+          npm config get package-lock
+      - run: npm ci --package-lock=true
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
