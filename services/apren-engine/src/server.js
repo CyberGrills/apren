@@ -633,7 +633,7 @@ app.get("/lifecycle/:id",(req,res)=>{
 app.post("/verify/:id",(req,res)=>{
 
 
- const result = verification.verifyFood({
+ const result = verificationEngine.verifyFood({
 
     id:req.params.id,
 
@@ -674,7 +674,7 @@ app.get("/verify/:id",(req,res)=>{
     assetId:req.params.id,
 
     records:
-       verification.getVerification(req.params.id)
+       verificationEngine.getVerification(req.params.id)
 
  });
 
