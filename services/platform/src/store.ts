@@ -218,7 +218,7 @@ export async function offeringProjection(db: Connection, id: string): Promise<Of
   if (!r) return null;
   const windows = await rows(
     db,
-    'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 ORDER BY starts_at LIMIT 500',
+    'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 AND ends_at>now() ORDER BY starts_at LIMIT 500',
     [id],
   );
   return {
