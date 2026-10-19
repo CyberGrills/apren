@@ -35,7 +35,11 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       : addDays(selectedDate || firstWindow?.serviceDate || localDateNow(), 1),
   );
   const [windowId, setWindowId] = useState(firstWindow?.id ?? '');
-  const [quantity, setQuantity] = useState('1');
+  const requestedRooms = Number(searchParams.get('rooms') ?? '1');
+  const initialQuantity = Number.isSafeInteger(requestedRooms) && requestedRooms >= 1 && requestedRooms <= 100
+    ? String(requestedRooms)
+    : '1';
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [held, setHeld] = useState<Reservation | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
