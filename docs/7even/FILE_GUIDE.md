@@ -1,6 +1,6 @@
 # Active file guide
 
-Refreshed 18 October 2026 for multi-provider payments, based on `2394f1a`. The original rebuild inventory remains pinned to `26d61a4aaf0ee87411b57df2ac94a5e5ad607e33`. Paths are relative to the repository. The active runtime consists of `apps/web`, `services/platform`, `packages/contracts` and `packages/engine`; `legacy/` is historical and is not an npm workspace.
+Refreshed 19 October 2026 for the current 7even hotel-booking engine. Paths are relative to the repository. The active workspaces are apps/web, services/platform, packages/contracts and packages/engine.
 
 This table began as a 152-file snapshot of active source, configuration, tests, design assets and documentation at the rebuild baseline. The 16 October seasonal-theme additions below extend that snapshot; later verification artifacts can be added independently, so the original count is not a claim of a complete current-tree inventory. `node_modules`, build output, `.env`, `.local`, database files and caches are excluded because they are generated/private runtime state. Their exclusion is not permission to commit them. Runtime dependencies are recorded by package manifests and the root lock, rather than individually documenting downloaded third-party files.
 
@@ -107,7 +107,6 @@ This table began as a 152-file snapshot of active source, configuration, tests, 
 | `design/explorations/verification/seasonal/rollover.json` | Browser evidence for an open-page calendar transition and resume without navigation; uses the tested page's clock. |
 | `docs/7even/API_CONTRACT.md` | Shared route/envelope/access contract, states, concurrency semantics and provider/mock boundaries. |
 | `docs/7even/ARCHITECTURE.md` | System flow, authority boundaries, money/tenant invariants, measured demand and the code/contract extension path for sectors and PMS adapters. |
-| `docs/7even/BUILD_PROPOSAL.md` | User-approved product scope, operating rules, fee/points model, architecture and release constraints. |
 | `docs/7even/FILE_GUIDE.md` | This per-file guide to the active rebuild, generated artifacts and historical source mapping. |
 | `docs/7even/IMPLEMENTATION_REVIEW.md` | Assesses current scope, verification limits, proposal journeys and disposition of all 42 original findings. |
 | `docs/7even/OPERATIONS.md` | Actual startup/configuration, database roles, recovery limits, provider review, offline constraints, SMTP caveat and nondestructive rollback guidance. |
@@ -123,12 +122,7 @@ This table began as a 152-file snapshot of active source, configuration, tests, 
 | `docs/7even/evidence/seasonal-integration.txt` | Post-feature combined 43-case local integration output; no real provider/bank/SMTP proof implied. |
 | `docs/7even/evidence/seasonal-lint.txt` | Post-feature lint command output with existing warnings retained. |
 | `docs/7even/evidence/seasonal-unit.txt` | Post-feature 205-case combined engine, contracts and frontend assertions, including season/calendar and brand checks. |
-| `docs/7even/legacy-review/APREN_FILE_GUIDE.txt` | Original file-by-file notes covering every one of the 486 Apren tracked files at the pinned base commit. |
-| `docs/7even/legacy-review/APREN_REVIEW.txt` | Original Apren purpose, architecture, 42 findings and assessment before the hospitality rebuild. |
-| `docs/7even/legacy-review/APREN_REVIEW_DATA.json` | Machine-readable original inventory and stable finding order used to map all 42 findings in the implementation review. |
-| `docs/7even/research/ACCEPTANCE_RESEARCH.txt` | Original finding coverage and test-design matrix, including superseding payment-model notes and remaining acceptance targets. |
 | `docs/7even/research/DESIGN_RESEARCH.txt` | Local reference catalog plus Dribbble/Behance research and design direction/provenance notes. |
-| `docs/7even/research/ENGINE_RESEARCH.txt` | Research notes on hospitality engine, Flutterwave contracts, database and reliable operational boundaries. |
 | `docs/7even/research/FLUTTERWAVE_CONTRACT_ADDENDUM.txt` | Revised provider contract research superseding manual-payment assumptions, including split commission, webhook mode, uncertainty and settlement evidence. |
 | `docs/security/tma.md` | Source-linked STRIDE threat model pinned to the base commit plus the historical pre-seasonal rebuild content hash. |
 | `learn/2026-10-16-rebuild-seven.md` | Consolidated learning explanation of actual engine/backend/frontend changes, durable effects, limitations and self-check questions. |
@@ -174,7 +168,7 @@ This table began as a 152-file snapshot of active source, configuration, tests, 
 | `tests/integration/provider.test.ts` | Provider transport contract tests for exact amounts, numeric token preservation and frozen flat commission. |
 | `tests/integration/recovery-crash.test.ts` | Real child-process SIGKILL, PG rollback and fresh-worker recovery assertions, including no repeated checkout after a synthetic possible charge; isolated test DB only. |
 | `tests/integration/recovery-mailer.test.ts` | Checks missing/invalid SMTP configuration and an injected mail transport contract; does not contact a real SMTP service. |
-| `tsconfig.json` | Strict shared no-emit TypeScript checking, NodeNext imports, browser/Node types and legacy exclusions. |
+| `tsconfig.json` | Strict shared no-emit TypeScript checking, NodeNext imports and browser/Node types. |
 | `design/explorations/verification/seasonal/autumn-tablet.jpg` | Final tablet campaign screenshot after 13px caption refinement. |
 | `design/explorations/verification/seasonal/autumn-mobile.jpg` | Final mobile campaign screenshot after 13px caption refinement. |
 | `design/explorations/verification/seasonal/resume.json` | Browser resume after clock jump selects the current campaign without navigation. |
@@ -217,29 +211,20 @@ The older `final-*` and `seasonal-*` evidence rows above describe their recorded
 
 Existing `app.ts`, `payments.ts`, `store.ts`, `worker.ts`, shared contracts, seed, customer/reception entry points, admin and business screens use these interfaces. viem 2.57.7 is installed in the frontend/platform manifests and root lockfile. Real provider sandboxes, Base wallet transfers and SMTP delivery remain unverified.
 
-## Original files and current historical paths
+## Current source map
 
-The original repository contained 486 tracked files. Every original file has an individual entry in [APREN_FILE_GUIDE.txt](legacy-review/APREN_FILE_GUIDE.txt), with machine-readable details in [APREN_REVIEW_DATA.json](legacy-review/APREN_REVIEW_DATA.json) and narrative assessment in [APREN_REVIEW.txt](legacy-review/APREN_REVIEW.txt). Those reports are pinned to `26d61a4aaf0ee87411b57df2ac94a5e5ad607e33` and describe the original bytes. [Implementation review](IMPLEMENTATION_REVIEW.md) maps each of the 42 original findings to replacement, exclusion or remaining proof.
+The current tracked source tree is the 7even rebuild. Retired prototype source files, brand assets and maintenance scripts are not included in this branch; previous commits remain available in Git history.
 
-Apply these path translations to inspect an original file now:
-
-| Original path family | Current location or disposition |
+| Area | Current source |
 |---|---|
-| `services/apren-engine` | Retired and removed from the active tree by the 7even hotel-booking refactor; its prior inventory appears only in historical audit notes |
-| `services/gateway`, `identity`, `intelligence`, `market`, `notification`, `shared`, `trade`, `wallet` | Same relative paths beneath `legacy/services/`; historical implementations only |
-| Root historical `*.sh` installers/restarts/patchers | `legacy/scripts/<original filename>` |
-| `debug/` | `legacy/debug/` |
-| `config/` | `legacy/config/` |
-| Original `apps/web/src/` | `legacy/web-src/` |
-| Original `apps/web/public/icons/` | `legacy/web-icons/` |
-| Original root `README.md` | `legacy/README.apren.md` |
-| Original root `package.json` | `legacy/package.json.reference` |
-| Original nested `apps/web/package-lock.json` | `legacy/web-package-lock.json.reference` |
-| Original active package/entry/build configuration replaced in place | Original bytes remain retrievable at the pinned Git commit; the active table describes each replacement |
-| `legacy/README.md` | New quarantine explanation; not an original Apren file |
-
-Do not execute historical shell scripts as a migration sequence. They retain author-specific paths and overwrite/kill behavior documented in the original review; archived engine-maintenance scripts are under `legacy/scripts/apren-engine-maintenance/`. The former `services/apren-engine/` directory has been removed from the active tree. The APREN review files below remain historical audit records only; they do not define the 7even product brand or runtime. The retired food service's local SQLite store is not part of the current booking engine. The remaining historical services and old web source are not active runtime components. There is no legacy customer-data migration in this rebuild.
+| Customer and staff interfaces | apps/web |
+| Platform API and domain workflows | services/platform |
+| Shared request/response types | packages/contracts |
+| Hotel availability optimizer and deterministic rules | packages/engine |
+| Database authority | database/migrations and services/platform |
+| Automated checks | packages, tests and .github/workflows |
+| Runtime entry points | scripts/dev.mjs and scripts/start.mjs |
 
 ## How to read the code
 
-Start with [architecture](ARCHITECTURE.md), the approved proposal and API contract, then read shared contracts and the pure engine. Follow a request from `apps/web/src/lib/api.ts` through `app.ts`, its domain module, PostgreSQL transaction/journal helpers and worker. Read the matching test and its stated limits. This shows where presentation ends, server authority begins and durable effects commit.
+Start with [architecture](ARCHITECTURE.md), the hotel-booking engine guide and API contract, then read shared contracts and the pure engine. Follow a request from `apps/web/src/lib/api.ts` through `app.ts`, its domain module, PostgreSQL transaction/journal helpers and worker. Read the matching test and its stated limits. This shows where presentation ends, server authority begins and durable effects commit.

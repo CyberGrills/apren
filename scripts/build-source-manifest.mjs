@@ -10,7 +10,6 @@ const activePrefixes = [
   'database/',
   'packages/',
   'scripts/',
-  'services/apren-engine/',
   'services/platform/',
   'tests/',
   '.github/workflows/',
@@ -31,7 +30,6 @@ const paths = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'ut
   .filter(Boolean)
   .filter((path) => !path.split('/').some((segment) => ['node_modules', 'dist', 'coverage', '.git'].includes(segment)))
   .filter((path) => !path.startsWith('docs/'))
-  .filter((path) => !path.startsWith('legacy/'))
   .filter((path) => {
     const fileName = path.split('/').at(-1);
     return !(fileName === '.env' || fileName.startsWith('.env.')) || path === '.env.example';
@@ -58,7 +56,7 @@ const output = {
   generatedFor: 'main',
   date: new Date().toISOString().slice(0, 10),
   algorithm: 'SHA-256 of sorted unique relative path + NUL + file bytes + NUL',
-  scope: 'All tracked active source, public assets, migrations, tests, scripts, workflows and named root/workspace configuration files; excludes node_modules/dist/coverage, local/private state, historical legacy source and documentation.',
+  scope: 'All tracked active source, public assets, migrations, tests, scripts, workflows and named root/workspace configuration files; excludes node_modules/dist/coverage, local/private state and documentation.',
   files: paths.length,
   sha256: hash.digest('hex'),
   paths,
