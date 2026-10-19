@@ -457,7 +457,7 @@ export function createApp(options: AppOptions = {}) {
       const offerings: C.Offering[] = [];
       for (let offset = 0; offset < found.length; offset += 12) {
         const batch = await Promise.all(
-          found.slice(offset, offset + 12).map((row) => S.offeringProjection(pool, row.offering_id)),
+          found.slice(offset, offset + 12).map((row) => S.offeringProjection(pool, row.offering_id, true)),
         );
         offerings.push(...batch.filter((offer): offer is C.Offering => !!offer));
       }
@@ -484,7 +484,18 @@ export function createApp(options: AppOptions = {}) {
       return ranked.slice((page - 1) * size, page * size).flatMap((item) => {
         const hotel = byId.get(item.id);
         if (!hotel) return [];
-        const { id: _hotelId, ...bookingOptimization } = item;
+        const bookingOptimization = {
+          checkInDate: item.checkInDate,
+          checkOutDate: item.checkOutDate,
+          nights: item.nights,
+          roomsRequested: item.roomsRequested,
+          roomsAvailable: item.roomsAvailable,
+          estimatedBaseTotalMinor: item.estimatedBaseTotalMinor,
+          matchScore: item.matchScore,
+          reasons: item.reasons,
+          checkedAt: item.checkedAt,
+          policyVersion: item.policyVersion,
+        };
         return [{ ...hotel, bookingOptimization }];
       });
     }
