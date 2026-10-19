@@ -225,7 +225,7 @@ Apply these path translations to inspect an original file now:
 
 | Original path family | Current location or disposition |
 |---|---|
-| `services/assets` | Promoted to the active `services/apren-engine/` service; source modules retain their internal relative layout |
+| `services/apren-engine` | Retired and removed from the active tree by the 7even hotel-booking refactor; its prior inventory appears only in historical audit notes |
 | `services/gateway`, `identity`, `intelligence`, `market`, `notification`, `shared`, `trade`, `wallet` | Same relative paths beneath `legacy/services/`; historical implementations only |
 | Root historical `*.sh` installers/restarts/patchers | `legacy/scripts/<original filename>` |
 | `debug/` | `legacy/debug/` |
@@ -238,7 +238,7 @@ Apply these path translations to inspect an original file now:
 | Original active package/entry/build configuration replaced in place | Original bytes remain retrievable at the pinned Git commit; the active table describes each replacement |
 | `legacy/README.md` | New quarantine explanation; not an original Apren file |
 
-Do not execute historical shell scripts as a migration sequence. They retain author-specific paths and overwrite/kill behavior documented in the original review; archived engine-maintenance scripts are under `legacy/scripts/apren-engine-maintenance/`. The active Apren service retains the former assets API for local compatibility, but its SQLite storage is not production-durable. The remaining historical services and old web source are not active runtime components. There is no legacy customer-data migration in this rebuild.
+Do not execute historical shell scripts as a migration sequence. They retain author-specific paths and overwrite/kill behavior documented in the original review; archived engine-maintenance scripts are under `legacy/scripts/apren-engine-maintenance/`. The former `services/apren-engine/` directory has been removed from the active tree. The APREN review files below remain historical audit records only; they do not define the 7even product brand or runtime. The retired food service's local SQLite store is not part of the current booking engine. The remaining historical services and old web source are not active runtime components. There is no legacy customer-data migration in this rebuild.
 
 ## How to read the code
 
