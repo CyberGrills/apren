@@ -89,7 +89,7 @@ describe('7even real-time hotel booking optimizer', () => {
       asOf,
     });
     assert.deepEqual(result.map((hotel) => hotel.id), ['in-budget']);
-    assert.ok(result[0]?.reasons.some((reason) => /0 of 2 requested amenities/i.test(reason)));
+    assert.ok(result[0]?.reasons.some((reason) => /1 of 2 requested amenity/i.test(reason)));
   });
 
   it('rejects invalid room counts, past dates, invalid ranges, and budgets', () => {
