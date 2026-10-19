@@ -60,6 +60,15 @@ export async function createQuote(
 ): Promise<Quote> {
   const offer = await offeringProjection(db, input.offeringId);
   if (!offer) return fail(404, 'NOT_FOUND', 'This offering was not found.');
+  if (offer.kind === 'STAY') {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(new Date());
+    const part = (name: string) => parts.find((value) => value.type === name)?.value ?? '';
+    const today = `${part('year')}-${part('month')}-${part('day')}`;
+    if (input.startDate < today)
+      return fail(422, 'PAST_CHECK_IN', 'Check-in must be today or a future date in the hotel time zone.');
+  }
   if (actor.role === 'RECEPTION') {
     requireTenant(actor, offer.businessId);
     requireVenue(actor, offer.venueId);
