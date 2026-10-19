@@ -42,6 +42,24 @@ describe('Apren engine service boundary', () => {
         capabilities: ['food-assets', 'food-intelligence', 'food-economy', 'food-brain'],
       });
 
+      const verificationAssetId = '980000001';
+      const verificationResponse = await fetch(`${engineUrl}/verify/${verificationAssetId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'image', file: 'evidence-ref:route-test' }),
+      });
+      assert.equal(verificationResponse.status, 200);
+      const verificationPayload = await verificationResponse.json();
+      assert.equal(verificationPayload.verification.status, 'REVIEW_REQUIRED');
+      assert.equal(verificationPayload.verification.verified, false);
+      assert.equal(verificationPayload.verification.confidence, null);
+
+      const lifecycleResponse = await fetch(`${engineUrl}/lifecycle/${verificationAssetId}`);
+      assert.equal(lifecycleResponse.status, 200);
+      const lifecyclePayload = await lifecycleResponse.json();
+      assert.ok(lifecyclePayload.events.some((event) => event.event_type === 'VERIFICATION_REVIEW_REQUIRED'));
+      assert.equal(lifecyclePayload.events.some((event) => event.event_type === 'VERIFIED'), false);
+
       const previousEngineUrl = process.env.APREN_ENGINE_URL;
       process.env.APREN_ENGINE_URL = engineUrl;
       const runtime = createApp({ pool: {}, provider: new MockProvider(), environment: 'test', publicOrigin: 'http://127.0.0.1' });
