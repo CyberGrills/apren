@@ -33,6 +33,20 @@ describe('Apren engine service boundary', () => {
         await new Promise((resolvePromise) => setTimeout(resolvePromise, 50));
       }
       assert.ok(port, `engine did not start; stdout=${output}; stderr=${stderr}`);
+
+      for (const expectedRoute of [
+        "GET /brain/memory/recall/:assetId",
+        "GET /brain/memory/:assetId",
+        "POST /economy/pulse",
+        "GET /brain/adaptive/:assetId",
+        "POST /brain/simulation/run/:assetId",
+      ]) {
+        assert.ok(
+          output.includes(expectedRoute),
+          `engine route was not registered during startup: ${expectedRoute}`,
+        );
+      }
+
       const engineUrl = `http://127.0.0.1:${port}`;
       const response = await fetch(`${engineUrl}/healthz`);
       assert.equal(response.status, 200);
