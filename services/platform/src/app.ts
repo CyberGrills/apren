@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import * as C from '@7even/contracts';
-import { serviceDates, assessDemand } from '@7even/engine';
+import { serviceDates, assessDemand, optimizeHotelBookings } from '@7even/engine';
 import { createPool, transaction, one, rows, ApiError, fail, string } from './db.ts';
 import type { Connection } from './db.ts';
 import { hashPassword, verifyPassword, newToken, digestToken } from './auth.ts';
@@ -343,17 +343,25 @@ export function createApp(options: AppOptions = {}) {
     await pool.query('SELECT 1 FROM seven.migrations LIMIT 1');
     return { status: 'ready', storage: 'postgresql', paymentMode: provider.mode };
   });
-  route('get', '/engine/apren/health', async () => {
-    const engineUrl = process.env.APREN_ENGINE_URL;
-    if (!engineUrl) return { engine: 'apren', status: 'not_configured' };
-    try {
-      const response = await fetch(new URL('/healthz', engineUrl), { signal: AbortSignal.timeout(2000) });
-      if (!response.ok) return { engine: 'apren', status: 'unavailable' };
-      const payload = await response.json() as { status?: string };
-      return { engine: 'apren', status: payload.status === 'ok' ? 'ok' : 'unavailable' };
-    } catch {
-      return { engine: 'apren', status: 'unavailable' };
-    }
+  route('get', '/engine/booking/health', async () => {
+    const result = await one(
+      pool,
+      `SELECT count(*)::int AS total
+       FROM seven.offerings o
+       JOIN seven.businesses b USING(business_id)
+       JOIN seven.sectors s USING(sector_id)
+       WHERE o.is_published
+         AND b.workflow_state_id=${S.sid('APPROVED')}
+         AND s.sector_code='STAY'`,
+    );
+    return {
+      engine: '7even-hotel-booking-engine',
+      status: 'ok',
+      inventorySource: 'postgresql-live',
+      publishedHotelOffers: Number(result?.total ?? 0),
+      capabilities: ['live-inventory-filtering', 'multi-night-availability', 'room-count-fit', 'explainable-match-ranking'],
+      policyVersion: '7even-hotel-ranking-v1',
+    };
   });
   route('get', '/auth/session', async (_req, res) => sessionData(res));
   route('post', '/auth/register', async (req, res) => {
@@ -409,33 +417,99 @@ export function createApp(options: AppOptions = {}) {
   route('get', '/offerings', async (req) => {
     const page = Math.max(1, Math.min(10000, Number(req.query.page) || 1));
     const size = Math.max(1, Math.min(100, Number(req.query.pageSize) || 30));
+    const requestedKind = String(req.query.kind ?? '');
+    const city = req.query.city === undefined ? '' : z.string().trim().max(160).parse(req.query.city);
+
+    if (requestedKind === 'STAY') {
+      const startDate = req.query.startDate === undefined
+        ? undefined
+        : z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.startDate);
+      const endDate = req.query.endDate === undefined
+        ? undefined
+        : z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.endDate);
+      if (endDate && !startDate)
+        return fail(422, 'CHECK_IN_REQUIRED', 'Choose a check-in date before check-out.');
+      const rooms = z.coerce.number().int().min(1).max(100).parse(req.query.rooms ?? '1');
+      const maxBaseTotalMinor = req.query.maxBaseTotalMinor === undefined
+        ? undefined
+        : z.string().regex(/^(0|[1-9]\d{0,14})$/).parse(req.query.maxBaseTotalMinor);
+      const amenityText = req.query.amenities === undefined
+        ? ''
+        : z.string().max(1600).parse(req.query.amenities);
+      const amenities = amenityText
+        ? amenityText.split(',').map((value) => z.string().trim().min(1).max(80).parse(value)).slice(0, 20)
+        : [];
+
+      // Load every public hotel candidate before ranking, then paginate the ranked list.
+      const found = await rows(
+        pool,
+        `SELECT o.offering_id
+         FROM seven.offerings o
+         JOIN seven.businesses b USING(business_id)
+         JOIN seven.sectors s USING(sector_id)
+         WHERE o.is_published
+           AND b.workflow_state_id=${S.sid('APPROVED')}
+           AND s.sector_code='STAY'
+           AND ($1='' OR lower(o.city) LIKE $1)
+         ORDER BY o.created_at DESC`,
+        [city ? `%${city.toLowerCase()}%` : ''],
+      );
+      const offerings: C.Offering[] = [];
+      for (let offset = 0; offset < found.length; offset += 12) {
+        const batch = await Promise.all(
+          found.slice(offset, offset + 12).map((row) => S.offeringProjection(pool, row.offering_id)),
+        );
+        offerings.push(...batch.filter((offer): offer is C.Offering => !!offer));
+      }
+
+      const ranked = optimizeHotelBookings(
+        offerings.map((offer) => ({
+          id: offer.id,
+          title: offer.title,
+          city: offer.city,
+          priceMinor: offer.priceMinor,
+          amenities: offer.amenities,
+          windows: offer.windows,
+        })),
+        {
+          checkInDate: startDate,
+          checkOutDate: endDate,
+          rooms,
+          city: city || undefined,
+          amenities,
+          maxBaseTotalMinor,
+        },
+      );
+      const byId = new Map(offerings.map((offer) => [offer.id, offer]));
+      return ranked.slice((page - 1) * size, page * size).flatMap((item) => {
+        const hotel = byId.get(item.id);
+        if (!hotel) return [];
+        const { id: _hotelId, ...bookingOptimization } = item;
+        return [{ ...hotel, bookingOptimization }];
+      });
+    }
+
     const found = await rows(
       pool,
       `SELECT o.offering_id FROM seven.offerings o JOIN seven.businesses b USING(business_id) JOIN seven.sectors s USING(sector_id) WHERE o.is_published AND b.workflow_state_id=${S.sid('APPROVED')} AND ($1='' OR lower(o.city) LIKE $1) AND ($2='' OR s.sector_code=$2) ORDER BY o.created_at LIMIT $3 OFFSET $4`,
       [
-        req.query.city ? `%${String(req.query.city).toLowerCase()}%` : '',
-        String(req.query.kind ?? ''),
+        city ? `%${city.toLowerCase()}%` : '',
+        requestedKind,
         size,
         (page - 1) * size,
       ],
     );
     const offerings = (
-      await Promise.all(found.map((r) => S.offeringProjection(pool, r.offering_id)))
+      await Promise.all(found.map((row) => S.offeringProjection(pool, row.offering_id)))
     ).filter((offer): offer is C.Offering => !!offer);
     if (!req.query.startDate) return offerings;
-    const startDate = z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/)
-      .parse(req.query.startDate);
-    const endDate = req.query.endDate
-      ? z
-          .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/)
-          .parse(req.query.endDate)
-      : undefined;
+    const genericStartDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.startDate);
+    const genericEndDate = req.query.endDate === undefined
+      ? undefined
+      : z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.endDate);
     return offerings.filter((offer) => {
       const dates =
-        offer.kind === 'STAY' && endDate ? serviceDates(startDate, endDate) : [startDate];
+        offer.kind === 'STAY' && genericEndDate ? serviceDates(genericStartDate, genericEndDate) : [genericStartDate];
       return dates.every((date) =>
         offer.windows.some(
           (window) =>
