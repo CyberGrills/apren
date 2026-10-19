@@ -35,7 +35,7 @@ export function ExplorePage() {
     const form = new FormData(event.currentTarget);
     const next = new URLSearchParams();
     if (kind && ['STAY', 'DINING', 'EXPERIENCE'].includes(kind)) next.set('kind', kind);
-    for (const key of ['city', 'startDate', 'endDate']) {
+    for (const key of ['city', 'startDate', 'endDate', 'rooms']) {
       const value = String(form.get(key) ?? '').trim();
       if (value) next.set(key, value);
     }
@@ -170,16 +170,33 @@ export function ExplorePage() {
             />
           </div>
           {(!kind || kind === 'STAY') && (
-            <div>
-              <label htmlFor="explore-end">Check-out</label>
-              <input
-                id="explore-end"
-                name="endDate"
-                type="date"
-                min={params.get('startDate') || localDateNow()}
-                defaultValue={params.get('endDate') ?? ''}
-              />
-            </div>
+            <>
+              <div>
+                <label htmlFor="explore-end">Check-out</label>
+                <input
+                  id="explore-end"
+                  name="endDate"
+                  type="date"
+                  min={params.get('startDate') || localDateNow()}
+                  defaultValue={params.get('endDate') ?? ''}
+                />
+              </div>
+              {kind === 'STAY' && (
+                <div>
+                  <label htmlFor="explore-rooms">Rooms</label>
+                  <input
+                    id="explore-rooms"
+                    name="rooms"
+                    type="number"
+                    min={1}
+                    max={100}
+                    step={1}
+                    required
+                    defaultValue={params.get('rooms') ?? '1'}
+                  />
+                </div>
+              )}
+            </>
           )}
           <button type="submit" className="btn btn-primary">
             <Search size={17} aria-hidden="true" /> Find places
@@ -193,7 +210,7 @@ export function ExplorePage() {
                 ? `${data.length} ${data.length === 1 ? 'place' : 'places'} to consider`
                 : 'Places on 7even'}
           </p>
-          <span>Full prices shown before you reserve.</span>
+          <span>{kind === 'STAY' ? 'Live room availability checked on each search; final quote confirms price and capacity.' : 'Full prices shown before you reserve.'}</span>
         </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
