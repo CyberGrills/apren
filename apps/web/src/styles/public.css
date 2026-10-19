@@ -1435,3 +1435,33 @@
 .arrival-lead-card a { display: inline-block; margin-top: .4rem; font-size: .8rem; font-weight: 650; text-decoration: underline; text-underline-offset: .2em; }
 @media (max-width: 800px) { .arrival-lead-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .arrival-discovery-form, .arrival-lead-grid { grid-template-columns: 1fr; } .arrival-discovery-form > .btn { width: 100%; } .arrival-lead-heading { align-items: start; flex-direction: column; } }
+
+
+/* 7even hotel booking optimizer results */
+.hotel-match {
+  margin-top: 0.8rem;
+  padding: 0.65rem 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.hotel-match-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+.hotel-match-line strong {
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.hotel-match-line span {
+  font-variant-numeric: tabular-nums;
+}
+.hotel-match p {
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+}
+
