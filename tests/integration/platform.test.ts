@@ -27,6 +27,23 @@ import { processInbox, processOutbox, recoverClaims } from '../../services/platf
 
 const origin = 'http://localhost:5177';
 const password = 'Integration-only-passphrase-42!';
+
+function lagosDateOffset(days: number): string {
+  const value = new Date(Date.now() + days * 86400000);
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Lagos',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(value);
+  const part = (name: string) => parts.find((entry) => entry.type === name)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+function calendarDateOffset(date: string, days: number): string {
+  const value = new Date(`${date}T12:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
 interface Result<T> {
   status: number;
   data: T;
@@ -145,6 +162,53 @@ test('7even real PostgreSQL API and invariant acceptance', {
         assert.equal(publicOffers.status, 200);
         assert.equal(publicOffers.data.length, 3);
         assert.ok(publicOffers.data.every((o) => o.windows.length === 45 && o.isSample));
+
+        const engineHealth = await guest.request<{
+          engine: string;
+          status: string;
+          inventorySource: string;
+          publishedHotelOffers: number;
+          policyVersion: string;
+        }>('/engine/booking/health');
+        assert.equal(engineHealth.status, 200, JSON.stringify(engineHealth));
+        assert.equal(engineHealth.data.engine, '7even-hotel-booking-engine');
+        assert.equal(engineHealth.data.status, 'ok');
+        assert.equal(engineHealth.data.inventorySource, 'postgresql-live');
+        assert.ok(engineHealth.data.publishedHotelOffers >= 1);
+        assert.equal(engineHealth.data.policyVersion, '7even-hotel-ranking-v1');
+
+        const checkIn = lagosDateOffset(7);
+        const checkOut = calendarDateOffset(checkIn, 2);
+        const optimizedHotels = await guest.request<C.Offering[]>(
+          `/offerings?kind=STAY&startDate=${checkIn}&endDate=${checkOut}&rooms=2`,
+        );
+        assert.equal(optimizedHotels.status, 200, JSON.stringify(optimizedHotels));
+        assert.ok(optimizedHotels.data.length >= 1);
+        assert.ok(optimizedHotels.data.every((hotel) =>
+          hotel.kind === 'STAY'
+          && hotel.bookingOptimization?.checkInDate === checkIn
+          && hotel.bookingOptimization?.checkOutDate === checkOut
+          && hotel.bookingOptimization?.roomsRequested === 2
+          && (hotel.bookingOptimization?.matchScore ?? -1) >= 0
+          && (hotel.bookingOptimization?.matchScore ?? 101) <= 100,
+        ));
+        const impossibleRooms = await guest.request<C.Offering[]>(
+          `/offerings?kind=STAY&startDate=${checkIn}&endDate=${checkOut}&rooms=9`,
+        );
+        assert.equal(impossibleRooms.status, 200);
+        assert.deepEqual(impossibleRooms.data, []);
+
+        const stay = publicOffers.data.find((offering) => offering.kind === 'STAY');
+        assert.ok(stay);
+        const pastQuote = await guest.request('/quotes', 'POST', {
+          offeringId: stay.id,
+          startDate: lagosDateOffset(-2),
+          endDate: lagosDateOffset(-1),
+          quantity: 1,
+        });
+        assert.equal(pastQuote.status, 422);
+        assert.equal(pastQuote.error?.code, 'PAST_CHECK_IN');
+
         assert.equal((await guest.request('/admin/overview')).status, 403);
         assert.equal((await friend.request('/business/overview')).status, 403);
         const invalid = await new Client(base).request('/auth/register', 'POST', {
