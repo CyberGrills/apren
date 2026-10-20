@@ -458,11 +458,10 @@ export function createApp(options: AppOptions = {}) {
         ? amenityText.split(',').map((value) => z.string().trim().min(1).max(80).parse(value)).slice(0, 20)
         : [];
 
-      // Bound work before loading offering projections. Only approved, published STAY
-      // offers with live inventory for the requested date range enter the ranking stage.
-      // The cap is deliberately explicit and observable; ranking-v1 remains the fallback.
+      // Retrieve every eligible candidate: a fixed cap silently hides valid hotels from
+      // nationwide searches. Indexed eligibility filters constrain database work; ranking-v1
+      // remains deterministic and evaluates the complete eligible set.
       const searchStartedAt = performance.now();
-      const candidateLimit = 1000;
       const candidateStartedAt = performance.now();
       const found = await rows(
         pool,
@@ -497,10 +496,10 @@ export function createApp(options: AppOptions = {}) {
                     COALESCE($3::date, $2::date + 1)
              ) = (COALESCE($3::date, $2::date + 1) - $2::date)
            )
-         ORDER BY CASE WHEN $6='' THEN 0 WHEN lower(o.city)=lower($6) THEN 0 ELSE 1 END,
+         ORDER BY CASE WHEN $5='' THEN 0 WHEN lower(o.city)=lower($5) THEN 0 ELSE 1 END,
                   o.created_at DESC, o.offering_id
-         LIMIT $5`,
-        [city ? `%${city.toLowerCase()}%` : '', startDate ?? null, endDate ?? null, rooms, candidateLimit, city],
+         `,
+        [city ? `%${city.toLowerCase()}%` : '', startDate ?? null, endDate ?? null, rooms, city],
       );
       const candidateQueryMs = Math.round((performance.now() - candidateStartedAt) * 100) / 100;
       const projectionStartedAt = performance.now();
@@ -544,8 +543,8 @@ export function createApp(options: AppOptions = {}) {
         city: city || null,
         dateScoped: !!startDate,
         candidates: found.length,
-        candidateLimit,
-        candidateLimitReached: found.length === candidateLimit,
+        candidateCap: null,
+        candidateCapReached: false,
         projectedOfferings: offerings.length,
         rankedResults: ranked.length,
         candidateQueryMs,
