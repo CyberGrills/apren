@@ -546,6 +546,8 @@ export function createApp(options: AppOptions = {}) {
         maxRooms: number;
       } = { minTotal: null, maxTotal: null, maxRooms: 0 };
       let projectedOfferings = 0;
+      let secondPassProjectedOfferings = 0;
+      let eligibleRankedCount = 0;
       let projectionMs = 0;
       let rankingMs = 0;
       const firstPass = await scanBatches(async (ids) => {
@@ -566,6 +568,7 @@ export function createApp(options: AppOptions = {}) {
           baseCriteria,
         );
         rankingMs += performance.now() - rankingStartedAt;
+        eligibleRankedCount += batchRanked.length;
         for (const item of batchRanked) {
           const total = BigInt(item.estimatedBaseTotalMinor);
           globalStatsAccumulator.minTotal = globalStatsAccumulator.minTotal === null || total < globalStatsAccumulator.minTotal ? total : globalStatsAccumulator.minTotal;
@@ -595,7 +598,7 @@ export function createApp(options: AppOptions = {}) {
           const projectionStartedAt = performance.now();
           const offerings = await S.offeringProjections(searchDb, ids, true);
           projectionMs += performance.now() - projectionStartedAt;
-          projectedOfferings += offerings.length;
+          secondPassProjectedOfferings += offerings.length;
           secondPassCandidates += ids.length;
           const rankingStartedAt = performance.now();
           const batchRanked: RankedHotel[] = optimizeHotelBookings(
@@ -636,8 +639,11 @@ export function createApp(options: AppOptions = {}) {
         candidateCap: null,
         candidateCapReached: false,
         projectedOfferings,
+        secondPassProjectedOfferings,
+        projectionRowsRead: projectedOfferings + secondPassProjectedOfferings,
         secondPassCandidates,
-        rankedResults: rankedResults.length,
+        rankedResults: eligibleRankedCount,
+        returnedResults: rankedResults.length,
         candidateQueryMs,
         projectionMs,
         rankingMs,
