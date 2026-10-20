@@ -194,7 +194,7 @@ test('7even real PostgreSQL API and invariant acceptance', {
              WHERE workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
              ORDER BY business_id LIMIT 1
            ) approved
-           CROSS JOIN generate_series(1,1105) AS series
+           CROSS JOIN generate_series(1,1105) AS seq(series)
            RETURNING offering_id`,
         );
         assert.equal(syntheticOffers.length, 1105, 'isolated scale fixture must contain 1,105 hotels');
@@ -239,6 +239,10 @@ test('7even real PostgreSQL API and invariant acceptance', {
           ['%lagos%', checkIn, checkOut, 2, 200],
         );
         assert.ok(explain.length > 0 && explain[0]?.['QUERY PLAN'], 'EXPLAIN ANALYZE plan must be captured');
+        console.info(JSON.stringify({
+          event: 'seven.hotel_search.synthetic_query_plan',
+          queryPlan: explain[0]?.['QUERY PLAN'],
+        }));
 
         const searchDurations: number[] = [];
         let benchmarkIds: string[] = [];
