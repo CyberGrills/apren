@@ -202,8 +202,8 @@ test('7even real PostgreSQL API and invariant acceptance', {
           `INSERT INTO seven.inventory_windows
              (inventory_window_id,offering_id,starts_at,ends_at,capacity)
            SELECT gen_random_uuid(), offer_id,
-                  ((\$1::date + night_offset)::timestamp + time '13:00') AT TIME ZONE 'UTC',
-                  ((\$1::date + night_offset + 1)::timestamp + time '10:00') AT TIME ZONE 'UTC',
+                  (\$1::date + night_offset + time '13:00') AT TIME ZONE 'UTC',
+                  (\$1::date + night_offset + 1 + time '10:00') AT TIME ZONE 'UTC',
                   3
            FROM unnest(\$2::uuid[]) AS offers(offer_id)
            CROSS JOIN generate_series(0,1) AS nights(night_offset)`,
@@ -268,7 +268,11 @@ test('7even real PostgreSQL API and invariant acceptance', {
           queryPlanCaptured: true,
         }));
         assert.ok(p95Ms < 5000, `synthetic hotel search p95 exceeded 5s: ${p95Ms}ms`);
-        assert.equal(benchmarkIds[0], 'scale-fixture-check-placeholder', 'replaced below with SQL-verified lowest-price ID');
+        const cheapestSynthetic = await one<{ offering_id: string }>(
+          pool,
+          "SELECT offering_id FROM seven.offerings WHERE title='Scale synthetic hotel 1'",
+        );
+        assert.equal(benchmarkIds[0], cheapestSynthetic?.offering_id, 'lowest-priced eligible synthetic hotel must remain in the global top results');
 
         const optimizedHotels = await guest.request<C.Offering[]>(
           `/offerings?kind=STAY&startDate=${checkIn}&endDate=${checkOut}&rooms=2`,
