@@ -1,5 +1,36 @@
 import pg from 'pg';
 import type { Pool, PoolClient, QueryResultRow } from 'pg';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+const supabaseRootCa = readFileSync(
+  fileURLToPath(new URL('../../../packages/certs/supabase-prod-ca-2021.crt', import.meta.url)),
+  'utf8',
+);
+
+function connectionOptions(connectionString: string): {
+  connectionString: string;
+  ssl?: { ca: string; rejectUnauthorized: true };
+} {
+  const url = new URL(connectionString);
+  const isSupabaseHost =
+    url.hostname.endsWith('.supabase.co') ||
+    url.hostname.endsWith('.pooler.supabase.com');
+
+  if (!isSupabaseHost) return { connectionString };
+
+  // pg 8.23 treats sslmode=require as certificate-verifying mode by default.
+  // Supabase uses its own root CA, so pass the verified CA explicitly and
+  // remove URL SSL parameters that would override the node-postgres ssl object.
+  for (const key of ['sslmode', 'sslrootcert', 'sslcert', 'sslkey', 'sslfactory', 'uselibpqcompat']) {
+    url.searchParams.delete(key);
+  }
+
+  return {
+    connectionString: url.toString(),
+    ssl: { ca: supabaseRootCa, rejectUnauthorized: true },
+  };
+}
 
 export function createPool(
   connectionString = process.env.DATABASE_URL ?? process.env.POSTGRES_URL,
@@ -7,7 +38,7 @@ export function createPool(
   if (!connectionString) throw new Error('DATABASE_URL or POSTGRES_URL is required.');
   const serverless = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
   return new pg.Pool({
-    connectionString,
+    ...connectionOptions(connectionString),
     max: serverless ? 1 : 12,
     connectionTimeoutMillis: serverless ? 10000 : 5000,
     idleTimeoutMillis: 10000,
