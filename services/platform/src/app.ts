@@ -86,14 +86,10 @@ export function createApp(options: AppOptions = {}) {
   const provider = options.providers ?? options.provider ?? new ProviderRegistry();
   if (
     environment === 'production' &&
-    (provider.mode === 'mock' ||
-      !process.env.FLUTTERWAVE_SECRET_KEY ||
-      !process.env.FLUTTERWAVE_WEBHOOK_SECRET ||
-      !process.env.PAYSTACK_SECRET_KEY ||
-      !publicOrigin.startsWith('https://'))
+    (provider.mode === 'mock' || !publicOrigin.startsWith('https://'))
   )
     throw new Error(
-      'Production requires HTTPS and both configured fiat providers. Mock payments are forbidden.',
+      'Production requires HTTPS and live payment mode. Mock payments are forbidden.',
     );
   if (
     environment === 'production' &&
