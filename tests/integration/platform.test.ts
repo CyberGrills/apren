@@ -179,6 +179,97 @@ test('7even real PostgreSQL API and invariant acceptance', {
 
         const checkIn = lagosDateOffset(7);
         const checkOut = calendarDateOffset(checkIn, 2);
+        const syntheticOffers = await rows<{ offering_id: string }>(
+          pool,
+          `INSERT INTO seven.offerings
+             (offering_id,business_id,sector_id,title,description,city,price_minor,is_published,details)
+           SELECT gen_random_uuid(), approved.business_id,
+                  (SELECT sector_id FROM seven.sectors WHERE sector_code='STAY'),
+                  'Scale synthetic hotel ' || series,
+                  'Isolated performance-test listing',
+                  'Lagos', 100000 + series * 1000, true,
+                  jsonb_build_object('amenities', jsonb_build_array('Wi-Fi'), 'capacity', 3)
+           FROM (
+             SELECT business_id FROM seven.businesses
+             WHERE workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
+             ORDER BY business_id LIMIT 1
+           ) approved
+           CROSS JOIN generate_series(1,1105) AS series
+           RETURNING offering_id`,
+        );
+        assert.equal(syntheticOffers.length, 1105, 'isolated scale fixture must contain 1,105 hotels');
+        await pool.query(
+          `INSERT INTO seven.inventory_windows
+             (inventory_window_id,offering_id,starts_at,ends_at,capacity)
+           SELECT gen_random_uuid(), offer_id,
+                  ((\$1::date + night_offset)::timestamp + time '13:00') AT TIME ZONE 'UTC',
+                  ((\$1::date + night_offset + 1)::timestamp + time '10:00') AT TIME ZONE 'UTC',
+                  3
+           FROM unnest(\$2::uuid[]) AS offers(offer_id)
+           CROSS JOIN generate_series(0,1) AS nights(night_offset)`,
+          [checkIn, syntheticOffers.map((item) => item.offering_id)],
+        );
+
+        const explain = await rows<{ 'QUERY PLAN': unknown }>(
+          pool,
+          `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+           SELECT o.offering_id
+           FROM seven.offerings o
+           JOIN seven.businesses b USING(business_id)
+           JOIN seven.sectors s USING(sector_id)
+           WHERE o.is_published
+             AND b.workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
+             AND s.sector_code='STAY'
+             AND lower(o.city) LIKE \$1
+             AND EXISTS (
+               SELECT 1 FROM seven.inventory_windows w
+               WHERE w.offering_id=o.offering_id AND w.ends_at>now()
+                 AND w.capacity>w.allocated_count
+                 AND (w.starts_at + interval '1 hour')::date>=\$2::date
+                 AND (w.starts_at + interval '1 hour')::date<\$3::date
+             )
+             AND (SELECT count(DISTINCT (w.starts_at + interval '1 hour')::date)
+                  FROM seven.inventory_windows w
+                  WHERE w.offering_id=o.offering_id AND w.ends_at>now()
+                    AND w.capacity-w.allocated_count>=\$4
+                    AND (w.starts_at + interval '1 hour')::date>=\$2::date
+                    AND (w.starts_at + interval '1 hour')::date<\$3::date)
+                 = (\$3::date - \$2::date)
+           ORDER BY o.offering_id LIMIT \$5`,
+          ['%lagos%', checkIn, checkOut, 2, 200],
+        );
+        assert.ok(explain.length > 0 && explain[0]?.['QUERY PLAN'], 'EXPLAIN ANALYZE plan must be captured');
+
+        const searchDurations: number[] = [];
+        let benchmarkIds: string[] = [];
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const startedAt = performance.now();
+          const benchmark = await guest.request<C.Offering[]>(
+            `/offerings?kind=STAY&city=Lagos&startDate=${checkIn}&endDate=${checkOut}&rooms=2&pageSize=10`,
+          );
+          searchDurations.push(performance.now() - startedAt);
+          assert.equal(benchmark.status, 200, JSON.stringify(benchmark));
+          assert.equal(benchmark.data.length, 10);
+          assert.ok(benchmark.data.every((hotel) => hotel.bookingOptimization?.roomsAvailable >= 2));
+          const ids = benchmark.data.map((hotel) => hotel.id);
+          if (attempt === 0) benchmarkIds = ids;
+          else assert.deepEqual(ids, benchmarkIds, 'repeated searches must return deterministic top results');
+        }
+        const sortedDurations = [...searchDurations].sort((a, b) => a - b);
+        const p50Ms = Math.round(sortedDurations[2]! * 100) / 100;
+        const p95Ms = Math.round(sortedDurations[4]! * 100) / 100;
+        console.info(JSON.stringify({
+          event: 'seven.hotel_search.synthetic_benchmark',
+          eligibleSyntheticHotels: syntheticOffers.length,
+          batchSize: 200,
+          samples: searchDurations.length,
+          p50Ms,
+          p95Ms,
+          queryPlanCaptured: true,
+        }));
+        assert.ok(p95Ms < 5000, `synthetic hotel search p95 exceeded 5s: ${p95Ms}ms`);
+        assert.equal(benchmarkIds[0], 'scale-fixture-check-placeholder', 'replaced below with SQL-verified lowest-price ID');
+
         const optimizedHotels = await guest.request<C.Offering[]>(
           `/offerings?kind=STAY&startDate=${checkIn}&endDate=${checkOut}&rooms=2`,
         );
