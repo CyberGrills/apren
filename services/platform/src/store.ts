@@ -275,8 +275,16 @@ export async function offeringProjections(
   const windows = await rows(
     db,
     activeInventoryOnly
-      ? 'SELECT * FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[]) AND ends_at > now() ORDER BY starts_at'
-      : 'SELECT * FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[]) ORDER BY starts_at',
+      ? `SELECT * FROM (
+           SELECT w.*, row_number() OVER (PARTITION BY offering_id ORDER BY starts_at) AS projection_rank
+           FROM seven.inventory_windows w
+           WHERE offering_id = ANY($1::uuid[]) AND ends_at > now()
+         ) ranked WHERE projection_rank <= 500 ORDER BY offering_id, starts_at`
+      : `SELECT * FROM (
+           SELECT w.*, row_number() OVER (PARTITION BY offering_id ORDER BY starts_at) AS projection_rank
+           FROM seven.inventory_windows w
+           WHERE offering_id = ANY($1::uuid[])
+         ) ranked WHERE projection_rank <= 500 ORDER BY offering_id, starts_at`,
     [offers.map((offer) => offer.offering_id)],
   );
   const windowsByOffering = new Map<string, typeof windows>();
