@@ -458,7 +458,12 @@ export function createApp(options: AppOptions = {}) {
         ? amenityText.split(',').map((value) => z.string().trim().min(1).max(80).parse(value)).slice(0, 20)
         : [];
 
-      // Load every public hotel candidate before ranking, then paginate the ranked list.
+      // Bound work before loading offering projections. Only approved, published STAY
+      // offers with live inventory for the requested date range enter the ranking stage.
+      // The cap is deliberately explicit and observable; ranking-v1 remains the fallback.
+      const searchStartedAt = performance.now();
+      const candidateLimit = 1000;
+      const candidateStartedAt = performance.now();
       const found = await rows(
         pool,
         `SELECT o.offering_id
@@ -469,9 +474,36 @@ export function createApp(options: AppOptions = {}) {
            AND b.workflow_state_id=${S.sid('APPROVED')}
            AND s.sector_code='STAY'
            AND ($1='' OR lower(o.city) LIKE $1)
-         ORDER BY o.created_at DESC`,
-        [city ? `%${city.toLowerCase()}%` : ''],
+           AND EXISTS (
+             SELECT 1
+             FROM seven.inventory_windows w
+             WHERE w.offering_id=o.offering_id
+               AND w.ends_at > now()
+               AND w.capacity > w.allocated_count
+               AND (w.starts_at + interval '1 hour')::date >=
+                   COALESCE($2::date, (now() AT TIME ZONE 'Africa/Lagos')::date)
+               AND ($2::date IS NULL OR (w.starts_at + interval '1 hour')::date <
+                   COALESCE($3::date, $2::date + 1))
+           )
+           AND (
+             $2::date IS NULL OR
+             (SELECT count(DISTINCT (w.starts_at + interval '1 hour')::date)
+              FROM seven.inventory_windows w
+              WHERE w.offering_id=o.offering_id
+                AND w.ends_at > now()
+                AND w.capacity - w.allocated_count >= $4
+                AND (w.starts_at + interval '1 hour')::date >= $2::date
+                AND (w.starts_at + interval '1 hour')::date <
+                    COALESCE($3::date, $2::date + 1)
+             ) = (COALESCE($3::date, $2::date + 1) - $2::date)
+           )
+         ORDER BY CASE WHEN $6='' THEN 0 WHEN lower(o.city)=lower($6) THEN 0 ELSE 1 END,
+                  o.created_at DESC, o.offering_id
+         LIMIT $5`,
+        [city ? `%${city.toLowerCase()}%` : '', startDate ?? null, endDate ?? null, rooms, candidateLimit, city],
       );
+      const candidateQueryMs = Math.round((performance.now() - candidateStartedAt) * 100) / 100;
+      const projectionStartedAt = performance.now();
       const offerings: C.Offering[] = [];
       for (let offset = 0; offset < found.length; offset += 12) {
         const batch = await Promise.all(
@@ -479,8 +511,10 @@ export function createApp(options: AppOptions = {}) {
         );
         offerings.push(...batch.filter((offer): offer is C.Offering => !!offer));
       }
+      const projectionMs = Math.round((performance.now() - projectionStartedAt) * 100) / 100;
 
       let ranked: ReturnType<typeof optimizeHotelBookings>;
+      const rankingStartedAt = performance.now();
       try {
         ranked = optimizeHotelBookings(
           offerings.map((offer) => ({
@@ -505,6 +539,22 @@ export function createApp(options: AppOptions = {}) {
           return fail(422, 'INVALID_HOTEL_SEARCH', error.message);
         throw error;
       }
+      const rankingMs = Math.round((performance.now() - rankingStartedAt) * 100) / 100;
+      console.info(JSON.stringify({
+        event: 'seven.hotel_search.measurement',
+        policyVersion: '7even-hotel-ranking-v1',
+        city: city || null,
+        dateScoped: !!startDate,
+        candidates: found.length,
+        candidateLimit,
+        candidateLimitReached: found.length === candidateLimit,
+        projectedOfferings: offerings.length,
+        rankedResults: ranked.length,
+        candidateQueryMs,
+        projectionMs,
+        rankingMs,
+        totalMs: Math.round((performance.now() - searchStartedAt) * 100) / 100,
+      }));
       const byId = new Map(offerings.map((offer) => [offer.id, offer]));
       return ranked.slice((page - 1) * size, page * size).flatMap((item) => {
         const hotel = byId.get(item.id);
