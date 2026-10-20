@@ -1,12 +1,17 @@
 import type { Offering, Sector } from '@7even/contracts';
+import { useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { EmptyState, ErrorNotice, Loading, OfferingCard } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
+import { api } from '../../lib/api.ts';
 import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 export function ExplorePage() {
   const [params, setParams] = useSearchParams();
+  const [aiMessage, setAiMessage] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const requestedKind = params.get('kind');
   const kind =
     requestedKind && ['STAY', 'DINING', 'EXPERIENCE'].includes(requestedKind)
@@ -29,6 +34,38 @@ export function ExplorePage() {
       if (value) next.set(key, value);
     }
     setParams(next);
+  }
+  async function searchWithAssistant(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (aiLoading || aiMessage.trim().length < 2) return;
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const result = await api<{
+        intent: {
+          city: string | null;
+          checkInDate: string | null;
+          checkOutDate: string | null;
+          rooms: number;
+          amenities: string[];
+          maxBudgetNaira: string | null;
+          clarification: string | null;
+        };
+        searchParams: Record<string, string>;
+      }>('/ai/interpret-search', {
+        method: 'POST',
+        body: { message: aiMessage.trim() },
+      });
+      if (result.intent.clarification) {
+        setAiError(result.intent.clarification);
+        return;
+      }
+      setParams(new URLSearchParams({ ...result.searchParams, page: '1' }));
+    } catch (cause) {
+      setAiError(cause instanceof Error ? cause.message : 'AI search is unavailable. Use the standard filters below.');
+    } finally {
+      setAiLoading(false);
+    }
   }
   function changeKind(value: string) {
     const next = new URLSearchParams(params);
@@ -54,6 +91,29 @@ export function ExplorePage() {
           </h1>
           <p>Rooms, dining and experiences from businesses on 7even.</p>
         </div>
+        <form className="explore-filters explore-ai-search" onSubmit={searchWithAssistant}>
+          <div className="explore-filter-heading">
+            <Search size={17} aria-hidden="true" />
+            <label htmlFor="explore-ai-query">Describe your stay</label>
+          </div>
+          <div>
+            <input
+              id="explore-ai-query"
+              name="aiQuery"
+              value={aiMessage}
+              onChange={(event) => setAiMessage(event.target.value)}
+              placeholder="e.g. Two nights in Lagos, a pool, and under ₦80,000"
+              maxLength={2000}
+              minLength={2}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={aiLoading || aiMessage.trim().length < 2}>
+            {aiLoading ? 'Understanding your request…' : 'Search with AI'}
+          </button>
+          {aiError && <p className="explore-ai-error" role="status">{aiError}</p>}
+          <p className="explore-ai-note">AI translates your request into search filters. Hotel availability, prices and booking confirmations come from 7even’s booking system.</p>
+        </form>
         <fieldset className="explore-categories">
           <legend className="sr-only">Browse categories</legend>
           {[
