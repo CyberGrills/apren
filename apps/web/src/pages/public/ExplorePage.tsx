@@ -91,6 +91,7 @@ export function ExplorePage() {
           </h1>
           <p>Rooms, dining and experiences from businesses on 7even.</p>
         </div>
+        {(!kind || kind === 'STAY') && (
         <form className="explore-filters explore-ai-search" onSubmit={searchWithAssistant}>
           <div className="explore-filter-heading">
             <Search size={17} aria-hidden="true" />
@@ -114,6 +115,7 @@ export function ExplorePage() {
           {aiError && <p className="explore-ai-error" role="status">{aiError}</p>}
           <p className="explore-ai-note">AI translates your request into search filters. Hotel availability, prices and booking confirmations come from 7even’s booking system.</p>
         </form>
+        )}
         <fieldset className="explore-categories">
           <legend className="sr-only">Browse categories</legend>
           {[
