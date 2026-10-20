@@ -239,6 +239,11 @@ test('7even real PostgreSQL API and invariant acceptance', {
           ['%lagos%', checkIn, checkOut, 2, 200],
         );
         assert.ok(explain.length > 0 && explain[0]?.['QUERY PLAN'], 'EXPLAIN ANALYZE plan must be captured');
+        const cityTrigramIndex = await one<{ exists: boolean }>(
+          pool,
+          "SELECT to_regclass('seven.offerings_public_city_trgm_idx') IS NOT NULL AS exists",
+        );
+        assert.equal(cityTrigramIndex?.exists, true, 'substring city searches need a trigram index');
         console.info(JSON.stringify({
           event: 'seven.hotel_search.synthetic_query_plan',
           queryPlan: explain[0]?.['QUERY PLAN'],
@@ -277,6 +282,22 @@ test('7even real PostgreSQL API and invariant acceptance', {
           "SELECT offering_id FROM seven.offerings WHERE title='Scale synthetic hotel 1'",
         );
         assert.equal(benchmarkIds[0], cheapestSynthetic?.offering_id, 'lowest-priced eligible synthetic hotel must remain in the global top results');
+        const inventoryFailures = await one<{ invalid: string }>(
+          pool,
+          `SELECT count(*) AS invalid
+           FROM unnest(\$1::uuid[]) AS selected(offering_id)
+           WHERE (
+             SELECT count(DISTINCT (w.starts_at + interval '1 hour')::date)
+             FROM seven.inventory_windows w
+             WHERE w.offering_id=selected.offering_id
+               AND w.ends_at>now()
+               AND w.capacity-w.allocated_count>=2
+               AND (w.starts_at + interval '1 hour')::date>=\$2::date
+               AND (w.starts_at + interval '1 hour')::date<\$3::date
+           ) <> (\$3::date - \$2::date)`,
+          [benchmarkIds, checkIn, checkOut],
+        );
+        assert.equal(inventoryFailures?.invalid, '0', 'every returned hotel must have capacity for every requested night');
 
         const optimizedHotels = await guest.request<C.Offering[]>(
           `/offerings?kind=STAY&startDate=${checkIn}&endDate=${checkOut}&rooms=2`,
