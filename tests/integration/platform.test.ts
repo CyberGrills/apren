@@ -197,7 +197,30 @@ test('7even real PostgreSQL API and invariant acceptance', {
            CROSS JOIN generate_series(1,1105) AS seq(series)
            RETURNING offering_id`,
         );
-        assert.equal(syntheticOffers.length, 1105, 'isolated scale fixture must contain 1,105 hotels');
+        assert.equal(syntheticOffers.length, 1105, 'isolated scale fixture must contain 1,105 eligible hotels');
+        const syntheticIneligibleOffers = await rows<{ offering_id: string }>(
+          pool,
+          `INSERT INTO seven.offerings
+             (offering_id,business_id,sector_id,title,description,city,price_minor,is_published,details)
+           SELECT gen_random_uuid(), approved.business_id,
+                  (SELECT sector_id FROM seven.sectors WHERE sector_code='STAY'),
+                  'Scale ineligible hotel ' || series,
+                  'Isolated no-inventory listing for keyset regression',
+                  'Lagos', 50000 + series * 1000, true,
+                  jsonb_build_object('amenities', jsonb_build_array('Wi-Fi'), 'capacity', 3)
+           FROM (
+             SELECT business_id FROM seven.businesses
+             WHERE workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
+             ORDER BY business_id LIMIT 1
+           ) approved
+           CROSS JOIN generate_series(1,175) AS seq(series)
+           RETURNING offering_id`,
+        );
+        assert.equal(syntheticIneligibleOffers.length, 175, 'mixed fixture must include ineligible listings between keyset batches');
+        const allSyntheticOfferIds = [
+          ...syntheticOffers.map((item) => item.offering_id),
+          ...syntheticIneligibleOffers.map((item) => item.offering_id),
+        ];
         await pool.query(
           `INSERT INTO seven.inventory_windows
              (inventory_window_id,offering_id,starts_at,ends_at,capacity)
@@ -213,29 +236,36 @@ test('7even real PostgreSQL API and invariant acceptance', {
         const explain = await rows<{ 'QUERY PLAN': unknown }>(
           pool,
           `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
-           SELECT o.offering_id
-           FROM seven.offerings o
-           JOIN seven.businesses b USING(business_id)
-           JOIN seven.sectors s USING(sector_id)
-           WHERE o.is_published
-             AND b.workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
-             AND s.sector_code='STAY'
-             AND lower(o.city) LIKE \$1
-             AND EXISTS (
-               SELECT 1 FROM seven.inventory_windows w
-               WHERE w.offering_id=o.offering_id AND w.ends_at>now()
-                 AND w.capacity>w.allocated_count
-                 AND (w.starts_at + interval '1 hour')::date>=\$2::date
-                 AND (w.starts_at + interval '1 hour')::date<\$3::date
-             )
-             AND (SELECT count(DISTINCT (w.starts_at + interval '1 hour')::date)
-                  FROM seven.inventory_windows w
-                  WHERE w.offering_id=o.offering_id AND w.ends_at>now()
-                    AND w.capacity-w.allocated_count>=\$4
-                    AND (w.starts_at + interval '1 hour')::date>=\$2::date
-                    AND (w.starts_at + interval '1 hour')::date<\$3::date)
-                 = (\$3::date - \$2::date)
-           ORDER BY o.offering_id LIMIT \$5`,
+           WITH raw_batch AS (
+             SELECT o.offering_id
+             FROM seven.offerings o
+             JOIN seven.businesses b USING(business_id)
+             JOIN seven.sectors s USING(sector_id)
+             WHERE o.is_published
+               AND b.workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
+               AND s.sector_code='STAY'
+               AND lower(o.city) LIKE \\$1
+             ORDER BY o.offering_id
+             LIMIT \\$5
+           ),
+           inventory_by_offering AS (
+             SELECT w.offering_id,
+               bool_or(w.ends_at>now() AND w.capacity>w.allocated_count) AS has_available_window,
+               count(DISTINCT (w.starts_at + interval '1 hour')::date) FILTER (
+                 WHERE w.ends_at>now() AND w.capacity-w.allocated_count>=\\$4
+               ) AS nights_with_capacity
+             FROM seven.inventory_windows w
+             JOIN raw_batch rb USING(offering_id)
+             WHERE (w.starts_at + interval '1 hour')::date>=\\$2::date
+               AND (w.starts_at + interval '1 hour')::date<\\$3::date
+             GROUP BY w.offering_id
+           )
+           SELECT rb.offering_id,
+             (COALESCE(ibo.has_available_window,false)
+              AND COALESCE(ibo.nights_with_capacity,0)=(\\$3::date-\\$2::date)) AS eligible
+           FROM raw_batch rb
+           LEFT JOIN inventory_by_offering ibo USING(offering_id)
+           ORDER BY rb.offering_id`,
           ['%lagos%', checkIn, checkOut, 2, 200],
         );
         assert.ok(explain.length > 0 && explain[0]?.['QUERY PLAN'], 'EXPLAIN ANALYZE plan must be captured');
@@ -341,11 +371,11 @@ test('7even real PostgreSQL API and invariant acceptance', {
 
         await pool.query(
           'DELETE FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[])',
-          [syntheticOffers.map((item) => item.offering_id)],
+          [allSyntheticOfferIds],
         );
         await pool.query(
           'DELETE FROM seven.offerings WHERE offering_id = ANY($1::uuid[])',
-          [syntheticOffers.map((item) => item.offering_id)],
+          [allSyntheticOfferIds],
         );
       },
     );
