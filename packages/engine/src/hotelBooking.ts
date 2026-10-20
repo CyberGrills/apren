@@ -49,6 +49,13 @@ export interface HotelBookingOptimization {
   policyVersion: '7even-hotel-ranking-v1';
 }
 
+/** Global normalization inputs used to keep independently processed batches ranking-equivalent. */
+export interface HotelBookingRankingStats {
+  minEstimatedBaseTotalMinor: string;
+  maxEstimatedBaseTotalMinor: string;
+  maxRoomsAvailable: number;
+}
+
 interface EligibleCandidate {
   hotel: HotelBookingCandidate;
   checkInDate: string;
@@ -137,6 +144,7 @@ function cityFit(hotelCity: string, requestedCity: string): number {
 export function optimizeHotelBookings(
   candidates: readonly HotelBookingCandidate[],
   criteria: HotelBookingCriteria = {},
+  rankingStats?: HotelBookingRankingStats,
 ): HotelBookingOptimization[] {
   const rooms = criteria.rooms ?? 1;
   if (!Number.isSafeInteger(rooms) || rooms < 1 || rooms > 100) {
@@ -221,15 +229,23 @@ export function optimizeHotelBookings(
 
   if (eligible.length === 0) return [];
 
-  const minTotal = eligible.reduce((lowest, candidate) =>
-    candidate.estimatedBaseTotal < lowest ? candidate.estimatedBaseTotal : lowest,
-    eligible[0]!.estimatedBaseTotal,
-  );
-  const maxTotal = eligible.reduce((highest, candidate) =>
-    candidate.estimatedBaseTotal > highest ? candidate.estimatedBaseTotal : highest,
-    eligible[0]!.estimatedBaseTotal,
-  );
-  const maxRoomsAvailable = Math.max(...eligible.map((candidate) => candidate.roomsAvailable));
+  const minTotal = rankingStats
+    ? validMinor(rankingStats.minEstimatedBaseTotalMinor, 'Minimum eligible base total')
+    : eligible.reduce((lowest, candidate) =>
+        candidate.estimatedBaseTotal < lowest ? candidate.estimatedBaseTotal : lowest,
+        eligible[0]!.estimatedBaseTotal,
+      );
+  const maxTotal = rankingStats
+    ? validMinor(rankingStats.maxEstimatedBaseTotalMinor, 'Maximum eligible base total')
+    : eligible.reduce((highest, candidate) =>
+        candidate.estimatedBaseTotal > highest ? candidate.estimatedBaseTotal : highest,
+        eligible[0]!.estimatedBaseTotal,
+      );
+  const maxRoomsAvailable = rankingStats?.maxRoomsAvailable
+    ?? Math.max(...eligible.map((candidate) => candidate.roomsAvailable));
+  if (maxTotal < minTotal || !Number.isSafeInteger(maxRoomsAvailable) || maxRoomsAvailable < 1) {
+    throw new RangeError('Global hotel ranking statistics are invalid.');
+  }
   const activeWeight = 45 + 25 + (requestedCity ? 15 : 0) + (requiredAmenities.length ? 15 : 0);
 
   const ranked = eligible.map((candidate) => {
