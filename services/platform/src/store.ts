@@ -256,6 +256,77 @@ export async function offeringProjection(db: Connection, id: string, activeInven
     })),
   };
 }
+export async function offeringProjections(
+  db: Connection,
+  ids: string[],
+  activeInventoryOnly = false,
+): Promise<Offering[]> {
+  if (ids.length === 0) return [];
+  const offers = await rows(
+    db,
+    `SELECT o.*,s.sector_code,b.business_name,b.details AS business_details
+     FROM seven.offerings o
+     JOIN seven.sectors s USING(sector_id)
+     JOIN seven.businesses b USING(business_id)
+     WHERE o.offering_id = ANY($1::uuid[])`,
+    [ids],
+  );
+  if (offers.length === 0) return [];
+  const windows = await rows(
+    db,
+    activeInventoryOnly
+      ? 'SELECT * FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[]) AND ends_at > now() ORDER BY starts_at'
+      : 'SELECT * FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[]) ORDER BY starts_at',
+    [offers.map((offer) => offer.offering_id)],
+  );
+  const windowsByOffering = new Map<string, typeof windows>();
+  for (const window of windows) {
+    const key = window.offering_id as string;
+    const list = windowsByOffering.get(key) ?? [];
+    list.push(window);
+    windowsByOffering.set(key, list);
+  }
+  const projected = new Map<string, Offering>();
+  for (const r of offers) {
+    const offerWindows = windowsByOffering.get(r.offering_id) ?? [];
+    projected.set(r.offering_id, {
+      id: r.offering_id,
+      businessId: r.business_id,
+      venueId: r.venue_id ?? '',
+      businessName: r.business_name,
+      title: r.title,
+      description: r.description,
+      kind: r.sector_code,
+      city: r.city,
+      address: r.details.address ?? r.business_details.address ?? '',
+      priceMinor: r.price_minor,
+      currency: 'NGN',
+      unitLabel: r.sector_code === 'STAY' ? 'night' : r.sector_code === 'DINING' ? 'guest' : 'person',
+      capacity: r.details.capacity ?? 1,
+      images: r.details.images ?? [],
+      amenities: r.details.amenities ?? [],
+      cancellationHours: r.details.cancellationHours ?? 24,
+      taxBps: r.tax_bps,
+      discountBps: r.details.discountBps ?? 0,
+      published: r.is_published,
+      revision: r.revision,
+      isSample: !!r.business_details.isSample,
+      windows: offerWindows.map((w) => ({
+        id: w.inventory_window_id,
+        serviceDate: new Date(new Date(w.starts_at).getTime() + 3600000).toISOString().slice(0, 10),
+        startAt: iso(w.starts_at),
+        endAt: iso(w.ends_at),
+        capacity: w.capacity,
+        remaining: w.capacity - w.allocated_count,
+        revision: w.revision,
+      })),
+    });
+  }
+  return ids.flatMap((id) => {
+    const offer = projected.get(id);
+    return offer ? [offer] : [];
+  });
+}
 export async function quoteProjection(db: Connection, id: string): Promise<Quote | null> {
   const r = await one(db, 'SELECT * FROM seven.quotes WHERE quote_id=$1', [id]);
   if (!r) return null;
