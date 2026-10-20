@@ -8,5 +8,11 @@
       "source": "/((?!api/|api$).*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/[...path].ts": {
+      "maxDuration": 30,
+      "includeFiles": "packages/**"
+    }
+  }
 }
