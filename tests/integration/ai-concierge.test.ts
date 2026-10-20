@@ -26,6 +26,15 @@ test('hotel search intent schema rejects extra fields and invalid room counts', 
     maxBudgetNaira: null,
     clarification: null,
   }).success, false);
+  assert.equal(hotelSearchIntentSchema.safeParse({
+    city: 'Lagos',
+    checkInDate: '2026-02-31',
+    checkOutDate: '2026-03-03',
+    rooms: 1,
+    amenities: [],
+    maxBudgetNaira: null,
+    clarification: null,
+  }).success, false);
 });
 
 test('hotel search parameters convert Naira to exact kobo and preserve deterministic filters', () => {
