@@ -140,7 +140,9 @@ export function toHotelSearchParams(intent: HotelSearchIntent): URLSearchParams 
   if (intent.checkOutDate) params.set('endDate', intent.checkOutDate);
   if (intent.amenities.length) params.set('amenities', intent.amenities.join(','));
   if (intent.maxBudgetNaira !== null) {
-    const [whole, fraction = ''] = intent.maxBudgetNaira.split('.');
+    const parts = intent.maxBudgetNaira.split('.');
+    const whole = parts[0] ?? '0';
+    const fraction = parts[1] ?? '';
     const minor = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
     params.set('maxBaseTotalMinor', minor.toString());
   }
