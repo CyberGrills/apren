@@ -12,7 +12,7 @@ CREATE INDEX IF NOT EXISTS offerings_public_city_created_idx
 -- A plain btree on lower(city) cannot accelerate that predicate; use pg_trgm.
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-DO $
+DO $migration$
 DECLARE
   trigram_schema text;
 BEGIN
@@ -32,7 +32,7 @@ BEGIN
     'CREATE INDEX IF NOT EXISTS offerings_public_city_trgm_idx ON seven.offerings USING gin (lower(city) %I.gin_trgm_ops) WHERE is_published',
     trigram_schema
   );
-END $;
+END $migration$;
 
 CREATE INDEX IF NOT EXISTS businesses_workflow_business_idx
   ON seven.businesses (workflow_state_id, business_id);
