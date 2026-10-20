@@ -244,25 +244,25 @@ test('7even real PostgreSQL API and invariant acceptance', {
              WHERE o.is_published
                AND b.workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
                AND s.sector_code='STAY'
-               AND lower(o.city) LIKE \\$1
+               AND lower(o.city) LIKE \$1
              ORDER BY o.offering_id
-             LIMIT \\$5
+             LIMIT \$5
            ),
            inventory_by_offering AS (
              SELECT w.offering_id,
                bool_or(w.ends_at>now() AND w.capacity>w.allocated_count) AS has_available_window,
                count(DISTINCT (w.starts_at + interval '1 hour')::date) FILTER (
-                 WHERE w.ends_at>now() AND w.capacity-w.allocated_count>=\\$4
+                 WHERE w.ends_at>now() AND w.capacity-w.allocated_count>=\$4
                ) AS nights_with_capacity
              FROM seven.inventory_windows w
              JOIN raw_batch rb USING(offering_id)
-             WHERE (w.starts_at + interval '1 hour')::date>=\\$2::date
-               AND (w.starts_at + interval '1 hour')::date<\\$3::date
+             WHERE (w.starts_at + interval '1 hour')::date>=\$2::date
+               AND (w.starts_at + interval '1 hour')::date<\$3::date
              GROUP BY w.offering_id
            )
            SELECT rb.offering_id,
              (COALESCE(ibo.has_available_window,false)
-              AND COALESCE(ibo.nights_with_capacity,0)=(\\$3::date-\\$2::date)) AS eligible
+              AND COALESCE(ibo.nights_with_capacity,0)=(\$3::date-\$2::date)) AS eligible
            FROM raw_batch rb
            LEFT JOIN inventory_by_offering ibo USING(offering_id)
            ORDER BY rb.offering_id`,
