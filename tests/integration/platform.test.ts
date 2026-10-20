@@ -254,7 +254,7 @@ test('7even real PostgreSQL API and invariant acceptance', {
           searchDurations.push(performance.now() - startedAt);
           assert.equal(benchmark.status, 200, JSON.stringify(benchmark));
           assert.equal(benchmark.data.length, 10);
-          assert.ok(benchmark.data.every((hotel) => hotel.bookingOptimization?.roomsAvailable >= 2));
+          assert.ok(benchmark.data.every((hotel) => (hotel.bookingOptimization?.roomsAvailable ?? 0) >= 2));
           const ids = benchmark.data.map((hotel) => hotel.id);
           if (attempt === 0) benchmarkIds = ids;
           else assert.deepEqual(ids, benchmarkIds, 'repeated searches must return deterministic top results');
