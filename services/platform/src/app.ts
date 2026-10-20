@@ -458,14 +458,22 @@ export function createApp(options: AppOptions = {}) {
         ? amenityText.split(',').map((value) => z.string().trim().min(1).max(80).parse(value)).slice(0, 20)
         : [];
 
-      // Retrieve every eligible candidate: a fixed cap silently hides valid hotels from
-      // nationwide searches. Indexed eligibility filters constrain database work; ranking-v1
-      // remains deterministic and evaluates the complete eligible set.
+      // Scan eligible IDs in stable keyset batches. A first pass collects the
+      // global normalization statistics used by ranking-v1; a second pass ranks
+      // batches with those same statistics and retains only the requested top-K.
       const searchStartedAt = performance.now();
-      const candidateStartedAt = performance.now();
-      const found = await rows(
-        pool,
-        `SELECT o.offering_id
+      const batchSize = 200;
+      const asOf = new Date().toISOString();
+      const baseCriteria = {
+        checkInDate: startDate,
+        checkOutDate: endDate,
+        rooms,
+        city: city || undefined,
+        amenities,
+        maxBaseTotalMinor,
+        asOf,
+      };
+      const candidateSql = `SELECT o.offering_id
          FROM seven.offerings o
          JOIN seven.businesses b USING(business_id)
          JOIN seven.sectors s USING(sector_id)
@@ -473,17 +481,16 @@ export function createApp(options: AppOptions = {}) {
            AND b.workflow_state_id=${S.sid('APPROVED')}
            AND s.sector_code='STAY'
            AND ($1='' OR lower(o.city) LIKE $1)
-           AND EXISTS (
-             SELECT 1
-             FROM seven.inventory_windows w
-             WHERE w.offering_id=o.offering_id
-               AND w.ends_at > now()
-               AND w.capacity > w.allocated_count
-               AND (w.starts_at + interval '1 hour')::date >=
-                   COALESCE($2::date, (now() AT TIME ZONE 'Africa/Lagos')::date)
-               AND ($2::date IS NULL OR (w.starts_at + interval '1 hour')::date <
-                   COALESCE($3::date, $2::date + 1))
-           )
+           AND ($2::date IS NULL OR
+             EXISTS (
+               SELECT 1 FROM seven.inventory_windows w
+               WHERE w.offering_id=o.offering_id
+                 AND w.ends_at > now()
+                 AND w.capacity > w.allocated_count
+                 AND (w.starts_at + interval '1 hour')::date >= $2::date
+                 AND (w.starts_at + interval '1 hour')::date <
+                     COALESCE($3::date, $2::date + 1)
+             ))
            AND (
              $2::date IS NULL OR
              (SELECT count(DISTINCT (w.starts_at + interval '1 hour')::date)
@@ -496,24 +503,50 @@ export function createApp(options: AppOptions = {}) {
                     COALESCE($3::date, $2::date + 1)
              ) = (COALESCE($3::date, $2::date + 1) - $2::date)
            )
-         ORDER BY CASE WHEN $5='' THEN 0 WHEN lower(o.city)=lower($5) THEN 0 ELSE 1 END,
-                  o.created_at DESC, o.offering_id
-         `,
-        [city ? `%${city.toLowerCase()}%` : '', startDate ?? null, endDate ?? null, rooms, city],
-      );
-      const candidateQueryMs = Math.round((performance.now() - candidateStartedAt) * 100) / 100;
-      const projectionStartedAt = performance.now();
-      const offerings = await S.offeringProjections(
-        pool,
-        found.map((row) => row.offering_id),
-        true,
-      );
-      const projectionMs = Math.round((performance.now() - projectionStartedAt) * 100) / 100;
+           AND ($5::uuid IS NULL OR o.offering_id > $5::uuid)
+         ORDER BY o.offering_id
+         LIMIT $6`;
+      const candidateValues = (cursor: string | null) => [
+        city ? `%${city.toLowerCase()}%` : '',
+        startDate ?? null,
+        endDate ?? null,
+        rooms,
+        cursor,
+        batchSize,
+      ];
+      const scanBatches = async (
+        visit: (ids: string[]) => Promise<void>,
+      ): Promise<{ count: number; queryMs: number }> => {
+        let cursor: string | null = null;
+        let count = 0;
+        let queryMs = 0;
+        while (true) {
+          const queryStartedAt = performance.now();
+          const found = await rows(pool, candidateSql, candidateValues(cursor));
+          queryMs += performance.now() - queryStartedAt;
+          if (found.length === 0) break;
+          const ids = found.map((row) => String(row.offering_id));
+          await visit(ids);
+          count += ids.length;
+          cursor = ids[ids.length - 1]!;
+          if (found.length < batchSize) break;
+        }
+        return { count, queryMs };
+      };
 
-      let ranked: ReturnType<typeof optimizeHotelBookings>;
-      const rankingStartedAt = performance.now();
-      try {
-        ranked = optimizeHotelBookings(
+      let globalMinTotal: bigint | null = null;
+      let globalMaxTotal: bigint | null = null;
+      let globalMaxRooms = 0;
+      let projectedOfferings = 0;
+      let projectionMs = 0;
+      let rankingMs = 0;
+      const firstPass = await scanBatches(async (ids) => {
+        const projectionStartedAt = performance.now();
+        const offerings = await S.offeringProjections(pool, ids, true);
+        projectionMs += performance.now() - projectionStartedAt;
+        projectedOfferings += offerings.length;
+        const rankingStartedAt = performance.now();
+        const batchRanked = optimizeHotelBookings(
           offerings.map((offer) => ({
             id: offer.id,
             title: offer.title,
@@ -522,40 +555,91 @@ export function createApp(options: AppOptions = {}) {
             amenities: offer.amenities,
             windows: offer.windows,
           })),
-          {
-            checkInDate: startDate,
-            checkOutDate: endDate,
-            rooms,
-            city: city || undefined,
-            amenities,
-            maxBaseTotalMinor,
-          },
+          baseCriteria,
         );
-      } catch (error) {
-        if (error instanceof RangeError)
-          return fail(422, 'INVALID_HOTEL_SEARCH', error.message);
-        throw error;
+        rankingMs += performance.now() - rankingStartedAt;
+        for (const item of batchRanked) {
+          const total = BigInt(item.estimatedBaseTotalMinor);
+          globalMinTotal = globalMinTotal === null || total < globalMinTotal ? total : globalMinTotal;
+          globalMaxTotal = globalMaxTotal === null || total > globalMaxTotal ? total : globalMaxTotal;
+          globalMaxRooms = Math.max(globalMaxRooms, item.roomsAvailable);
+        }
+      });
+
+      const topK = page * size;
+      type RankedHotel = ReturnType<typeof optimizeHotelBookings>[number];
+      const top: Array<{ item: RankedHotel; hotel: C.Offering }> = [];
+      const compareRanked = (a: RankedHotel, b: RankedHotel) =>
+        b.matchScore - a.matchScore
+        || (BigInt(a.estimatedBaseTotalMinor) < BigInt(b.estimatedBaseTotalMinor) ? -1
+          : BigInt(a.estimatedBaseTotalMinor) > BigInt(b.estimatedBaseTotalMinor) ? 1 : 0)
+        || b.roomsAvailable - a.roomsAvailable
+        || a.id.localeCompare(b.id);
+      let secondPassCandidates = 0;
+      if (globalMinTotal !== null && globalMaxTotal !== null && globalMaxRooms > 0) {
+        const rankingStats = {
+          minEstimatedBaseTotalMinor: globalMinTotal.toString(),
+          maxEstimatedBaseTotalMinor: globalMaxTotal.toString(),
+          maxRoomsAvailable: globalMaxRooms,
+        };
+        await scanBatches(async (ids) => {
+          const projectionStartedAt = performance.now();
+          const offerings = await S.offeringProjections(pool, ids, true);
+          projectionMs += performance.now() - projectionStartedAt;
+          secondPassCandidates += ids.length;
+          const rankingStartedAt = performance.now();
+          let batchRanked: RankedHotel[];
+          try {
+            batchRanked = optimizeHotelBookings(
+              offerings.map((offer) => ({
+                id: offer.id,
+                title: offer.title,
+                city: offer.city,
+                priceMinor: offer.priceMinor,
+                amenities: offer.amenities,
+                windows: offer.windows,
+              })),
+              baseCriteria,
+              rankingStats,
+            );
+          } catch (error) {
+            if (error instanceof RangeError)
+              throw error;
+            throw error;
+          }
+          rankingMs += performance.now() - rankingStartedAt;
+          const byId = new Map(offerings.map((offer) => [offer.id, offer]));
+          for (const item of batchRanked) {
+            const hotel = byId.get(item.id);
+            if (hotel) top.push({ item, hotel });
+          }
+          top.sort((a, b) => compareRanked(a.item, b.item));
+          if (top.length > topK) top.length = topK;
+        });
       }
-      const rankingMs = Math.round((performance.now() - rankingStartedAt) * 100) / 100;
+      const candidateQueryMs = Math.round(firstPass.queryMs * 100) / 100;
+      projectionMs = Math.round(projectionMs * 100) / 100;
+      rankingMs = Math.round(rankingMs * 100) / 100;
+      const rankedResults = top.map(({ item }) => item);
       console.info(JSON.stringify({
         event: 'seven.hotel_search.measurement',
         policyVersion: '7even-hotel-ranking-v1',
         city: city || null,
         dateScoped: !!startDate,
-        candidates: found.length,
+        candidates: firstPass.count,
+        candidateBatchSize: batchSize,
+        candidatePasses: globalMinTotal === null ? 1 : 2,
         candidateCap: null,
         candidateCapReached: false,
-        projectedOfferings: offerings.length,
-        rankedResults: ranked.length,
+        projectedOfferings,
+        secondPassCandidates,
+        rankedResults: rankedResults.length,
         candidateQueryMs,
         projectionMs,
         rankingMs,
         totalMs: Math.round((performance.now() - searchStartedAt) * 100) / 100,
       }));
-      const byId = new Map(offerings.map((offer) => [offer.id, offer]));
-      return ranked.slice((page - 1) * size, page * size).flatMap((item) => {
-        const hotel = byId.get(item.id);
-        if (!hotel) return [];
+      return top.slice((page - 1) * size, page * size).map(({ item, hotel }) => {
         const bookingOptimization = {
           checkInDate: item.checkInDate,
           checkOutDate: item.checkOutDate,
@@ -568,7 +652,7 @@ export function createApp(options: AppOptions = {}) {
           checkedAt: item.checkedAt,
           policyVersion: item.policyVersion,
         };
-        return [{ ...hotel, bookingOptimization }];
+        return { ...hotel, bookingOptimization };
       });
     }
 
