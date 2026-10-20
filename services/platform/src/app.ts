@@ -504,13 +504,11 @@ export function createApp(options: AppOptions = {}) {
       );
       const candidateQueryMs = Math.round((performance.now() - candidateStartedAt) * 100) / 100;
       const projectionStartedAt = performance.now();
-      const offerings: C.Offering[] = [];
-      for (let offset = 0; offset < found.length; offset += 12) {
-        const batch = await Promise.all(
-          found.slice(offset, offset + 12).map((row) => S.offeringProjection(pool, row.offering_id, true)),
-        );
-        offerings.push(...batch.filter((offer): offer is C.Offering => !!offer));
-      }
+      const offerings = await S.offeringProjections(
+        pool,
+        found.map((row) => row.offering_id),
+        true,
+      );
       const projectionMs = Math.round((performance.now() - projectionStartedAt) * 100) / 100;
 
       let ranked: ReturnType<typeof optimizeHotelBookings>;
