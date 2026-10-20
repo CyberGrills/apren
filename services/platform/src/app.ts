@@ -589,6 +589,7 @@ export function createApp(options: AppOptions = {}) {
           const projectionStartedAt = performance.now();
           const offerings = await S.offeringProjections(searchDb, ids, true);
           projectionMs += performance.now() - projectionStartedAt;
+          projectedOfferings += offerings.length;
           secondPassCandidates += ids.length;
           const rankingStartedAt = performance.now();
           const batchRanked: RankedHotel[] = optimizeHotelBookings(
