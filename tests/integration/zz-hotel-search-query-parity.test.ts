@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { optimizeHotelBookings } from '@7even/engine';
 import { createPool, one, rows, transaction } from '../../services/platform/src/db.ts';
+import * as S from '../../services/platform/src/store.ts';
 
 const batchSize = 200;
 const rooms = 2;
@@ -108,6 +110,39 @@ test('legacy correlated and grouped hotel eligibility match on the same isolated
         const legacy = await scan(db, legacySql, scenario.city, scenario.start, scenario.end);
         const grouped = await scan(db, groupedSql, scenario.city, scenario.start, scenario.end);
         assert.deepEqual(grouped.ids, legacy.ids, 'Candidate ID/order parity failed for ' + scenario.name);
+        if (scenario.name === 'single-night') {
+          // Run the same production ranking policy against each strategy's
+          // independently retrieved candidates, not just the candidate IDs.
+          const legacyOffers = await S.offeringProjections(db, legacy.ids, true);
+          const groupedOffers = await S.offeringProjections(db, grouped.ids, true);
+          const criteria = {
+            checkInDate: start,
+            checkOutDate: lagosDateOffset(8),
+            rooms,
+            city: 'Lagos',
+            amenities: [] as string[],
+            asOf: new Date().toISOString(),
+          };
+          const rank = (offers: typeof legacyOffers) => optimizeHotelBookings(
+            offers.map((offer) => ({
+              id: offer.id,
+              title: offer.title,
+              city: offer.city,
+              priceMinor: offer.priceMinor,
+              amenities: offer.amenities,
+              windows: offer.windows,
+            })),
+            criteria,
+          ).map((item) => ({
+            id: item.id,
+            matchScore: item.matchScore,
+            estimatedBaseTotalMinor: item.estimatedBaseTotalMinor,
+            roomsAvailable: item.roomsAvailable,
+            reasons: item.reasons,
+            policyVersion: item.policyVersion,
+          }));
+          assert.deepEqual(rank(groupedOffers), rank(legacyOffers), 'Ranked hotel IDs, order, scores, and reasons must match.');
+        }
       }
       const legacyTimes: number[] = [];
       const groupedTimes: number[] = [];
