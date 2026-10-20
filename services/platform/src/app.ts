@@ -481,16 +481,16 @@ export function createApp(options: AppOptions = {}) {
            AND b.workflow_state_id=${S.sid('APPROVED')}
            AND s.sector_code='STAY'
            AND ($1='' OR lower(o.city) LIKE $1)
-           AND ($2::date IS NULL OR
-             EXISTS (
-               SELECT 1 FROM seven.inventory_windows w
-               WHERE w.offering_id=o.offering_id
-                 AND w.ends_at > now()
-                 AND w.capacity > w.allocated_count
-                 AND (w.starts_at + interval '1 hour')::date >= $2::date
-                 AND (w.starts_at + interval '1 hour')::date <
-                     COALESCE($3::date, $2::date + 1)
-             ))
+           AND EXISTS (
+             SELECT 1 FROM seven.inventory_windows w
+             WHERE w.offering_id=o.offering_id
+               AND w.ends_at > now()
+               AND w.capacity > w.allocated_count
+               AND (w.starts_at + interval '1 hour')::date >=
+                   COALESCE($2::date, (now() AT TIME ZONE 'Africa/Lagos')::date)
+               AND ($2::date IS NULL OR (w.starts_at + interval '1 hour')::date <
+                   COALESCE($3::date, $2::date + 1))
+           )
            AND (
              $2::date IS NULL OR
              (SELECT count(DISTINCT (w.starts_at + interval '1 hour')::date)
@@ -582,7 +582,7 @@ export function createApp(options: AppOptions = {}) {
           maxEstimatedBaseTotalMinor: globalMaxTotal.toString(),
           maxRoomsAvailable: globalMaxRooms,
         };
-        await scanBatches(async (ids) => {
+        const secondPass = await scanBatches(async (ids) => {
           const projectionStartedAt = performance.now();
           const offerings = await S.offeringProjections(pool, ids, true);
           projectionMs += performance.now() - projectionStartedAt;
@@ -617,7 +617,7 @@ export function createApp(options: AppOptions = {}) {
           if (top.length > topK) top.length = topK;
         });
       }
-      const candidateQueryMs = Math.round(firstPass.queryMs * 100) / 100;
+      const candidateQueryMs = Math.round((firstPass.queryMs + (globalMinTotal === null ? 0 : secondPass!.queryMs)) * 100) / 100;
       projectionMs = Math.round(projectionMs * 100) / 100;
       rankingMs = Math.round(rankingMs * 100) / 100;
       const rankedResults = top.map(({ item }) => item);
