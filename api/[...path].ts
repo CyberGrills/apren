@@ -10,4 +10,15 @@ const environment =
 
 const { app } = createApp({ environment });
 
-export default app;
+type HandlerRequest = Parameters<typeof app>[0];
+type HandlerResponse = Parameters<typeof app>[1];
+
+export default function handler(req: HandlerRequest, res: HandlerResponse) {
+  // Vercel catch-all functions may receive a path relative to /api. The
+  // platform router registers canonical /api/... paths, so normalize once.
+  const url = req.url ?? "/";
+  if (!url.startsWith("/api/") && url !== "/api") {
+    req.url = `/api${url.startsWith("/") ? "" : "/"}${url}`;
+  }
+  return app(req, res);
+}

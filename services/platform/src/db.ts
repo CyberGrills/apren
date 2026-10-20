@@ -1,8 +1,10 @@
 import pg from 'pg';
 import type { Pool, PoolClient, QueryResultRow } from 'pg';
 
-export function createPool(connectionString = process.env.DATABASE_URL): Pool {
-  if (!connectionString) throw new Error('DATABASE_URL is required.');
+export function createPool(
+  connectionString = process.env.DATABASE_URL ?? process.env.POSTGRES_URL,
+): Pool {
+  if (!connectionString) throw new Error('DATABASE_URL or POSTGRES_URL is required.');
   const serverless = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
   return new pg.Pool({
     connectionString,
