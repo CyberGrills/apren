@@ -587,29 +587,22 @@ export function createApp(options: AppOptions = {}) {
         };
         const secondPass = await scanBatches(async (ids) => {
           const projectionStartedAt = performance.now();
-          const offerings = await S.offeringProjections(pool, ids, true);
+          const offerings = await S.offeringProjections(searchDb, ids, true);
           projectionMs += performance.now() - projectionStartedAt;
           secondPassCandidates += ids.length;
           const rankingStartedAt = performance.now();
-          let batchRanked: RankedHotel[];
-          try {
-            batchRanked = optimizeHotelBookings(
-              offerings.map((offer) => ({
-                id: offer.id,
-                title: offer.title,
-                city: offer.city,
-                priceMinor: offer.priceMinor,
-                amenities: offer.amenities,
-                windows: offer.windows,
-              })),
-              baseCriteria,
-              rankingStats,
-            );
-          } catch (error) {
-            if (error instanceof RangeError)
-              throw error;
-            throw error;
-          }
+          const batchRanked: RankedHotel[] = optimizeHotelBookings(
+            offerings.map((offer) => ({
+              id: offer.id,
+              title: offer.title,
+              city: offer.city,
+              priceMinor: offer.priceMinor,
+              amenities: offer.amenities,
+              windows: offer.windows,
+            })),
+            baseCriteria,
+            rankingStats,
+          );
           rankingMs += performance.now() - rankingStartedAt;
           const byId = new Map(offerings.map((offer) => [offer.id, offer]));
           for (const item of batchRanked) {
