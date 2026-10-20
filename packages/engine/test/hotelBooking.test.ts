@@ -110,4 +110,42 @@ describe('7even real-time hotel booking optimizer', () => {
       asOf,
     }), []);
   });
+  it('preserves full-corpus ranking when candidates are processed in bounded batches with global statistics', () => {
+    const hotels = [
+      candidate('hotel-01', '2500000', 'Lagos', 4),
+      candidate('hotel-02', '1000000', 'Lagos', 4),
+      candidate('hotel-03', '1500000', 'Lagos', 8),
+      candidate('hotel-04', '1800000', 'Uyo', 6),
+      candidate('hotel-05', '1200000', 'Abuja', 3),
+      candidate('hotel-06', '2200000', 'Lagos', 7),
+    ];
+    const criteria = {
+      checkInDate: '2026-10-20',
+      checkOutDate: '2026-10-22',
+      rooms: 2,
+      city: 'Lagos',
+      amenities: ['wi-fi'],
+      asOf,
+    };
+    const baseline = optimizeHotelBookings(hotels, criteria);
+    const totals = baseline.map((item) => BigInt(item.estimatedBaseTotalMinor));
+    const stats = {
+      minEstimatedBaseTotalMinor: totals.reduce((a, b) => a < b ? a : b).toString(),
+      maxEstimatedBaseTotalMinor: totals.reduce((a, b) => a > b ? a : b).toString(),
+      maxRoomsAvailable: Math.max(...baseline.map((item) => item.roomsAvailable)),
+    };
+    const batched = [
+      ...optimizeHotelBookings(hotels.slice(0, 2), criteria, stats),
+      ...optimizeHotelBookings(hotels.slice(2, 4), criteria, stats),
+      ...optimizeHotelBookings(hotels.slice(4), criteria, stats),
+    ].sort((a, b) =>
+      b.matchScore - a.matchScore
+      || (BigInt(a.estimatedBaseTotalMinor) < BigInt(b.estimatedBaseTotalMinor) ? -1
+        : BigInt(a.estimatedBaseTotalMinor) > BigInt(b.estimatedBaseTotalMinor) ? 1 : 0)
+      || b.roomsAvailable - a.roomsAvailable
+      || a.id.localeCompare(b.id),
+    );
+    assert.deepEqual(batched, baseline);
+  });
+
 });
