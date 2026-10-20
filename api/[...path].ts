@@ -79,8 +79,8 @@ export default async function handler(req: HandlerRequest, res: HandlerResponse)
   }
 
   try {
-    app ??= createApp({ environment });
-    return app(req, res);
+    const application = app ?? (app = createApp({ environment }).app);
+    return application(req, res);
   } catch (error) {
     console.error(
       "7even API initialization failed",
