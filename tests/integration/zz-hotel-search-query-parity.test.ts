@@ -22,7 +22,7 @@ async function scan(db: Parameters<typeof rows>[0], sql: string, city: string, s
   let queries = 0;
   const began = performance.now();
   while (true) {
-    const found = await rows<CandidateRow>(db, sql, [city, start, end, rooms, cursor, batchSize]);
+    const found: CandidateRow[] = await rows<CandidateRow>(db, sql, [city, start, end, rooms, cursor, batchSize]);
     queries++;
     if (found.length === 0) break;
     for (const row of found) if (row.eligible === undefined || row.eligible) ids.push(String(row.offering_id));
