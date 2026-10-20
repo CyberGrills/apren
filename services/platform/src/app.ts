@@ -576,6 +576,7 @@ export function createApp(options: AppOptions = {}) {
         || b.roomsAvailable - a.roomsAvailable
         || a.id.localeCompare(b.id);
       let secondPassCandidates = 0;
+      let secondPassQueryMs = 0;
       if (globalMinTotal !== null && globalMaxTotal !== null && globalMaxRooms > 0) {
         const rankingStats = {
           minEstimatedBaseTotalMinor: globalMinTotal.toString(),
@@ -616,8 +617,9 @@ export function createApp(options: AppOptions = {}) {
           top.sort((a, b) => compareRanked(a.item, b.item));
           if (top.length > topK) top.length = topK;
         });
+        secondPassQueryMs = secondPass.queryMs;
       }
-      const candidateQueryMs = Math.round((firstPass.queryMs + (globalMinTotal === null ? 0 : secondPass!.queryMs)) * 100) / 100;
+      const candidateQueryMs = Math.round((firstPass.queryMs + secondPassQueryMs) * 100) / 100;
       projectionMs = Math.round(projectionMs * 100) / 100;
       rankingMs = Math.round(rankingMs * 100) / 100;
       const rankedResults = top.map(({ item }) => item);
