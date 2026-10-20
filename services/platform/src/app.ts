@@ -194,7 +194,7 @@ export function createApp(options: AppOptions = {}) {
     );
     res.cookie('seven_session', token, {
       httpOnly: true,
-      secure: publicOrigin.startsWith('https://'),
+      secure: publicOrigin.startsWith('https://') || Boolean(process.env.VERCEL_URL),
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 86400000,
