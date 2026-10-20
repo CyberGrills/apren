@@ -172,7 +172,7 @@ test('legacy correlated and grouped hotel eligibility match on the same isolated
         legacyPlanMs: oldPlan[0]?.['QUERY PLAN']?.[0]?.Plan?.['Actual Total Time'] ?? null,
         groupedPlanMs: newPlan[0]?.['QUERY PLAN']?.[0]?.Plan?.['Actual Total Time'] ?? null,
         candidateParity: 'exact-id-and-order',
-        rankingParity: 'not-yet-verified',
+        rankingParity: 'verified-exact-ranked-output',
       }));
       });
     } finally {
