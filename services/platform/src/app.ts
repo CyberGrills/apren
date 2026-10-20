@@ -30,6 +30,7 @@ import { mountOperations } from './operations.ts';
 import { mountAccountRoutes, rateLimitLogin } from './accounts.ts';
 import type { RecoveryMailer } from './accounts.ts';
 import { configuredRecoveryMailer } from './recoveryMailer.ts';
+import { interpretHotelSearch, isOpenAIConfigured, toHotelSearchParams } from './aiConcierge.ts';
 import { processInbox, processOutbox } from './worker.ts';
 
 export interface AppOptions {
@@ -360,6 +361,24 @@ export function createApp(options: AppOptions = {}) {
   route('get', '/health/ready', async () => {
     await pool.query('SELECT 1 FROM seven.migrations LIMIT 1');
     return { status: 'ready', storage: 'postgresql', paymentMode: provider.mode };
+  });
+  route('post', '/ai/interpret-search', async (req) => {
+    const input = z.strictObject({
+      message: z.string().trim().min(2).max(2000),
+    }).parse(req.body);
+    if (!isOpenAIConfigured())
+      return fail(503, 'AI_NOT_CONFIGURED', 'AI search is not configured yet. Standard hotel search remains available.');
+    try {
+      const intent = await interpretHotelSearch(input.message);
+      return {
+        intent,
+        searchParams: Object.fromEntries(toHotelSearchParams(intent)),
+        provider: 'openai',
+        model: process.env.OPENAI_MODEL?.trim() || 'gpt-6-luna',
+      };
+    } catch {
+      return fail(502, 'AI_PROVIDER_UNAVAILABLE', 'AI search is temporarily unavailable. Standard hotel search remains available.');
+    }
   });
   route('get', '/engine/booking/health', async () => {
     const result = await one(
