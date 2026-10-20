@@ -475,7 +475,8 @@ export function createApp(options: AppOptions = {}) {
         maxBaseTotalMinor,
         asOf,
       };
-      const candidateSql = `SELECT o.offering_id
+      const candidateSql = `WITH raw_batch AS (
+         SELECT o.offering_id
          FROM seven.offerings o
          JOIN seven.businesses b USING(business_id)
          JOIN seven.sectors s USING(sector_id)
@@ -483,31 +484,41 @@ export function createApp(options: AppOptions = {}) {
            AND b.workflow_state_id=${S.sid('APPROVED')}
            AND s.sector_code='STAY'
            AND ($1='' OR lower(o.city) LIKE $1)
-           AND EXISTS (
-             SELECT 1 FROM seven.inventory_windows w
-             WHERE w.offering_id=o.offering_id
-               AND w.ends_at > now()
-               AND w.capacity > w.allocated_count
-               AND (w.starts_at + interval '1 hour')::date >=
-                   COALESCE($2::date, (now() AT TIME ZONE 'Africa/Lagos')::date)
-               AND ($2::date IS NULL OR (w.starts_at + interval '1 hour')::date <
-                   COALESCE($3::date, $2::date + 1))
-           )
-           AND (
-             $2::date IS NULL OR
-             (SELECT count(DISTINCT (w.starts_at + interval '1 hour')::date)
-              FROM seven.inventory_windows w
-              WHERE w.offering_id=o.offering_id
-                AND w.ends_at > now()
-                AND w.capacity - w.allocated_count >= $4
-                AND (w.starts_at + interval '1 hour')::date >= $2::date
-                AND (w.starts_at + interval '1 hour')::date <
-                    COALESCE($3::date, $2::date + 1)
-             ) = (COALESCE($3::date, $2::date + 1) - $2::date)
-           )
            AND ($5::uuid IS NULL OR o.offering_id > $5::uuid)
          ORDER BY o.offering_id
-         LIMIT $6`;
+         LIMIT $6
+       ),
+       inventory_by_offering AS (
+         SELECT w.offering_id,
+           bool_or(
+             w.ends_at > now()
+             AND w.capacity > w.allocated_count
+           ) AS has_available_window,
+           count(DISTINCT (w.starts_at + interval '1 hour')::date) FILTER (
+             WHERE w.ends_at > now()
+               AND w.capacity - w.allocated_count >= $4
+               AND $2::date IS NOT NULL
+           ) AS nights_with_capacity
+         FROM seven.inventory_windows w
+         JOIN raw_batch rb USING(offering_id)
+         WHERE (w.starts_at + interval '1 hour')::date >=
+             COALESCE($2::date, (now() AT TIME ZONE 'Africa/Lagos')::date)
+           AND ($2::date IS NULL OR (w.starts_at + interval '1 hour')::date <
+               COALESCE($3::date, $2::date + 1))
+         GROUP BY w.offering_id
+       )
+       SELECT rb.offering_id,
+         (
+           COALESCE(ibo.has_available_window, false)
+           AND (
+             $2::date IS NULL OR
+             COALESCE(ibo.nights_with_capacity, 0) =
+               (COALESCE($3::date, $2::date + 1) - $2::date)
+           )
+         ) AS eligible
+       FROM raw_batch rb
+       LEFT JOIN inventory_by_offering ibo USING(offering_id)
+       ORDER BY rb.offering_id`;
       const candidateValues = (cursor: string | null) => [
         city ? `%${city.toLowerCase()}%` : '',
         startDate ?? null,
@@ -524,17 +535,23 @@ export function createApp(options: AppOptions = {}) {
         let queryMs = 0;
         while (true) {
           const queryStartedAt = performance.now();
-          const found: Array<{ offering_id: string }> = await rows<{ offering_id: string }>(
+          const found: Array<{ offering_id: string; eligible: boolean }> = await rows<{ offering_id: string; eligible: boolean }>(
             searchDb,
             candidateSql,
             candidateValues(cursor),
           );
           queryMs += performance.now() - queryStartedAt;
           if (found.length === 0) break;
-          const ids = found.map((row) => String(row.offering_id));
-          await visit(ids);
-          count += ids.length;
-          cursor = ids[ids.length - 1]!;
+          // Advance the cursor past every raw listing, not only eligible listings,
+          // so mixed inventories cannot cause repeated scans or skipped rows.
+          const ids = found
+            .filter((row) => row.eligible)
+            .map((row) => String(row.offering_id));
+          if (ids.length > 0) {
+            await visit(ids);
+            count += ids.length;
+          }
+          cursor = String(found[found.length - 1]!.offering_id);
           if (found.length < batchSize) break;
         }
         return { count, queryMs };
@@ -635,6 +652,8 @@ export function createApp(options: AppOptions = {}) {
         dateScoped: !!startDate,
         candidates: firstPass.count,
         candidateBatchSize: batchSize,
+        candidateEligibilityStrategy: 'set-based-grouped-inventory',
+
         candidatePasses: globalStatsAccumulator.minTotal === null ? 1 : 2,
         candidateCap: null,
         candidateCapReached: false,
