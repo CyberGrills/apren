@@ -317,6 +317,15 @@ test('7even real PostgreSQL API and invariant acceptance', {
           role: 'ADMIN',
         });
         assert.equal(invalid.status, 422);
+
+        await pool.query(
+          'DELETE FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[])',
+          [syntheticOffers.map((item) => item.offering_id)],
+        );
+        await pool.query(
+          'DELETE FROM seven.offerings WHERE offering_id = ANY($1::uuid[])',
+          [syntheticOffers.map((item) => item.offering_id)],
+        );
       },
     );
     await t.test('20 independent quote/hold races allocate the last unit once', async () => {
