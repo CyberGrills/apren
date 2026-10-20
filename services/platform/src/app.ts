@@ -524,7 +524,11 @@ export function createApp(options: AppOptions = {}) {
         let queryMs = 0;
         while (true) {
           const queryStartedAt = performance.now();
-          const found = await rows(searchDb, candidateSql, candidateValues(cursor));
+          const found: Array<{ offering_id: string }> = await rows<{ offering_id: string }>(
+            searchDb,
+            candidateSql,
+            candidateValues(cursor),
+          );
           queryMs += performance.now() - queryStartedAt;
           if (found.length === 0) break;
           const ids = found.map((row) => String(row.offering_id));
@@ -536,9 +540,11 @@ export function createApp(options: AppOptions = {}) {
         return { count, queryMs };
       };
 
-      let globalMinTotal: bigint | null = null;
-      let globalMaxTotal: bigint | null = null;
-      let globalMaxRooms = 0;
+      const globalStatsAccumulator: {
+        minTotal: bigint | null;
+        maxTotal: bigint | null;
+        maxRooms: number;
+      } = { minTotal: null, maxTotal: null, maxRooms: 0 };
       let projectedOfferings = 0;
       let projectionMs = 0;
       let rankingMs = 0;
@@ -562,9 +568,9 @@ export function createApp(options: AppOptions = {}) {
         rankingMs += performance.now() - rankingStartedAt;
         for (const item of batchRanked) {
           const total = BigInt(item.estimatedBaseTotalMinor);
-          globalMinTotal = globalMinTotal === null || total < globalMinTotal ? total : globalMinTotal;
-          globalMaxTotal = globalMaxTotal === null || total > globalMaxTotal ? total : globalMaxTotal;
-          globalMaxRooms = Math.max(globalMaxRooms, item.roomsAvailable);
+          globalStatsAccumulator.minTotal = globalStatsAccumulator.minTotal === null || total < globalStatsAccumulator.minTotal ? total : globalStatsAccumulator.minTotal;
+          globalStatsAccumulator.maxTotal = globalStatsAccumulator.maxTotal === null || total > globalStatsAccumulator.maxTotal ? total : globalStatsAccumulator.maxTotal;
+          globalStatsAccumulator.maxRooms = Math.max(globalStatsAccumulator.maxRooms, item.roomsAvailable);
         }
       });
 
@@ -579,11 +585,11 @@ export function createApp(options: AppOptions = {}) {
         || a.id.localeCompare(b.id);
       let secondPassCandidates = 0;
       let secondPassQueryMs = 0;
-      if (globalMinTotal !== null && globalMaxTotal !== null && globalMaxRooms > 0) {
+      if (globalStatsAccumulator.minTotal !== null && globalStatsAccumulator.maxTotal !== null && globalStatsAccumulator.maxRooms > 0) {
         const rankingStats = {
-          minEstimatedBaseTotalMinor: globalMinTotal.toString(),
-          maxEstimatedBaseTotalMinor: globalMaxTotal.toString(),
-          maxRoomsAvailable: globalMaxRooms,
+          minEstimatedBaseTotalMinor: globalStatsAccumulator.minTotal.toString(),
+          maxEstimatedBaseTotalMinor: globalStatsAccumulator.maxTotal.toString(),
+          maxRoomsAvailable: globalStatsAccumulator.maxRooms,
         };
         const secondPass = await scanBatches(async (ids) => {
           const projectionStartedAt = performance.now();
@@ -626,7 +632,7 @@ export function createApp(options: AppOptions = {}) {
         dateScoped: !!startDate,
         candidates: firstPass.count,
         candidateBatchSize: batchSize,
-        candidatePasses: globalMinTotal === null ? 1 : 2,
+        candidatePasses: globalStatsAccumulator.minTotal === null ? 1 : 2,
         candidateCap: null,
         candidateCapReached: false,
         projectedOfferings,
