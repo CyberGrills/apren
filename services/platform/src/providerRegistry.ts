@@ -40,9 +40,12 @@ export class ProviderRegistry {
       crypto?: CryptoGateway;
     } = {},
   ) {
+    const production = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
     this.mode =
       options.mode ??
-      (process.env.PAYMENT_MODE === 'mock' || !process.env.PAYMENT_MODE ? 'mock' : 'live');
+      (process.env.PAYMENT_MODE
+        ? process.env.PAYMENT_MODE === 'mock' ? 'mock' : 'live'
+        : production ? 'live' : 'mock');
     this.adapters =
       options.adapters ??
       (this.mode === 'mock'
