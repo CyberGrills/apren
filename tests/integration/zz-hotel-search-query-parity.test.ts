@@ -45,11 +45,58 @@ test('legacy correlated and grouped hotel eligibility match on the same isolated
   try {
     const dbName = await one<{ db: string }>(pool, 'SELECT current_database() AS db');
     assert.match(dbName?.db ?? '', /_test_db$/, 'Benchmark may only use the disposable _test_db database.');
-    await transaction(pool, async (db) => {
-      await db.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');
-      const fixture = await one<{ total: number }>(db, "SELECT count(*)::int AS total FROM seven.offerings WHERE title LIKE 'Scale % hotel %'");
-      assert.ok((fixture?.total ?? 0) >= 1280, 'Expected 1,105 eligible scale listings plus 175 no-inventory listings.');
-      const start = lagosDateOffset(7);
+    const start = lagosDateOffset(7);
+    // This benchmark owns its fixture: the broader integration test cleans up its
+    // own synthetic rows, and test-file execution order must not be a dependency.
+    await pool.query(
+      `INSERT INTO seven.offerings
+         (offering_id,business_id,sector_id,title,description,city,price_minor,is_published,details)
+       SELECT gen_random_uuid(), approved.business_id,
+              (SELECT sector_id FROM seven.sectors WHERE sector_code='STAY'),
+              'Scale synthetic hotel ' || series,
+              'Disposable benchmark-only listing',
+              'Lagos', 100000 + series * 1000, true,
+              jsonb_build_object('capacity', 3)
+       FROM (
+         SELECT business_id FROM seven.businesses
+         WHERE workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
+         ORDER BY business_id LIMIT 1
+       ) approved
+       CROSS JOIN generate_series(1,1105) AS seq(series)`,
+    );
+    await pool.query(
+      `INSERT INTO seven.offerings
+         (offering_id,business_id,sector_id,title,description,city,price_minor,is_published,details)
+       SELECT gen_random_uuid(), approved.business_id,
+              (SELECT sector_id FROM seven.sectors WHERE sector_code='STAY'),
+              'Scale ineligible hotel ' || series,
+              'Disposable benchmark-only listing without inventory',
+              'Lagos', 50000 + series * 1000, true,
+              jsonb_build_object('capacity', 3)
+       FROM (
+         SELECT business_id FROM seven.businesses
+         WHERE workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED')
+         ORDER BY business_id LIMIT 1
+       ) approved
+       CROSS JOIN generate_series(1,175) AS seq(series)`,
+    );
+    await pool.query(
+      `INSERT INTO seven.inventory_windows
+         (inventory_window_id,offering_id,starts_at,ends_at,capacity)
+       SELECT gen_random_uuid(), o.offering_id,
+              ($1::date + night_offset + time '13:00') AT TIME ZONE 'UTC',
+              ($1::date + night_offset + 1 + time '10:00') AT TIME ZONE 'UTC',
+              3
+       FROM seven.offerings o
+       CROSS JOIN generate_series(0,1) AS nights(night_offset)
+       WHERE o.title LIKE 'Scale synthetic hotel %'`,
+      [start],
+    );
+    try {
+      await transaction(pool, async (db) => {
+        await db.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');
+        const fixture = await one<{ total: number }>(db, "SELECT count(*)::int AS total FROM seven.offerings WHERE title LIKE 'Scale % hotel %'");
+        assert.ok((fixture?.total ?? 0) >= 1280, 'Expected 1,105 eligible scale listings plus 175 no-inventory listings.');
       const scenarios = [
         { name: 'no-date', start: null, end: null, city: '%lagos%' },
         { name: 'single-night', start, end: null, city: '%lagos%' },
@@ -92,7 +139,11 @@ test('legacy correlated and grouped hotel eligibility match on the same isolated
         candidateParity: 'exact-id-and-order',
         rankingParity: 'not-yet-verified',
       }));
-    });
+      });
+    } finally {
+      await pool.query("DELETE FROM seven.inventory_windows WHERE offering_id IN (SELECT offering_id FROM seven.offerings WHERE title LIKE 'Scale % hotel %')");
+      await pool.query("DELETE FROM seven.offerings WHERE title LIKE 'Scale % hotel %'");
+    }
   } finally {
     await pool.end();
   }
