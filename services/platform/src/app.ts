@@ -458,6 +458,8 @@ export function createApp(options: AppOptions = {}) {
         ? amenityText.split(',').map((value) => z.string().trim().min(1).max(80).parse(value)).slice(0, 20)
         : [];
 
+      return transaction(pool, async (searchDb) => {
+        await searchDb.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');
       // Scan eligible IDs in stable keyset batches. A first pass collects the
       // global normalization statistics used by ranking-v1; a second pass ranks
       // batches with those same statistics and retains only the requested top-K.
@@ -522,7 +524,7 @@ export function createApp(options: AppOptions = {}) {
         let queryMs = 0;
         while (true) {
           const queryStartedAt = performance.now();
-          const found = await rows(pool, candidateSql, candidateValues(cursor));
+          const found = await rows(searchDb, candidateSql, candidateValues(cursor));
           queryMs += performance.now() - queryStartedAt;
           if (found.length === 0) break;
           const ids = found.map((row) => String(row.offering_id));
@@ -542,7 +544,7 @@ export function createApp(options: AppOptions = {}) {
       let rankingMs = 0;
       const firstPass = await scanBatches(async (ids) => {
         const projectionStartedAt = performance.now();
-        const offerings = await S.offeringProjections(pool, ids, true);
+        const offerings = await S.offeringProjections(searchDb, ids, true);
         projectionMs += performance.now() - projectionStartedAt;
         projectedOfferings += offerings.length;
         const rankingStartedAt = performance.now();
@@ -655,6 +657,7 @@ export function createApp(options: AppOptions = {}) {
           policyVersion: item.policyVersion,
         };
         return { ...hotel, bookingOptimization };
+      });
       });
     }
 
