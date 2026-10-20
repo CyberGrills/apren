@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const localDate = z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).nullable();
+const localDate = z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).refine((value) => {\n  const parsed = new Date(`${value}T00:00:00.000Z`);\n  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;\n}, 'Use a real calendar date.').nullable();
 const budgetNaira = z.string().regex(/^(0|[1-9]\\d{0,8})(\\.\\d{1,2})?$/).nullable();
 
 export const hotelSearchIntentSchema = z.strictObject({
