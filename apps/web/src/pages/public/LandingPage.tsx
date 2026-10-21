@@ -4,6 +4,7 @@ import {
   BedDouble,
   CalendarCheck,
   Compass,
+  LayoutGrid,
   MapPin,
   Search,
   ShieldCheck,
@@ -16,13 +17,20 @@ import { EmptyState, ErrorNotice, Loading, OfferingCard } from '../../components
 import { useApi } from '../../hooks/useApi.ts';
 import { addDays, localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
-const categories: { value: Sector; label: string; Icon: typeof BedDouble }[] = [
+type MarketplaceKind = Sector | 'ALL';
+
+const categories: { value: MarketplaceKind; label: string; Icon: typeof BedDouble }[] = [
+  { value: 'ALL', label: 'All', Icon: LayoutGrid },
   { value: 'STAY', label: 'Stays', Icon: BedDouble },
   { value: 'DINING', label: 'Dining', Icon: Utensils },
   { value: 'EXPERIENCE', label: 'Experiences', Icon: Compass },
 ];
 
-const categoryHeadings: Record<Sector, { title: string; description: string }> = {
+const categoryHeadings: Record<MarketplaceKind, { title: string; description: string }> = {
+  ALL: {
+    title: 'Find your next good place.',
+    description: 'Explore stays, dining and experiences from businesses listed on 7even.',
+  },
   STAY: {
     title: 'Places to stay',
     description: 'Find a room for the night, a weekend away, or the trip you have been planning.',
@@ -39,27 +47,31 @@ const categoryHeadings: Record<Sector, { title: string; description: string }> =
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const [kind, setKind] = useState<Sector>('STAY');
+  const [kind, setKind] = useState<MarketplaceKind>('STAY');
   const [city, setCity] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [rooms, setRooms] = useState('1');
   const [dateError, setDateError] = useState('');
-  const { data, loading, error, reload } = useApi<Offering[]>(`/offerings?kind=${kind}&pageSize=8`);
+  const listingPath =
+    kind === 'ALL' ? '/offerings?pageSize=8' : `/offerings?kind=${kind}&pageSize=8`;
+  const { data, loading, error, reload } = useApi<Offering[]>(listingPath);
+  const isStaySearch = kind === 'STAY';
 
   function search(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (kind === 'STAY' && startDate && endDate && endDate <= startDate) {
+    if (isStaySearch && startDate && endDate && endDate <= startDate) {
       setDateError('Check-out must be at least one day after check-in.');
       return;
     }
     setDateError('');
-    const query = new URLSearchParams({ kind });
+    const query = new URLSearchParams();
+    if (kind !== 'ALL') query.set('kind', kind);
     if (city.trim()) query.set('city', city.trim());
     if (startDate) query.set('startDate', startDate);
-    if (kind === 'STAY' && endDate) query.set('endDate', endDate);
-    if (kind === 'STAY') query.set('rooms', rooms || '1');
-    navigate(`/explore?${query.toString()}`);
+    if (isStaySearch && endDate) query.set('endDate', endDate);
+    if (isStaySearch) query.set('rooms', rooms || '1');
+    navigate(`/explore${query.size ? `?${query.toString()}` : ''}`);
   }
 
   const heading = categoryHeadings[kind];
@@ -68,76 +80,6 @@ export function LandingPage() {
     <div className="public-page seven-marketplace">
       <PublicHeader />
       <main id="main-content">
-        <section className="seven-search-shell" aria-label="Search 7even">
-          <form className="seven-search-bar" onSubmit={search}>
-            <div className="seven-search-field seven-search-destination">
-              <label htmlFor="seven-city">Where</label>
-              <div className="seven-search-input-wrap">
-                <MapPin size={16} aria-hidden="true" />
-                <input
-                  id="seven-city"
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
-                  placeholder="Search destinations"
-                  autoComplete="address-level2"
-                  maxLength={160}
-                />
-              </div>
-            </div>
-            <div className="seven-search-field">
-              <label htmlFor="seven-checkin">Check in</label>
-              <input
-                id="seven-checkin"
-                type="date"
-                min={localDateNow()}
-                value={startDate}
-                onChange={(event) => {
-                  setStartDate(event.target.value);
-                  setDateError('');
-                }}
-              />
-            </div>
-            <div className="seven-search-field">
-              <label htmlFor="seven-checkout">Check out</label>
-              <input
-                id="seven-checkout"
-                type="date"
-                min={startDate ? addDays(startDate, 1) : localDateNow()}
-                value={endDate}
-                onChange={(event) => {
-                  setEndDate(event.target.value);
-                  setDateError('');
-                }}
-                disabled={kind !== 'STAY'}
-              />
-            </div>
-            <div className="seven-search-field seven-search-rooms">
-              <label htmlFor="seven-rooms">Rooms</label>
-              <select
-                id="seven-rooms"
-                value={rooms}
-                onChange={(event) => setRooms(event.target.value)}
-                disabled={kind !== 'STAY'}
-              >
-                {[1, 2, 3, 4, 5, 6].map((count) => (
-                  <option value={count} key={count}>
-                    {count} {count === 1 ? 'room' : 'rooms'}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button className="seven-search-button" type="submit" aria-label="Search places">
-              <Search size={20} aria-hidden="true" />
-              <span>Search</span>
-            </button>
-          </form>
-          {dateError && (
-            <p className="seven-date-error" role="alert">
-              {dateError}
-            </p>
-          )}
-        </section>
-
         <nav className="public-container seven-category-row" aria-label="Browse by category">
           {categories.map(({ value, label, Icon }) => (
             <button
@@ -154,11 +96,100 @@ export function LandingPage() {
               <span>{label}</span>
             </button>
           ))}
-          <Link to="/explore" className="seven-more-filters">
+          <Link
+            to={kind === 'ALL' ? '/explore' : `/explore?kind=${kind}`}
+            className="seven-more-filters"
+          >
             <SlidersHorizontal size={17} aria-hidden="true" />
             <span>More filters</span>
           </Link>
         </nav>
+
+        <section className="seven-search-shell" aria-label="Search 7even">
+          <form
+            className={`seven-search-bar ${isStaySearch ? 'seven-search-stay' : 'seven-search-compact'}`}
+            onSubmit={search}
+          >
+            <div className="seven-search-field seven-search-destination">
+              <label htmlFor="seven-city">Where</label>
+              <div className="seven-search-input-wrap">
+                <MapPin size={16} aria-hidden="true" />
+                <input
+                  id="seven-city"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  placeholder="Search destinations"
+                  autoComplete="address-level2"
+                  maxLength={160}
+                />
+              </div>
+            </div>
+            {isStaySearch ? (
+              <>
+                <div className="seven-search-field">
+                  <label htmlFor="seven-checkin">Check in</label>
+                  <input
+                    id="seven-checkin"
+                    type="date"
+                    min={localDateNow()}
+                    value={startDate}
+                    onChange={(event) => {
+                      setStartDate(event.target.value);
+                      setDateError('');
+                    }}
+                  />
+                </div>
+                <div className="seven-search-field">
+                  <label htmlFor="seven-checkout">Check out</label>
+                  <input
+                    id="seven-checkout"
+                    type="date"
+                    min={startDate ? addDays(startDate, 1) : localDateNow()}
+                    value={endDate}
+                    onChange={(event) => {
+                      setEndDate(event.target.value);
+                      setDateError('');
+                    }}
+                  />
+                </div>
+                <div className="seven-search-field seven-search-rooms">
+                  <label htmlFor="seven-rooms">Rooms</label>
+                  <select
+                    id="seven-rooms"
+                    value={rooms}
+                    onChange={(event) => setRooms(event.target.value)}
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((count) => (
+                      <option value={count} key={count}>
+                        {count} {count === 1 ? 'room' : 'rooms'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : (
+              <div className="seven-search-field">
+                <label htmlFor="seven-date">When</label>
+                <input
+                  id="seven-date"
+                  type="date"
+                  min={localDateNow()}
+                  value={startDate}
+                  onChange={(event) => setStartDate(event.target.value)}
+                />
+              </div>
+            )}
+            <button className="seven-search-button" type="submit" aria-label="Search places">
+              <Search size={20} aria-hidden="true" />
+              <span>Search</span>
+            </button>
+          </form>
+          {dateError && (
+            <p className="seven-date-error" role="alert">
+              {dateError}
+            </p>
+          )}
+        </section>
 
         <section
           className="public-container seven-marketplace-results"
@@ -170,7 +201,10 @@ export function LandingPage() {
               <h1 id="seven-results-title">{heading.title}</h1>
               <p className="seven-results-description">{heading.description}</p>
             </div>
-            <Link to={`/explore?kind=${kind}`} className="seven-all-results">
+            <Link
+              to={kind === 'ALL' ? '/explore' : `/explore?kind=${kind}`}
+              className="seven-all-results"
+            >
               View all <span aria-hidden="true">→</span>
             </Link>
           </div>
