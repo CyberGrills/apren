@@ -39,6 +39,12 @@ function lagosDateOffset(days: number): string {
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
+function calendarDateOffset(date: string, days: number): string {
+  const value = new Date(`${date}T12:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
 interface Result<T> {
   status: number;
   data: T;
@@ -110,6 +116,7 @@ test(
     const pool = createPool(testDatabaseUrl);
     let appPool = pool;
     let ownsAppPool = false;
+    let schemaReady = false;
     let server: Server | undefined;
     let testUserId: string | undefined;
     let pendingBusinessId: string | undefined;
@@ -127,6 +134,7 @@ test(
 
       await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
       await migrate(pool);
+      schemaReady = true;
 
       if (process.env.TEST_RUNTIME_DATABASE_URL) {
         const runtimeUrl = process.env.TEST_RUNTIME_DATABASE_URL;
@@ -233,7 +241,7 @@ test(
       );
 
       const checkIn = lagosDateOffset(7);
-      const checkOut = lagosDateOffset(9);
+      const checkOut = calendarDateOffset(checkIn, 2);
       const eligibleTitle = 'READINESS FIXTURE - Full two-night capacity';
 
       async function addOffer(
@@ -291,7 +299,7 @@ test(
       }
 
       const validId = await addOffer(fixtureBusiness, eligibleTitle, 2);
-      const noInventoryId = await addOffer(
+      await addOffer(
         fixtureBusiness,
         'READINESS FIXTURE - No inventory',
         2,
@@ -339,34 +347,36 @@ test(
         );
       }
 
-      const businessIds = [pendingBusinessId, approvedBusinessId].filter(
-        (value): value is string => Boolean(value),
-      );
-      if (offeringIds.length) {
-        await pool.query(
-          'DELETE FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[])',
-          [offeringIds],
+      if (schemaReady) {
+        const businessIds = [pendingBusinessId, approvedBusinessId].filter(
+          (value): value is string => Boolean(value),
         );
-        await pool.query(
-          'DELETE FROM seven.offerings WHERE offering_id = ANY($1::uuid[])',
-          [offeringIds],
-        );
-      }
-      if (businessIds.length) {
-        await pool.query(
-          'DELETE FROM seven.audit_events WHERE business_id = ANY($1::uuid[])',
-          [businessIds],
-        );
-        await pool.query('DELETE FROM seven.sources WHERE business_id = ANY($1::uuid[])', [businessIds]);
-        await pool.query('DELETE FROM seven.memberships WHERE business_id = ANY($1::uuid[])', [businessIds]);
-        await pool.query('DELETE FROM seven.venues WHERE business_id = ANY($1::uuid[])', [businessIds]);
-        await pool.query('DELETE FROM seven.businesses WHERE business_id = ANY($1::uuid[])', [businessIds]);
-      }
-      if (testUserId) {
-        await pool.query('DELETE FROM seven.audit_events WHERE user_id=$1', [testUserId]);
-        await pool.query('DELETE FROM seven.idempotencies WHERE user_id=$1', [testUserId]);
-        await pool.query('DELETE FROM seven.sessions WHERE user_id=$1', [testUserId]);
-        await pool.query('DELETE FROM seven.users WHERE user_id=$1', [testUserId]);
+        if (offeringIds.length) {
+          await pool.query(
+            'DELETE FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[])',
+            [offeringIds],
+          );
+          await pool.query(
+            'DELETE FROM seven.offerings WHERE offering_id = ANY($1::uuid[])',
+            [offeringIds],
+          );
+        }
+        if (businessIds.length) {
+          await pool.query(
+            'DELETE FROM seven.audit_events WHERE business_id = ANY($1::uuid[])',
+            [businessIds],
+          );
+          await pool.query('DELETE FROM seven.sources WHERE business_id = ANY($1::uuid[])', [businessIds]);
+          await pool.query('DELETE FROM seven.memberships WHERE business_id = ANY($1::uuid[])', [businessIds]);
+          await pool.query('DELETE FROM seven.venues WHERE business_id = ANY($1::uuid[])', [businessIds]);
+          await pool.query('DELETE FROM seven.businesses WHERE business_id = ANY($1::uuid[])', [businessIds]);
+        }
+        if (testUserId) {
+          await pool.query('DELETE FROM seven.audit_events WHERE user_id=$1', [testUserId]);
+          await pool.query('DELETE FROM seven.idempotencies WHERE user_id=$1', [testUserId]);
+          await pool.query('DELETE FROM seven.sessions WHERE user_id=$1', [testUserId]);
+          await pool.query('DELETE FROM seven.users WHERE user_id=$1', [testUserId]);
+        }
       }
       if (ownsAppPool) await appPool.end();
       await pool.end();
