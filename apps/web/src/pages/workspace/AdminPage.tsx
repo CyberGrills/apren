@@ -28,6 +28,15 @@ type Editor =
   | { kind: 'subaccount'; business: Business }
   | { kind: 'cryptoWallet'; business: Business; account: BusinessPaymentAccount }
   | { kind: 'policy' };
+const hotelVerificationChecks = [
+  { key: 'propertyExists', label: 'The property exists and is operating.' },
+  { key: 'partnerAuthority', label: 'The partner is authorized to list this property and has consented.' },
+  { key: 'directContact', label: 'The property contact route has been verified.' },
+  { key: 'fullAddress', label: 'The full property address has been verified.' },
+  { key: 'coordinates', label: 'The property coordinates have been independently checked.' },
+  { key: 'currentRates', label: 'Current NGN rates and their pricing basis have been checked.' },
+  { key: 'roomInventoryAndPolicies', label: 'Room types, capacity, occupancy limits and booking policies have been checked.' },
+] as const;
 const titles: Record<Tab, string> = {
   overview: 'Keep the whole picture.',
   businesses: 'The businesses on 7even.',
@@ -462,12 +471,34 @@ function AdminEditor({
     setBusy(true);
     setError(null);
     try {
-      if (editor.kind === 'status')
+      if (editor.kind === 'status') {
+        const body: {
+          status: 'APPROVED' | 'SUSPENDED';
+          reason: string;
+          verification?: Record<string, unknown>;
+        } = { status: editor.status, reason: get('reason') };
+        if (editor.status === 'APPROVED') {
+          const evidence = (name: string) => ({
+            confirmed: f.get(`confirmed_${name}`) === 'on',
+            evidenceReference: get(`evidence_${name}`),
+          });
+          body.verification = {
+            propertyExists: evidence('propertyExists'),
+            partnerAuthority: evidence('partnerAuthority'),
+            directContact: evidence('directContact'),
+            fullAddress: evidence('fullAddress'),
+            coordinates: evidence('coordinates'),
+            currentRates: evidence('currentRates'),
+            roomInventoryAndPolicies: evidence('roomInventoryAndPolicies'),
+            inventoryFreshnessHours: Number(get('inventoryFreshnessHours')),
+          };
+        }
         await api(`/admin/businesses/${editor.business.id}/status`, {
           method: 'POST',
           idempotencyKey: key,
-          body: { status: editor.status, reason: get('reason') },
+          body,
         });
+      }
       else if (editor.kind === 'subaccount')
         await api(`/admin/businesses/${editor.business.id}/subaccount`, {
           method: 'POST',
@@ -532,6 +563,45 @@ function AdminEditor({
               <br />
               {editor.business.phone}
             </p>
+            {editor.status === 'APPROVED' && (
+              <section className="workspace-section" aria-label="Hotel verification checklist">
+                <p className="notice">
+                  Approval enables publication. Confirm each item only after reviewing real partner evidence.
+                  Enter a source URL or an internal case/document reference for every check.
+                </p>
+                <Field label="Maximum inventory age before it should be treated as stale (hours)">
+                  <input
+                    name="inventoryFreshnessHours"
+                    type="number"
+                    min={1}
+                    max={168}
+                    defaultValue={24}
+                    required
+                  />
+                </Field>
+                {hotelVerificationChecks.map((check) => (
+                  <div className="verification-check" key={check.key}>
+                    <label className="checkbox-row">
+                      <input
+                        type="checkbox"
+                        name={`confirmed_${check.key}`}
+                        required
+                      />
+                      <span>{check.label}</span>
+                    </label>
+                    <Field label={`Evidence reference · ${check.label}`}>
+                      <input
+                        name={`evidence_${check.key}`}
+                        minLength={3}
+                        maxLength={300}
+                        placeholder="HTTPS URL or internal case/document ID"
+                        required
+                      />
+                    </Field>
+                  </div>
+                ))}
+              </section>
+            )}
             <Field label="Decision and reason">
               <textarea name="reason" minLength={3} maxLength={500} required />
             </Field>
