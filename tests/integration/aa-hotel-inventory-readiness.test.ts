@@ -343,6 +343,42 @@ test(
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Only one room'));
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Unpublished'));
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Stale inventory'));
+
+      const genericListing = await client.request<Array<{ title: string }>>(
+        `/offerings?city=${encodeURIComponent(fixtureCity)}&pageSize=30`,
+      );
+      assert.equal(genericListing.status, 200, JSON.stringify(genericListing));
+      assert.deepEqual(
+        genericListing.data.filter((offering) => offering.kind === 'STAY').map((offering) => offering.title),
+        [eligibleTitle],
+        'Generic public discovery must not bypass hotel verification or inventory freshness.',
+      );
+
+      const staleQuote = await client.request('/quotes', 'POST', {
+        offeringId: staleId,
+        startDate: checkIn,
+        endDate: checkOut,
+        quantity: 1,
+      });
+      assert.equal(staleQuote.status, 409, JSON.stringify(staleQuote));
+      assert.equal(staleQuote.error?.code, 'CAPACITY_CHANGED');
+
+      const quote = await client.request<{ id: string }>('/quotes', 'POST', {
+        offeringId: validId,
+        startDate: checkIn,
+        endDate: checkOut,
+        quantity: 1,
+      });
+      assert.equal(quote.status, 200, JSON.stringify(quote));
+      await pool.query(
+        "UPDATE seven.inventory_windows SET inventory_confirmed_at=now()-interval '25 hours' WHERE offering_id=$1",
+        [validId],
+      );
+      const staleHold = await client.request('/reservations', 'POST', {
+        quoteId: quote.data.id,
+      });
+      assert.equal(staleHold.status, 409, JSON.stringify(staleHold));
+      assert.equal(staleHold.error?.code, 'INVENTORY_STALE');
     } finally {
       if (server) {
         await new Promise<void>((resolve, reject) =>
@@ -355,6 +391,14 @@ test(
           (value): value is string => Boolean(value),
         );
         if (offeringIds.length) {
+          await pool.query(
+            'DELETE FROM seven.observations WHERE offering_id = ANY($1::uuid[])',
+            [offeringIds],
+          );
+          await pool.query(
+            'DELETE FROM seven.quotes WHERE offering_id = ANY($1::uuid[])',
+            [offeringIds],
+          );
           await pool.query(
             'DELETE FROM seven.inventory_windows WHERE offering_id = ANY($1::uuid[])',
             [offeringIds],
