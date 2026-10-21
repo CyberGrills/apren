@@ -4,7 +4,7 @@ ALTER TABLE seven.inventory_windows
   ADD COLUMN inventory_confirmed_at timestamptz;
 
 UPDATE seven.inventory_windows
-SET inventory_confirmed_at = '-infinity'::timestamptz;
+SET inventory_confirmed_at = '2000-01-01 00:00:00+00'::timestamptz;
 
 ALTER TABLE seven.inventory_windows
   ALTER COLUMN inventory_confirmed_at SET DEFAULT now();
