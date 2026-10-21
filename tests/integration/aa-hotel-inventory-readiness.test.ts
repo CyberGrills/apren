@@ -344,7 +344,7 @@ test(
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Unpublished'));
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Stale inventory'));
 
-      const genericListing = await client.request<Array<{ title: string }>>(
+      const genericListing = await client.request<Array<{ title: string; kind: string }>>(
         `/offerings?city=${encodeURIComponent(fixtureCity)}&pageSize=30`,
       );
       assert.equal(genericListing.status, 200, JSON.stringify(genericListing));
