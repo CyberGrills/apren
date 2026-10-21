@@ -315,11 +315,17 @@ test(
       const partialId = await addOffer('READINESS FIXTURE - Missing second night', 2);
       const lowCapacityId = await addOffer('READINESS FIXTURE - Only one room', 1);
       const unpublishedId = await addOffer('READINESS FIXTURE - Unpublished', 2, false);
+      const staleId = await addOffer('READINESS FIXTURE - Stale inventory', 2);
 
       await addAvailability(validId, checkIn, checkOut, 2);
       await addAvailability(partialId, checkIn, calendarDateOffset(checkIn, 1), 2);
       await addAvailability(lowCapacityId, checkIn, checkOut, 1);
       await addAvailability(unpublishedId, checkIn, checkOut, 2);
+      await addAvailability(staleId, checkIn, checkOut, 2);
+      await pool.query(
+        "UPDATE seven.inventory_windows SET updated_at=now()-interval '25 hours' WHERE offering_id=$1",
+        [staleId],
+      );
 
       const listingResponse = await client.request<Array<{ title: string }>>(
         `/offerings?kind=STAY&city=${encodeURIComponent(fixtureCity)}&startDate=${checkIn}&endDate=${checkOut}&rooms=2&pageSize=30`,
@@ -336,6 +342,7 @@ test(
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Missing second night'));
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Only one room'));
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Unpublished'));
+      assert.ok(!returnedTitles.includes('READINESS FIXTURE - Stale inventory'));
     } finally {
       if (server) {
         await new Promise<void>((resolve, reject) =>
