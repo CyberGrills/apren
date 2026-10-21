@@ -167,6 +167,20 @@ export function createApp(options: AppOptions = {}) {
             return fail(403, 'CSRF_REJECTED', 'Refresh the page before trying again.');
         }
       }
+      const previewReadOnly =
+        process.env.SEVEN_PREVIEW_READ_ONLY === 'true' &&
+        (process.env.VERCEL_ENV ?? environment) !== 'production';
+      if (
+        previewReadOnly &&
+        !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+        req.path !== '/api/ai/interpret-search'
+      ) {
+        return fail(
+          503,
+          'PREVIEW_READ_ONLY',
+          'This preview is read-only. Account, booking, payment, refund, and webhook changes are disabled.',
+        );
+      }
       next();
     } catch (error) {
       next(error);
