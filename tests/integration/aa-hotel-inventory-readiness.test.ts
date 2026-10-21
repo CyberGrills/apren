@@ -321,6 +321,10 @@ test(
         }
         if (businessIds.length) {
           await pool.query(
+            'DELETE FROM seven.outbox_events WHERE business_id = ANY($1::uuid[])',
+            [businessIds],
+          );
+          await pool.query(
             'DELETE FROM seven.audit_events WHERE business_id = ANY($1::uuid[])',
             [businessIds],
           );
