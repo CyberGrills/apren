@@ -439,6 +439,14 @@ export function createApp(options: AppOptions = {}) {
     const city = req.query.city === undefined ? '' : z.string().trim().max(160).parse(req.query.city);
 
     if (requestedKind === 'STAY') {
+      const businessVerificationGate =
+        environment === 'production'
+          ? `b.details #>> '{verificationReview,checklistVersion}' = '1'`
+          : `(b.details #>> '{verificationReview,checklistVersion}' = '1' OR b.details->>'isSample' = 'true')`;
+      const inventoryFreshnessGate =
+        environment === 'production'
+          ? `w.updated_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour')`
+          : `(b.details->>'isSample' = 'true' OR w.updated_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'))`;
       const startDate = req.query.startDate === undefined
         ? undefined
         : z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.startDate);
@@ -483,6 +491,7 @@ export function createApp(options: AppOptions = {}) {
          WHERE o.is_published
            AND b.workflow_state_id=${S.sid('APPROVED')}
            AND s.sector_code='STAY'
+           AND ${businessVerificationGate}
            AND ($1='' OR lower(o.city) LIKE $1)
            AND ($5::uuid IS NULL OR o.offering_id > $5::uuid)
          ORDER BY o.offering_id
@@ -501,7 +510,10 @@ export function createApp(options: AppOptions = {}) {
            ) AS nights_with_capacity
          FROM seven.inventory_windows w
          JOIN raw_batch rb USING(offering_id)
-         WHERE (w.starts_at + interval '1 hour')::date >=
+         JOIN seven.offerings o USING(offering_id)
+         JOIN seven.businesses b USING(business_id)
+         WHERE ${inventoryFreshnessGate}
+           AND (w.starts_at + interval '1 hour')::date >=
              COALESCE($2::date, (now() AT TIME ZONE 'Africa/Lagos')::date)
            AND ($2::date IS NULL OR (w.starts_at + interval '1 hour')::date <
                COALESCE($3::date, $2::date + 1))
