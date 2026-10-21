@@ -323,7 +323,7 @@ test(
       await addAvailability(unpublishedId, checkIn, checkOut, 2);
       await addAvailability(staleId, checkIn, checkOut, 2);
       await pool.query(
-        "UPDATE seven.inventory_windows SET updated_at=now()-interval '25 hours' WHERE offering_id=$1",
+        "UPDATE seven.inventory_windows SET inventory_confirmed_at=now()-interval '25 hours' WHERE offering_id=$1",
         [staleId],
       );
 
