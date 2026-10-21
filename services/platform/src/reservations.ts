@@ -57,8 +57,9 @@ export async function createQuote(
     windowId?: string;
     quantity: number;
   },
+  requireVerifiedHotel = process.env.NODE_ENV === 'production',
 ): Promise<Quote> {
-  const offer = await offeringProjection(db, input.offeringId);
+  const offer = await offeringProjection(db, input.offeringId, true);
   if (!offer) return fail(404, 'NOT_FOUND', 'This offering was not found.');
   if (offer.kind === 'STAY') {
     const parts = new Intl.DateTimeFormat('en-GB', {
@@ -73,18 +74,39 @@ export async function createQuote(
     requireTenant(actor, offer.businessId);
     requireVenue(actor, offer.venueId);
   }
-  const business = await one(
+  const business = await one<{
+    workflow_state_code: string;
+    details: Record<string, unknown>;
+  }>(
     db,
-    'SELECT workflow_state_id FROM seven.businesses WHERE business_id=$1',
+    'SELECT s.workflow_state_code,b.details FROM seven.businesses b JOIN seven.workflow_states s USING(workflow_state_id) WHERE b.business_id=$1',
     [offer.businessId],
   );
-  const approved = await one(
-    db,
-    `SELECT 1 FROM seven.businesses WHERE business_id=$1 AND workflow_state_id=${sid('APPROVED')}`,
-    [offer.businessId],
-  );
-  if (!business || !approved || (!offer.published && actor.businessId !== offer.businessId))
+  if (
+    !business ||
+    business.workflow_state_code !== 'APPROVED' ||
+    (!offer.published && actor.businessId !== offer.businessId)
+  )
     return fail(409, 'OFFER_UNAVAILABLE', 'This offering is not available to book.');
+
+  if (offer.kind === 'STAY') {
+    const review = business.details.verificationReview as
+      | { checklistVersion?: unknown; inventoryFreshnessHours?: unknown }
+      | undefined;
+    const verified =
+      review?.checklistVersion === 1 &&
+      typeof review.inventoryFreshnessHours === 'number' &&
+      Number.isInteger(review.inventoryFreshnessHours) &&
+      review.inventoryFreshnessHours >= 1 &&
+      review.inventoryFreshnessHours <= 168;
+    const localSample = business.details.isSample === true && !requireVerifiedHotel;
+    if (!verified && !localSample)
+      return fail(
+        409,
+        'VERIFICATION_REQUIRED',
+        'This hotel has not completed the required verification review.',
+      );
+  }
   const dates =
     offer.kind === 'STAY'
       ? serviceDates(input.startDate, input.endDate ?? input.startDate)
@@ -147,6 +169,7 @@ export async function createReservation(
   quoteId: string,
   walkIn = false,
   userId = actor.id,
+  requireVerifiedHotel = process.env.NODE_ENV === 'production',
 ): Promise<Reservation> {
   await expireHolds(db);
   // Quotes are immutable to the runtime role. Serialize their claim without granting UPDATE.
@@ -158,22 +181,48 @@ export async function createReservation(
     return fail(409, 'QUOTE_EXPIRED', 'This quote has expired. Request a new quote.');
   if (await one(db, 'SELECT reservation_id FROM seven.reservations WHERE quote_id=$1', [quoteId]))
     return fail(409, 'QUOTE_USED', 'This quote already has a reservation.');
-  const offer = await offeringProjection(db, quote.offering_id);
-  if (
-    !offer ||
-    !(await one(
-      db,
-      `SELECT 1 FROM seven.businesses WHERE business_id=$1 AND workflow_state_id=${sid('APPROVED')}`,
-      [offer.businessId],
-    ))
-  )
+  const offer = await offeringProjection(db, quote.offering_id, true);
+  if (!offer)
     return fail(
       409,
       'OFFER_UNAVAILABLE',
       'This business is not currently available for reservations.',
     );
-  if (!offer?.published)
+  const business = await one<{
+    workflow_state_code: string;
+    details: Record<string, unknown>;
+  }>(
+    db,
+    'SELECT s.workflow_state_code,b.details FROM seven.businesses b JOIN seven.workflow_states s USING(workflow_state_id) WHERE b.business_id=$1',
+    [offer.businessId],
+  );
+  if (!business || business.workflow_state_code !== 'APPROVED')
+    return fail(
+      409,
+      'OFFER_UNAVAILABLE',
+      'This business is not currently available for reservations.',
+    );
+  if (!offer.published)
     return fail(409, 'OFFER_UNAVAILABLE', 'This offering is no longer available.');
+  if (offer.kind === 'STAY') {
+    const review = business.details.verificationReview as
+      | { checklistVersion?: unknown; inventoryFreshnessHours?: unknown }
+      | undefined;
+    const verified =
+      review?.checklistVersion === 1 &&
+      typeof review.inventoryFreshnessHours === 'number' &&
+      Number.isInteger(review.inventoryFreshnessHours) &&
+      review.inventoryFreshnessHours >= 1 &&
+      review.inventoryFreshnessHours <= 168;
+    const localSample = business.details.isSample === true && !requireVerifiedHotel;
+    if (!verified && !localSample)
+      return fail(
+        409,
+        'VERIFICATION_REQUIRED',
+        'This hotel has not completed the required verification review.',
+      );
+  }
+  const freshInventoryIds = new Set(offer.windows.map((window) => window.id));
   if (walkIn) {
     requireTenant(actor, offer.businessId);
     requireVenue(actor, offer.venueId);
@@ -184,6 +233,12 @@ export async function createReservation(
       'SELECT * FROM seven.inventory_windows WHERE inventory_window_id=$1 FOR UPDATE',
       [windowId],
     );
+    if (offer.kind === 'STAY' && !freshInventoryIds.has(windowId))
+      return fail(
+        409,
+        'INVENTORY_STALE',
+        'The hotel has not reconfirmed this room inventory within its freshness window. Request an updated quote.',
+      );
     if (
       !inventory ||
       inventory.allocated_count + quote.quantity > inventory.capacity ||

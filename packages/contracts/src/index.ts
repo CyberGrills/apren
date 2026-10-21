@@ -162,9 +162,24 @@ export const staffInput = z.strictObject({
   password,
   venueId: id.optional(),
 });
+export const businessVerificationEvidenceInput = z.strictObject({
+  confirmed: z.boolean(),
+  evidenceReference: z.string().trim().min(3).max(300),
+});
+export const businessVerificationInput = z.strictObject({
+  propertyExists: businessVerificationEvidenceInput,
+  partnerAuthority: businessVerificationEvidenceInput,
+  directContact: businessVerificationEvidenceInput,
+  fullAddress: businessVerificationEvidenceInput,
+  coordinates: businessVerificationEvidenceInput,
+  currentRates: businessVerificationEvidenceInput,
+  roomInventoryAndPolicies: businessVerificationEvidenceInput,
+  inventoryFreshnessHours: z.int().min(1).max(168),
+});
 export const businessStatusInput = z.strictObject({
   status: z.enum(['APPROVED', 'SUSPENDED']),
   reason: z.string().trim().min(3).max(500),
+  verification: businessVerificationInput.optional(),
 });
 export const subaccountInput = z
   .strictObject({
