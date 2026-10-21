@@ -8,6 +8,7 @@ All routes start with `/api`. Success is `{ data: T }`; list data is an array, w
 |---|---|---|---|
 | GET /health/live, /health/ready | None | `{ status, ... }` | Public, readiness checks storage |
 | GET /auth/session | None | SessionData | Public, returns null user when anonymous |
+| POST /ai/interpret-search | `{ message: string }`, 2–2000 characters | `{ intent, searchParams, provider: "openai", model }` | Public with same-origin/CSRF checks; 20 attempts per IP per 15 minutes in PostgreSQL; requires server key and explicit model |
 | POST /auth/register | registerInput | SessionData | Anonymous; CUSTOMER only |
 | POST /auth/login | loginInput | SessionData | Anonymous, rate limited |
 | POST /auth/logout | None | `{ success: true }` | Session |
