@@ -698,9 +698,40 @@ export function createApp(options: AppOptions = {}) {
       });
     }
 
+    const genericStayVerificationGate =
+      environment === 'production'
+        ? `b.details #>> '{verificationReview,checklistVersion}' = '1'`
+        : `(b.details #>> '{verificationReview,checklistVersion}' = '1' OR b.details->>'isSample' = 'true')`;
+    const genericInventoryFreshnessGate =
+      environment === 'production'
+        ? `w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour')`
+        : `(b.details->>'isSample' = 'true' OR w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'))`;
     const found = await rows(
       pool,
-      `SELECT o.offering_id FROM seven.offerings o JOIN seven.businesses b USING(business_id) JOIN seven.sectors s USING(sector_id) WHERE o.is_published AND b.workflow_state_id=${S.sid('APPROVED')} AND ($1='' OR lower(o.city) LIKE $1) AND ($2='' OR s.sector_code=$2) ORDER BY o.created_at LIMIT $3 OFFSET $4`,
+      `SELECT o.offering_id
+       FROM seven.offerings o
+       JOIN seven.businesses b USING(business_id)
+       JOIN seven.sectors s USING(sector_id)
+       WHERE o.is_published
+         AND b.workflow_state_id=${S.sid('APPROVED')}
+         AND (
+           s.sector_code <> 'STAY'
+           OR (
+             ${genericStayVerificationGate}
+             AND EXISTS (
+               SELECT 1
+               FROM seven.inventory_windows w
+               WHERE w.offering_id=o.offering_id
+                 AND w.ends_at>now()
+                 AND w.capacity>w.allocated_count
+                 AND ${genericInventoryFreshnessGate}
+             )
+           )
+         )
+         AND ($1='' OR lower(o.city) LIKE $1)
+         AND ($2='' OR s.sector_code=$2)
+       ORDER BY o.created_at
+       LIMIT $3 OFFSET $4`,
       [
         city ? `%${city.toLowerCase()}%` : '',
         requestedKind,
@@ -709,7 +740,7 @@ export function createApp(options: AppOptions = {}) {
       ],
     );
     const offerings = (
-      await Promise.all(found.map((row) => S.offeringProjection(pool, row.offering_id)))
+      await Promise.all(found.map((row) => S.offeringProjection(pool, row.offering_id, true)))
     ).filter((offer): offer is C.Offering => !!offer);
     if (!req.query.startDate) return offerings;
     const genericStartDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.startDate);
@@ -730,23 +761,35 @@ export function createApp(options: AppOptions = {}) {
     });
   });
   route('get', '/offerings/:id', async (req, res) => {
-    const offer = await S.offeringProjection(pool, id(req));
+    let offer = await S.offeringProjection(pool, id(req));
     if (!offer) return fail(404, 'NOT_FOUND', 'Offering not found.');
     const b = await S.businessProjection(pool, offer.businessId);
-    if (!offer.published || b?.status !== 'APPROVED') {
+    let verifiedStay = offer.kind !== 'STAY' || Boolean(environment !== 'production' && b?.isSample);
+    if (offer.kind === 'STAY' && !verifiedStay) {
+      const review = await one<{ checklist_version: string | null }>(
+        pool,
+        "SELECT details #>> '{verificationReview,checklistVersion}' AS checklist_version FROM seven.businesses WHERE business_id=$1",
+        [offer.businessId],
+      );
+      verifiedStay = review?.checklist_version === '1';
+    }
+    const publicEligible = offer.published && b?.status === 'APPROVED' && verifiedStay;
+    if (!publicEligible) {
       const actor = actorFor(res);
       S.requireTenant(actor, offer.businessId);
       S.requireVenue(actor, offer.venueId);
+    } else if (offer.kind === 'STAY') {
+      offer = (await S.offeringProjection(pool, offer.id, true)) ?? offer;
     }
     return offer;
   });
   route('post', '/quotes', async (req, res) => {
     const input = parse(C.quoteInput, req);
-    return mutate(req, res, (db, actor) => R.createQuote(db, actor, input));
+    return mutate(req, res, (db, actor) => R.createQuote(db, actor, input, environment === 'production'));
   });
   route('post', '/reservations', async (req, res) => {
     const input = parse(C.reservationInput, req);
-    return mutate(req, res, (db, actor) => R.createReservation(db, actor, input.quoteId));
+    return mutate(req, res, (db, actor) => R.createReservation(db, actor, input.quoteId, false, actor.id, environment === 'production'));
   });
   route('get', '/reservations/:id', async (req, res) => {
     const r = await S.reservationProjection(pool, id(req));
@@ -1536,7 +1579,7 @@ export function createApp(options: AppOptions = {}) {
         );
         customer = { user_id: customerId };
       }
-      return R.createReservation(db, actor, input.quoteId, true, customer.user_id);
+      return R.createReservation(db, actor, input.quoteId, true, customer.user_id, environment === 'production');
     });
   });
   route('post', '/reception/sync', async (req, res): Promise<C.SyncResult> => {
