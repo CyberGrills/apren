@@ -6,18 +6,22 @@ import '@fontsource/newsreader/latin-400-italic.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
+import { BrandIntro } from './components/BrandIntro.tsx';
 import { SeasonProvider } from './context/SeasonContext.tsx';
 import { seasonAt } from './lib/season.ts';
 import './styles/global.css';
 import './styles/public.css';
 import './styles/customer.css';
 import './styles/workspace.css';
+import './styles/brand-intro.css';
+
 document.documentElement.dataset.season = seasonAt(new Date());
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <SeasonProvider>
       <App />
     </SeasonProvider>
+    <BrandIntro />
   </StrictMode>,
 );
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

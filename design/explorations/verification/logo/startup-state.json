@@ -1,0 +1,25 @@
+{
+  "intro": [
+    {
+      "color": "rgb(43, 74, 51)",
+      "hidden": "true",
+      "pointerEvents": "none",
+      "strokes": [
+        {
+          "animation": "brand-intro-stroke",
+          "delay": "0s",
+          "duration": "0.3s",
+          "opacity": "0",
+          "part": "brand-stroke-first"
+        },
+        {
+          "animation": "brand-intro-stroke",
+          "delay": "0.32s",
+          "duration": "0.3s",
+          "opacity": "0",
+          "part": "brand-stroke-second"
+        }
+      ]
+    }
+  ]
+}
