@@ -1392,7 +1392,7 @@ export function createApp(options: AppOptions = {}) {
           );
         else
           await db.query(
-            'INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity) VALUES($1,$2,$3,$4,$5)',
+            'INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at) VALUES($1,$2,$3,$4,$5,now())',
             [randomUUID(), offer.id, start, end, input.capacity],
           );
       }
