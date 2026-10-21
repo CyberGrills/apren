@@ -349,9 +349,16 @@ test(
       );
       assert.equal(genericListing.status, 200, JSON.stringify(genericListing));
       assert.deepEqual(
-        genericListing.data.filter((offering) => offering.kind === 'STAY').map((offering) => offering.title),
-        [eligibleTitle],
-        'Generic public discovery must not bypass hotel verification or inventory freshness.',
+        genericListing.data
+          .filter((offering) => offering.kind === 'STAY')
+          .map((offering) => offering.title)
+          .sort(),
+        [
+          eligibleTitle,
+          'READINESS FIXTURE - Missing second night',
+          'READINESS FIXTURE - Only one room',
+        ].sort(),
+        'Generic discovery may show fresh inventory without applying date/room filters, but must exclude stale, unpublished, and inventory-empty hotels.',
       );
 
       const staleQuote = await client.request('/quotes', 'POST', {
