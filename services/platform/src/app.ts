@@ -1726,21 +1726,67 @@ export function createApp(options: AppOptions = {}) {
     const input = parse(C.businessStatusInput, req);
     return mutate(req, res, async (db, actor) => {
       requireRole(actor, ['ADMIN']);
+      const businessId = id(req);
+      const current = await one<{ details: Record<string, unknown> }>(
+        db,
+        'SELECT details FROM seven.businesses WHERE business_id=$1 FOR UPDATE',
+        [businessId],
+      );
+      if (!current) return fail(404, 'NOT_FOUND', 'Business not found.');
+
+      let details = current.details ?? {};
+      if (input.status === 'APPROVED') {
+        const verification = input.verification;
+        if (!verification)
+          return fail(
+            409,
+            'VERIFICATION_REQUIRED',
+            'Complete the hotel verification checklist and attach evidence references before approval.',
+          );
+        const evidenceItems = [
+          verification.propertyExists,
+          verification.partnerAuthority,
+          verification.directContact,
+          verification.fullAddress,
+          verification.coordinates,
+          verification.currentRates,
+          verification.roomInventoryAndPolicies,
+        ];
+        if (
+          evidenceItems.some((item) => !item.confirmed || !item.evidenceReference.trim())
+        )
+          return fail(
+            409,
+            'VERIFICATION_INCOMPLETE',
+            'Every hotel verification item must be confirmed with an evidence reference.',
+          );
+        details = {
+          ...details,
+          verificationReview: {
+            checklistVersion: 1,
+            evidence: verification,
+            inventoryFreshnessHours: verification.inventoryFreshnessHours,
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: actor.id,
+          },
+        };
+      }
+
       const found = await one(
         db,
-        `UPDATE seven.businesses SET workflow_state_id=${S.sid(input.status)},revision=revision+1,updated_at=now() WHERE business_id=$1 RETURNING business_id`,
-        [id(req)],
+        `UPDATE seven.businesses SET workflow_state_id=${S.sid(input.status)},details=$2::jsonb,revision=revision+1,updated_at=now() WHERE business_id=$1 RETURNING business_id`,
+        [businessId, JSON.stringify(details)],
       );
       if (!found) return fail(404, 'NOT_FOUND', 'Business not found.');
       await S.audit(
         db,
         actor,
-        id(req),
+        businessId,
         `business.${input.status.toLowerCase()}`,
-        id(req),
+        businessId,
         input.reason,
       );
-      return S.businessProjection(db, id(req));
+      return S.businessProjection(db, businessId);
     });
   });
   route('post', '/admin/businesses/:id/subaccount', async (req, res) => {
