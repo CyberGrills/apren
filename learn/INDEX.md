@@ -1,3 +1,4 @@
+- [2026-10-21] [One 7, two entrance strokes](2026-10-21-logo-wordmark-startup.md): A shared vector logo removes the repeated numeral and introduces a short, accessible two-stroke startup sequence.
 - [2026-10-18] [Three payment paths, one booking record](2026-10-18-multi-provider-payments.md): Frozen provider routing, verified direct-wallet USDC and merchant commission owed share one recoverable booking engine.
 - [2026-10-16] [Automatic seasonal campaigns with a fixed brand](2026-10-16-automatic-seasonal-themes.md): Lagos calendar changes campaign colors, copy and photography while preserving the core palette.
 - [2026-10-16] [Rebuilding 7even around one hospitality record](2026-10-16-rebuild-seven.md): One engine connects bookings, verified payments, rewards and pop-up feedback across the app.

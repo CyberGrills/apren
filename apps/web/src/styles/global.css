@@ -208,15 +208,20 @@ textarea::placeholder {
   width: 166px;
   height: 60px;
   display: block;
-  mix-blend-mode: multiply;
+  color: var(--ink);
+  fill: currentColor;
+}
+.brand-caption {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
 }
 .brand-compact {
   width: 42px;
   height: 48px;
 }
 .brand-inverse {
-  filter: invert(1);
-  mix-blend-mode: screen;
+  color: var(--paper);
 }
 .skip-link {
   position: fixed;
