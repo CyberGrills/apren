@@ -219,7 +219,24 @@ export async function offeringProjection(db: Connection, id: string, activeInven
   const windows = await rows(
     db,
     activeInventoryOnly
-      ? 'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 AND ends_at>now() ORDER BY starts_at LIMIT 500'
+      ? `SELECT w.*
+         FROM seven.inventory_windows w
+         JOIN seven.offerings o USING(offering_id)
+         JOIN seven.sectors s USING(sector_id)
+         JOIN seven.businesses b USING(business_id)
+         WHERE w.offering_id=$1
+           AND w.ends_at>now()
+           AND (
+             s.sector_code <> 'STAY'
+             OR b.details->>'isSample'='true'
+             OR (
+               b.details #>> '{verificationReview,checklistVersion}'='1'
+               AND w.updated_at > now() - (
+                 COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'
+               )
+             )
+           )
+         ORDER BY w.starts_at LIMIT 500`
       : 'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 ORDER BY starts_at LIMIT 500',
     [id],
   );
@@ -276,9 +293,23 @@ export async function offeringProjections(
     db,
     activeInventoryOnly
       ? `SELECT * FROM (
-           SELECT w.*, row_number() OVER (PARTITION BY offering_id ORDER BY starts_at) AS projection_rank
+           SELECT w.*, row_number() OVER (PARTITION BY w.offering_id ORDER BY w.starts_at) AS projection_rank
            FROM seven.inventory_windows w
-           WHERE offering_id = ANY($1::uuid[]) AND ends_at > now()
+           JOIN seven.offerings o USING(offering_id)
+           JOIN seven.sectors s USING(sector_id)
+           JOIN seven.businesses b USING(business_id)
+           WHERE w.offering_id = ANY($1::uuid[])
+             AND w.ends_at > now()
+             AND (
+               s.sector_code <> 'STAY'
+               OR b.details->>'isSample'='true'
+               OR (
+                 b.details #>> '{verificationReview,checklistVersion}'='1'
+                 AND w.updated_at > now() - (
+                   COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'
+                 )
+               )
+             )
          ) ranked WHERE projection_rank <= 500 ORDER BY offering_id, starts_at`
       : `SELECT * FROM (
            SELECT w.*, row_number() OVER (PARTITION BY offering_id ORDER BY starts_at) AS projection_rank
