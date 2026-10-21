@@ -4,7 +4,7 @@
 
 ## Outcome
 
-All 30 remote branch tips outside main in the fetched snapshot are ancestors of the integration branch. The deleted `feat/remote-dev-control-plane` remote was pruned and was not recreated. Main has not been updated by this task. The combined result is ready for qualified review before the production-connected main branch changes.
+All 30 remote branch tips outside main in the fetched snapshot are ancestors of the integration branch. The deleted `feat/remote-dev-control-plane` remote was pruned and was not recreated. At the integration-review checkpoint, remote main was unchanged and the combined result awaited qualified review. That review and the completed merge are recorded below.
 
 - 15 branch tips were already ancestors of main.
 - Nine equivalent/superseded branches and two retired Apren branches were reconciled with an ancestry-only merge. This retains their history and main's current code.
@@ -44,13 +44,21 @@ Screenshots and measured phone/tablet bounds are in `design/explorations/verific
 
 Tests use provider doubles and synthetic RPC evidence. Live OpenAI/model access, payment provider sandboxes, SMTP delivery, bank credit and Base wallet delivery were not exercised. The existing CI configuration supplies the test administrator URL only; the complete restricted-runtime evidence above comes from the local suite with both test URL keys configured. No dedicated static/API security scanner, hosted Data API inspection, backup/restore drill or production migration was performed. Passing these checks does not establish production readiness.
 
-## Final release gate
+## Release gate at review
 
-GitHub records main's current Vercel deployment under `Production`. At inspection, open PRs #11, #33 and #36 had no human reviews. The user-provided AGENTS instructions require qualified human review before production release of authorization boundaries, tenant isolation, sensitive data flows and consequential migrations. That review remains required for the combined changes.
+GitHub records main's Vercel deployment under `Production`. At inspection, open PRs #11, #33 and #36 had no human reviews. The user-provided AGENTS instructions require qualified human review before production release of authorization boundaries, tenant isolation, sensitive data flows and consequential migrations. The combined changes were held for that review.
 
-Automatic approval review also rejected a proposed partial main update because it would have deployed only part of the requested consolidation. That action did not run. The complete integration is therefore published for review rather than applying a partial production update or bypassing the review gate.
+Automatic approval review rejected a proposed partial main update because it would have deployed only part of the requested consolidation. That action did not run. The complete integration was published for review instead. Only the complete, subsequently approved change was merged.
 
 Application rollback must use a reviewed compatible artifact. Applied migration files remain immutable; any database correction must be reviewed and forward-only. Do not drop production schemas, rewrite migration checksums, delete journals or blindly retry external financial effects.
+
+## Completion after qualified approval
+
+The user confirmed, "I am qualified, have reviewed PR #37, and approve the full production merge." PR #37 then merged as `a21ed826c715b884e9849b090c7baf5284a9bdbe`. Fresh Git checks prove all 31 remaining remote branch tips, including the integration branch, are ancestors of main. The resulting application tree exactly matches the reviewed integration commit `88539674c043a66d08dfa347ad584c1b23bfaaa8`.
+
+PRs #11, #33, #36 and #37 are closed and marked merged. GitHub reported no remaining open pull requests. Main's `validate` and `Supabase Preview` checks passed, and Vercel recorded a successful Production deployment. The deployment URL redirected to Vercel login, preventing an unauthenticated live-page or API-health smoke check. Deployment success does not prove provider or production database behavior. No production migration or privileged Supabase operation was executed in this task.
+
+The follow-up documentation commit records this completion without changing the reviewed application code.
 
 ## Fetched branch ledger
 

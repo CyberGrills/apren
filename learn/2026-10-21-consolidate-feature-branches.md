@@ -4,7 +4,7 @@
 
 ## In short
 
-The integration contains every fetched branch tip while keeping the current 7even engine and deployment setup. It adds the missing concierge and database changes, corrects their integration gaps and records the checks. Main remains unchanged while the required production review is pending.
+The integration contains every fetched branch tip while preserving the 7even engine and deployment setup. It adds the concierge and database changes, corrects integration gaps and records the checks. Qualified human review preceded the complete merge into main.
 
 ## What changed
 
@@ -36,7 +36,7 @@ Two notebooks can contain the same lesson written on different dates. Git commit
 
 ## Watch out for
 
-Local checks passed: 242 unit tests, 188 integration tests, build, lint and browser checks. Lint still reports warnings. Provider doubles do not prove real payment, OpenAI or wallet delivery. The privileged Supabase operation was not run. Main is production-connected, so qualified human review remains the final gate.
+Local checks passed: 242 unit tests, 188 integration tests, build, lint and browser checks. Lint still reports warnings. Provider doubles do not prove payment, OpenAI or wallet delivery. Privileged Supabase SQL was not run. Main CI and Vercel deployment passed; Vercel login blocked a live-page check.
 
 ## Check yourself
 
