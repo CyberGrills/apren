@@ -477,7 +477,7 @@ function AdminEditor({
           reason: string;
           verification?: Record<string, unknown>;
         } = { status: editor.status, reason: get('reason') };
-        if (editor.status === 'APPROVED') {
+        if (editor.status === 'APPROVED' && editor.business.sector === 'STAY') {
           const evidence = (name: string) => ({
             confirmed: f.get(`confirmed_${name}`) === 'on',
             evidenceReference: get(`evidence_${name}`),
@@ -563,7 +563,7 @@ function AdminEditor({
               <br />
               {editor.business.phone}
             </p>
-            {editor.status === 'APPROVED' && (
+            {editor.status === 'APPROVED' && editor.business.sector === 'STAY' && (
               <section className="workspace-section" aria-label="Hotel verification checklist">
                 <p className="notice">
                   Approval enables publication. Confirm each item only after reviewing real partner evidence.
