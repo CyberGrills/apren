@@ -217,10 +217,48 @@ test(
       );
       assert.equal(unauthorizedApproval.status, 403, JSON.stringify(unauthorizedApproval));
 
-      const approval = await admin.request<C.Business>(
-        `/admin/businesses/${pendingBusinessId}/status`,
+      const approvalPath = `/admin/businesses/${pendingBusinessId}/status`;
+      const missingVerification = await admin.request(
+        approvalPath,
         'POST',
-        { status: 'APPROVED', reason: 'Approved by the isolated inventory readiness test.' },
+        { status: 'APPROVED', reason: 'Attempt approval without evidence.' },
+      );
+      assert.equal(missingVerification.status, 409, JSON.stringify(missingVerification));
+      assert.equal(missingVerification.error?.code, 'VERIFICATION_REQUIRED');
+
+      const verification = {
+        propertyExists: { confirmed: true, evidenceReference: 'test-case:property-operating' },
+        partnerAuthority: { confirmed: true, evidenceReference: 'test-case:partner-authority' },
+        directContact: { confirmed: true, evidenceReference: 'test-case:contact-check' },
+        fullAddress: { confirmed: true, evidenceReference: 'test-case:address-check' },
+        coordinates: { confirmed: true, evidenceReference: 'test-case:coordinate-check' },
+        currentRates: { confirmed: true, evidenceReference: 'test-case:current-rate-sheet' },
+        roomInventoryAndPolicies: { confirmed: true, evidenceReference: 'test-case:room-inventory-policy' },
+        inventoryFreshnessHours: 24,
+      };
+      const incompleteVerification = await admin.request(
+        approvalPath,
+        'POST',
+        {
+          status: 'APPROVED',
+          reason: 'Attempt approval with an unchecked evidence item.',
+          verification: {
+            ...verification,
+            coordinates: { confirmed: false, evidenceReference: 'test-case:coordinate-check' },
+          },
+        },
+      );
+      assert.equal(incompleteVerification.status, 409, JSON.stringify(incompleteVerification));
+      assert.equal(incompleteVerification.error?.code, 'VERIFICATION_INCOMPLETE');
+
+      const approval = await admin.request<C.Business>(
+        approvalPath,
+        'POST',
+        {
+          status: 'APPROVED',
+          reason: 'Approved by the isolated inventory readiness test.',
+          verification,
+        },
       );
       assert.equal(approval.status, 200, JSON.stringify(approval));
       assert.equal(approval.data.status, 'APPROVED');
