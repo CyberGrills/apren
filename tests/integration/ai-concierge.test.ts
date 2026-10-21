@@ -78,7 +78,8 @@ test('OpenAI intent parser uses Responses API, strict schema, and validates mode
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
     assert.equal(captured?.url, 'https://api.openai.com/v1/responses');
-    assert.equal((captured?.init?.headers as Record<string, string>).Authorization, 'Bearer test-only-not-a-real-key');
+    assert.ok(captured?.init?.headers);
+    assert.equal((captured.init.headers as Record<string, string>).Authorization, 'Bearer test-only-not-a-real-key');
     const request = JSON.parse(String(captured?.init?.body)) as { store: boolean; text: { format: { type: string; strict: boolean } } };
     assert.equal(request.store, false);
     assert.equal(request.text.format.type, 'json_schema');
