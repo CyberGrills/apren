@@ -53,6 +53,12 @@ export async function rateLimitLogin(pool: Pool, ip: string, email: string): Pro
   await limit(pool, `login:email:${email.trim().toLowerCase()}`, 15);
 }
 
+/** Shared PostgreSQL throttling for billable public AI hotel-search requests. */
+export async function rateLimitAiSearch(pool: Pool, ip: string): Promise<void> {
+  const clientIp = ip.trim().slice(0, 100) || 'unknown';
+  await limit(pool, `ai-search:ip:${clientIp}`, 20);
+}
+
 async function revokeCredentials(db: Connection, userId: string, passwordHash: string, recoveryId?: string): Promise<void> {
   // Caller holds the user row lock. Keep user -> recovery -> session ordering everywhere.
   await db.query('UPDATE seven.users SET password_hash=$2,updated_at=now() WHERE user_id=$1', [userId, passwordHash]);

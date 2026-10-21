@@ -27,7 +27,7 @@ import * as R from './reservations.ts';
 import * as P from './payments.ts';
 import * as B from './benefits.ts';
 import { mountOperations } from './operations.ts';
-import { mountAccountRoutes, rateLimitLogin } from './accounts.ts';
+import { mountAccountRoutes, rateLimitAiSearch, rateLimitLogin } from './accounts.ts';
 import type { RecoveryMailer } from './accounts.ts';
 import { configuredRecoveryMailer } from './recoveryMailer.ts';
 import { interpretHotelSearch, isOpenAIConfigured, toHotelSearchParams } from './aiConcierge.ts';
@@ -366,6 +366,12 @@ export function createApp(options: AppOptions = {}) {
     const input = z.strictObject({
       message: z.string().trim().min(2).max(2000),
     }).parse(req.body);
+    // Vercel sanitizes these client-IP headers at its edge. Outside Vercel, use
+    // Express's socket-derived IP and never trust caller-supplied forwarding headers.
+    const forwardedIp = process.env.VERCEL
+      ? (req.get('x-vercel-forwarded-for') ?? req.get('x-forwarded-for') ?? '').split(',')[0]?.trim()
+      : undefined;
+    await rateLimitAiSearch(pool, forwardedIp || req.ip || 'unknown');
     if (!isOpenAIConfigured())
       return fail(503, 'AI_NOT_CONFIGURED', 'AI search is not configured yet. Standard hotel search remains available.');
     try {

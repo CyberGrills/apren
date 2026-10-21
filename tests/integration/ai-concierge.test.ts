@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import type { Pool } from 'pg';
+import { rateLimitAiSearch } from '../../services/platform/src/accounts.ts';
+import { ApiError } from '../../services/platform/src/db.ts';
 import {
   hotelSearchIntentSchema,
   interpretHotelSearch,
@@ -7,34 +10,43 @@ import {
 } from '../../services/platform/src/aiConcierge.ts';
 
 test('hotel search intent schema rejects extra fields and invalid room counts', () => {
-  assert.equal(hotelSearchIntentSchema.safeParse({
-    city: 'Lagos',
-    checkInDate: '2026-11-01',
-    checkOutDate: '2026-11-03',
-    rooms: 1,
-    amenities: [],
-    maxBudgetNaira: null,
-    clarification: null,
-    availability: true,
-  }).success, false);
-  assert.equal(hotelSearchIntentSchema.safeParse({
-    city: null,
-    checkInDate: null,
-    checkOutDate: null,
-    rooms: 11,
-    amenities: [],
-    maxBudgetNaira: null,
-    clarification: null,
-  }).success, false);
-  assert.equal(hotelSearchIntentSchema.safeParse({
-    city: 'Lagos',
-    checkInDate: '2026-02-31',
-    checkOutDate: '2026-03-03',
-    rooms: 1,
-    amenities: [],
-    maxBudgetNaira: null,
-    clarification: null,
-  }).success, false);
+  assert.equal(
+    hotelSearchIntentSchema.safeParse({
+      city: 'Lagos',
+      checkInDate: '2026-11-01',
+      checkOutDate: '2026-11-03',
+      rooms: 1,
+      amenities: [],
+      maxBudgetNaira: null,
+      clarification: null,
+      availability: true,
+    }).success,
+    false,
+  );
+  assert.equal(
+    hotelSearchIntentSchema.safeParse({
+      city: null,
+      checkInDate: null,
+      checkOutDate: null,
+      rooms: 11,
+      amenities: [],
+      maxBudgetNaira: null,
+      clarification: null,
+    }).success,
+    false,
+  );
+  assert.equal(
+    hotelSearchIntentSchema.safeParse({
+      city: 'Lagos',
+      checkInDate: '2026-02-31',
+      checkOutDate: '2026-03-03',
+      rooms: 1,
+      amenities: [],
+      maxBudgetNaira: null,
+      clarification: null,
+    }).success,
+    false,
+  );
 });
 
 test('hotel search parameters convert Naira to exact kobo and preserve deterministic filters', () => {
@@ -63,24 +75,36 @@ test('OpenAI intent parser uses Responses API, strict schema, and validates mode
   process.env.OPENAI_MODEL = 'gpt-6-luna';
   try {
     let captured: { url: string; init?: RequestInit } | undefined;
-    const result = await interpretHotelSearch('Two nights in Lagos, one room, under ₦50,000', async (input, init) => {
-      captured = { url: String(input), init };
-      return new Response(JSON.stringify({
-        output_text: JSON.stringify({
-          city: 'Lagos',
-          checkInDate: '2026-11-01',
-          checkOutDate: '2026-11-03',
-          rooms: 1,
-          amenities: [],
-          maxBudgetNaira: '50000',
-          clarification: null,
-        }),
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    });
+    const result = await interpretHotelSearch(
+      'Two nights in Lagos, one room, under ₦50,000',
+      async (input, init) => {
+        captured = { url: String(input), init };
+        return new Response(
+          JSON.stringify({
+            output_text: JSON.stringify({
+              city: 'Lagos',
+              checkInDate: '2026-11-01',
+              checkOutDate: '2026-11-03',
+              rooms: 1,
+              amenities: [],
+              maxBudgetNaira: '50000',
+              clarification: null,
+            }),
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      },
+    );
     assert.equal(captured?.url, 'https://api.openai.com/v1/responses');
     assert.ok(captured?.init?.headers);
-    assert.equal((captured.init.headers as Record<string, string>).Authorization, 'Bearer test-only-not-a-real-key');
-    const request = JSON.parse(String(captured?.init?.body)) as { store: boolean; text: { format: { type: string; strict: boolean } } };
+    assert.equal(
+      (captured.init.headers as Record<string, string>).Authorization,
+      'Bearer test-only-not-a-real-key',
+    );
+    const request = JSON.parse(String(captured?.init?.body)) as {
+      store: boolean;
+      text: { format: { type: string; strict: boolean } };
+    };
     assert.equal(request.store, false);
     assert.equal(request.text.format.type, 'json_schema');
     assert.equal(request.text.format.strict, true);
@@ -92,4 +116,25 @@ test('OpenAI intent parser uses Responses API, strict schema, and validates mode
     if (originalModel === undefined) delete process.env.OPENAI_MODEL;
     else process.env.OPENAI_MODEL = originalModel;
   }
+});
+
+test('billable AI hotel search uses a shared per-IP PostgreSQL rate limit', async () => {
+  let requestCount = 0;
+  const pool = {
+    query: async (sql: string) => {
+      assert.match(sql, /seven\.account_rate_limits/);
+      requestCount += 1;
+      return { rows: [{ request_count: requestCount }] };
+    },
+  } as unknown as Pool;
+
+  for (let i = 0; i < 20; i += 1) {
+    await rateLimitAiSearch(pool, '203.0.113.10');
+  }
+  await assert.rejects(
+    () => rateLimitAiSearch(pool, '203.0.113.10'),
+    (error: unknown) =>
+      error instanceof ApiError && error.status === 429 && error.code === 'RATE_LIMITED',
+  );
+  assert.equal(requestCount, 21);
 });
