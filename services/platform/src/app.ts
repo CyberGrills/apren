@@ -1387,7 +1387,7 @@ export function createApp(options: AppOptions = {}) {
           );
         if (previous)
           await db.query(
-            'UPDATE seven.inventory_windows SET capacity=$2,ends_at=$3,revision=revision+1,updated_at=now() WHERE inventory_window_id=$1',
+            'UPDATE seven.inventory_windows SET capacity=$2,ends_at=$3,revision=revision+1,updated_at=now(),inventory_confirmed_at=now() WHERE inventory_window_id=$1',
             [previous.inventory_window_id, input.capacity, end],
           );
         else
