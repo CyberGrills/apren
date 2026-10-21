@@ -231,7 +231,7 @@ export async function offeringProjection(db: Connection, id: string, activeInven
              OR b.details->>'isSample'='true'
              OR (
                b.details #>> '{verificationReview,checklistVersion}'='1'
-               AND w.updated_at > now() - (
+               AND w.inventory_confirmed_at > now() - (
                  COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'
                )
              )
