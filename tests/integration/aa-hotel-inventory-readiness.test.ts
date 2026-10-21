@@ -16,7 +16,7 @@ function assertDisposableDatabaseUrl(value: string, label: string): URL {
   const parsed = new URL(value);
   assert.doesNotMatch(
     parsed.hostname,
-    /(?:^|\\.)supabase\\.co$|(?:^|\\.)pooler\\.supabase\\.com$/i,
+    /(?:^|\.)supabase\.co$|(?:^|\.)pooler\.supabase\.com$/i,
     `${label} must point to an isolated test PostgreSQL instance, never Supabase.`,
   );
   assert.match(
