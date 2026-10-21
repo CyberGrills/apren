@@ -108,7 +108,7 @@ class Client {
 }
 
 test(
-  'hotel onboarding approval and room-night inventory eligibility are safe and fail closed',
+  'hotel onboarding, admin approval, and room-night inventory eligibility are safe and fail closed',
   { skip: !process.env.TEST_DATABASE_URL, timeout: 120000 },
   async () => {
     const testDatabaseUrl = process.env.TEST_DATABASE_URL!;
@@ -118,9 +118,8 @@ test(
     let ownsAppPool = false;
     let schemaReady = false;
     let server: Server | undefined;
-    let testUserId: string | undefined;
+    const testUserIds: string[] = [];
     let pendingBusinessId: string | undefined;
-    let approvedBusinessId: string | undefined;
     const offeringIds: string[] = [];
 
     try {
@@ -164,7 +163,18 @@ test(
       const client = new Client(`http://127.0.0.1:${address.port}`);
       const email = `inventory-readiness-${randomUUID()}@seven.test`;
       const user = await client.register(email);
-      testUserId = user.id;
+      testUserIds.push(user.id);
+
+      const admin = new Client(`http://127.0.0.1:${address.port}`);
+      const adminEmail = `inventory-readiness-admin-${randomUUID()}@seven.test`;
+      const adminUser = await admin.register(adminEmail);
+      testUserIds.push(adminUser.id);
+      // Bootstrap the administrator only inside the disposable test schema.
+      await pool.query(
+        "UPDATE seven.users SET role_id=(SELECT role_id FROM seven.roles WHERE role_code='ADMIN') WHERE user_id=$1",
+        [adminUser.id],
+      );
+      await admin.login(adminEmail);
 
       const application = await client.request<C.Business>('/business/applications', 'POST', {
         businessName: 'Inventory Readiness Test Property',
@@ -200,130 +210,78 @@ test(
       assert.equal(attemptToPublish.status, 403, JSON.stringify(attemptToPublish));
       assert.equal(attemptToPublish.error?.code, 'APPROVAL_REQUIRED');
 
-      const fixtureBusiness = randomUUID();
-      const fixtureVenue = randomUUID();
-      approvedBusinessId = fixtureBusiness;
-      const fixtureCity = 'Readiness Test City';
-      const businessName = 'Isolated Inventory Eligibility Fixture';
+      const unauthorizedApproval = await client.request(
+        `/admin/businesses/${pendingBusinessId}/status`,
+        'POST',
+        { status: 'APPROVED', reason: 'This request must be rejected for a non-admin.' },
+      );
+      assert.equal(unauthorizedApproval.status, 403, JSON.stringify(unauthorizedApproval));
 
-      await pool.query(
-        `INSERT INTO seven.businesses
-           (business_id,business_name,slug,city,description,workflow_state_id,details)
-         VALUES
-           ($1,$2,$3,$4,$5,
-            (SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='APPROVED'),
-            $6::jsonb)`,
-        [
-          fixtureBusiness,
-          businessName,
-          `readiness-fixture-${fixtureBusiness.slice(0, 8)}`,
-          fixtureCity,
-          'Isolated automated test fixture; not an actual hotel.',
-          JSON.stringify({
-            address: '2 Isolated Test Lane, Readiness Test City',
-            sector: 'STAY',
-            isSample: true,
-            isTestFixture: true,
-          }),
-        ],
+      const approval = await admin.request<C.Business>(
+        `/admin/businesses/${pendingBusinessId}/status`,
+        'POST',
+        { status: 'APPROVED', reason: 'Approved by the isolated inventory readiness test.' },
       );
-      await pool.query(
-        `INSERT INTO seven.venues
-           (venue_id,business_id,venue_name,address_line,city,timezone_name)
-         VALUES ($1,$2,$3,$4,$5,'Africa/Lagos')`,
-        [
-          fixtureVenue,
-          fixtureBusiness,
-          businessName,
-          '2 Isolated Test Lane, Readiness Test City',
-          fixtureCity,
-        ],
-      );
+      assert.equal(approval.status, 200, JSON.stringify(approval));
+      assert.equal(approval.data.status, 'APPROVED');
+
+      await client.login(email);
 
       const checkIn = lagosDateOffset(7);
       const checkOut = calendarDateOffset(checkIn, 2);
+      const fixtureCity = 'Readiness Test City';
+      const address = '1 Isolated Test Lane, Readiness Test City';
       const eligibleTitle = 'READINESS FIXTURE - Full two-night capacity';
 
       async function addOffer(
-        businessId: string,
         title: string,
         capacity: number,
+        published = true,
       ): Promise<string> {
-        const offeringId = randomUUID();
-        offeringIds.push(offeringId);
-        await pool.query(
-          `INSERT INTO seven.offerings
-             (offering_id,business_id,venue_id,sector_id,title,description,city,price_minor,is_published,details)
-           VALUES
-             ($1,$2,$3,
-              (SELECT sector_id FROM seven.sectors WHERE sector_code='STAY'),
-              $4,$5,$6,12000000,true,$7::jsonb)`,
-          [
-            offeringId,
-            businessId,
-            businessId === fixtureBusiness ? fixtureVenue : null,
-            title,
-            'Synthetic test-only listing used to verify public eligibility.',
-            fixtureCity,
-            JSON.stringify({
-              address: '2 Isolated Test Lane, Readiness Test City',
-              capacity,
-              amenities: [],
-              images: [],
-              cancellationHours: 24,
-              discountBps: 0,
-              isSample: true,
-            }),
-          ],
-        );
-        return offeringId;
+        const response = await client.request<C.Offering>('/business/offerings', 'POST', {
+          title,
+          description: 'Synthetic test-only listing used to verify public eligibility.',
+          kind: 'STAY',
+          city: fixtureCity,
+          address,
+          priceMinor: 12000000,
+          capacity,
+          published,
+          images: [],
+          amenities: [],
+          cancellationHours: 24,
+          taxBps: 0,
+          discountBps: 0,
+        });
+        assert.equal(response.status, 200, JSON.stringify(response));
+        offeringIds.push(response.data.id);
+        return response.data.id;
       }
 
-      async function addNightWindows(
+      async function addAvailability(
         offeringId: string,
-        offsets: number[],
+        startDate: string,
+        endDate: string,
         capacity: number,
       ): Promise<void> {
-        for (const offset of offsets) {
-          await pool.query(
-            `INSERT INTO seven.inventory_windows
-               (inventory_window_id,offering_id,starts_at,ends_at,capacity)
-             VALUES
-               ($1,$2,
-                ($3::date + $4::int + time '13:00') AT TIME ZONE 'UTC',
-                ($3::date + $4::int + 1 + time '10:00') AT TIME ZONE 'UTC',
-                $5)`,
-            [randomUUID(), offeringId, checkIn, offset, capacity],
-          );
-        }
+        const response = await client.request<C.Offering>(
+          `/business/offerings/${offeringId}/availability`,
+          'POST',
+          { startDate, endDate, capacity },
+        );
+        assert.equal(response.status, 200, JSON.stringify(response));
       }
 
-      const validId = await addOffer(fixtureBusiness, eligibleTitle, 2);
-      await addOffer(
-        fixtureBusiness,
-        'READINESS FIXTURE - No inventory',
-        2,
-      );
-      const partialId = await addOffer(
-        fixtureBusiness,
-        'READINESS FIXTURE - Missing second night',
-        2,
-      );
-      const lowCapacityId = await addOffer(
-        fixtureBusiness,
-        'READINESS FIXTURE - Only one room',
-        1,
-      );
-      const pendingId = await addOffer(
-        pendingBusinessId,
-        'READINESS FIXTURE - Pending business with inventory',
-        2,
-      );
+      const validId = await addOffer(eligibleTitle, 2);
+      await addOffer('READINESS FIXTURE - No inventory', 2);
+      const partialId = await addOffer('READINESS FIXTURE - Missing second night', 2);
+      const lowCapacityId = await addOffer('READINESS FIXTURE - Only one room', 1);
+      const unpublishedId = await addOffer('READINESS FIXTURE - Unpublished', 2, false);
 
-      await addNightWindows(validId, [0, 1], 2);
-      await addNightWindows(partialId, [0], 2);
-      await addNightWindows(lowCapacityId, [0, 1], 1);
-      await addNightWindows(pendingId, [0, 1], 2);
+      await addAvailability(validId, checkIn, checkOut, 2);
+      await addAvailability(partialId, checkIn, calendarDateOffset(checkIn, 1), 2);
+      await addAvailability(lowCapacityId, checkIn, checkOut, 1);
+      await addAvailability(unpublishedId, checkIn, checkOut, 2);
 
       const listingResponse = await client.request<Array<{ title: string }>>(
         `/offerings?kind=STAY&city=${encodeURIComponent(fixtureCity)}&startDate=${checkIn}&endDate=${checkOut}&rooms=2&pageSize=30`,
@@ -334,12 +292,12 @@ test(
       assert.deepEqual(
         returnedTitles,
         [eligibleTitle],
-        'Public results must require an approved business and sufficient inventory on every requested night.',
+        'Public results must require approval, publication, and sufficient inventory on every requested night.',
       );
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - No inventory'));
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Missing second night'));
       assert.ok(!returnedTitles.includes('READINESS FIXTURE - Only one room'));
-      assert.ok(!returnedTitles.includes('READINESS FIXTURE - Pending business with inventory'));
+      assert.ok(!returnedTitles.includes('READINESS FIXTURE - Unpublished'));
     } finally {
       if (server) {
         await new Promise<void>((resolve, reject) =>
@@ -348,7 +306,7 @@ test(
       }
 
       if (schemaReady) {
-        const businessIds = [pendingBusinessId, approvedBusinessId].filter(
+        const businessIds = [pendingBusinessId].filter(
           (value): value is string => Boolean(value),
         );
         if (offeringIds.length) {
@@ -371,11 +329,20 @@ test(
           await pool.query('DELETE FROM seven.venues WHERE business_id = ANY($1::uuid[])', [businessIds]);
           await pool.query('DELETE FROM seven.businesses WHERE business_id = ANY($1::uuid[])', [businessIds]);
         }
-        if (testUserId) {
-          await pool.query('DELETE FROM seven.audit_events WHERE user_id=$1', [testUserId]);
-          await pool.query('DELETE FROM seven.idempotencies WHERE user_id=$1', [testUserId]);
-          await pool.query('DELETE FROM seven.sessions WHERE user_id=$1', [testUserId]);
-          await pool.query('DELETE FROM seven.users WHERE user_id=$1', [testUserId]);
+        if (testUserIds.length) {
+          await pool.query(
+            'DELETE FROM seven.audit_events WHERE user_id = ANY($1::uuid[])',
+            [testUserIds],
+          );
+          await pool.query(
+            'DELETE FROM seven.idempotencies WHERE user_id = ANY($1::uuid[])',
+            [testUserIds],
+          );
+          await pool.query(
+            'DELETE FROM seven.sessions WHERE user_id = ANY($1::uuid[])',
+            [testUserIds],
+          );
+          await pool.query('DELETE FROM seven.users WHERE user_id = ANY($1::uuid[])', [testUserIds]);
         }
       }
       if (ownsAppPool) await appPool.end();
