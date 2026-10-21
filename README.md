@@ -40,7 +40,7 @@ npm start
 
 Integration tests require a separate `TEST_DATABASE_URL` whose database name ends in `_test_db`. They reset only its `seven` schema and run serially. Set `TEST_RUNTIME_DATABASE_URL` to a restricted login for that same test database. The login must have `INHERIT` enabled and be a member of `seven_app` (for example, `GRANT seven_app TO seven_runtime WITH INHERIT TRUE;`). The fixture administrator migrates/seeds while HTTP requests run under the restricted login; acceptance checks effective schema and group privileges before starting HTTP requests. Tests cover inventory races, provider doubles, balanced journals, account recovery, provider-scoped replay, worker termination and transaction rollback. Local doubles do not certify provider sandboxes, bank credit or Base wallet delivery.
 
-`npm start` serves the built SPA and API on 7077. Set `APP_ORIGIN=http://127.0.0.1:7077` for a standalone local built-app check. All frontend calls use same-origin `/api` paths. Production needs an HTTPS reverse proxy, production credentials and the release review described below. No deployment has been made.
+`npm start` serves the built SPA and API on 7077. Set `APP_ORIGIN=http://127.0.0.1:7077` for a standalone local built-app check. All frontend calls use same-origin `/api` paths. Production needs an HTTPS reverse proxy, production credentials and the release review described below. Review deployed configuration separately from local checks.
 
 ## Optional stay search
 

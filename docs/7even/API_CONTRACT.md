@@ -1,6 +1,6 @@
 # 7even API contract
 
-Updated 18 October 2026 for the approved multi-provider payment rules. These routes describe the local server. Shared DTOs and strict input schemas live in `packages/contracts/src/index.ts`; account recovery schemas live beside their handlers in `services/platform/src/accounts.ts`.
+Updated 21 October 2026 for optional stay search and the consolidated application. These routes describe the local server. Shared DTOs and strict input schemas live in `packages/contracts/src/index.ts`; account recovery schemas live beside their handlers in `services/platform/src/accounts.ts`.
 
 All routes start with `/api`. Success is `{ data: T }`; list data is an array, without a total-count envelope. Errors use `ApiErrorBody`. Amounts are exact integer minor-unit strings, points are bounded integers. App mutations use same-origin verification and, for a signed-in actor, CSRF verification. The business mutations below require `Idempotency-Key`; login, registration, recovery, password change and webhook handlers have separate controls. Session authority comes from the server cookie. Browser requests include credentials. `X-CSRF-Token` comes from the session response. Never accept a caller-supplied role or business as authority.
 

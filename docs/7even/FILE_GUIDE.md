@@ -144,6 +144,7 @@ This table began as a 152-file snapshot of active source, configuration, tests, 
 | `scripts/dev.mjs` | Starts only the modular platform API and Vite app on their configured local development ports; handles process shutdown. |
 | `services/platform/package.json` | Single modular platform runtime dependencies and server/migrate/seed/test scripts. |
 | `services/platform/src/accounts.ts` | Hashed single-use account recovery, password change/session revocation, private delivery and persistent per-account/IP abuse counters shared across workers. |
+| `services/platform/src/aiConcierge.ts` | Optional server-side OpenAI intent extraction, explicit key/model configuration, strict dates and room validation, clarification and exact NGN search-filter conversion. |
 | `services/platform/src/app.ts` | Application construction, secure session/CSRF/origin middleware, route mounting, durable mutation keys, catalog/business/admin APIs and error translation. |
 | `services/platform/src/auth.ts` | Salted scrypt password hashing, constant-time verification and opaque token hashing/generation. |
 | `services/platform/src/benefits.ts` | Point-funded reward redemption, benefit consumption, gift/swap eligibility, proposal locks, ownership rotation and expiry. |

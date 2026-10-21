@@ -14,6 +14,8 @@ Copy `.env.example` to `.env` and supply environment-specific values privately. 
 | `MIGRATION_DATABASE_URL` | Separate administrator connection used by `npm run db:migrate`. The runner falls back to `DATABASE_URL` if absent; do not rely on that fallback in a deployed environment. |
 | `TEST_DATABASE_URL` | Administrator connection to a disposable database whose name ends in `_test_db`. Integration fixtures reset that database's `seven` schema. |
 | `TEST_RUNTIME_DATABASE_URL` | Restricted `seven_app` login for the same disposable database, used by HTTP acceptance tests. |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | Optional server-only stay-search credentials. Both are required. Select a model supported by the API account for Structured Outputs; no default model is selected. |
+| `SEVEN_PREVIEW_READ_ONLY` | Optional `true` rejects preview HTTP mutations except stay search, including its rate-limit writes. Production ignores the flag. Use isolated preview storage and workers as well. |
 | `NODE_ENV`, `PORT`, `APP_ORIGIN` | Runtime mode, API listener port and canonical browser origin. The API binds all interfaces; production requires HTTPS ingress. |
 | `PAYMENT_MODE` | `mock` for explicit local demonstrations; `live` for real adapters. Production rejects mock mode and requires both fiat providers. |
 | `FLUTTERWAVE_SECRET_KEY`, `FLUTTERWAVE_WEBHOOK_SECRET` | Server-only credentials. `FLUTTERWAVE_WEBHOOK_SCHEME` must be `v3-verif-hash` for this adapter. Do not substitute another webhook protocol. |
@@ -37,6 +39,8 @@ Hotel stays must pass the admin verification checklist before approval: operatin
 `npm run dev` starts the API on port 7077 and Vite on loopback port 5177. Vite proxies same-origin `/api`; the restored local PostgreSQL instance also uses loopback. `npm run build` performs TypeScript checking and writes the frontend build. With a built frontend and the appropriate `APP_ORIGIN`, `npm start` serves API and SPA on the configured API port. The API listener binds to `0.0.0.0`, so it is not confined to loopback; reachability depends on host/network controls. A production ingress must deliberately provide HTTPS and reviewed access controls. No deployed ingress, firewall or TLS configuration is proved by the local run.
 
 `GET /api/health/live` checks that the process responds. `GET /api/health/ready` also queries PostgreSQL. Neither endpoint proves provider, SMTP, bank or worker health.
+
+Migrations 012 and 013 enable row-level security for internal tables and preserve access for the established server roles according to existing grants. Tenant authorization remains in the application. Migration 014 pins six integrity trigger functions to `pg_catalog, seven`; it replaces the older branch's function script without changing the applied 010 and 011 files. Its `ALTER FUNCTION` statements are safe to repeat if an environment previously applied that old script. Test migration upgrades and effective runtime privileges before release. The privileged Supabase Data API operation in `database/operations/` is separate, requires project-specific review, and is not run by application migrations.
 
 ## Recovery and queued work
 
