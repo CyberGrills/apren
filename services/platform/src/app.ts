@@ -445,7 +445,7 @@ export function createApp(options: AppOptions = {}) {
           : `(b.details #>> '{verificationReview,checklistVersion}' = '1' OR b.details->>'isSample' = 'true')`;
       const inventoryFreshnessGate =
         environment === 'production'
-          ? `w.updated_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour')`
+          ? `w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour')`
           : `(b.details->>'isSample' = 'true' OR w.updated_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'))`;
       const startDate = req.query.startDate === undefined
         ? undefined
