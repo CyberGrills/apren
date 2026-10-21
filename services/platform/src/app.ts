@@ -708,7 +708,7 @@ export function createApp(options: AppOptions = {}) {
         : `(b.details->>'isSample' = 'true' OR w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'))`;
     const found = await rows(
       pool,
-      `SELECT o.offering_id
+      `SELECT o.offering_id, s.sector_code
        FROM seven.offerings o
        JOIN seven.businesses b USING(business_id)
        JOIN seven.sectors s USING(sector_id)
@@ -740,7 +740,11 @@ export function createApp(options: AppOptions = {}) {
       ],
     );
     const offerings = (
-      await Promise.all(found.map((row) => S.offeringProjection(pool, row.offering_id, true)))
+      await Promise.all(
+        found.map((row) =>
+          S.offeringProjection(pool, row.offering_id, row.sector_code === 'STAY'),
+        ),
+      )
     ).filter((offer): offer is C.Offering => !!offer);
     if (!req.query.startDate) return offerings;
     const genericStartDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.startDate);
