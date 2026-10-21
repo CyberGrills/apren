@@ -31,7 +31,8 @@ test(
         decodeURIComponent(parsed.pathname.slice(1)),
         'Connected database must match TEST_DATABASE_URL.',
       );
-      await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
+      // Do not reset the shared integration schema here. Other integration tests
+      // own their fixtures; this test only validates the migration state and roles.
       await migrate(pool);
 
       const audit = await pool.query<{
