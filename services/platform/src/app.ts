@@ -1747,7 +1747,9 @@ export function createApp(options: AppOptions = {}) {
       if (!current) return fail(404, 'NOT_FOUND', 'Business not found.');
 
       let details = current.details ?? {};
-      if (input.status === 'APPROVED') {
+      const businessSector =
+        typeof details.sector === 'string' ? details.sector : 'STAY';
+      if (input.status === 'APPROVED' && businessSector === 'STAY') {
         const verification = input.verification;
         if (!verification)
           return fail(
