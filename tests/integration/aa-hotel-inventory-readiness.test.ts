@@ -159,13 +159,13 @@ test(
       server = await new Promise<Server>((resolve) => {
         const listener = app.app.listen(0, '127.0.0.1', () => resolve(listener));
       });
-      const address = server.address() as AddressInfo;
-      const client = new Client(`http://127.0.0.1:${address.port}`);
+      const serverAddress = server.address() as AddressInfo;
+      const client = new Client(`http://127.0.0.1:${serverAddress.port}`);
       const email = `inventory-readiness-${randomUUID()}@seven.test`;
       const user = await client.register(email);
       testUserIds.push(user.id);
 
-      const admin = new Client(`http://127.0.0.1:${address.port}`);
+      const admin = new Client(`http://127.0.0.1:${serverAddress.port}`);
       const adminEmail = `inventory-readiness-admin-${randomUUID()}@seven.test`;
       const adminUser = await admin.register(adminEmail);
       testUserIds.push(adminUser.id);
