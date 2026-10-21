@@ -40,7 +40,15 @@ npm start
 
 Integration tests require a separate `TEST_DATABASE_URL` whose database name ends in `_test_db`. They reset only its `seven` schema and run serially. Set `TEST_RUNTIME_DATABASE_URL` to a restricted login for that same test database. The login must have `INHERIT` enabled and be a member of `seven_app` (for example, `GRANT seven_app TO seven_runtime WITH INHERIT TRUE;`). The fixture administrator migrates/seeds while HTTP requests run under the restricted login; acceptance checks effective schema and group privileges before starting HTTP requests. Tests cover inventory races, provider doubles, balanced journals, account recovery, provider-scoped replay, worker termination and transaction rollback. Local doubles do not certify provider sandboxes, bank credit or Base wallet delivery.
 
-`npm start` serves the built SPA and API on 7077. Set `APP_ORIGIN=http://127.0.0.1:7077` for a standalone local built-app check. All frontend calls use same-origin `/api` paths. Production needs an HTTPS reverse proxy, production credentials and the release review described below. No deployment has been made.
+`npm start` serves the built SPA and API on 7077. Set `APP_ORIGIN=http://127.0.0.1:7077` for a standalone local built-app check. All frontend calls use same-origin `/api` paths. Production needs an HTTPS reverse proxy, production credentials and the release review described below. Review deployed configuration separately from local checks.
+
+## Optional stay search
+
+Guests can describe a stay on Explore. Set server-only `OPENAI_API_KEY` and an explicit `OPENAI_MODEL` that your API account supports for Structured Outputs. Both are required; no model is silently selected. The request is sent to OpenAI with `store: false`, an eight-second timeout and strict output validation. Missing dates require clarification. The service translates requests into filters; the existing engine remains responsible for availability, ranking, pricing and bookings. Without configuration, the endpoint returns a clear unavailable response and the normal filters remain usable.
+
+The public endpoint shares a PostgreSQL limit of 20 attempts per IP per 15-minute window across workers. Do not include personal or payment information in a stay request. Local tests use provider doubles; live OpenAI account/model access and quality still need verification.
+
+Set `SEVEN_PREVIEW_READ_ONLY=true` for a preview that must reject HTTP account, booking, payment, refund and webhook mutations with retryable `503` responses. The stay-search endpoint remains available and writes its rate-limit counters. This flag is ignored when `VERCEL_ENV=production`. It does not replace a separate preview database or disable external background workers.
 
 ## Payments and rewards
 

@@ -1,12 +1,23 @@
 import type { Offering, Sector } from '@7even/contracts';
 import { Search, SlidersHorizontal } from 'lucide-react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { EmptyState, ErrorNotice, Loading, OfferingCard } from '../../components/ui.tsx';
+import {
+  EmptyState,
+  ErrorNotice,
+  Loading,
+  OfferingCard,
+  useFeedback,
+} from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
+import { api } from '../../lib/api.ts';
 import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 export function ExplorePage() {
   const [params, setParams] = useSearchParams();
+  const { showError } = useFeedback();
+  const [aiMessage, setAiMessage] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
   const requestedKind = params.get('kind');
   const kind =
     requestedKind && ['STAY', 'DINING', 'EXPERIENCE'].includes(requestedKind)
@@ -29,6 +40,39 @@ export function ExplorePage() {
       if (value) next.set(key, value);
     }
     setParams(next);
+  }
+  async function searchWithAssistant(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (aiLoading || aiMessage.trim().length < 2) return;
+    setAiLoading(true);
+    try {
+      const result = await api<{
+        intent: {
+          city: string | null;
+          checkInDate: string | null;
+          checkOutDate: string | null;
+          rooms: number;
+          amenities: string[];
+          maxBudgetNaira: string | null;
+          clarification: string | null;
+        };
+        searchParams: Record<string, string>;
+      }>('/ai/interpret-search', {
+        method: 'POST',
+        body: { message: aiMessage.trim() },
+      });
+      if (result.intent.clarification) {
+        showError(result.intent.clarification);
+        return;
+      }
+      setParams(new URLSearchParams({ ...result.searchParams, page: '1' }));
+    } catch (cause) {
+      showError(
+        cause instanceof Error ? cause.message : 'AI search is unavailable. Use the filters below.',
+      );
+    } finally {
+      setAiLoading(false);
+    }
   }
   function changeKind(value: string) {
     const next = new URLSearchParams(params);
@@ -54,6 +98,39 @@ export function ExplorePage() {
           </h1>
           <p>Rooms, dining and experiences from businesses on 7even.</p>
         </div>
+        {(!kind || kind === 'STAY') && (
+          <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
+            <div className="explore-ai-field">
+              <label htmlFor="explore-ai-query">
+                <Search size={17} aria-hidden="true" />
+                Describe your stay
+              </label>
+              <input
+                className="field-input"
+                id="explore-ai-query"
+                name="aiQuery"
+                aria-describedby="explore-ai-note"
+                value={aiMessage}
+                onChange={(event) => setAiMessage(event.target.value)}
+                placeholder="e.g. Two nights in Lagos, a pool, and under ₦80,000"
+                maxLength={2000}
+                minLength={2}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={aiLoading || aiMessage.trim().length < 2}
+            >
+              {aiLoading ? 'Understanding your request…' : 'Search with AI'}
+            </button>
+            <p className="explore-ai-note" id="explore-ai-note">
+              Your request goes to OpenAI to turn it into search filters. Prices and availability
+              come from 7even.
+            </p>
+          </form>
+        )}
         <fieldset className="explore-categories">
           <legend className="sr-only">Browse categories</legend>
           {[
@@ -139,7 +216,11 @@ export function ExplorePage() {
                 ? `${data.length} ${data.length === 1 ? 'place' : 'places'} to consider`
                 : 'Places on 7even'}
           </p>
-          <span>{kind === 'STAY' ? 'Live room availability checked on each search; final quote confirms price and capacity.' : 'Full prices shown before you reserve.'}</span>
+          <span>
+            {kind === 'STAY'
+              ? 'Live room availability checked on each search; final quote confirms price and capacity.'
+              : 'Full prices shown before you reserve.'}
+          </span>
         </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}

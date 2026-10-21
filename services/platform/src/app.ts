@@ -27,9 +27,10 @@ import * as R from './reservations.ts';
 import * as P from './payments.ts';
 import * as B from './benefits.ts';
 import { mountOperations } from './operations.ts';
-import { mountAccountRoutes, rateLimitLogin } from './accounts.ts';
+import { mountAccountRoutes, rateLimitAiSearch, rateLimitLogin } from './accounts.ts';
 import type { RecoveryMailer } from './accounts.ts';
 import { configuredRecoveryMailer } from './recoveryMailer.ts';
+import { interpretHotelSearch, isOpenAIConfigured, toHotelSearchParams } from './aiConcierge.ts';
 import { processInbox, processOutbox } from './worker.ts';
 
 export interface AppOptions {
@@ -165,6 +166,20 @@ export function createApp(options: AppOptions = {}) {
           if (!submitted || digestToken(submitted) !== res.locals.session?.csrf_hash)
             return fail(403, 'CSRF_REJECTED', 'Refresh the page before trying again.');
         }
+      }
+      const previewReadOnly =
+        process.env.SEVEN_PREVIEW_READ_ONLY === 'true' &&
+        (process.env.VERCEL_ENV ?? environment) !== 'production';
+      if (
+        previewReadOnly &&
+        !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+        req.path !== '/api/ai/interpret-search'
+      ) {
+        return fail(
+          503,
+          'PREVIEW_READ_ONLY',
+          'This preview is read-only. Account, booking, payment, refund, and webhook changes are disabled.',
+        );
       }
       next();
     } catch (error) {
@@ -360,6 +375,30 @@ export function createApp(options: AppOptions = {}) {
   route('get', '/health/ready', async () => {
     await pool.query('SELECT 1 FROM seven.migrations LIMIT 1');
     return { status: 'ready', storage: 'postgresql', paymentMode: provider.mode };
+  });
+  route('post', '/ai/interpret-search', async (req) => {
+    const input = z.strictObject({
+      message: z.string().trim().min(2).max(2000),
+    }).parse(req.body);
+    // Vercel sanitizes these client-IP headers at its edge. Outside Vercel, use
+    // Express's socket-derived IP and never trust caller-supplied forwarding headers.
+    const forwardedIp = process.env.VERCEL
+      ? (req.get('x-vercel-forwarded-for') ?? req.get('x-forwarded-for') ?? '').split(',')[0]?.trim()
+      : undefined;
+    await rateLimitAiSearch(pool, forwardedIp || req.ip || 'unknown');
+    if (!isOpenAIConfigured())
+      return fail(503, 'AI_NOT_CONFIGURED', 'AI search is not configured yet. Standard hotel search remains available.');
+    try {
+      const intent = await interpretHotelSearch(input.message);
+      return {
+        intent,
+        searchParams: Object.fromEntries(toHotelSearchParams(intent)),
+        provider: 'openai',
+        model: process.env.OPENAI_MODEL?.trim(),
+      };
+    } catch {
+      return fail(502, 'AI_PROVIDER_UNAVAILABLE', 'AI search is temporarily unavailable. Standard hotel search remains available.');
+    }
   });
   route('get', '/engine/booking/health', async () => {
     const result = await one(
