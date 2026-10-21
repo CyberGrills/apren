@@ -1517,3 +1517,619 @@
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
+
+
+/* 7even stay marketplace: Airbnb-inspired discovery patterns with 7even's own brand and live inventory. */
+.seven-marketplace {
+  --public-page-width: min(calc(100% - 5rem), 1680px);
+  --paper: #ffffff;
+  --ink: #222222;
+  --accent: #245740;
+  --accent-hover: #173d2c;
+  --line: #dddddd;
+  --muted: #717171;
+  --surface: #ffffff;
+  --surface-subtle: #f7f7f7;
+  --control-border: #b0b0b0;
+  --public-panel: #f7f7f7;
+  --public-rule-strong: #b0b0b0;
+  --radius: 10px;
+  color: var(--ink);
+  background: #ffffff;
+  font-size: 14px;
+}
+.seven-marketplace .public-header {
+  background: #fff;
+  border-bottom: 1px solid #ebebeb;
+}
+.seven-marketplace .public-nav {
+  min-height: 84px;
+}
+.seven-marketplace .public-nav-desktop {
+  gap: 0.45rem;
+}
+.seven-marketplace .public-nav-desktop a {
+  border-radius: 999px;
+  padding: 0.8rem 1rem;
+  color: #555;
+  transition: background 150ms ease, color 150ms ease;
+}
+.seven-marketplace .public-nav-desktop a:hover {
+  background: #f7f7f7;
+  text-decoration: none;
+  color: #222;
+}
+.seven-marketplace .public-nav-actions {
+  gap: 0.9rem;
+}
+.seven-marketplace .public-account-link {
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+}
+.seven-marketplace .public-account-link:hover {
+  background: #f7f7f7;
+  text-decoration: none;
+}
+.seven-marketplace .public-business-link {
+  border: 1px solid #dddddd;
+  border-radius: 999px;
+  padding: 0.65rem 0.85rem;
+  gap: 0.5rem;
+}
+.seven-marketplace .public-menu-button {
+  border: 1px solid #dddddd;
+  border-radius: 999px;
+}
+.seven-search-shell {
+  width: var(--public-page-width);
+  margin-inline: auto;
+  padding: 1.35rem 0 1rem;
+}
+.seven-search-bar {
+  width: min(100%, 970px);
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: minmax(185px, 1.3fr) minmax(135px, 0.9fr) minmax(135px, 0.9fr) minmax(98px, 0.62fr) auto;
+  align-items: center;
+  margin-inline: auto;
+  padding: 0.38rem;
+  background: #fff;
+  border: 1px solid #dddddd;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 7%);
+}
+.seven-search-field {
+  min-width: 0;
+  padding: 0.35rem 1.05rem;
+  border-left: 1px solid #eeeeee;
+}
+.seven-search-field:first-child {
+  border-left: 0;
+}
+.seven-search-field label {
+  display: block;
+  margin: 0 0 0.23rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #222;
+}
+.seven-search-field input,
+.seven-search-field select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 23px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline-offset: 3px;
+  background: transparent;
+  box-shadow: none;
+  color: #555;
+  font-family: var(--font-body);
+  font-size: 0.77rem;
+  line-height: 1.35;
+}
+.seven-search-field input:focus,
+.seven-search-field select:focus {
+  outline: none;
+}
+.seven-search-field input::placeholder {
+  color: #717171;
+  opacity: 1;
+}
+.seven-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.seven-search-input-wrap svg {
+  display: none;
+  flex-shrink: 0;
+  color: #717171;
+}
+.seven-search-button {
+  min-width: 49px;
+  min-height: 49px;
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font: 600 0.8rem / 1 var(--font-body);
+  transition: background 160ms ease, transform 160ms ease;
+}
+.seven-search-button:hover {
+  background: var(--accent-hover);
+}
+.seven-search-button:active {
+  transform: scale(0.98);
+}
+.seven-date-error {
+  width: min(100%, 970px);
+  margin: 0.65rem auto 0;
+  font-size: 0.78rem;
+  color: #9c302c;
+}
+.seven-category-row {
+  display: flex;
+  align-items: stretch;
+  gap: 1.4rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  border-bottom: 1px solid #eeeeee;
+  padding-block: 0.85rem 0;
+}
+.seven-category-row::-webkit-scrollbar {
+  display: none;
+}
+.seven-category,
+.seven-more-filters {
+  flex: 0 0 auto;
+  min-width: 72px;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.25rem 0.45rem 0.95rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #717171;
+  text-align: center;
+  text-decoration: none;
+  font: 600 0.72rem / 1.25 var(--font-body);
+  white-space: nowrap;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+.seven-category svg {
+  color: #777;
+  transition: color 150ms ease;
+}
+.seven-category:hover,
+.seven-category:hover svg {
+  color: #222;
+}
+.seven-category.active {
+  border-bottom-color: #222;
+  color: #222;
+}
+.seven-category.active svg {
+  color: #222;
+}
+.seven-more-filters {
+  flex-direction: row;
+  min-width: auto;
+  min-height: 40px;
+  align-self: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  padding: 0.7rem 1rem;
+  border: 1px solid #dddddd;
+  border-radius: 999px;
+  color: #222;
+}
+.seven-more-filters:hover {
+  background: #f7f7f7;
+}
+.seven-marketplace-results {
+  padding-block: 2rem 4.2rem;
+}
+.seven-results-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.4rem;
+}
+.seven-kicker {
+  margin: 0 0 0.35rem;
+  color: #717171;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.seven-results-heading h1 {
+  margin: 0;
+  font: 600 clamp(1.65rem, 2.4vw, 2rem) / 1.2 var(--font-body);
+  letter-spacing: -0.04em;
+  color: #222;
+}
+.seven-results-description {
+  margin: 0.45rem 0 0;
+  color: #717171;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.seven-all-results {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 42px;
+  color: #222;
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-underline-offset: 3px;
+}
+.seven-all-results:hover {
+  text-decoration: underline;
+}
+.seven-listing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem 1.15rem;
+}
+.seven-marketplace .offering-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.seven-marketplace .offering-image-link {
+  aspect-ratio: 1 / 0.96;
+  border-radius: 13px;
+  background: #f2f2f2;
+}
+.seven-marketplace .offering-image-link img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.seven-marketplace .image-placeholder {
+  min-height: 220px;
+  color: #777;
+  font-size: 4rem;
+}
+.seven-marketplace .sample-tag {
+  left: 0.7rem;
+  top: 0.7rem;
+  padding: 0.48rem 0.7rem;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+  color: #222;
+  letter-spacing: 0;
+  font-size: 0.67rem;
+  font-weight: 600;
+}
+.seven-marketplace .offering-card-copy {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0.8rem 0 0;
+}
+.seven-marketplace .offering-kind {
+  align-items: start;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  color: #555;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.seven-marketplace .offering-kind span {
+  gap: 0.2rem;
+  white-space: nowrap;
+  color: #555;
+}
+.seven-marketplace .offering-kind span svg {
+  width: 12px;
+  height: 12px;
+}
+.seven-marketplace .offering-card h3 {
+  margin: 0 0 0.25rem;
+  font: 600 0.93rem / 1.4 var(--font-body);
+  letter-spacing: -0.01em;
+}
+.seven-marketplace .offering-card h3 a {
+  align-items: start;
+  gap: 0.35rem;
+  justify-content: flex-start;
+  color: #222;
+}
+.seven-marketplace .offering-card h3 a svg {
+  display: none;
+}
+.seven-marketplace .offering-business {
+  margin: 0.1rem 0 0;
+  color: #717171;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.seven-marketplace .hotel-match {
+  display: none;
+}
+.seven-marketplace .offering-price {
+  gap: 0.32rem;
+  padding-top: 0.6rem;
+  margin-top: auto;
+  border: 0;
+  align-items: baseline;
+}
+.seven-marketplace .offering-price .money {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.seven-marketplace .offering-price > span:last-child {
+  color: #555;
+  font-size: 0.78rem;
+}
+.seven-marketplace .loading-state {
+  margin-block: 2rem;
+  color: #717171;
+}
+.seven-marketplace .empty-state {
+  margin: 1rem 0 0;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  background: #fafafa;
+}
+.seven-marketplace .empty-state h2 {
+  margin-bottom: 0.65rem;
+  font: 600 1.45rem / 1.3 var(--font-body);
+  letter-spacing: -0.025em;
+}
+.seven-marketplace .empty-state p {
+  max-width: 70ch;
+  margin-bottom: 1.25rem;
+  color: #717171;
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+.seven-marketplace .empty-state .btn {
+  border-radius: 999px;
+}
+.seven-trust-strip {
+  border-top: 1px solid #eeeeee;
+  background: #fafafa;
+  padding-block: 2.2rem;
+}
+.seven-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+}
+.seven-trust-grid article {
+  display: flex;
+  align-items: start;
+  gap: 0.9rem;
+  min-width: 0;
+}
+.seven-trust-grid article > svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+.seven-trust-grid h2 {
+  margin: 0 0 0.35rem;
+  font: 600 0.88rem / 1.35 var(--font-body);
+  letter-spacing: -0.01em;
+}
+.seven-trust-grid p {
+  margin: 0;
+  color: #717171;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+.seven-marketplace .public-footer {
+  border-top: 1px solid #eeeeee;
+}
+.seven-marketplace .public-footer-top > p {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.seven-marketplace .public-footer-top nav {
+  font-size: 0.8rem;
+}
+.seven-marketplace .public-footer-bottom {
+  font-size: 0.75rem;
+}
+@media (max-width: 1180px) {
+  .seven-listing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .seven-search-bar {
+    width: min(100%, 900px);
+    grid-template-columns: minmax(150px, 1.15fr) minmax(125px, 0.9fr) minmax(125px, 0.9fr) minmax(90px, 0.6fr) auto;
+  }
+}
+@media (max-width: 900px) {
+  .seven-marketplace {
+    --public-page-width: calc(100% - 3rem);
+  }
+  .seven-marketplace .public-nav {
+    min-height: 78px;
+  }
+  .seven-search-shell {
+    padding-top: 1rem;
+  }
+  .seven-search-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-radius: 23px;
+    gap: 0;
+    padding: 0.35rem;
+  }
+  .seven-search-field {
+    padding: 0.8rem 1rem;
+    border-left: 0;
+  }
+  .seven-search-field:nth-child(even) {
+    border-left: 1px solid #eeeeee;
+  }
+  .seven-search-field:nth-child(n + 3) {
+    border-top: 1px solid #eeeeee;
+  }
+  .seven-search-button {
+    grid-column: 1 / -1;
+    border-radius: 14px;
+    min-height: 46px;
+    margin: 0.35rem;
+  }
+  .seven-category-row {
+    gap: 0.95rem;
+  }
+  .seven-more-filters {
+    margin-left: 0;
+  }
+  .seven-listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.7rem 1rem;
+  }
+  .seven-trust-grid {
+    gap: 1.2rem;
+  }
+}
+@media (max-width: 600px) {
+  .seven-marketplace {
+    --public-page-width: calc(100% - 2rem);
+  }
+  .seven-marketplace .public-nav {
+    min-height: 68px;
+  }
+  .seven-marketplace .public-nav .brand {
+    width: 116px;
+    height: auto;
+  }
+  .seven-marketplace .public-nav-actions {
+    gap: 0.4rem;
+  }
+  .seven-marketplace .public-account-link {
+    padding: 0.6rem 0.65rem;
+    font-size: 0.77rem;
+  }
+  .seven-marketplace .public-menu-button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .seven-marketplace .public-mobile-nav {
+    gap: 0.25rem 1rem;
+    padding-block: 0.5rem 0.8rem;
+  }
+  .seven-search-shell {
+    padding-block: 0.8rem 0.5rem;
+  }
+  .seven-search-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .seven-search-field {
+    padding: 0.7rem 0.7rem;
+  }
+  .seven-search-field label {
+    font-size: 0.68rem;
+  }
+  .seven-search-field input,
+  .seven-search-field select {
+    font-size: 0.72rem;
+  }
+  .seven-search-field input[type="date"] {
+    letter-spacing: -0.03em;
+  }
+  .seven-search-button {
+    min-height: 46px;
+  }
+  .seven-category-row {
+    width: 100%;
+    padding-inline: 1rem;
+    gap: 0.55rem;
+  }
+  .seven-category {
+    min-width: 68px;
+    min-height: 70px;
+    font-size: 0.68rem;
+  }
+  .seven-more-filters {
+    padding-inline: 0.75rem;
+    min-height: 38px;
+  }
+  .seven-marketplace-results {
+    padding-block: 1.5rem 2.8rem;
+  }
+  .seven-results-heading {
+    align-items: start;
+    gap: 1rem;
+  }
+  .seven-results-heading h1 {
+    font-size: 1.45rem;
+  }
+  .seven-results-description {
+    max-width: 48ch;
+    font-size: 0.81rem;
+  }
+  .seven-all-results {
+    min-height: 35px;
+    font-size: 0.75rem;
+  }
+  .seven-listing-grid {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
+  }
+  .seven-marketplace .offering-image-link {
+    aspect-ratio: 1.15 / 1;
+  }
+  .seven-marketplace .offering-card h3 {
+    font-size: 1rem;
+  }
+  .seven-trust-strip {
+    padding-block: 1.6rem;
+  }
+  .seven-trust-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .seven-trust-grid h2 {
+    font-size: 0.86rem;
+  }
+  .seven-marketplace .public-footer-top {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+  .seven-marketplace .public-footer-top nav {
+    justify-items: start;
+  }
+  .seven-marketplace .public-footer-bottom {
+    align-items: start;
+    flex-direction: column;
+    margin-top: 1.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seven-search-button,
+  .seven-category,
+  .seven-category svg {
+    transition: none;
+  }
+}
