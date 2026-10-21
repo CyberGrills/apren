@@ -60,7 +60,7 @@ All routes start with `/api`. Success is `{ data: T }`; list data is an array, w
 | GET /reception/reservations/:id/payment-notes | None | PaymentNote[] | Scoped owner/reception or admin |
 | POST /reception/reservations/:id/payment-notes | paymentNoteInput | PaymentNote | Same scope, staff observation only; does not establish payment or reward eligibility |
 | GET /admin/overview | None | AdminOverview | Admin |
-| POST /admin/businesses/:id/status | businessStatusInput | Business | Admin, audited |
+| POST /admin/businesses/:id/status | businessStatusInput | Business | Admin, audited; APPROVED requires all hotel verification checks, evidence references and a 1–168 hour inventory freshness window |
 | POST /admin/businesses/:id/subaccount | `{ provider, subaccountCode, accountLabel }` (flutterwave or paystack) | Business | Admin; matching RS_/ACCT_ code and verified Nigerian bank mapping |
 | POST /admin/businesses/:id/crypto-wallet/approve | `{ expectedRevision, approved, reason }` | Business | Admin, reviewed current wallet ownership, revision and business status |
 | POST /admin/policy | policyInput | AdminOverview policy | Admin, immutable next version; commission fixed approved1000bps |
