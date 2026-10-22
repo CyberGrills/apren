@@ -27,3 +27,5 @@ export type {
 
 export { optimizeHotelBookings } from './hotelBooking.ts';
 export type { HotelInventoryWindow, HotelBookingCandidate, HotelBookingCriteria, HotelBookingOptimization } from './hotelBooking.ts';
+export { decideRevenueAction } from './revenueOrchestration.ts';
+export type { RevenueAction, RevenueEconomics, RevenueDecisionInput, RevenueDecision } from './revenueOrchestration.ts';
