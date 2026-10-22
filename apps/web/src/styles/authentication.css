@@ -1,0 +1,139 @@
+.authentication-options {
+  display: grid;
+  gap: var(--space-5);
+}
+.social-signin-options,
+.passkey-signin-option {
+  display: grid;
+  gap: var(--space-3);
+}
+.signin-provider-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--control-border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    background var(--duration),
+    border-color var(--duration);
+}
+.signin-provider-button:not(:disabled):hover {
+  background: var(--surface-subtle);
+  border-color: var(--accent);
+}
+.signin-provider-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.signin-passkey-button {
+  color: var(--accent);
+  background: var(--surface-active);
+  border-color: var(--accent);
+}
+.signin-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+.signin-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-5);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.signin-divider::before,
+.signin-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+.account-signin-methods {
+  margin-top: var(--space-7);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--line);
+}
+.account-signin-methods h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  margin: 0 0 var(--space-3);
+}
+.account-signin-methods > p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+.account-signin-methods .signin-provider-button {
+  margin-block: var(--space-3);
+  justify-content: flex-start;
+}
+.signin-connected {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 0.7rem;
+}
+.passkey-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-5) 0;
+}
+.passkey-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.passkey-list strong {
+  display: block;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.passkey-list small {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 0.7rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.passkey-remove-button {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: var(--space-2);
+}
+.signin-method-dialog form {
+  display: grid;
+  gap: var(--space-5);
+}
+.signin-method-dialog p {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+.signin-method-dialog .form-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+@media (max-width: 600px) {
+  .auth-layout:not(.auth-layout-admin) .auth-copy h1 {
+    font-size: clamp(2rem, 9.5vw, 2.6rem);
+    line-height: 1.05;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .signin-provider-button {
+    transition: none;
+  }
+}
