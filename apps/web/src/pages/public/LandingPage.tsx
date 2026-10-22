@@ -1,131 +1,218 @@
 import type { Offering, Sector } from '@7even/contracts';
-import { ArrowRight, ArrowUpRight, CalendarDays, MapPin } from 'lucide-react';
+import {
+  BadgeCheck,
+  BedDouble,
+  CalendarCheck,
+  Compass,
+  LayoutGrid,
+  MapPin,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Utensils,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { EmptyState, ErrorNotice, Loading, OfferingCard } from '../../components/ui.tsx';
-import { useSeason } from '../../context/SeasonContext.tsx';
 import { useApi } from '../../hooks/useApi.ts';
-import { seasonalCampaigns } from '../../lib/seasonalCampaigns.ts';
-import { editorialImages, localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
+import { addDays, localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
+
+type MarketplaceKind = Sector | 'ALL';
+
+const categories: { value: MarketplaceKind; label: string; Icon: typeof BedDouble }[] = [
+  { value: 'ALL', label: 'All', Icon: LayoutGrid },
+  { value: 'STAY', label: 'Stays', Icon: BedDouble },
+  { value: 'DINING', label: 'Dining', Icon: Utensils },
+  { value: 'EXPERIENCE', label: 'Experiences', Icon: Compass },
+];
+
+const categoryHeadings: Record<MarketplaceKind, { title: string; description: string }> = {
+  ALL: {
+    title: 'Find your next good place.',
+    description: 'Explore stays, dining and experiences from businesses listed on 7even.',
+  },
+  STAY: {
+    title: 'Places to stay',
+    description: 'Find a room for the night, a weekend away, or the trip you have been planning.',
+  },
+  DINING: {
+    title: 'Tables worth booking',
+    description: 'Discover restaurants and make room for a meal worth remembering.',
+  },
+  EXPERIENCE: {
+    title: 'Make a day of it',
+    description: 'Find local experiences and make more of the time you have.',
+  },
+};
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const campaign = seasonalCampaigns[useSeason()];
-  const [kind, setKind] = useState<Sector>('STAY');
+  const [kind, setKind] = useState<MarketplaceKind>('STAY');
   const [city, setCity] = useState('');
-  const [date, setDate] = useState('');
-  const { data, loading, error, reload } = useApi<Offering[]>('/offerings?pageSize=3');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [rooms, setRooms] = useState('1');
+  const [dateError, setDateError] = useState('');
+  const listingPath =
+    kind === 'ALL' ? '/offerings?pageSize=8' : `/offerings?kind=${kind}&pageSize=8`;
+  const { data, loading, error, reload } = useApi<Offering[]>(listingPath);
+  const isStaySearch = kind === 'STAY';
+
   function search(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const query = new URLSearchParams({ kind });
+    if (isStaySearch && startDate && endDate && endDate <= startDate) {
+      setDateError('Check-out must be at least one day after check-in.');
+      return;
+    }
+    setDateError('');
+    const query = new URLSearchParams();
+    if (kind !== 'ALL') query.set('kind', kind);
     if (city.trim()) query.set('city', city.trim());
-    if (date) query.set('startDate', date);
-    navigate(`/explore?${query}`);
+    if (startDate) query.set('startDate', startDate);
+    if (isStaySearch && endDate) query.set('endDate', endDate);
+    if (isStaySearch) query.set('rooms', rooms || '1');
+    navigate(`/explore${query.size ? `?${query.toString()}` : ''}`);
   }
+
+  const heading = categoryHeadings[kind];
+
   return (
-    <div className="public-page">
+    <div className="public-page seven-marketplace">
       <PublicHeader />
       <main id="main-content">
-        <section className="public-container landing-hero" aria-labelledby="landing-title">
-          <div className="landing-hero-copy">
-            <span className="public-eyebrow">Good places. Nigeria first.</span>
-            <span className="seasonal-campaign-label">{campaign.label}</span>
-            <h1 id="landing-title">
-              Rooms, tables
-              <br />
-              and <em>days out.</em>
-            </h1>
-            <p>{campaign.message}</p>
-            <div className="landing-footnote">
-              <span aria-hidden="true">07</span>
-              <p>
-                For a night away, a long lunch,
-                <br />
-                or the part of your city
-                <br />
-                you haven't met yet.
-              </p>
+        <nav className="public-container seven-category-row" aria-label="Browse by category">
+          {categories.map(({ value, label, Icon }) => (
+            <button
+              type="button"
+              className={kind === value ? 'seven-category active' : 'seven-category'}
+              key={value}
+              onClick={() => {
+                setKind(value);
+                setDateError('');
+              }}
+              aria-pressed={kind === value}
+            >
+              <Icon size={23} strokeWidth={1.7} aria-hidden="true" />
+              <span>{label}</span>
+            </button>
+          ))}
+          <Link
+            to={kind === 'ALL' ? '/explore' : `/explore?kind=${kind}`}
+            className="seven-more-filters"
+          >
+            <SlidersHorizontal size={17} aria-hidden="true" />
+            <span>More filters</span>
+          </Link>
+        </nav>
+
+        <section className="seven-search-shell" aria-label="Search 7even">
+          <form
+            className={`seven-search-bar ${isStaySearch ? 'seven-search-stay' : 'seven-search-compact'}`}
+            onSubmit={search}
+          >
+            <div className="seven-search-field seven-search-destination">
+              <label htmlFor="seven-city">Where</label>
+              <div className="seven-search-input-wrap">
+                <MapPin size={16} aria-hidden="true" />
+                <input
+                  id="seven-city"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  placeholder="Search destinations"
+                  autoComplete="address-level2"
+                  maxLength={160}
+                />
+              </div>
             </div>
-          </div>
-          <figure className="landing-hero-image">
-            <img
-              src={campaign.image.src}
-              alt={campaign.image.alt}
-              width={campaign.image.width}
-              height={campaign.image.height}
-              fetchPriority="high"
-            />
-            <figcaption>
-              <span>{campaign.image.caption}</span>
-              <span>{campaign.image.credit}</span>
-            </figcaption>
-          </figure>
-          <form className="landing-search" onSubmit={search} aria-label="Find a place">
-            <div className="landing-search-kind">
-              <label htmlFor="home-kind">Your plan</label>
-              <select
-                id="home-kind"
-                value={kind}
-                onChange={(e) => setKind(e.target.value as Sector)}
-              >
-                <option value="STAY">A place to stay</option>
-                <option value="DINING">A table to book</option>
-                <option value="EXPERIENCE">Something to do</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="home-city">
-                <MapPin size={13} aria-hidden="true" /> Where
-              </label>
-              <input
-                id="home-city"
-                placeholder="Any city in Nigeria"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                maxLength={160}
-              />
-            </div>
-            <div>
-              <label htmlFor="home-date">
-                <CalendarDays size={13} aria-hidden="true" /> When
-              </label>
-              <input
-                id="home-date"
-                type="date"
-                min={localDateNow()}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </div>
-            <button className="btn btn-primary" type="submit">
-              Find a place <ArrowUpRight size={19} aria-hidden="true" />
+            {isStaySearch ? (
+              <>
+                <div className="seven-search-field">
+                  <label htmlFor="seven-checkin">Check in</label>
+                  <input
+                    id="seven-checkin"
+                    type="date"
+                    min={localDateNow()}
+                    value={startDate}
+                    onChange={(event) => {
+                      setStartDate(event.target.value);
+                      setDateError('');
+                    }}
+                  />
+                </div>
+                <div className="seven-search-field">
+                  <label htmlFor="seven-checkout">Check out</label>
+                  <input
+                    id="seven-checkout"
+                    type="date"
+                    min={startDate ? addDays(startDate, 1) : localDateNow()}
+                    value={endDate}
+                    onChange={(event) => {
+                      setEndDate(event.target.value);
+                      setDateError('');
+                    }}
+                  />
+                </div>
+                <div className="seven-search-field seven-search-rooms">
+                  <label htmlFor="seven-rooms">Rooms</label>
+                  <select
+                    id="seven-rooms"
+                    value={rooms}
+                    onChange={(event) => setRooms(event.target.value)}
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((count) => (
+                      <option value={count} key={count}>
+                        {count} {count === 1 ? 'room' : 'rooms'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : (
+              <div className="seven-search-field">
+                <label htmlFor="seven-date">When</label>
+                <input
+                  id="seven-date"
+                  type="date"
+                  min={localDateNow()}
+                  value={startDate}
+                  onChange={(event) => setStartDate(event.target.value)}
+                />
+              </div>
+            )}
+            <button className="seven-search-button" type="submit" aria-label="Search places">
+              <Search size={20} aria-hidden="true" />
+              <span>Search</span>
             </button>
           </form>
+          {dateError && (
+            <p className="seven-date-error" role="alert">
+              {dateError}
+            </p>
+          )}
         </section>
-        <section className="public-container landing-places" aria-labelledby="places-title">
-          <div className="public-section-heading">
+
+        <section
+          className="public-container seven-marketplace-results"
+          aria-labelledby="seven-results-title"
+        >
+          <div className="seven-results-heading">
             <div>
-              <span className="public-eyebrow">Worth a look / 01</span>
-              <h2 id="places-title">
-                A little room for
-                <br />a good weekend.
-              </h2>
+              <p className="seven-kicker">Discover with 7even</p>
+              <h1 id="seven-results-title">{heading.title}</h1>
+              <p className="seven-results-description">{heading.description}</p>
             </div>
-            <div>
-              <p>
-                A stay, dinner, something to do.
-                <br />
-                One place to keep your plans.
-              </p>
-              <Link to="/explore" className="public-text-link">
-                See all places <ArrowUpRight size={18} aria-hidden="true" />
-              </Link>
-            </div>
+            <Link
+              to={kind === 'ALL' ? '/explore' : `/explore?kind=${kind}`}
+              className="seven-all-results"
+            >
+              View all <span aria-hidden="true">→</span>
+            </Link>
           </div>
+
           {loading && <Loading />}
           {error && <ErrorNotice message={error} retry={reload} />}
           {data && data.length > 0 && (
-            <div className="landing-offering-grid">
+            <div className="seven-listing-grid">
               {data.map((offering) => (
                 <OfferingCard key={offering.id} offering={offering} />
               ))}
@@ -133,81 +220,50 @@ export function LandingPage() {
           )}
           {data?.length === 0 && (
             <EmptyState
-              title="Good places are on their way."
-              description="Businesses will appear here once they have joined 7even and published their availability."
+              title={
+                kind === 'STAY'
+                  ? 'Your next stay is not listed just yet.'
+                  : 'We are making room for more.'
+              }
+              description={
+                kind === 'STAY'
+                  ? '7even only shows properties that have passed the required verification review and have current room availability confirmed by their partner. Try another category, or come back as new stays are approved.'
+                  : 'There are no published places in this category right now. New listings will appear after the business has completed onboarding and published its offering.'
+              }
               action={
                 <Link className="btn btn-secondary" to="/business/apply">
-                  Bring your business
+                  List your property or business
                 </Link>
               }
             />
           )}
         </section>
-        <section className="landing-editorial" aria-labelledby="local-title">
-          <div className="public-container landing-editorial-grid">
-            <figure>
-              <img
-                src={editorialImages.beach}
-                alt="Two visitors beside the ocean in Lagos, Nigeria."
-                width="1000"
-                height="1200"
-                loading="lazy"
-              />
-              <figcaption>On the coast in Lagos · Photo: Ben Iwara / Unsplash</figcaption>
-            </figure>
-            <div>
-              <span className="public-eyebrow">Go a little further / 02</span>
-              <h2 id="local-title">
-                A change of scene.
-                <br />
-                <em>Close to home.</em>
-              </h2>
-              <p>
-                A day by the water. Dinner without a rush. A room with no early alarm. You don't
-                always need a long trip to make time for yourself.
-              </p>
-              <Link to="/explore?kind=EXPERIENCE" className="public-text-link">
-                Find something to do <ArrowUpRight size={18} aria-hidden="true" />
-              </Link>
-              <div className="landing-local-note">
-                <span className="public-eyebrow">Your points stay with you</span>
-                <p>
-                  Earn points when eligible bookings are completed. See what you've earned and
-                  choose rewards from participating businesses.
-                </p>
-                <Link to="/app/points">
-                  How your points add up <ArrowRight size={15} aria-hidden="true" />
-                </Link>
+
+        <section className="seven-trust-strip" aria-label="Booking principles">
+          <div className="public-container seven-trust-grid">
+            <article>
+              <ShieldCheck size={25} strokeWidth={1.6} aria-hidden="true" />
+              <div>
+                <h2>Verified before listing</h2>
+                <p>Properties must pass a documented review before appearing as bookable stays.</p>
               </div>
-            </div>
+            </article>
+            <article>
+              <CalendarCheck size={25} strokeWidth={1.6} aria-hidden="true" />
+              <div>
+                <h2>Availability that matters</h2>
+                <p>Room inventory must be reconfirmed by the property partner to stay bookable.</p>
+              </div>
+            </article>
+            <article>
+              <BadgeCheck size={25} strokeWidth={1.6} aria-hidden="true" />
+              <div>
+                <h2>Clear before you book</h2>
+                <p>Review the quote and booking terms before committing to a reservation.</p>
+              </div>
+            </article>
           </div>
         </section>
-        <section className="public-container landing-business" aria-labelledby="for-business-title">
-          <div>
-            <span className="public-eyebrow">For the people behind the place / 03</span>
-            <h2 id="for-business-title">
-              More time for
-              <br />
-              your guests.
-            </h2>
-          </div>
-          <div>
-            <p>
-              Your rooms, reservations and next arrivals in one workspace. See the days that need
-              attention and the evidence behind each demand suggestion.
-            </p>
-            <Link className="btn btn-primary" to="/business/apply">
-              Bring your business to 7even <ArrowUpRight size={18} aria-hidden="true" />
-            </Link>
-            <p className="public-small">
-              Stays, dining and experiences. Built to make room for more.
-            </p>
-          </div>
-        </section>
-        <div className="public-container landing-image-note">
-          Editorial photographs are illustrative. They do not represent named businesses or
-          available inventory.
-        </div>
       </main>
       <PublicFooter />
     </div>
