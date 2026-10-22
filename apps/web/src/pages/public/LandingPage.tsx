@@ -7,8 +7,6 @@ import { DestinationInput } from '../../components/LocationFields.tsx';
 import { EmptyState, Loading, OfferingCard, useFeedback } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { stayDatesError } from '../../lib/datePicker.ts';
-import { listingsForKind } from '../../lib/nigeriaDirectory.ts';
-import { DirectoryListingCard } from './DirectoryListingCard.tsx';
 import { addDays, localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 type MarketplaceKind = Sector | 'ALL';
@@ -71,13 +69,6 @@ export function LandingPage() {
   }
 
   const heading = categoryHeadings[kind];
-  const directoryPreview =
-    kind === 'ALL'
-      ? (['STAY', 'DINING', 'EXPERIENCE'] as const).flatMap((category) =>
-          listingsForKind(category).slice(0, 2),
-        )
-      : listingsForKind(kind).slice(0, 6);
-
   return (
     <div className="public-page seven-marketplace">
       <PublicHeader />
@@ -242,36 +233,7 @@ export function LandingPage() {
             />
           )}
 
-          {!loading && (Boolean(error) || data?.length === 0) && (
-            <div className="seven-directory-preview">
-              <div className="seven-directory-preview-heading">
-                <div>
-                  <p className="seven-kicker">The wider Nigeria directory</p>
-                  <h2>Explore places by category</h2>
-                  <p>
-                    These source-linked leads help you discover places while the 7even partner
-                    catalogue is being connected. They are not verified or bookable 7even offers.
-                  </p>
-                </div>
-                <Link
-                  className="seven-all-results"
-                  to={kind === 'ALL' ? '/directory?kind=ALL' : `/directory?kind=${kind}`}
-                >
-                  Browse directory <span aria-hidden="true">↗</span>
-                </Link>
-              </div>
-              <div className="seven-directory-grid">
-                {directoryPreview.map((listing) => (
-                  <DirectoryListingCard key={listing.id} listing={listing} />
-                ))}
-              </div>
-              {kind === 'STAY' && (
-                <Link className="seven-directory-all-states" to="/directory?kind=STAY">
-                  Browse hotels by all 36 states and the FCT <span aria-hidden="true">→</span>
-                </Link>
-              )}
-            </div>
-          )}
+
         </section>
       </main>
       <PublicFooter />
