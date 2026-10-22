@@ -49,3 +49,8 @@ AVAILABILITY
 Editorial image requests currently go directly to images.unsplash.com. They are not bundled for offline use. Actual desktop/mobile browser inspection on 16 October 2026 confirmed all editorial images loaded. A future production asset pipeline should create appropriately sized, licensed local derivatives with these credits retained.
 
 Local development listings are marked Sample place. They are not participating merchants or a claim of live Nigerian property inventory. This register covers the four editorial/fallback assets above; any additional listing image must have its own verified provenance before production use.
+
+Nigeria location search: GeoNames, CC BY 4.0. Snapshot 2026-10-22.
+https://www.geonames.org/
+https://creativecommons.org/licenses/by/4.0/
+Source, coverage and exclusions: /data/nigeria/README.md

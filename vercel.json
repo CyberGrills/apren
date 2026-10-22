@@ -16,7 +16,7 @@
   "functions": {
     "api/[...path].ts": {
       "maxDuration": 30,
-      "includeFiles": "packages/**"
+      "includeFiles": "{packages/**,apps/web/public/data/nigeria/**}"
     }
   }
 }

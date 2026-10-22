@@ -1,3 +1,4 @@
+- [2026-10-22] [Finding a place by state, city and date](2026-10-22-nigeria-search-and-calendar.md): Nationwide destination suggestions, scoped hotel search and an accessible calendar preserve location accuracy and existing links.
 - [2026-10-21] [Combining branches without reviving old code](2026-10-21-consolidate-feature-branches.md): Git ancestry, focused conflict resolution and boundary tests produce one reviewable integration while preserving current behavior.
 - [2026-10-21] [One 7, two entrance strokes](2026-10-21-logo-wordmark-startup.md): A shared vector logo removes the repeated numeral and introduces a short, accessible two-stroke startup sequence.
 - [2026-10-18] [Three payment paths, one booking record](2026-10-18-multi-provider-payments.md): Frozen provider routing, verified direct-wallet USDC and merchant commission owed share one recoverable booking engine.

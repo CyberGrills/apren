@@ -43,6 +43,7 @@ export async function seed(
         slug: 'the-haven-lagos',
         name: 'The Haven Lagos',
         city: 'Lagos',
+        state: 'Lagos',
         sector: 'STAY',
         title: 'A quiet room above the city',
         price: '8500000',
@@ -58,6 +59,7 @@ export async function seed(
         slug: 'ora-lagos',
         name: 'Ora Kitchen',
         city: 'Lagos',
+        state: 'Lagos',
         sector: 'DINING',
         title: 'A table worth taking your time at',
         price: '2200000',
@@ -73,6 +75,7 @@ export async function seed(
         slug: 'terra-abuja',
         name: 'Terra Abuja',
         city: 'Abuja',
+        state: 'Federal Capital Territory (Abuja)',
         sector: 'EXPERIENCE',
         title: 'Clay, conversation and something to keep',
         price: '1800000',
@@ -89,7 +92,20 @@ export async function seed(
       const business = await one(db, 'SELECT business_id FROM seven.businesses WHERE slug=$1', [
         place.slug,
       ]);
-      if (business) continue;
+      if (business) {
+        await db.query(
+          `UPDATE seven.businesses SET details=jsonb_set(details,'{state}',to_jsonb($2::text)),revision=revision+1,updated_at=now()
+           WHERE business_id=$1 AND city=$3 AND details->>'isSample'='true' AND details->>'state' IS NULL`,
+          [business.business_id, place.state, place.city],
+        );
+        await db.query(
+          `UPDATE seven.offerings o SET details=jsonb_set(o.details,'{state}',to_jsonb($2::text)),revision=o.revision+1,updated_at=now()
+           WHERE o.business_id=$1 AND o.title=$3 AND o.city=$4 AND o.details->>'state' IS NULL
+             AND EXISTS (SELECT 1 FROM seven.businesses b WHERE b.business_id=o.business_id AND b.city=$4 AND b.details->>'isSample'='true')`,
+          [business.business_id, place.state, place.title, place.city],
+        );
+        continue;
+      }
       const businessId = randomUUID();
       const venueId = randomUUID();
       const offeringId = randomUUID();
@@ -104,6 +120,7 @@ export async function seed(
           `RS_LOCAL_${businessId.replaceAll('-', '')}`,
           {
             address: place.address,
+            state: place.state,
             sector: place.sector,
             phone: '+234 000 000 0000',
             isSample: true,
@@ -129,6 +146,7 @@ export async function seed(
           place.price,
           {
             address: place.address,
+            state: place.state,
             capacity: place.capacity,
             images: [place.image],
             amenities: place.amenities,

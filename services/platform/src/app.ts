@@ -32,6 +32,7 @@ import type { RecoveryMailer } from './accounts.ts';
 import { configuredRecoveryMailer } from './recoveryMailer.ts';
 import { interpretHotelSearch, isOpenAIConfigured, toHotelSearchParams } from './aiConcierge.ts';
 import { processInbox, processOutbox } from './worker.ts';
+import { findLocations, retainedLocationState } from './locations.ts';
 
 export interface AppOptions {
   pool?: Pool;
@@ -515,11 +516,18 @@ export function createApp(options: AppOptions = {}) {
     ]);
     return { states, listings, total: totalRow?.total ?? 0, page, pageSize };
   });
+  route('get', '/locations', async (req) => {
+    const query = z.string().trim().max(160).parse(req.query.q ?? '');
+    const state = C.nigeriaStateInput.parse(req.query.state) ?? '';
+    const limit = z.coerce.number().int().min(1).max(30).parse(req.query.limit ?? 8);
+    return findLocations(query, state, limit);
+  });
   route('get', '/offerings', async (req) => {
     const page = Math.max(1, Math.min(10000, Number(req.query.page) || 1));
     const size = Math.max(1, Math.min(100, Number(req.query.pageSize) || 30));
     const requestedKind = String(req.query.kind ?? '');
     const city = req.query.city === undefined ? '' : z.string().trim().max(160).parse(req.query.city);
+    const state = C.nigeriaStateInput.parse(req.query.state) ?? '';
 
     if (requestedKind === 'STAY') {
       const businessVerificationGate =
@@ -575,7 +583,8 @@ export function createApp(options: AppOptions = {}) {
            AND b.workflow_state_id=${S.sid('APPROVED')}
            AND s.sector_code='STAY'
            AND ${businessVerificationGate}
-           AND ($1='' OR lower(o.city) LIKE $1)
+           AND ($7='' OR lower(btrim(o.details->>'state'))=lower($7))
+           AND ($1='' OR ($7='' AND lower(o.city) LIKE $1) OR ($7<>'' AND lower(btrim(o.city))=$1))
            AND ($5::uuid IS NULL OR o.offering_id > $5::uuid)
          ORDER BY o.offering_id
          LIMIT $6
@@ -615,12 +624,13 @@ export function createApp(options: AppOptions = {}) {
        LEFT JOIN inventory_by_offering ibo USING(offering_id)
        ORDER BY rb.offering_id`;
       const candidateValues = (cursor: string | null) => [
-        city ? `%${city.toLowerCase()}%` : '',
+        city ? (state ? city.toLowerCase() : `%${city.toLowerCase()}%`) : '',
         startDate ?? null,
         endDate ?? null,
         rooms,
         cursor,
         batchSize,
+        state,
       ];
       const scanBatches = async (
         visit: (ids: string[]) => Promise<void>,
@@ -811,15 +821,17 @@ export function createApp(options: AppOptions = {}) {
              )
            )
          )
-         AND ($1='' OR lower(o.city) LIKE $1)
+         AND ($5='' OR lower(btrim(o.details->>'state'))=lower($5))
+         AND ($1='' OR ($5='' AND lower(o.city) LIKE $1) OR ($5<>'' AND lower(btrim(o.city))=$1))
          AND ($2='' OR s.sector_code=$2)
        ORDER BY o.created_at
        LIMIT $3 OFFSET $4`,
       [
-        city ? `%${city.toLowerCase()}%` : '',
+        city ? (state ? city.toLowerCase() : `%${city.toLowerCase()}%`) : '',
         requestedKind,
         size,
         (page - 1) * size,
+        state,
       ],
     );
     const offerings = (
@@ -1232,7 +1244,7 @@ export function createApp(options: AppOptions = {}) {
             .slice(0, 65)}-${businessId.slice(0, 8)}`,
           input.city,
           input.description,
-          { address: input.address, phone: input.phone, sector: input.sector, isSample: false },
+          { address: input.address, phone: input.phone, sector: input.sector, isSample: false, state: input.state ?? null },
         ],
       );
       await db.query(
@@ -1386,12 +1398,16 @@ export function createApp(options: AppOptions = {}) {
         );
     if (!venue) return fail(422, 'INVALID_VENUE', 'Choose a venue belonging to this business.');
     const offeringId = existingId ?? randomUUID();
+    let state = input.state ?? null;
     if (existingId) {
       const old = await one(db, 'SELECT * FROM seven.offerings WHERE offering_id=$1 FOR UPDATE', [
         existingId,
       ]);
       if (!old) return fail(404, 'NOT_FOUND', 'Offering not found.');
       S.requireTenant(actor, old.business_id, true);
+      state = input.state === undefined && old.venue_id !== venue.venue_id
+        ? null
+        : retainedLocationState(input, { city: old.city, state: old.details.state });
       const sector = (
         await one(db, 'SELECT sector_code FROM seven.sectors WHERE sector_id=$1', [old.sector_id])
       )?.sector_code;
@@ -1413,6 +1429,7 @@ export function createApp(options: AppOptions = {}) {
     }
     const details = {
       address: input.address,
+      state,
       capacity: input.capacity,
       images: input.images,
       amenities: input.amenities,

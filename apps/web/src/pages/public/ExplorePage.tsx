@@ -2,6 +2,7 @@ import type { Offering, Sector } from '@7even/contracts';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { StateCityFields } from '../../components/LocationFields.tsx';
 import {
   EmptyState,
   ErrorNotice,
@@ -11,6 +12,7 @@ import {
 } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
+import { stayDatesError } from '../../lib/datePicker.ts';
 import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 export function ExplorePage() {
@@ -33,10 +35,22 @@ export function ExplorePage() {
   function filter(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const dateError =
+      !kind || kind === 'STAY'
+        ? stayDatesError(String(form.get('startDate') ?? ''), String(form.get('endDate') ?? ''))
+        : null;
+    if (dateError) {
+      showError(dateError);
+      return;
+    }
     const next = new URLSearchParams();
     if (kind && ['STAY', 'DINING', 'EXPERIENCE'].includes(kind)) next.set('kind', kind);
-    for (const key of ['city', 'startDate', 'endDate', 'rooms']) {
+    for (const key of ['state', 'city', 'startDate', 'endDate', 'rooms']) {
       const value = String(form.get(key) ?? '').trim();
+      if (value) next.set(key, value);
+    }
+    for (const key of ['amenities', 'maxBaseTotalMinor']) {
+      const value = params.get(key);
       if (value) next.set(key, value);
     }
     setParams(next);
@@ -155,16 +169,11 @@ export function ExplorePage() {
             <SlidersHorizontal size={17} aria-hidden="true" />
             <span>Make it yours</span>
           </div>
-          <div>
-            <label htmlFor="explore-city">City</label>
-            <input
-              id="explore-city"
-              name="city"
-              defaultValue={params.get('city') ?? ''}
-              placeholder="Any city in Nigeria"
-              maxLength={160}
-            />
-          </div>
+          <StateCityFields
+            prefix="explore"
+            initialState={params.get('state')}
+            initialCity={params.get('city') ?? ''}
+          />
           <div>
             <label htmlFor="explore-start">{kind === 'STAY' ? 'Check-in' : 'Date'}</label>
             <input

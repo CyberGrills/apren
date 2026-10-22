@@ -2,6 +2,7 @@ import type { Business } from '@7even/contracts';
 import { ArrowUpRight, CalendarDays, ChartNoAxesCombined, Store } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { StateCityFields } from '../../components/LocationFields.tsx';
 import { ErrorNotice, Field, useFeedback } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -18,7 +19,7 @@ export function BusinessApplicationPage() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const body = Object.fromEntries(
-      ['businessName', 'city', 'address', 'phone', 'sector', 'description'].map((key) => [
+      ['businessName', 'state', 'city', 'address', 'phone', 'sector', 'description'].map((key) => [
         key,
         String(form.get(key) ?? '').trim(),
       ]),
@@ -149,15 +150,7 @@ export function BusinessApplicationPage() {
                     </select>
                   </Field>
                   <div className="public-form-row">
-                    <Field label="City">
-                      <input
-                        className="field-input"
-                        name="city"
-                        autoComplete="address-level2"
-                        required
-                        maxLength={160}
-                      />
-                    </Field>
+                    <StateCityFields required prefix="application" />
                     <Field label="Business phone">
                       <input
                         className="field-input"

@@ -1,9 +1,10 @@
-import { useFeedback } from '../../components/Feedback.tsx';
 import type { BusinessOverview, Offering, Reward, SessionUser, Venue } from '@7even/contracts';
 import { majorToMinor } from '@7even/engine';
 import { ArrowUpRight, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useFeedback } from '../../components/Feedback.tsx';
+import { StateCityFields } from '../../components/LocationFields.tsx';
 import {
   EmptyState,
   ErrorNotice,
@@ -23,8 +24,8 @@ import {
   dateLabel,
   MetricsStrip,
   ReservationActionDialog,
-  ReservationTable,
   type ReservationCommand,
+  ReservationTable,
 } from './shared.tsx';
 
 type Tab = 'overview' | 'reservations' | 'offerings' | 'demand' | 'rewards' | 'team' | 'settings';
@@ -473,6 +474,7 @@ function BusinessEditor({
           description: get('description'),
           kind: get('kind'),
           city: get('city'),
+          state: get('state'),
           address: get('address'),
           priceMinor: majorToMinor(get('price')),
           capacity: integer('capacity'),
@@ -653,9 +655,12 @@ function BusinessEditor({
                 defaultValue={offer?.capacity ?? 1}
               />
             </Field>
-            <Field label="City">
-              <input name="city" required defaultValue={offer?.city ?? data.business?.city} />
-            </Field>
+            <StateCityFields
+              required
+              prefix="offering"
+              initialState={offer ? offer.state : data.business?.state}
+              initialCity={offer?.city ?? data.business?.city ?? ''}
+            />
             <Field label="Street address">
               <input
                 name="address"

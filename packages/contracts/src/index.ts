@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { findNigeriaState } from './nigeriaLocations.ts';
+export * from './nigeriaLocations.ts';
 
 export const sectors = ['STAY', 'DINING', 'EXPERIENCE'] as const;
 export type Sector = (typeof sectors)[number];
@@ -41,6 +43,15 @@ const email = z
   .transform((value) => value.trim().toLowerCase());
 const password = z.string().min(12, 'Use at least 12 characters.').max(128);
 const shortText = z.string().trim().min(1).max(160);
+export const nigeriaStateInput = z.string().trim().max(100).transform((value, context) => {
+  if (!value) return null;
+  const state = findNigeriaState(value);
+  if (!state) {
+    context.addIssue({ code: 'custom', message: 'Choose a Nigerian state or the FCT.' });
+    return z.NEVER;
+  }
+  return state.name;
+}).nullable().optional();
 
 export const registerInput = z.strictObject({
   email,
@@ -55,6 +66,7 @@ export const profileInput = z.strictObject({
 export const businessApplicationInput = z.strictObject({
   businessName: shortText,
   city: shortText,
+  state: nigeriaStateInput,
   address: z.string().trim().min(4).max(300),
   phone: z.string().trim().min(5).max(30),
   sector: z.enum(sectors),
@@ -66,6 +78,7 @@ export const offeringInput = z.strictObject({
   kind: z.enum(sectors),
   venueId: id.optional(),
   city: shortText,
+  state: nigeriaStateInput,
   address: z.string().trim().min(4).max(300),
   priceMinor: positiveMinor,
   capacity: z.int().min(1).max(10000),
@@ -289,6 +302,7 @@ export interface Offering {
   description: string;
   kind: Sector;
   city: string;
+  state?: string | null;
   address: string;
   priceMinor: string;
   currency: 'NGN';
@@ -501,6 +515,7 @@ export interface Business {
   id: string;
   businessName: string;
   city: string;
+  state?: string | null;
   address: string;
   description: string;
   phone: string;

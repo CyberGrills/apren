@@ -1,20 +1,12 @@
-import type { Offering, Sector } from '@7even/contracts';
-import {
-  BadgeCheck,
-  BedDouble,
-  CalendarCheck,
-  Compass,
-  LayoutGrid,
-  MapPin,
-  Search,
-  ShieldCheck,
-  SlidersHorizontal,
-  Utensils,
-} from 'lucide-react';
+import type { NigeriaLocation, Offering, Sector } from '@7even/contracts';
+import { BedDouble, Compass, LayoutGrid, Search, SlidersHorizontal, Utensils } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { EmptyState, Loading, OfferingCard } from '../../components/ui.tsx';
+import { DatePicker } from '../../components/DatePicker.tsx';
+import { DestinationInput } from '../../components/LocationFields.tsx';
+import { EmptyState, Loading, OfferingCard, useFeedback } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
+import { stayDatesError } from '../../lib/datePicker.ts';
 import { listingsForKind } from '../../lib/nigeriaDirectory.ts';
 import { DirectoryListingCard } from './DirectoryListingCard.tsx';
 import { addDays, localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
@@ -49,12 +41,13 @@ const categoryHeadings: Record<MarketplaceKind, { title: string; description: st
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const { showError } = useFeedback();
   const [kind, setKind] = useState<MarketplaceKind>('STAY');
   const [city, setCity] = useState('');
+  const [destination, setDestination] = useState<NigeriaLocation | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [rooms, setRooms] = useState('1');
-  const [dateError, setDateError] = useState('');
   const listingPath =
     kind === 'ALL' ? '/offerings?pageSize=8' : `/offerings?kind=${kind}&pageSize=8`;
   const { data, loading, error, reload } = useApi<Offering[]>(listingPath);
@@ -62,14 +55,15 @@ export function LandingPage() {
 
   function search(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isStaySearch && startDate && endDate && endDate <= startDate) {
-      setDateError('Check-out must be at least one day after check-in.');
+    const dateError = isStaySearch ? stayDatesError(startDate, endDate) : null;
+    if (dateError) {
+      showError(dateError);
       return;
     }
-    setDateError('');
     const query = new URLSearchParams();
     if (kind !== 'ALL') query.set('kind', kind);
-    if (city.trim()) query.set('city', city.trim());
+    if (city.trim()) query.set('city', destination?.name ?? city.trim());
+    if (destination) query.set('state', destination.state);
     if (startDate) query.set('startDate', startDate);
     if (isStaySearch && endDate) query.set('endDate', endDate);
     if (isStaySearch) query.set('rooms', rooms || '1');
@@ -96,7 +90,6 @@ export function LandingPage() {
               key={value}
               onClick={() => {
                 setKind(value);
-                setDateError('');
               }}
               aria-pressed={kind === value}
             >
@@ -119,45 +112,40 @@ export function LandingPage() {
             onSubmit={search}
           >
             <div className="seven-search-field seven-search-destination">
-              <label htmlFor="seven-city">Where</label>
-              <div className="seven-search-input-wrap">
-                <MapPin size={16} aria-hidden="true" />
-                <input
-                  id="seven-city"
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
-                  placeholder="Search destinations"
-                  autoComplete="address-level2"
-                  maxLength={160}
-                />
-              </div>
+              <DestinationInput
+                value={city}
+                onChange={(value) => {
+                  setCity(value);
+                  setDestination(null);
+                }}
+                onSelect={(location) => {
+                  setCity(location.name);
+                  setDestination(location);
+                }}
+              />
             </div>
             {isStaySearch ? (
               <>
                 <div className="seven-search-field">
-                  <label htmlFor="seven-checkin">Check in</label>
-                  <input
+                  <DatePicker
                     id="seven-checkin"
-                    type="date"
-                    min={localDateNow()}
+                    name="startDate"
+                    label="Check in"
                     value={startDate}
-                    onChange={(event) => {
-                      setStartDate(event.target.value);
-                      setDateError('');
+                    onChange={(value) => {
+                      setStartDate(value);
+                      if (endDate && endDate <= value) setEndDate('');
                     }}
                   />
                 </div>
                 <div className="seven-search-field">
-                  <label htmlFor="seven-checkout">Check out</label>
-                  <input
+                  <DatePicker
                     id="seven-checkout"
-                    type="date"
-                    min={startDate ? addDays(startDate, 1) : localDateNow()}
+                    name="endDate"
+                    label="Check out"
                     value={endDate}
-                    onChange={(event) => {
-                      setEndDate(event.target.value);
-                      setDateError('');
-                    }}
+                    min={startDate ? addDays(startDate, 1) : localDateNow()}
+                    onChange={setEndDate}
                   />
                 </div>
                 <div className="seven-search-field seven-search-rooms">
@@ -177,13 +165,12 @@ export function LandingPage() {
               </>
             ) : (
               <div className="seven-search-field">
-                <label htmlFor="seven-date">When</label>
-                <input
+                <DatePicker
                   id="seven-date"
-                  type="date"
-                  min={localDateNow()}
+                  name="startDate"
+                  label="When"
                   value={startDate}
-                  onChange={(event) => setStartDate(event.target.value)}
+                  onChange={setStartDate}
                 />
               </div>
             )}
@@ -192,11 +179,6 @@ export function LandingPage() {
               <span>Search</span>
             </button>
           </form>
-          {dateError && (
-            <p className="seven-date-error" role="alert">
-              {dateError}
-            </p>
-          )}
         </section>
 
         <section
@@ -290,32 +272,6 @@ export function LandingPage() {
               )}
             </div>
           )}
-        </section>
-
-        <section className="seven-trust-strip" aria-label="Booking principles">
-          <div className="public-container seven-trust-grid">
-            <article>
-              <ShieldCheck size={25} strokeWidth={1.6} aria-hidden="true" />
-              <div>
-                <h2>Verified before listing</h2>
-                <p>Properties must pass a documented review before appearing as bookable stays.</p>
-              </div>
-            </article>
-            <article>
-              <CalendarCheck size={25} strokeWidth={1.6} aria-hidden="true" />
-              <div>
-                <h2>Availability that matters</h2>
-                <p>Room inventory must be reconfirmed by the property partner to stay bookable.</p>
-              </div>
-            </article>
-            <article>
-              <BadgeCheck size={25} strokeWidth={1.6} aria-hidden="true" />
-              <div>
-                <h2>Clear before you book</h2>
-                <p>Review the quote and booking terms before committing to a reservation.</p>
-              </div>
-            </article>
-          </div>
         </section>
       </main>
       <PublicFooter />
