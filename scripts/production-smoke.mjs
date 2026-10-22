@@ -71,10 +71,10 @@ await check('auth session', '/api/auth/session', (body) => {
   return 'session endpoint responds with expected anonymous/authenticated shape';
 });
 
-const offerings = await check('offerings API', '/api/offerings?pageSize=3', (body) => {
-  if (!Array.isArray(body?.data)) throw new Error('offerings data is not an array');
-  if (body.data.length === 0) warnings.push('No published bookable offerings; hotel onboarding is required.');
-  return `${body.data.length} offering(s) returned`;
+const offerings = await check('published hotel inventory', '/api/offerings?kind=STAY&pageSize=3', (body) => {
+  if (!Array.isArray(body?.data)) throw new Error('published hotel inventory data is not an array');
+  if (body.data.length === 0) throw new Error('no published bookable hotels; partner onboarding and fresh room confirmation are required');
+  return `${body.data.length} bookable hotel offering(s) returned`;
 });
 
 const directory = await check('stay directory API', '/api/directory?kind=STAY&pageSize=20', (body) => {
