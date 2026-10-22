@@ -53,6 +53,17 @@ await check('database readiness', '/api/health/ready', (body) => {
   return 'database and migration ledger reachable';
 });
 
+await check('live payment readiness', '/api/health/ready', (body) => {
+  const payments = body?.data?.payments;
+  if (!payments || payments.mode !== 'live' || payments.fiatReady !== true) {
+    const missing = Array.isArray(payments?.missingRequiredConfiguration)
+      ? payments.missingRequiredConfiguration.join(', ')
+      : 'payment readiness diagnostics unavailable';
+    throw new Error('live fiat checkout is not ready; missing or invalid configuration: ' + missing);
+  }
+  return 'Paystack and Flutterwave live adapters are configured';
+});
+
 await check('auth session', '/api/auth/session', (body) => {
   if (!body || typeof body.data !== 'object' || !Object.hasOwn(body.data, 'user')) {
     throw new Error('session response contract changed');
