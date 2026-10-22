@@ -1,36 +1,36 @@
-import express from 'express';
-import type { Request, Response, NextFunction } from 'express';
-import type { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { z } from 'zod';
 import * as C from '@7even/contracts';
-import { serviceDates, assessDemand, optimizeHotelBookings } from '@7even/engine';
-import { createPool, transaction, one, rows, ApiError, fail, string } from './db.ts';
+import { assessDemand, optimizeHotelBookings, serviceDates } from '@7even/engine';
+import type { NextFunction, Request, Response } from 'express';
+import express from 'express';
+import type { Pool } from 'pg';
+import { z } from 'zod';
+import type { RecoveryMailer } from './accounts.ts';
+import { mountAccountRoutes, rateLimitAiSearch, rateLimitLogin } from './accounts.ts';
+import { interpretHotelSearch, isOpenAIConfigured, toHotelSearchParams } from './aiConcierge.ts';
+import { digestToken, hashPassword, newToken, verifyPassword } from './auth.ts';
+import * as B from './benefits.ts';
+import { MockCryptoGateway } from './cryptoProvider.ts';
 import type { Connection } from './db.ts';
-import { hashPassword, verifyPassword, newToken, digestToken } from './auth.ts';
-import { MockProvider, validWebhookSecret, parseProviderJson } from './provider.ts';
+import { ApiError, createPool, fail, one, rows, string, transaction } from './db.ts';
+import { mountOperations } from './operations.ts';
+import { mountPaymentAccounts } from './paymentAccounts.ts';
+import * as P from './payments.ts';
+import { validPaystackWebhook } from './paystackProvider.ts';
 import type { PaymentProvider } from './provider.ts';
+import { MockProvider, parseProviderJson, validWebhookSecret } from './provider.ts';
 import {
+  executionModeIds,
   ProviderRegistry,
+  paymentMode,
   providerFor,
   providerIds,
-  executionModeIds,
-  paymentMode,
 } from './providerRegistry.ts';
-import { MockCryptoGateway } from './cryptoProvider.ts';
-import { validPaystackWebhook } from './paystackProvider.ts';
-import { mountPaymentAccounts } from './paymentAccounts.ts';
-import * as S from './store.ts';
-import * as R from './reservations.ts';
-import * as P from './payments.ts';
-import * as B from './benefits.ts';
-import { mountOperations } from './operations.ts';
-import { mountAccountRoutes, rateLimitAiSearch, rateLimitLogin } from './accounts.ts';
-import type { RecoveryMailer } from './accounts.ts';
 import { configuredRecoveryMailer } from './recoveryMailer.ts';
-import { interpretHotelSearch, isOpenAIConfigured, toHotelSearchParams } from './aiConcierge.ts';
+import * as R from './reservations.ts';
+import * as S from './store.ts';
 import { processInbox, processOutbox } from './worker.ts';
 
 export interface AppOptions {
@@ -75,7 +75,8 @@ export function createApp(options: AppOptions = {}) {
     ]
       .filter((value): value is string => typeof value === 'string' && value.length > 0)
       .map((value) => {
-        const candidate = value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
+        const candidate =
+          value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
         try {
           return new URL(candidate).origin;
         } catch {
@@ -377,17 +378,25 @@ export function createApp(options: AppOptions = {}) {
     return { status: 'ready', storage: 'postgresql', paymentMode: provider.mode };
   });
   route('post', '/ai/interpret-search', async (req) => {
-    const input = z.strictObject({
-      message: z.string().trim().min(2).max(2000),
-    }).parse(req.body);
+    const input = z
+      .strictObject({
+        message: z.string().trim().min(2).max(2000),
+      })
+      .parse(req.body);
     // Vercel sanitizes these client-IP headers at its edge. Outside Vercel, use
     // Express's socket-derived IP and never trust caller-supplied forwarding headers.
     const forwardedIp = process.env.VERCEL
-      ? (req.get('x-vercel-forwarded-for') ?? req.get('x-forwarded-for') ?? '').split(',')[0]?.trim()
+      ? (req.get('x-vercel-forwarded-for') ?? req.get('x-forwarded-for') ?? '')
+          .split(',')[0]
+          ?.trim()
       : undefined;
     await rateLimitAiSearch(pool, forwardedIp || req.ip || 'unknown');
     if (!isOpenAIConfigured())
-      return fail(503, 'AI_NOT_CONFIGURED', 'AI search is not configured yet. Standard hotel search remains available.');
+      return fail(
+        503,
+        'AI_NOT_CONFIGURED',
+        'AI search is not configured yet. Standard hotel search remains available.',
+      );
     try {
       const intent = await interpretHotelSearch(input.message);
       return {
@@ -397,7 +406,11 @@ export function createApp(options: AppOptions = {}) {
         model: process.env.OPENAI_MODEL?.trim(),
       };
     } catch {
-      return fail(502, 'AI_PROVIDER_UNAVAILABLE', 'AI search is temporarily unavailable. Standard hotel search remains available.');
+      return fail(
+        502,
+        'AI_PROVIDER_UNAVAILABLE',
+        'AI search is temporarily unavailable. Standard hotel search remains available.',
+      );
     }
   });
   route('get', '/engine/booking/health', async () => {
@@ -416,7 +429,12 @@ export function createApp(options: AppOptions = {}) {
       status: 'ok',
       inventorySource: 'postgresql-live',
       publishedHotelOffers: Number(result?.total ?? 0),
-      capabilities: ['live-inventory-filtering', 'multi-night-availability', 'room-count-fit', 'explainable-match-ranking'],
+      capabilities: [
+        'live-inventory-filtering',
+        'multi-night-availability',
+        'room-count-fit',
+        'explainable-match-ranking',
+      ],
       policyVersion: '7even-hotel-ranking-v1',
     };
   });
@@ -471,11 +489,54 @@ export function createApp(options: AppOptions = {}) {
     });
   });
 
+  route('get', '/directory', async (req) => {
+    const kind = z
+      .enum(['ALL', 'STAY', 'DINING', 'EXPERIENCE'])
+      .parse(typeof req.query.kind === 'string' ? req.query.kind.toUpperCase() : 'ALL');
+    const state =
+      req.query.state === undefined ? '' : z.string().trim().max(100).parse(req.query.state);
+    const searchText =
+      req.query.q === undefined ? '' : z.string().trim().max(160).parse(req.query.q);
+    const page = Math.max(1, Math.min(10000, Number(req.query.page) || 1));
+    const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 100));
+    const where = `listing_status='DIRECTORY_ONLY' AND is_bookable=false
+      AND ($1='ALL' OR kind=$1)
+      AND ($2='' OR state_name=$2)
+      AND ($3='' OR lower(concat_ws(' ',display_name,state_name,city,area,address_text)) LIKE '%' || lower($3) || '%')`;
+    const [states, totalRow, listings] = await Promise.all([
+      rows<{ stateName: string; capital: string; region: string; hotelDirectoryUrl: string }>(
+        pool,
+        `SELECT state_name AS "stateName", capital, region,
+                hotel_directory_url AS "hotelDirectoryUrl"
+         FROM seven.state_directories WHERE is_active ORDER BY state_name COLLATE "C"`,
+      ),
+      one<{ total: number }>(
+        pool,
+        `SELECT count(*)::int AS total FROM seven.discovery_listings WHERE ${where}`,
+        [kind, state, searchText],
+      ),
+      rows(
+        pool,
+        `SELECT discovery_listing_id::text AS id, kind, display_name AS name,
+                state_name AS state, city, area, address_text AS address,
+                description, image_url AS "imageUrl", image_source_url AS "imageSourceUrl",
+                split_part(split_part(image_source_url, '://', 2), '/', 1) AS "imageSourceName",
+                source_name AS "sourceName", source_url AS "sourceUrl",
+                'DIRECTORY_ONLY'::text AS status, false AS bookable, source_checked_at AS "sourceCheckedAt"
+         FROM seven.discovery_listings WHERE ${where}
+         ORDER BY state_name COLLATE "C", city COLLATE "C", display_name COLLATE "C"
+         LIMIT $4 OFFSET $5`,
+        [kind, state, searchText, pageSize, (page - 1) * pageSize],
+      ),
+    ]);
+    return { states, listings, total: totalRow?.total ?? 0, page, pageSize };
+  });
   route('get', '/offerings', async (req) => {
     const page = Math.max(1, Math.min(10000, Number(req.query.page) || 1));
     const size = Math.max(1, Math.min(100, Number(req.query.pageSize) || 30));
     const requestedKind = String(req.query.kind ?? '');
-    const city = req.query.city === undefined ? '' : z.string().trim().max(160).parse(req.query.city);
+    const city =
+      req.query.city === undefined ? '' : z.string().trim().max(160).parse(req.query.city);
 
     if (requestedKind === 'STAY') {
       const businessVerificationGate =
@@ -486,43 +547,62 @@ export function createApp(options: AppOptions = {}) {
         environment === 'production'
           ? `w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour')`
           : `(b.details->>'isSample' = 'true' OR w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'))`;
-      const startDate = req.query.startDate === undefined
-        ? undefined
-        : z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.startDate);
-      const endDate = req.query.endDate === undefined
-        ? undefined
-        : z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.endDate);
+      const startDate =
+        req.query.startDate === undefined
+          ? undefined
+          : z
+              .string()
+              .regex(/^\d{4}-\d{2}-\d{2}$/)
+              .parse(req.query.startDate);
+      const endDate =
+        req.query.endDate === undefined
+          ? undefined
+          : z
+              .string()
+              .regex(/^\d{4}-\d{2}-\d{2}$/)
+              .parse(req.query.endDate);
       if (endDate && !startDate)
         return fail(422, 'CHECK_IN_REQUIRED', 'Choose a check-in date before check-out.');
-      const rooms = z.coerce.number().int().min(1).max(100).parse(req.query.rooms ?? '1');
-      const maxBaseTotalMinor = req.query.maxBaseTotalMinor === undefined
-        ? undefined
-        : z.string().regex(/^(0|[1-9]\d{0,14})$/).parse(req.query.maxBaseTotalMinor);
-      const amenityText = req.query.amenities === undefined
-        ? ''
-        : z.string().max(1600).parse(req.query.amenities);
+      const rooms = z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .parse(req.query.rooms ?? '1');
+      const maxBaseTotalMinor =
+        req.query.maxBaseTotalMinor === undefined
+          ? undefined
+          : z
+              .string()
+              .regex(/^(0|[1-9]\d{0,14})$/)
+              .parse(req.query.maxBaseTotalMinor);
+      const amenityText =
+        req.query.amenities === undefined ? '' : z.string().max(1600).parse(req.query.amenities);
       const amenities = amenityText
-        ? amenityText.split(',').map((value) => z.string().trim().min(1).max(80).parse(value)).slice(0, 20)
+        ? amenityText
+            .split(',')
+            .map((value) => z.string().trim().min(1).max(80).parse(value))
+            .slice(0, 20)
         : [];
 
       return transaction(pool, async (searchDb) => {
         await searchDb.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');
-      // Scan eligible IDs in stable keyset batches. A first pass collects the
-      // global normalization statistics used by ranking-v1; a second pass ranks
-      // batches with those same statistics and retains only the requested top-K.
-      const searchStartedAt = performance.now();
-      const batchSize = 200;
-      const asOf = new Date().toISOString();
-      const baseCriteria = {
-        checkInDate: startDate,
-        checkOutDate: endDate,
-        rooms,
-        city: city || undefined,
-        amenities,
-        maxBaseTotalMinor,
-        asOf,
-      };
-      const candidateSql = `WITH raw_batch AS (
+        // Scan eligible IDs in stable keyset batches. A first pass collects the
+        // global normalization statistics used by ranking-v1; a second pass ranks
+        // batches with those same statistics and retains only the requested top-K.
+        const searchStartedAt = performance.now();
+        const batchSize = 200;
+        const asOf = new Date().toISOString();
+        const baseCriteria = {
+          checkInDate: startDate,
+          checkOutDate: endDate,
+          rooms,
+          city: city || undefined,
+          amenities,
+          maxBaseTotalMinor,
+          asOf,
+        };
+        const candidateSql = `WITH raw_batch AS (
          SELECT o.offering_id
          FROM seven.offerings o
          JOIN seven.businesses b USING(business_id)
@@ -570,106 +650,58 @@ export function createApp(options: AppOptions = {}) {
        FROM raw_batch rb
        LEFT JOIN inventory_by_offering ibo USING(offering_id)
        ORDER BY rb.offering_id`;
-      const candidateValues = (cursor: string | null) => [
-        city ? `%${city.toLowerCase()}%` : '',
-        startDate ?? null,
-        endDate ?? null,
-        rooms,
-        cursor,
-        batchSize,
-      ];
-      const scanBatches = async (
-        visit: (ids: string[]) => Promise<void>,
-      ): Promise<{ count: number; queryMs: number }> => {
-        let cursor: string | null = null;
-        let count = 0;
-        let queryMs = 0;
-        while (true) {
-          const queryStartedAt = performance.now();
-          const found: Array<{ offering_id: string; eligible: boolean }> = await rows<{ offering_id: string; eligible: boolean }>(
-            searchDb,
-            candidateSql,
-            candidateValues(cursor),
-          );
-          queryMs += performance.now() - queryStartedAt;
-          if (found.length === 0) break;
-          // Advance the cursor past every raw listing, not only eligible listings,
-          // so mixed inventories cannot cause repeated scans or skipped rows.
-          const ids = found
-            .filter((row) => row.eligible)
-            .map((row) => String(row.offering_id));
-          if (ids.length > 0) {
-            await visit(ids);
-            count += ids.length;
+        const candidateValues = (cursor: string | null) => [
+          city ? `%${city.toLowerCase()}%` : '',
+          startDate ?? null,
+          endDate ?? null,
+          rooms,
+          cursor,
+          batchSize,
+        ];
+        const scanBatches = async (
+          visit: (ids: string[]) => Promise<void>,
+        ): Promise<{ count: number; queryMs: number }> => {
+          let cursor: string | null = null;
+          let count = 0;
+          let queryMs = 0;
+          while (true) {
+            const queryStartedAt = performance.now();
+            const found: Array<{ offering_id: string; eligible: boolean }> = await rows<{
+              offering_id: string;
+              eligible: boolean;
+            }>(searchDb, candidateSql, candidateValues(cursor));
+            queryMs += performance.now() - queryStartedAt;
+            if (found.length === 0) break;
+            // Advance the cursor past every raw listing, not only eligible listings,
+            // so mixed inventories cannot cause repeated scans or skipped rows.
+            const ids = found.filter((row) => row.eligible).map((row) => String(row.offering_id));
+            if (ids.length > 0) {
+              await visit(ids);
+              count += ids.length;
+            }
+            cursor = String(found[found.length - 1]!.offering_id);
+            if (found.length < batchSize) break;
           }
-          cursor = String(found[found.length - 1]!.offering_id);
-          if (found.length < batchSize) break;
-        }
-        return { count, queryMs };
-      };
-
-      const globalStatsAccumulator: {
-        minTotal: bigint | null;
-        maxTotal: bigint | null;
-        maxRooms: number;
-      } = { minTotal: null, maxTotal: null, maxRooms: 0 };
-      let projectedOfferings = 0;
-      let secondPassProjectedOfferings = 0;
-      let eligibleRankedCount = 0;
-      let projectionMs = 0;
-      let rankingMs = 0;
-      const firstPass = await scanBatches(async (ids) => {
-        const projectionStartedAt = performance.now();
-        const offerings = await S.offeringProjections(searchDb, ids, true);
-        projectionMs += performance.now() - projectionStartedAt;
-        projectedOfferings += offerings.length;
-        const rankingStartedAt = performance.now();
-        const batchRanked = optimizeHotelBookings(
-          offerings.map((offer) => ({
-            id: offer.id,
-            title: offer.title,
-            city: offer.city,
-            priceMinor: offer.priceMinor,
-            amenities: offer.amenities,
-            windows: offer.windows,
-          })),
-          baseCriteria,
-        );
-        rankingMs += performance.now() - rankingStartedAt;
-        eligibleRankedCount += batchRanked.length;
-        for (const item of batchRanked) {
-          const total = BigInt(item.estimatedBaseTotalMinor);
-          globalStatsAccumulator.minTotal = globalStatsAccumulator.minTotal === null || total < globalStatsAccumulator.minTotal ? total : globalStatsAccumulator.minTotal;
-          globalStatsAccumulator.maxTotal = globalStatsAccumulator.maxTotal === null || total > globalStatsAccumulator.maxTotal ? total : globalStatsAccumulator.maxTotal;
-          globalStatsAccumulator.maxRooms = Math.max(globalStatsAccumulator.maxRooms, item.roomsAvailable);
-        }
-      });
-
-      const topK = page * size;
-      type RankedHotel = ReturnType<typeof optimizeHotelBookings>[number];
-      const top: Array<{ item: RankedHotel; hotel: C.Offering }> = [];
-      const compareRanked = (a: RankedHotel, b: RankedHotel) =>
-        b.matchScore - a.matchScore
-        || (BigInt(a.estimatedBaseTotalMinor) < BigInt(b.estimatedBaseTotalMinor) ? -1
-          : BigInt(a.estimatedBaseTotalMinor) > BigInt(b.estimatedBaseTotalMinor) ? 1 : 0)
-        || b.roomsAvailable - a.roomsAvailable
-        || a.id.localeCompare(b.id);
-      let secondPassCandidates = 0;
-      let secondPassQueryMs = 0;
-      if (globalStatsAccumulator.minTotal !== null && globalStatsAccumulator.maxTotal !== null && globalStatsAccumulator.maxRooms > 0) {
-        const rankingStats = {
-          minEstimatedBaseTotalMinor: globalStatsAccumulator.minTotal.toString(),
-          maxEstimatedBaseTotalMinor: globalStatsAccumulator.maxTotal.toString(),
-          maxRoomsAvailable: globalStatsAccumulator.maxRooms,
+          return { count, queryMs };
         };
-        const secondPass = await scanBatches(async (ids) => {
+
+        const globalStatsAccumulator: {
+          minTotal: bigint | null;
+          maxTotal: bigint | null;
+          maxRooms: number;
+        } = { minTotal: null, maxTotal: null, maxRooms: 0 };
+        let projectedOfferings = 0;
+        let secondPassProjectedOfferings = 0;
+        let eligibleRankedCount = 0;
+        let projectionMs = 0;
+        let rankingMs = 0;
+        const firstPass = await scanBatches(async (ids) => {
           const projectionStartedAt = performance.now();
           const offerings = await S.offeringProjections(searchDb, ids, true);
           projectionMs += performance.now() - projectionStartedAt;
-          secondPassProjectedOfferings += offerings.length;
-          secondPassCandidates += ids.length;
+          projectedOfferings += offerings.length;
           const rankingStartedAt = performance.now();
-          const batchRanked: RankedHotel[] = optimizeHotelBookings(
+          const batchRanked = optimizeHotelBookings(
             offerings.map((offer) => ({
               id: offer.id,
               title: offer.title,
@@ -679,61 +711,124 @@ export function createApp(options: AppOptions = {}) {
               windows: offer.windows,
             })),
             baseCriteria,
-            rankingStats,
           );
           rankingMs += performance.now() - rankingStartedAt;
-          const byId = new Map(offerings.map((offer) => [offer.id, offer]));
+          eligibleRankedCount += batchRanked.length;
           for (const item of batchRanked) {
-            const hotel = byId.get(item.id);
-            if (hotel) top.push({ item, hotel });
+            const total = BigInt(item.estimatedBaseTotalMinor);
+            globalStatsAccumulator.minTotal =
+              globalStatsAccumulator.minTotal === null || total < globalStatsAccumulator.minTotal
+                ? total
+                : globalStatsAccumulator.minTotal;
+            globalStatsAccumulator.maxTotal =
+              globalStatsAccumulator.maxTotal === null || total > globalStatsAccumulator.maxTotal
+                ? total
+                : globalStatsAccumulator.maxTotal;
+            globalStatsAccumulator.maxRooms = Math.max(
+              globalStatsAccumulator.maxRooms,
+              item.roomsAvailable,
+            );
           }
-          top.sort((a, b) => compareRanked(a.item, b.item));
-          if (top.length > topK) top.length = topK;
         });
-        secondPassQueryMs = secondPass.queryMs;
-      }
-      const candidateQueryMs = Math.round((firstPass.queryMs + secondPassQueryMs) * 100) / 100;
-      projectionMs = Math.round(projectionMs * 100) / 100;
-      rankingMs = Math.round(rankingMs * 100) / 100;
-      const rankedResults = top.map(({ item }) => item);
-      console.info(JSON.stringify({
-        event: 'seven.hotel_search.measurement',
-        policyVersion: '7even-hotel-ranking-v1',
-        city: city || null,
-        dateScoped: !!startDate,
-        candidates: firstPass.count,
-        candidateBatchSize: batchSize,
-        candidateEligibilityStrategy: 'set-based-grouped-inventory',
 
-        candidatePasses: globalStatsAccumulator.minTotal === null ? 1 : 2,
-        candidateCap: null,
-        candidateCapReached: false,
-        projectedOfferings,
-        secondPassProjectedOfferings,
-        projectionRowsRead: projectedOfferings + secondPassProjectedOfferings,
-        secondPassCandidates,
-        rankedResults: eligibleRankedCount,
-        returnedResults: rankedResults.length,
-        candidateQueryMs,
-        projectionMs,
-        rankingMs,
-        totalMs: Math.round((performance.now() - searchStartedAt) * 100) / 100,
-      }));
-      return top.slice((page - 1) * size, page * size).map(({ item, hotel }) => {
-        const bookingOptimization = {
-          checkInDate: item.checkInDate,
-          checkOutDate: item.checkOutDate,
-          nights: item.nights,
-          roomsRequested: item.roomsRequested,
-          roomsAvailable: item.roomsAvailable,
-          estimatedBaseTotalMinor: item.estimatedBaseTotalMinor,
-          matchScore: item.matchScore,
-          reasons: item.reasons,
-          checkedAt: item.checkedAt,
-          policyVersion: item.policyVersion,
-        };
-        return { ...hotel, bookingOptimization };
-      });
+        const topK = page * size;
+        type RankedHotel = ReturnType<typeof optimizeHotelBookings>[number];
+        const top: Array<{ item: RankedHotel; hotel: C.Offering }> = [];
+        const compareRanked = (a: RankedHotel, b: RankedHotel) =>
+          b.matchScore - a.matchScore ||
+          (BigInt(a.estimatedBaseTotalMinor) < BigInt(b.estimatedBaseTotalMinor)
+            ? -1
+            : BigInt(a.estimatedBaseTotalMinor) > BigInt(b.estimatedBaseTotalMinor)
+              ? 1
+              : 0) ||
+          b.roomsAvailable - a.roomsAvailable ||
+          a.id.localeCompare(b.id);
+        let secondPassCandidates = 0;
+        let secondPassQueryMs = 0;
+        if (
+          globalStatsAccumulator.minTotal !== null &&
+          globalStatsAccumulator.maxTotal !== null &&
+          globalStatsAccumulator.maxRooms > 0
+        ) {
+          const rankingStats = {
+            minEstimatedBaseTotalMinor: globalStatsAccumulator.minTotal.toString(),
+            maxEstimatedBaseTotalMinor: globalStatsAccumulator.maxTotal.toString(),
+            maxRoomsAvailable: globalStatsAccumulator.maxRooms,
+          };
+          const secondPass = await scanBatches(async (ids) => {
+            const projectionStartedAt = performance.now();
+            const offerings = await S.offeringProjections(searchDb, ids, true);
+            projectionMs += performance.now() - projectionStartedAt;
+            secondPassProjectedOfferings += offerings.length;
+            secondPassCandidates += ids.length;
+            const rankingStartedAt = performance.now();
+            const batchRanked: RankedHotel[] = optimizeHotelBookings(
+              offerings.map((offer) => ({
+                id: offer.id,
+                title: offer.title,
+                city: offer.city,
+                priceMinor: offer.priceMinor,
+                amenities: offer.amenities,
+                windows: offer.windows,
+              })),
+              baseCriteria,
+              rankingStats,
+            );
+            rankingMs += performance.now() - rankingStartedAt;
+            const byId = new Map(offerings.map((offer) => [offer.id, offer]));
+            for (const item of batchRanked) {
+              const hotel = byId.get(item.id);
+              if (hotel) top.push({ item, hotel });
+            }
+            top.sort((a, b) => compareRanked(a.item, b.item));
+            if (top.length > topK) top.length = topK;
+          });
+          secondPassQueryMs = secondPass.queryMs;
+        }
+        const candidateQueryMs = Math.round((firstPass.queryMs + secondPassQueryMs) * 100) / 100;
+        projectionMs = Math.round(projectionMs * 100) / 100;
+        rankingMs = Math.round(rankingMs * 100) / 100;
+        const rankedResults = top.map(({ item }) => item);
+        console.info(
+          JSON.stringify({
+            event: 'seven.hotel_search.measurement',
+            policyVersion: '7even-hotel-ranking-v1',
+            city: city || null,
+            dateScoped: !!startDate,
+            candidates: firstPass.count,
+            candidateBatchSize: batchSize,
+            candidateEligibilityStrategy: 'set-based-grouped-inventory',
+
+            candidatePasses: globalStatsAccumulator.minTotal === null ? 1 : 2,
+            candidateCap: null,
+            candidateCapReached: false,
+            projectedOfferings,
+            secondPassProjectedOfferings,
+            projectionRowsRead: projectedOfferings + secondPassProjectedOfferings,
+            secondPassCandidates,
+            rankedResults: eligibleRankedCount,
+            returnedResults: rankedResults.length,
+            candidateQueryMs,
+            projectionMs,
+            rankingMs,
+            totalMs: Math.round((performance.now() - searchStartedAt) * 100) / 100,
+          }),
+        );
+        return top.slice((page - 1) * size, page * size).map(({ item, hotel }) => {
+          const bookingOptimization = {
+            checkInDate: item.checkInDate,
+            checkOutDate: item.checkOutDate,
+            nights: item.nights,
+            roomsRequested: item.roomsRequested,
+            roomsAvailable: item.roomsAvailable,
+            estimatedBaseTotalMinor: item.estimatedBaseTotalMinor,
+            matchScore: item.matchScore,
+            reasons: item.reasons,
+            checkedAt: item.checkedAt,
+            policyVersion: item.policyVersion,
+          };
+          return { ...hotel, bookingOptimization };
+        });
       });
     }
 
@@ -771,28 +866,30 @@ export function createApp(options: AppOptions = {}) {
          AND ($2='' OR s.sector_code=$2)
        ORDER BY o.created_at
        LIMIT $3 OFFSET $4`,
-      [
-        city ? `%${city.toLowerCase()}%` : '',
-        requestedKind,
-        size,
-        (page - 1) * size,
-      ],
+      [city ? `%${city.toLowerCase()}%` : '', requestedKind, size, (page - 1) * size],
     );
     const offerings = (
       await Promise.all(
-        found.map((row) =>
-          S.offeringProjection(pool, row.offering_id, row.sector_code === 'STAY'),
-        ),
+        found.map((row) => S.offeringProjection(pool, row.offering_id, row.sector_code === 'STAY')),
       )
     ).filter((offer): offer is C.Offering => !!offer);
     if (!req.query.startDate) return offerings;
-    const genericStartDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.startDate);
-    const genericEndDate = req.query.endDate === undefined
-      ? undefined
-      : z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.endDate);
+    const genericStartDate = z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .parse(req.query.startDate);
+    const genericEndDate =
+      req.query.endDate === undefined
+        ? undefined
+        : z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .parse(req.query.endDate);
     return offerings.filter((offer) => {
       const dates =
-        offer.kind === 'STAY' && genericEndDate ? serviceDates(genericStartDate, genericEndDate) : [genericStartDate];
+        offer.kind === 'STAY' && genericEndDate
+          ? serviceDates(genericStartDate, genericEndDate)
+          : [genericStartDate];
       return dates.every((date) =>
         offer.windows.some(
           (window) =>
@@ -807,7 +904,8 @@ export function createApp(options: AppOptions = {}) {
     let offer = await S.offeringProjection(pool, id(req));
     if (!offer) return fail(404, 'NOT_FOUND', 'Offering not found.');
     const b = await S.businessProjection(pool, offer.businessId);
-    let verifiedStay = offer.kind !== 'STAY' || Boolean(environment !== 'production' && b?.isSample);
+    let verifiedStay =
+      offer.kind !== 'STAY' || Boolean(environment !== 'production' && b?.isSample);
     if (offer.kind === 'STAY' && !verifiedStay) {
       const review = await one<{ checklist_version: string | null }>(
         pool,
@@ -828,11 +926,15 @@ export function createApp(options: AppOptions = {}) {
   });
   route('post', '/quotes', async (req, res) => {
     const input = parse(C.quoteInput, req);
-    return mutate(req, res, (db, actor) => R.createQuote(db, actor, input, environment === 'production'));
+    return mutate(req, res, (db, actor) =>
+      R.createQuote(db, actor, input, environment === 'production'),
+    );
   });
   route('post', '/reservations', async (req, res) => {
     const input = parse(C.reservationInput, req);
-    return mutate(req, res, (db, actor) => R.createReservation(db, actor, input.quoteId, false, actor.id, environment === 'production'));
+    return mutate(req, res, (db, actor) =>
+      R.createReservation(db, actor, input.quoteId, false, actor.id, environment === 'production'),
+    );
   });
   route('get', '/reservations/:id', async (req, res) => {
     const r = await S.reservationProjection(pool, id(req));
@@ -1622,7 +1724,14 @@ export function createApp(options: AppOptions = {}) {
         );
         customer = { user_id: customerId };
       }
-      return R.createReservation(db, actor, input.quoteId, true, customer.user_id, environment === 'production');
+      return R.createReservation(
+        db,
+        actor,
+        input.quoteId,
+        true,
+        customer.user_id,
+        environment === 'production',
+      );
     });
   });
   route('post', '/reception/sync', async (req, res): Promise<C.SyncResult> => {
@@ -1833,8 +1942,7 @@ export function createApp(options: AppOptions = {}) {
       if (!current) return fail(404, 'NOT_FOUND', 'Business not found.');
 
       let details = current.details ?? {};
-      const businessSector =
-        typeof details.sector === 'string' ? details.sector : 'STAY';
+      const businessSector = typeof details.sector === 'string' ? details.sector : 'STAY';
       if (input.status === 'APPROVED' && businessSector === 'STAY') {
         const verification = input.verification;
         if (!verification)
@@ -1852,9 +1960,7 @@ export function createApp(options: AppOptions = {}) {
           verification.currentRates,
           verification.roomInventoryAndPolicies,
         ];
-        if (
-          evidenceItems.some((item) => !item.confirmed || !item.evidenceReference.trim())
-        )
+        if (evidenceItems.some((item) => !item.confirmed || !item.evidenceReference.trim()))
           return fail(
             409,
             'VERIFICATION_INCOMPLETE',

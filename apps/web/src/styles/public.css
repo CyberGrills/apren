@@ -2232,3 +2232,358 @@
     padding-block: 0.35rem 0.5rem;
   }
 }
+
+
+/* Source-backed directory: browse leads without confusing them with verified 7even inventory. */
+.seven-directory-page .seven-directory-hero {
+  padding-block: 2.5rem 2rem;
+}
+.seven-directory-back {
+  display: inline-block;
+  margin-bottom: 2rem;
+  color: var(--accent);
+  font-size: 0.85rem;
+  text-underline-offset: 4px;
+}
+.seven-directory-hero h1 {
+  max-width: 850px;
+  margin: 0.45rem 0 0.75rem;
+  font-size: clamp(2rem, 4.3vw, 3.6rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+.seven-directory-intro {
+  max-width: 880px;
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.seven-directory-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.75rem;
+}
+.seven-directory-tab {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.seven-directory-tab:hover,
+.seven-directory-tab.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+.seven-directory-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(230px, 0.75fr);
+  gap: 1rem;
+  max-width: 850px;
+  margin-top: 1.25rem;
+}
+.seven-directory-filter-field {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.seven-directory-filter-field input,
+.seven-directory-filter-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 400;
+}
+.seven-directory-content,
+.seven-state-directory {
+  padding-block: 2rem 3.25rem;
+}
+.seven-directory-section-heading,
+.seven-directory-preview-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.seven-directory-section-heading h2,
+.seven-directory-preview-heading h2 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+.seven-directory-section-heading > p,
+.seven-state-directory-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.seven-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.35rem;
+}
+.seven-directory-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+.seven-directory-image-link {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 1.55 / 1;
+  background: var(--surface-subtle);
+}
+.seven-directory-image-link img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+.seven-directory-image-link:hover img {
+  transform: scale(1.025);
+}
+.seven-directory-card-body {
+  padding: 1rem 1rem 1.1rem;
+}
+.seven-directory-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.seven-directory-card h3 {
+  margin: 0.65rem 0 0.15rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+.seven-directory-location {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.seven-directory-area {
+  margin: 0.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+.seven-directory-description {
+  min-height: 4.25rem;
+  margin: 0.7rem 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.79rem;
+  line-height: 1.6;
+}
+.seven-directory-source-link,
+.seven-directory-photo-credit,
+.seven-directory-all-states {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  width: fit-content;
+  text-underline-offset: 4px;
+}
+.seven-directory-source-link {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+.seven-directory-photo-credit {
+  display: block;
+  margin-top: 0.55rem;
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+.seven-directory-disclaimer {
+  margin: 0.75rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.seven-directory-no-results {
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.seven-directory-no-results h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.seven-directory-no-results p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.seven-state-directory {
+  border-top: 1px solid var(--line);
+}
+.seven-state-directory .seven-directory-section-heading {
+  align-items: start;
+}
+.seven-state-directory .seven-directory-intro {
+  max-width: 830px;
+  font-size: 0.84rem;
+}
+.seven-state-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.seven-state-directory-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 145px;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.seven-state-directory-region {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.seven-state-directory-card h3 {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.seven-state-directory-card p:not(.seven-state-directory-region) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.seven-state-directory-card a {
+  width: fit-content;
+  color: var(--accent);
+  font-size: 0.78rem;
+  text-underline-offset: 4px;
+  font-weight: 650;
+}
+.seven-directory-source-note {
+  margin: 1.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+.seven-directory-preview {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.seven-directory-preview-heading > div {
+  max-width: 770px;
+}
+.seven-directory-preview-heading > div > p:last-child {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+.seven-directory-all-states {
+  margin-top: 1.5rem;
+  color: var(--accent);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+.seven-api-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.2rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.seven-api-unavailable h2 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+.seven-api-unavailable p {
+  max-width: 800px;
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.seven-directory-page .seven-trust-strip {
+  margin-top: 1rem;
+}
+@media (max-width: 1050px) {
+  .seven-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .seven-state-directory-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .seven-directory-filters {
+    grid-template-columns: 1fr;
+  }
+  .seven-directory-section-heading,
+  .seven-directory-preview-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .seven-state-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .seven-directory-card-body {
+    padding: 0.85rem;
+  }
+  .seven-directory-description {
+    min-height: 0;
+  }
+  .seven-api-unavailable {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 480px) {
+  .seven-directory-grid,
+  .seven-state-directory-grid {
+    grid-template-columns: 1fr;
+  }
+}
