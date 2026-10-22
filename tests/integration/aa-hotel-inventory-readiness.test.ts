@@ -8,6 +8,7 @@ import { createApp } from '../../services/platform/src/app.ts';
 import { createPool, one } from '../../services/platform/src/db.ts';
 import { migrate } from '../../services/platform/src/migrate.ts';
 import { MockProvider } from '../../services/platform/src/provider.ts';
+import { seed } from '../../services/platform/src/seed.ts';
 
 const origin = 'http://localhost:5177';
 const password = 'HotelReadiness-Test-Passphrase-42!';
@@ -133,6 +134,7 @@ test(
 
       await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
       await migrate(pool);
+      await seed(pool, password);
       schemaReady = true;
 
       if (process.env.TEST_RUNTIME_DATABASE_URL) {
