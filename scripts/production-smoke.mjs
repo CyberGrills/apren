@@ -53,6 +53,17 @@ await check('database readiness', '/api/health/ready', (body) => {
   return 'database and migration ledger reachable';
 });
 
+await check('live payment readiness', '/api/health/ready', (body) => {
+  const payments = body?.data?.payments;
+  if (!payments || payments.mode !== 'live' || payments.fiatReady !== true) {
+    const missing = Array.isArray(payments?.missingRequiredConfiguration)
+      ? payments.missingRequiredConfiguration.join(', ')
+      : 'payment readiness diagnostics unavailable';
+    throw new Error('live fiat checkout is not ready; missing or invalid configuration: ' + missing);
+  }
+  return 'Paystack and Flutterwave live adapters are configured';
+});
+
 await check('auth session', '/api/auth/session', (body) => {
   if (!body || typeof body.data !== 'object' || !Object.hasOwn(body.data, 'user')) {
     throw new Error('session response contract changed');
@@ -60,10 +71,10 @@ await check('auth session', '/api/auth/session', (body) => {
   return 'session endpoint responds with expected anonymous/authenticated shape';
 });
 
-const offerings = await check('offerings API', '/api/offerings?pageSize=3', (body) => {
-  if (!Array.isArray(body?.data)) throw new Error('offerings data is not an array');
-  if (body.data.length === 0) warnings.push('No published bookable offerings; hotel onboarding is required.');
-  return `${body.data.length} offering(s) returned`;
+const offerings = await check('published hotel inventory', '/api/offerings?kind=STAY&pageSize=3', (body) => {
+  if (!Array.isArray(body?.data)) throw new Error('published hotel inventory data is not an array');
+  if (body.data.length === 0) throw new Error('no published bookable hotels; partner onboarding and fresh room confirmation are required');
+  return `${body.data.length} bookable hotel offering(s) returned`;
 });
 
 const directory = await check('stay directory API', '/api/directory?kind=STAY&pageSize=20', (body) => {

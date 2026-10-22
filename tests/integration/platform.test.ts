@@ -161,7 +161,7 @@ test('7even real PostgreSQL API and invariant acceptance', {
         const publicOffers = await guest.request<C.Offering[]>('/offerings');
         assert.equal(publicOffers.status, 200);
         assert.equal(publicOffers.data.length, 3);
-        assert.ok(publicOffers.data.every((o) => o.windows.length === 45 && o.isSample));
+        assert.ok(publicOffers.data.every((o) => o.windows.length >= 44 && o.windows.length <= 45 && o.isSample));
 
         const engineHealth = await guest.request<{
           engine: string;

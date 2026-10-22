@@ -14,6 +14,7 @@ import { MockProvider, validWebhookSecret, parseProviderJson } from './provider.
 import type { PaymentProvider } from './provider.ts';
 import {
   ProviderRegistry,
+  paymentReadiness,
   providerFor,
   providerIds,
   executionModeIds,
@@ -384,7 +385,8 @@ export function createApp(options: AppOptions = {}) {
   route('get', '/health/live', async () => ({ status: 'ok' }));
   route('get', '/health/ready', async () => {
     await pool.query('SELECT 1 FROM seven.migrations LIMIT 1');
-    return { status: 'ready', storage: 'postgresql', paymentMode: provider.mode };
+    const payments = paymentReadiness(environment);
+    return { status: 'ready', storage: 'postgresql', paymentMode: payments.mode, payments };
   });
   route('post', '/ai/interpret-search', async (req) => {
     const input = z.strictObject({

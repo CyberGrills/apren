@@ -1,5 +1,6 @@
 import { createApp } from "../services/platform/src/app.ts";
 import { createPool } from "../services/platform/src/db.ts";
+import { paymentReadiness } from "../services/platform/src/providerRegistry.ts";
 
 const vercelEnvironment = process.env.VERCEL_ENV;
 const environment =
@@ -60,8 +61,9 @@ export default async function handler(req: HandlerRequest, res: HandlerResponse)
     try {
       pool = createPool();
       await pool.query("SELECT 1 FROM seven.migrations LIMIT 1");
+      const payments = paymentReadiness(environment);
       return res.status(200).json({
-        data: { status: "ready", storage: "postgresql", paymentMode: process.env.PAYMENT_MODE ?? "live" },
+        data: { status: "ready", storage: "postgresql", paymentMode: payments.mode, payments },
       });
     } catch {
       return res.status(503).json({
