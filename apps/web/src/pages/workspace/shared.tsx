@@ -75,7 +75,16 @@ export function ReservationTable({
   onNotes?: (reservation: Reservation) => void;
 }) {
   return (
-    <div className="table-wrap">
+    <section
+      className="table-wrap"
+      aria-label="Reservations. Scroll horizontally to see payment and actions."
+      data-scrolls
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to scroll the reservation table.
+      tabIndex={0}
+    >
+      {reservations.length > 0 && (
+        <p className="table-scroll-cue">Scroll table for payment and actions →</p>
+      )}
       <table>
         <thead>
           <tr>
@@ -173,7 +182,7 @@ export function ReservationTable({
       {reservations.length === 0 && (
         <p className="small-copy panel">No reservations match this view.</p>
       )}
-    </div>
+    </section>
   );
 }
 export function ReservationActionDialog({

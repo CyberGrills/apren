@@ -1,0 +1,32 @@
+[
+  {
+    "chrome": false,
+    "facts": {
+      "accentHues": [
+        48
+      ],
+      "cards": 0,
+      "fonts": {
+        "Manrope": 48,
+        "Newsreader": 3
+      },
+      "leftEdges": 2,
+      "sizes": [
+        51.2,
+        24,
+        18,
+        14,
+        12.8,
+        12
+      ],
+      "weights": [
+        "400",
+        "600"
+      ]
+    },
+    "fails": [],
+    "name": "/admin/inventory",
+    "pxJobs": [],
+    "warns": []
+  }
+]

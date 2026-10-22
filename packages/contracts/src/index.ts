@@ -587,6 +587,7 @@ export interface BusinessOverview {
   activity: Activity[];
   staff: SessionUser[];
   notifications: Notification[];
+  listingReadiness: ListingReadiness;
 }
 export interface ReceptionOverview {
   business: Business | null;
@@ -611,6 +612,67 @@ export interface AdminOverview {
     commissionBps: number;
   };
   exceptions: { id: string; kind: string; message: string; createdAt: string }[];
+  exceptionsSummary: {
+    total: number;
+    shown: number;
+    truncated: boolean;
+    perCategoryLimit: number;
+  };
+  listingReadiness: ListingReadiness;
+}
+
+export type ListingBlockerCode =
+  | 'BUSINESS_NOT_APPROVED'
+  | 'OFFERING_UNPUBLISHED'
+  | 'HOTEL_VERIFICATION_REQUIRED'
+  | 'NO_INVENTORY'
+  | 'INVENTORY_EXPIRED'
+  | 'INVENTORY_STALE'
+  | 'INVENTORY_SOLD_OUT'
+  | 'INVENTORY_CONFLICT'
+  | 'INVENTORY_PROJECTION_LIMIT';
+export type ListingWarningCode = 'STATE_MISSING' | 'STATE_UNRECOGNIZED';
+export interface ListingCounts {
+  offerings: number;
+  published: number;
+  eligible: number;
+  blocked: number;
+}
+export interface OfferingListingReadiness {
+  offeringId: string;
+  title: string;
+  kind: Sector;
+  city: string;
+  state: string | null;
+  published: boolean;
+  /** Visible without date, room-count, city, or state filters. Not a booking guarantee. */
+  eligible: boolean;
+  managedInventory: boolean;
+  blockers: ListingBlockerCode[];
+  warnings: ListingWarningCode[];
+  inventory: {
+    totalWindows: number;
+    currentWindows: number;
+    freshWindows: number;
+    availableWindows: number;
+  };
+}
+export interface BusinessListingReadiness {
+  businessId: string;
+  businessName: string;
+  status: BusinessStatus;
+  counts: ListingCounts;
+  blockers: ('BUSINESS_NOT_APPROVED' | 'HOTEL_VERIFICATION_REQUIRED' | 'NO_OFFERINGS')[];
+  offerings: OfferingListingReadiness[];
+  offeringsLimit: number;
+  offeringsTruncated: boolean;
+}
+export interface ListingReadiness {
+  database: { status: 'connected'; checkedAt: string };
+  totals: ListingCounts & { businesses: number };
+  businesses: BusinessListingReadiness[];
+  businessLimit: number;
+  businessesTruncated: boolean;
 }
 export interface SyncResult {
   serverTime: string;
@@ -684,4 +746,11 @@ export interface AdminOperations {
     eventCount: number;
   }[];
   rewards: Reward[];
+}
+
+export interface AdminRecordsPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

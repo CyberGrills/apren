@@ -1,0 +1,33 @@
+[
+  {
+    "chrome": false,
+    "facts": {
+      "accentHues": [
+        48
+      ],
+      "cards": 0,
+      "fonts": {
+        "Manrope": 65,
+        "Newsreader": 7
+      },
+      "leftEdges": 1,
+      "sizes": [
+        51.2,
+        24,
+        18,
+        14,
+        12,
+        11.2
+      ],
+      "weights": [
+        "400",
+        "500",
+        "600"
+      ]
+    },
+    "fails": [],
+    "name": "/admin",
+    "pxJobs": [],
+    "warns": []
+  }
+]

@@ -1,21 +1,22 @@
 import { ArrowUpRight } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Brand } from '../../components/Brand.tsx';
 import { ErrorNotice, Field, useFeedback } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
+import { safeWorkspaceReturnTo } from '../../lib/workspaceNavigation.ts';
 import { editorialImages, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
-export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
+export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; workspace?: 'admin' }) {
   const { login, register } = useSession();
   const { showSuccess } = useFeedback();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const registration = mode === 'register';
-  const requested = params.get('returnTo') ?? params.get('next') ?? '/workspace';
-  const returnTo =
-    requested.startsWith('/') && !requested.startsWith('//') ? requested : '/workspace';
+  const admin = workspace === 'admin';
+  const registration = !admin && mode === 'register';
+  const returnTo = safeWorkspaceReturnTo(params.get('returnTo') ?? params.get('next'), admin);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -44,12 +45,31 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   }
   return (
     <div className="public-page">
-      <PublicHeader />
-      <main id="main-content" className="public-container auth-layout">
+      {admin ? (
+        <header className="public-header">
+          <div className="public-container public-nav">
+            <Link to="/" aria-label="7even home" className="public-brand">
+              <Brand />
+            </Link>
+          </div>
+        </header>
+      ) : (
+        <PublicHeader />
+      )}
+      <main
+        id="main-content"
+        className={`public-container auth-layout${admin ? ' auth-layout-admin' : ''}`}
+      >
         <div className="auth-copy">
-          <span className="public-eyebrow">Your plans start here</span>
+          <span className="public-eyebrow">{admin ? 'Staff access' : 'Your plans start here'}</span>
           <h1>
-            {registration ? (
+            {admin ? (
+              <>
+                7even
+                <br />
+                <em>operations.</em>
+              </>
+            ) : registration ? (
               <>
                 A little more
                 <br />
@@ -64,23 +84,33 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             )}
           </h1>
           <p>
-            {registration
-              ? 'Keep your bookings in one place. Earn points when eligible bookings are completed, then choose a reward you like.'
-              : 'Your next stay, your points and the plans you’ve already made.'}
+            {admin
+              ? 'Review businesses, follow reservations and keep platform operations in order.'
+              : registration
+                ? 'Keep your bookings in one place. Earn points when eligible bookings are completed, then choose a reward you like.'
+                : 'Your next stay, your points and the plans you’ve already made.'}
           </p>
-          <figure>
-            <img
-              src={editorialImages.room}
-              alt="A warmly lit hotel room. Illustrative photograph by Vojtech Bruzek."
-              width="1000"
-              height="700"
-            />
-            <figcaption>Photo: Vojtech Bruzek / Unsplash · Illustrative image</figcaption>
-          </figure>
+          {!admin && (
+            <figure>
+              <img
+                src={editorialImages.room}
+                alt="A warmly lit hotel room. Illustrative photograph by Vojtech Bruzek."
+                width="1000"
+                height="700"
+              />
+              <figcaption>Photo: Vojtech Bruzek / Unsplash · Illustrative image</figcaption>
+            </figure>
+          )}
         </div>
         <section className="auth-form-panel" aria-labelledby="auth-title">
-          <span className="public-eyebrow">7even account</span>
-          <h2 id="auth-title">{registration ? 'Make yourself at home.' : 'Sign in to 7even.'}</h2>
+          <span className="public-eyebrow">{admin ? 'Platform access' : '7even account'}</span>
+          <h2 id="auth-title">
+            {admin
+              ? 'Staff sign in.'
+              : registration
+                ? 'Make yourself at home.'
+                : 'Sign in to 7even.'}
+          </h2>
           <form onSubmit={submit}>
             {registration && (
               <Field label="Your name">
@@ -132,21 +162,24 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
               <Link to="/forgot-password">Forgot your password?</Link>
             </p>
           )}
-          <p className="auth-switch">
-            {registration ? 'Already have an account?' : 'New to 7even?'}{' '}
-            <Link
-              to={`/${registration ? 'login' : 'register'}?returnTo=${encodeURIComponent(returnTo)}`}
-            >
-              {registration ? 'Sign in' : 'Create an account'}
-            </Link>
-          </p>
+          {!admin && (
+            <p className="auth-switch">
+              {registration ? 'Already have an account?' : 'New to 7even?'}{' '}
+              <Link
+                to={`/${registration ? 'login' : 'register'}?returnTo=${encodeURIComponent(returnTo)}`}
+              >
+                {registration ? 'Sign in' : 'Create an account'}
+              </Link>
+            </p>
+          )}
           <p className="public-small">
-            Your account holds your booking history, points and benefits. Payment details are
-            handled by the payment provider.
+            {admin
+              ? 'Use an account assigned to platform administration. Access is checked after sign in.'
+              : 'Your account holds your booking history, points and benefits. Payment details are handled by the payment provider.'}
           </p>
         </section>
       </main>
-      <PublicFooter />
+      {!admin && <PublicFooter />}
     </div>
   );
 }

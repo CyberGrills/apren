@@ -1,0 +1,46 @@
+[
+  {
+    "chrome": false,
+    "facts": {
+      "accentHues": [
+        48
+      ],
+      "cards": 0,
+      "fonts": {
+        "Manrope": 42,
+        "Newsreader": 7
+      },
+      "leftEdges": 4,
+      "sizes": [
+        40,
+        24,
+        19.2,
+        18,
+        14,
+        12,
+        11.2
+      ],
+      "weights": [
+        "400",
+        "500",
+        "600"
+      ]
+    },
+    "fails": [],
+    "name": "/business",
+    "pxJobs": [
+      {
+        "fg": {
+          "a": 1,
+          "b": 248,
+          "g": 253,
+          "r": 255
+        },
+        "id": "0",
+        "need": 4.5,
+        "t": "Local sample · A quiet room above the ci"
+      }
+    ],
+    "warns": []
+  }
+]

@@ -13,6 +13,7 @@ import './styles/global.css';
 import './styles/public.css';
 import './styles/customer.css';
 import './styles/workspace.css';
+import './styles/workbench.css';
 import './styles/brand-intro.css';
 
 document.documentElement.dataset.season = seasonAt(new Date());

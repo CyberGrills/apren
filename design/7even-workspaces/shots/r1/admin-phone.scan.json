@@ -1,0 +1,40 @@
+[
+  {
+    "chrome": false,
+    "facts": {
+      "accentHues": [
+        48
+      ],
+      "cards": 0,
+      "fonts": {
+        "Manrope": 65,
+        "Newsreader": 7
+      },
+      "leftEdges": 3,
+      "sizes": [
+        40,
+        25.6,
+        24,
+        19.2,
+        18,
+        14,
+        13.28,
+        12.8,
+        12,
+        11.2
+      ],
+      "weights": [
+        "400",
+        "500",
+        "600"
+      ]
+    },
+    "fails": [],
+    "name": "/admin",
+    "pxJobs": [],
+    "warns": [
+      "10 distinct text sizes. A type scale has 5 to 7 steps: 40, 25.6, 24, 19.2, 18, 14, 13.28, 12.8, 12, 11.2",
+      "Lines of text touching vertically (ink under 2pt apart): \"Investigation queue\" / \"Unresolved exceptions\"; \"Partner onboarding\" / \"Business applications\""
+    ]
+  }
+]

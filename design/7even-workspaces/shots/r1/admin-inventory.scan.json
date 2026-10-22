@@ -1,0 +1,44 @@
+[
+  {
+    "chrome": false,
+    "facts": {
+      "accentHues": [
+        48
+      ],
+      "cards": 0,
+      "fonts": {
+        "Manrope": 48,
+        "Newsreader": 3
+      },
+      "leftEdges": 2,
+      "sizes": [
+        51.2,
+        27.2,
+        24,
+        19.2,
+        16,
+        14.08,
+        13.44,
+        12.8,
+        12.16,
+        11.52,
+        11.2,
+        11.04,
+        10.88,
+        10.6667
+      ],
+      "weights": [
+        "400",
+        "600"
+      ]
+    },
+    "fails": [
+      "Text below 11pt (iOS floor): 10.88px \"PostgreSQL checked 08:29 WAT\"; 10.6667px \"0 listings need attention\"; 10.6667px \"0 listings need attention\"; 10.6667px \"0 listings need attention\""
+    ],
+    "name": "/admin/inventory",
+    "pxJobs": [],
+    "warns": [
+      "14 distinct text sizes. A type scale has 5 to 7 steps: 51.2, 27.2, 24, 19.2, 16, 14.08, 13.44, 12.8, 12.16, 11.52, 11.2, 11.04, 10.88, 10.6667"
+    ]
+  }
+]

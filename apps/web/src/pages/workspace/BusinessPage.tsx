@@ -1,4 +1,11 @@
-import type { BusinessOverview, Offering, Reward, SessionUser, Venue } from '@7even/contracts';
+import type {
+  BusinessOverview,
+  Offering,
+  Reservation,
+  Reward,
+  SessionUser,
+  Venue,
+} from '@7even/contracts';
 import { majorToMinor } from '@7even/engine';
 import { ArrowUpRight, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -18,11 +25,15 @@ import {
 import { useSession } from '../../context/SessionContext.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
+import { upcomingInventory } from '../../lib/businessWorkspace.ts';
+import { AdminRecords } from './AdminRecords.tsx';
 import { BusinessPayments } from './BusinessPayments.tsx';
+import { ListingUpdateReceipt } from './ListingUpdateReceipt.tsx';
+import { BusinessWorkspaceOverview } from './BusinessWorkspaceOverview.tsx';
+import { ListingBadge } from './ListingReadiness.tsx';
+import { listingReasons } from '../../lib/listingReadiness.ts';
 import {
-  ActivityList,
   dateLabel,
-  MetricsStrip,
   ReservationActionDialog,
   type ReservationCommand,
   ReservationTable,
@@ -37,199 +48,176 @@ type Editor =
   | { kind: 'revoke'; staff: SessionUser };
 const titles: Record<Tab, string> = {
   overview: 'A good day starts here.',
-  reservations: 'Every plan, in one place.',
-  offerings: 'The places you run.',
-  demand: 'Know what’s moving.',
-  rewards: 'Give them a reason to return.',
-  team: 'The people behind it.',
-  settings: 'Your business on 7even.',
+  reservations: 'Reservations',
+  offerings: 'Places & availability',
+  demand: 'Demand',
+  rewards: 'Rewards',
+  team: 'Your team',
+  settings: 'Business details',
 };
 export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
   const { user } = useSession();
   const { data, loading, error, reload } = useApi<BusinessOverview>('/business/overview');
   const [editor, setEditor] = useState<Editor | null>(null);
   const [command, setCommand] = useState<ReservationCommand | null>(null);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
   const owner = user?.role === 'BUSINESS_OWNER';
-  const reservations =
-    data?.reservations.filter(
-      (r) =>
-        (!status || r.status === status) &&
-        `${r.customerName} ${r.reference} ${r.title}`.toLowerCase().includes(search.toLowerCase()),
-    ) ?? [];
   return (
     <>
-      <PageHeader
-        eyebrow={data?.business?.businessName ?? 'Your business'}
-        title={titles[tab]}
-        description={
-          tab === 'overview'
-            ? 'Reservations, payments and the next arrival. Kept together as your day moves.'
-            : tab === 'demand'
+      {tab !== 'overview' && (
+        <PageHeader
+          eyebrow={data?.business?.businessName ?? 'Your business'}
+          title={titles[tab]}
+          description={
+            tab === 'demand'
               ? 'Measured activity from 7even, with the period and evidence beside every suggestion.'
               : undefined
-        }
-        actions={
-          owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() =>
-                setEditor({
-                  kind: tab === 'offerings' ? 'offering' : tab === 'rewards' ? 'reward' : 'staff',
-                })
-              }
-            >
-              <Plus size={16} />
-              {tab === 'offerings'
-                ? 'Add a place'
-                : tab === 'rewards'
-                  ? 'Create a reward'
-                  : 'Add a team member'}
-            </button>
-          ) : (
-            <Link to="/reception" className="btn btn-secondary">
-              Open reception <ArrowUpRight size={16} />
-            </Link>
-          )
-        }
-      />
+          }
+          actions={
+            owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={
+                  ['offerings', 'rewards'].includes(tab) && data?.business?.status !== 'APPROVED'
+                }
+                onClick={() =>
+                  setEditor({
+                    kind: tab === 'offerings' ? 'offering' : tab === 'rewards' ? 'reward' : 'staff',
+                  })
+                }
+              >
+                <Plus size={16} />
+                {tab === 'offerings'
+                  ? 'Add a place'
+                  : tab === 'rewards'
+                    ? 'Create a reward'
+                    : 'Add a team member'}
+              </button>
+            ) : (
+              <Link to="/reception" className="btn btn-secondary">
+                Open reception <ArrowUpRight size={16} />
+              </Link>
+            )
+          }
+        />
+      )}
       {loading && <Loading />}
       {error && <ErrorNotice message={error} retry={reload} />}
       {data && (
         <>
-          {data.business?.status !== 'APPROVED' && (
+          {tab !== 'overview' && data.business?.status !== 'APPROVED' && (
             <div className="notice">
               Your business is {data.business?.status.toLowerCase() ?? 'awaiting setup'}. Publishing
               and checkout require an approved business.
             </div>
           )}
           {tab === 'overview' && (
-            <>
-              <MetricsStrip metrics={data.metrics} />
-              <div className="section-heading">
-                <h2>Latest reservations</h2>
-                <Link to="/business/reservations" className="text-button">
-                  See all
-                </Link>
-              </div>
-              <ReservationTable
-                reservations={data.reservations.slice(0, 8)}
-                onAction={setCommand}
-              />
-              <section className="workspace-section two-column">
-                <div>
-                  <div className="section-heading">
-                    <h2>At a glance</h2>
-                  </div>
-                  <div className="panel">
-                    <p>
-                      {data.offerings.length} places on 7even, with {data.metrics.availableCapacity}{' '}
-                      units of future capacity.
-                    </p>
-                    <p className="small-copy">
-                      Capacity updates when a hold is accepted, released or converted. A payment
-                      notification alone does not establish bank settlement.
-                    </p>
-                    <Link to="/business/offerings" className="text-button">
-                      Manage availability
-                    </Link>
-                  </div>
-                </div>
-                <div>
-                  <div className="section-heading">
-                    <h2>Recent activity</h2>
-                  </div>
-                  <ActivityList items={data.activity.slice(0, 6)} />
-                </div>
-              </section>
-            </>
+            <BusinessWorkspaceOverview
+              data={data}
+              onAdd={() => setEditor({ kind: 'offering' })}
+              onEdit={(id) => {
+                const offering = data.offerings.find((o) => o.id === id);
+                if (offering) setEditor({ kind: 'offering', offering });
+              }}
+              onAvailability={(id) => {
+                const offering = data.offerings.find((o) => o.id === id);
+                if (offering) setEditor({ kind: 'availability', offering });
+              }}
+              onAction={setCommand}
+              reload={reload}
+            />
           )}
           {tab === 'reservations' && (
-            <>
-              <div className="toolbar">
-                <input
-                  aria-label="Search reservations"
-                  placeholder="Guest, reference or place"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <select
-                  aria-label="Reservation status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                >
-                  <option value="">All statuses</option>
-                  {[
-                    'HELD',
-                    'CONFIRMED',
-                    'CHECKED_IN',
-                    'FULFILLED',
-                    'CANCELLED',
-                    'EXPIRED',
-                    'PAYMENT_REVIEW',
-                  ].map((s) => (
-                    <option key={s} value={s}>
-                      {s.toLowerCase().replaceAll('_', ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <ReservationTable reservations={reservations} onAction={setCommand} />
-            </>
+            <AdminRecords<Reservation>
+              collection="reservations"
+              endpoint="/business/records/reservations"
+              searchLabel="Search reservations"
+              placeholder="Guest, reference or place"
+              statuses={[
+                'HELD',
+                'CONFIRMED',
+                'CHECKED_IN',
+                'FULFILLED',
+                'CANCELLED',
+                'EXPIRED',
+                'PAYMENT_REVIEW',
+              ]}
+            >
+              {(reservations) => (
+                <ReservationTable reservations={reservations} onAction={setCommand} />
+              )}
+            </AdminRecords>
           )}
           {tab === 'offerings' &&
             (data.offerings.length ? (
               <div className="work-offering-grid">
-                {data.offerings.map((offer) => (
-                  <article className="work-offering" key={offer.id}>
-                    {offer.images[0] && <img src={offer.images[0]} alt="" loading="lazy" />}
-                    <div className="work-offering-copy">
-                      <div className="work-offering-meta">
-                        <span className="eyebrow">{offer.kind.toLowerCase()}</span>
-                        <StatusBadge status={offer.published ? 'PUBLISHED' : 'DRAFT'} />
-                      </div>
-                      <h2>{offer.title}</h2>
-                      <p className="small-copy">
-                        {offer.city} · <Money minor={offer.priceMinor} /> / {offer.unitLabel}
-                      </p>
-                      <p className="small-copy">
-                        {offer.windows.reduce((sum, w) => sum + w.remaining, 0)} available across{' '}
-                        {offer.windows.length} service windows
-                      </p>
-                      {owner && (
-                        <div className="work-offering-actions">
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-small"
-                            onClick={() => setEditor({ kind: 'availability', offering: offer })}
-                          >
-                            Availability
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-small"
-                            onClick={() => setEditor({ kind: 'offering', offering: offer })}
-                          >
-                            Edit details
-                          </button>
+                {data.offerings.map((offer) => {
+                  const windows = upcomingInventory(offer.windows);
+                  const checks = data.listingReadiness.businesses
+                    .find((b) => b.businessId === data.business?.id)
+                    ?.offerings.find((o) => o.offeringId === offer.id);
+                  return (
+                    <article className="work-offering" key={offer.id}>
+                      {offer.images[0] && <img src={offer.images[0]} alt="" loading="lazy" />}
+                      <div className="work-offering-copy">
+                        <div className="work-offering-meta">
+                          <span className="eyebrow">{offer.kind.toLowerCase()}</span>
+                          <ListingBadge offering={checks} />
                         </div>
-                      )}
-                      <div className="availability-calendar">
-                        {offer.windows.slice(0, 7).map((w) => (
-                          <div className="availability-day" key={w.id}>
-                            {dateLabel(w.serviceDate).slice(0, 6)}
-                            <strong>
-                              {w.remaining}/{w.capacity}
-                            </strong>
-                            available
+                        <h2>{offer.title}</h2>
+                        {!checks && (
+                          <p className="small-copy">
+                            Detailed checks are limited to the first 100 listings. Review this
+                            place’s details and availability below.
+                          </p>
+                        )}
+                        <p className="small-copy">
+                          {offer.city} · <Money minor={offer.priceMinor} /> / {offer.unitLabel}
+                        </p>
+                        <p className="small-copy">
+                          {windows.reduce((sum, w) => sum + w.remaining, 0)} available across{' '}
+                          {windows.length} upcoming service windows
+                        </p>
+                        {checks && [...checks.blockers, ...checks.warnings].length > 0 && (
+                          <ul className="offering-check-reasons">
+                            {[...checks.blockers, ...checks.warnings].map((code) => (
+                              <li key={code}>{listingReasons[code]}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {owner && (
+                          <div className="work-offering-actions">
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-small"
+                              onClick={() => setEditor({ kind: 'availability', offering: offer })}
+                            >
+                              Availability
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-small"
+                              onClick={() => setEditor({ kind: 'offering', offering: offer })}
+                            >
+                              Edit details
+                            </button>
                           </div>
-                        ))}
+                        )}
+                        <p className="availability-legend">Upcoming dates · available / total</p>
+                        <div className="availability-calendar">
+                          {windows.slice(0, 7).map((w) => (
+                            <div className="availability-day" key={w.id}>
+                              {dateLabel(w.serviceDate).slice(0, 6)}
+                              <strong>
+                                {w.remaining}/{w.capacity}
+                              </strong>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             ) : (
               <EmptyState
@@ -301,7 +289,11 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
               ) : (
                 <EmptyState
                   title="Make the next visit count."
-                  description="Publish a benefit with a points cost, capacity and a clear expiry."
+                  description={
+                    data.business?.status === 'APPROVED'
+                      ? 'Publish a benefit with a points cost, capacity and a clear expiry.'
+                      : 'Create rewards after 7even approves your business.'
+                  }
                 />
               )}
             </>
@@ -446,14 +438,16 @@ function BusinessEditor({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const needsVenues = editor.kind === 'offering';
+  const needsVenues = editor.kind === 'offering' || editor.kind === 'staff';
   const {
     data: venues,
     loading: venuesLoading,
     error: venuesError,
     reload: reloadVenues,
   } = useApi<Venue[]>(needsVenues ? '/business/venues' : null);
-  const venuesUnavailable = needsVenues && (venuesLoading || !!venuesError || !venues?.length);
+  const venuesUnavailable =
+    needsVenues &&
+    (venuesLoading || !!venuesError || (editor.kind === 'offering' && !venues?.length));
   const { showSuccess } = useFeedback();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -468,6 +462,7 @@ function BusinessEditor({
     setBusy(true);
     setError(null);
     try {
+      let savedOffering: Offering | undefined;
       if (editor.kind === 'offering') {
         const body = {
           title: get('title'),
@@ -492,27 +487,30 @@ function BusinessEditor({
             ? { expectedRevision: offer.revision, venueId: get('venueId') || offer.venueId }
             : {}),
         };
-        await api(`/business/offerings${offer ? `/${offer.id}` : ''}`, {
+        savedOffering = await api<Offering>(`/business/offerings${offer ? `/${offer.id}` : ''}`, {
           method: offer ? 'PATCH' : 'POST',
           body,
           idempotencyKey: key,
         });
       } else if (editor.kind === 'availability') {
-        await api(`/business/offerings/${editor.offering.id}/availability`, {
-          method: 'POST',
-          idempotencyKey: key,
-          body: {
-            startDate: get('startDate'),
-            ...(get('endDate') ? { endDate: get('endDate') } : {}),
-            ...(get('startAt')
-              ? {
-                  startAt: new Date(`${get('startAt')}+01:00`).toISOString(),
-                  endAt: new Date(`${get('endAt')}+01:00`).toISOString(),
-                }
-              : {}),
-            capacity: integer('capacity'),
+        savedOffering = await api<Offering>(
+          `/business/offerings/${editor.offering.id}/availability`,
+          {
+            method: 'POST',
+            idempotencyKey: key,
+            body: {
+              startDate: get('startDate'),
+              ...(get('endDate') ? { endDate: get('endDate') } : {}),
+              ...(get('startAt')
+                ? {
+                    startAt: new Date(`${get('startAt')}+01:00`).toISOString(),
+                    endAt: new Date(`${get('endAt')}+01:00`).toISOString(),
+                  }
+                : {}),
+              capacity: integer('capacity'),
+            },
           },
-        });
+        );
       } else if (editor.kind === 'reward') {
         await api('/business/rewards', {
           method: 'POST',
@@ -541,17 +539,33 @@ function BusinessEditor({
         });
       } else
         await api(`/business/staff/${editor.staff.id}`, { method: 'DELETE', idempotencyKey: key });
-      showSuccess(
-        editor.kind === 'revoke'
-          ? 'Reception access has been removed.'
-          : editor.kind === 'staff'
-            ? 'The reception account is ready.'
-            : editor.kind === 'availability'
-              ? 'Availability has been updated.'
-              : editor.kind === 'reward'
-                ? 'Your reward has been saved.'
-                : 'Your place has been saved.',
-      );
+      if (savedOffering) {
+        const previous = data.listingReadiness.businesses
+          .find((business) => business.businessId === savedOffering.businessId)
+          ?.offerings.find((offering) => offering.offeringId === savedOffering.id);
+        let refreshed: BusinessOverview | null = null;
+        try {
+          refreshed = await api<BusinessOverview>('/business/overview');
+        } catch {
+          // The mutation already succeeded; a failed read must not invite another write.
+        }
+        showSuccess(
+          <ListingUpdateReceipt
+            offering={savedOffering}
+            previous={previous}
+            refreshed={refreshed}
+          />,
+          editor.kind === 'availability' ? 'Availability saved.' : 'Listing saved.',
+        );
+      } else {
+        showSuccess(
+          editor.kind === 'revoke'
+            ? 'Reception access has been removed.'
+            : editor.kind === 'staff'
+              ? 'The reception account is ready.'
+              : 'Your reward has been saved.',
+        );
+      }
       onDone();
       onClose();
     } catch (cause) {
@@ -584,7 +598,7 @@ function BusinessEditor({
           </div>
         )}
         {needsVenues && venuesError && <ErrorNotice message={venuesError} retry={reloadVenues} />}
-        {needsVenues && !venuesLoading && !venuesError && venues?.length === 0 && (
+        {editor.kind === 'offering' && !venuesLoading && !venuesError && venues?.length === 0 && (
           <div className="form-wide">
             <ErrorNotice message="Add a venue before saving a place." />
             <Link className="text-button" to="/business/venues">
@@ -804,13 +818,11 @@ function BusinessEditor({
             <Field label="Assigned venue">
               <select name="venueId">
                 <option value="">All business venues</option>
-                {Array.from(new Map(data.offerings.map((o) => [o.venueId, o])).values()).map(
-                  (o) => (
-                    <option value={o.venueId} key={o.venueId}>
-                      {o.address}
-                    </option>
-                  ),
-                )}
+                {venues?.map((venue) => (
+                  <option value={venue.id} key={venue.id}>
+                    {venue.venueName} · {venue.address}
+                  </option>
+                ))}
               </select>
             </Field>
           </>

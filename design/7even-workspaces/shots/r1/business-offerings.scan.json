@@ -1,0 +1,34 @@
+[
+  {
+    "chrome": false,
+    "facts": {
+      "accentHues": [
+        48
+      ],
+      "cards": 0,
+      "fonts": {
+        "Manrope": 24,
+        "Newsreader": 2
+      },
+      "leftEdges": 6,
+      "sizes": [
+        24,
+        14,
+        12.8,
+        12
+      ],
+      "weights": [
+        "400",
+        "600",
+        "700"
+      ]
+    },
+    "fails": [],
+    "name": "/business/offerings",
+    "pxJobs": [],
+    "warns": [
+      "Largest text is 24px. No element owns the screen. (Mark data-dense if this is deliberate.)",
+      "6 distinct left edges in the left third. Align to fewer verticals."
+    ]
+  }
+]

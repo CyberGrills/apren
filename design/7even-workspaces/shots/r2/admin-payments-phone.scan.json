@@ -1,0 +1,36 @@
+[
+  {
+    "chrome": false,
+    "facts": {
+      "accentHues": [
+        48,
+        24,
+        0
+      ],
+      "cards": 0,
+      "fonts": {
+        "Manrope": 66,
+        "Newsreader": 1
+      },
+      "leftEdges": 3,
+      "sizes": [
+        24,
+        14,
+        12.8,
+        12,
+        11.2
+      ],
+      "weights": [
+        "400",
+        "600"
+      ]
+    },
+    "fails": [],
+    "name": "/admin/payments",
+    "pxJobs": [],
+    "warns": [
+      "Largest text is 24px. No element owns the screen. (Mark data-dense if this is deliberate.)",
+      "Three saturated hue families (48°, 24°, 0°). Is each one earning its place?"
+    ]
+  }
+]

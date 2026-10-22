@@ -10,12 +10,12 @@ export function PublicHeader() {
   const { user } = useSession();
   const [open, setOpen] = useState(false);
   const workspace =
-    user?.role === 'BUSINESS_OWNER'
-      ? { label: 'Your business', href: '/business' }
-      : user?.role === 'RECEPTION'
-        ? { label: 'Open reception', href: '/reception' }
-        : user?.role === 'ADMIN'
-          ? { label: 'Platform admin', href: '/admin' }
+    user?.role === 'ADMIN'
+      ? null
+      : user?.role === 'BUSINESS_OWNER'
+        ? { label: 'Your business', href: '/business' }
+        : user?.role === 'RECEPTION'
+          ? { label: 'Open reception', href: '/reception' }
           : { label: 'For business', href: '/business/apply' };
   return (
     <header className="public-header">
@@ -32,9 +32,11 @@ export function PublicHeader() {
           <Link to={user ? '/app/bookings' : '/login'} className="public-account-link">
             {user ? 'Your plans' : 'Sign in'}
           </Link>
-          <Link to={workspace.href} className="public-business-link">
-            {workspace.label} <ArrowUpRight size={15} aria-hidden="true" />
-          </Link>
+          {workspace && (
+            <Link to={workspace.href} className="public-business-link">
+              {workspace.label} <ArrowUpRight size={15} aria-hidden="true" />
+            </Link>
+          )}
           <button
             type="button"
             className="public-menu-button"
@@ -57,9 +59,11 @@ export function PublicHeader() {
           <Link to="/explore?kind=EXPERIENCE" onClick={() => setOpen(false)}>
             Experiences
           </Link>
-          <Link to={workspace.href} onClick={() => setOpen(false)}>
-            {workspace.label}
-          </Link>
+          {workspace && (
+            <Link to={workspace.href} onClick={() => setOpen(false)}>
+              {workspace.label}
+            </Link>
+          )}
         </nav>
       )}
     </header>

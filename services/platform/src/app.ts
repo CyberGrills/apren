@@ -33,6 +33,8 @@ import { configuredRecoveryMailer } from './recoveryMailer.ts';
 import { interpretHotelSearch, isOpenAIConfigured, toHotelSearchParams } from './aiConcierge.ts';
 import { processInbox, processOutbox } from './worker.ts';
 import { findLocations, retainedLocationState } from './locations.ts';
+import { listingReadiness } from './listingReadiness.ts';
+import { mountAdminRecords } from './adminRecords.ts';
 
 export interface AppOptions {
   pool?: Pool;
@@ -1290,7 +1292,7 @@ export function createApp(options: AppOptions = {}) {
             'SELECT offering_id FROM seven.offerings WHERE business_id=$1 ORDER BY created_at',
             [businessId],
           )
-        ).map((r) => S.offeringProjection(pool, r.offering_id)),
+        ).map((r) => S.offeringProjection(pool, r.offering_id, false, { upcomingInventoryOnly: true })),
       )
     ).filter((o): o is C.Offering => !!o);
   }
@@ -1367,6 +1369,7 @@ export function createApp(options: AppOptions = {}) {
         (u): u is C.SessionUser => !!u,
       ),
       notifications: await S.notifications(pool, actor.id),
+      listingReadiness: await listingReadiness(pool, { businessId, production: environment === 'production' }),
     };
   });
   async function saveOffering(
@@ -1818,18 +1821,24 @@ export function createApp(options: AppOptions = {}) {
       pool,
       'SELECT * FROM seven.policies ORDER BY policy_id DESC LIMIT 1',
     ))!;
+    const unresolvedPayments = await rows(
+      pool,
+      `SELECT p.payment_attempt_id,p.merchant_reference,p.created_at,s.workflow_state_code
+       FROM seven.payment_attempts p JOIN seven.workflow_states s USING(workflow_state_id)
+       WHERE s.workflow_state_code IN ('UNKNOWN','REVIEW_REQUIRED')
+       ORDER BY p.created_at,p.payment_attempt_id LIMIT 100`,
+    );
     const refunds = await rows(
       pool,
-      `SELECT r.*,s.workflow_state_code FROM seven.refunds r JOIN seven.workflow_states s USING(workflow_state_id) WHERE s.workflow_state_code IN ('UNKNOWN','FAILED','DISPATCHED') OR r.provider_details->>'exception' IS NOT NULL ORDER BY r.created_at DESC LIMIT 100`,
+      `SELECT r.*,s.workflow_state_code FROM seven.refunds r JOIN seven.workflow_states s USING(workflow_state_id) WHERE s.workflow_state_code IN ('UNKNOWN','FAILED','DISPATCHED') OR r.provider_details->>'exception' IS NOT NULL ORDER BY r.created_at,r.refund_id LIMIT 100`,
     );
     const exceptions = [
-      ...payments
-        .filter((p) => ['UNKNOWN', 'REVIEW_REQUIRED'].includes(p.status))
+      ...unresolvedPayments
         .map((p) => ({
-          id: p.id,
+          id: p.payment_attempt_id,
           kind: 'PAYMENT',
-          message: `${p.reference}: ${p.status}. Reconcile before another financial attempt.`,
-          createdAt: p.createdAt,
+          message: `${p.merchant_reference}: ${p.workflow_state_code}. Reconcile before another financial attempt.`,
+          createdAt: S.iso(p.created_at),
         })),
       ...refunds.map((r) => ({
         id: r.refund_id,
@@ -1860,6 +1869,14 @@ export function createApp(options: AppOptions = {}) {
         createdAt: S.iso(p.created_at),
       })),
     );
+    const exceptionCounts = await one<{ total: number }>(pool, `SELECT (
+      (SELECT count(*) FROM seven.payment_attempts p JOIN seven.workflow_states s USING(workflow_state_id)
+        WHERE s.workflow_state_code IN ('UNKNOWN','REVIEW_REQUIRED')) +
+      (SELECT count(*) FROM seven.refunds r JOIN seven.workflow_states s USING(workflow_state_id)
+        WHERE s.workflow_state_code IN ('UNKNOWN','FAILED','DISPATCHED') OR r.provider_details->>'exception' IS NOT NULL) +
+      (SELECT count(*) FROM seven.provider_events WHERE processed_at IS NULL AND (attempts>=5 OR last_error IS NOT NULL)) +
+      (SELECT count(*) FROM seven.payment_attempts WHERE provider_details ? 'settlementException' AND provider_details->>'settlementException' IS NOT NULL)
+    )::int AS total`);
     return {
       businesses,
       reservations,
@@ -1874,11 +1891,23 @@ export function createApp(options: AppOptions = {}) {
         commissionBps: 1000,
       },
       exceptions,
+      exceptionsSummary: {
+        total: exceptionCounts?.total ?? 0,
+        shown: exceptions.length,
+        truncated: (exceptionCounts?.total ?? 0) > exceptions.length,
+        perCategoryLimit: 100,
+      },
+      listingReadiness: await listingReadiness(pool, { production: environment === 'production' }),
     };
   }
   route('get', '/admin/overview', async (_req, res) => {
     requireRole(actorFor(res), ['ADMIN']);
     return adminOverview();
+  });
+  route('get', '/admin/listing-readiness', async (req, res): Promise<C.ListingReadiness> => {
+    requireRole(actorFor(res), ['ADMIN']);
+    const businessId = req.query.businessId === undefined ? undefined : z.uuid().parse(req.query.businessId);
+    return listingReadiness(pool, { businessId, production: environment === 'production' });
   });
   route('post', '/admin/businesses/:id/status', async (req, res) => {
     requireRole(actorFor(res), ['ADMIN']);
@@ -2089,6 +2118,7 @@ export function createApp(options: AppOptions = {}) {
   });
 
   mountOperations(app, { pool, actor: actorFor, mutate });
+  mountAdminRecords(app, { pool, actor: actorFor });
   const sendRecovery = options.sendRecovery ?? configuredRecoveryMailer();
   mountAccountRoutes(app, {
     pool,

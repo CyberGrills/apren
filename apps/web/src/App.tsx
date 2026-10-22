@@ -13,6 +13,7 @@ import { FeedbackProvider } from './components/Feedback.tsx';
 import { ErrorNotice, Loading, PageHeader } from './components/ui.tsx';
 import { WorkspaceShell } from './components/WorkspaceShell.tsx';
 import { SessionProvider, useSession } from './context/SessionContext.tsx';
+import { loginPathForWorkspace } from './lib/workspaceNavigation.ts';
 import { HelpPage } from './pages/account/HelpPage.tsx';
 import { PasswordPage, RecoveryPage } from './pages/account/RecoveryPages.tsx';
 import {
@@ -29,6 +30,7 @@ import {
   LandingPage,
   OfferingPage,
 } from './pages/public/index.ts';
+import { AdminInventoryPage } from './pages/workspace/AdminInventoryPage.tsx';
 import { AdminPage } from './pages/workspace/AdminPage.tsx';
 import { BusinessPage } from './pages/workspace/BusinessPage.tsx';
 import { OperationsPage } from './pages/workspace/OperationsPage.tsx';
@@ -61,7 +63,7 @@ function Protected({ roles }: { roles?: Role[] }) {
   if (!user)
     return (
       <Navigate
-        to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
+        to={`${loginPathForWorkspace(roles)}?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
         replace
       />
     );
@@ -155,6 +157,7 @@ export function App() {
               <Route path="/directory" element={<DirectoryPage />} />
               <Route path="/places/:id" element={<OfferingPage />} />
               <Route path="/login" element={<AuthPage mode="login" />} />
+              <Route path="/admin/login" element={<AuthPage mode="login" workspace="admin" />} />
               <Route path="/register" element={<AuthPage mode="register" />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="/booking-rules" element={<HelpPage rules />} />
@@ -193,8 +196,9 @@ export function App() {
               <Route element={<Protected roles={['ADMIN']} />}>
                 <Route path="/admin" element={<WorkspaceShell mode="admin" />}>
                   <Route index element={<AdminPage />} />
+                  <Route path="inventory" element={<AdminInventoryPage />} />
                   <Route path="operations" element={<OperationsPage />} />
-                  {(['businesses', 'payments', 'policy', 'audit'] as const).map((tab) => (
+                  {(['businesses', 'payments', 'reservations', 'policy', 'audit'] as const).map((tab) => (
                     <Route path={tab} element={<AdminPage tab={tab} />} key={tab} />
                   ))}
                 </Route>

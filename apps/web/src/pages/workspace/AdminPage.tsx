@@ -1,5 +1,12 @@
 import { useFeedback } from '../../components/Feedback.tsx';
-import type { AdminOverview, Business, BusinessPaymentAccount, Payment } from '@7even/contracts';
+import type {
+  Activity,
+  AdminOverview,
+  Business,
+  BusinessPaymentAccount,
+  Payment,
+  Reservation,
+} from '@7even/contracts';
 import { Check, RefreshCw, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -14,15 +21,16 @@ import {
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
 import { CryptoRefundDialog } from './CryptoRefundDialog.tsx';
+import { AdminWorkspaceOverview } from './AdminWorkspaceOverview.tsx';
+import { AdminRecords, AdminReservationsTable } from './AdminRecords.tsx';
 import {
   ActivityList,
   dateLabel,
-  MetricsStrip,
   ReservationActionDialog,
   type ReservationCommand,
 } from './shared.tsx';
 
-type Tab = 'overview' | 'businesses' | 'payments' | 'policy' | 'audit';
+type Tab = 'overview' | 'businesses' | 'payments' | 'reservations' | 'policy' | 'audit';
 type Editor =
   | { kind: 'status'; business: Business; status: 'APPROVED' | 'SUSPENDED' }
   | { kind: 'subaccount'; business: Business }
@@ -30,19 +38,26 @@ type Editor =
   | { kind: 'policy' };
 const hotelVerificationChecks = [
   { key: 'propertyExists', label: 'The property exists and is operating.' },
-  { key: 'partnerAuthority', label: 'The partner is authorized to list this property and has consented.' },
+  {
+    key: 'partnerAuthority',
+    label: 'The partner is authorized to list this property and has consented.',
+  },
   { key: 'directContact', label: 'The property contact route has been verified.' },
   { key: 'fullAddress', label: 'The full property address has been verified.' },
   { key: 'coordinates', label: 'The property coordinates have been independently checked.' },
   { key: 'currentRates', label: 'Current NGN rates and their pricing basis have been checked.' },
-  { key: 'roomInventoryAndPolicies', label: 'Room types, capacity, occupancy limits and booking policies have been checked.' },
+  {
+    key: 'roomInventoryAndPolicies',
+    label: 'Room types, capacity, occupancy limits and booking policies have been checked.',
+  },
 ] as const;
 const titles: Record<Tab, string> = {
-  overview: 'Keep the whole picture.',
-  businesses: 'The businesses on 7even.',
-  payments: 'Follow the money, clearly.',
-  policy: 'Points, with clear rules.',
-  audit: 'A record that stays.',
+  overview: 'Platform overview.',
+  businesses: 'Businesses',
+  payments: 'Payments & settlement',
+  reservations: 'Reservations',
+  policy: 'Points policy',
+  audit: 'Activity log',
 };
 export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
   const { showSuccess } = useFeedback();
@@ -50,7 +65,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [reconciling, setReconciling] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [refundingId, setRefundingId] = useState<string | null>(null);
   const [command, setCommand] = useState<ReservationCommand | null>(null);
   const [cryptoRefundId, setCryptoRefundId] = useState<string | null>(null);
   async function reconcile() {
@@ -71,14 +86,24 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
       setReconciling(false);
     }
   }
-  function refund(payment: Payment) {
+  async function refund(payment: Payment) {
+    if (refundingId) return;
     if (payment.crypto?.refund) {
       setCryptoRefundId(payment.id);
       return;
     }
-    const reservation = data?.reservations.find((item) => item.id === payment.reservationId);
-    if (reservation) setCommand({ reservation, action: 'REFUND', paymentId: payment.id });
-    else setActionError('Load the reservation before requesting its refund.');
+    setRefundingId(payment.id);
+    setActionError(null);
+    try {
+      const reservation = await api<Reservation>(`/reservations/${payment.reservationId}`);
+      setCommand({ reservation, action: 'REFUND', paymentId: payment.id });
+    } catch (cause) {
+      setActionError(
+        cause instanceof Error ? cause.message : 'Could not load this reservation. Try again.',
+      );
+    } finally {
+      setRefundingId(null);
+    }
   }
   return (
     <>
@@ -119,68 +144,21 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
       {data && (
         <>
           {tab === 'overview' && (
-            <>
-              <MetricsStrip metrics={data.metrics} admin />
-              <div className="two-column">
-                <section>
-                  <div className="section-heading">
-                    <h2>Needs attention</h2>
-                    <span className="tag">{data.exceptions.length} records</span>
-                  </div>
-                  <ExceptionList exceptions={data.exceptions} />
-                </section>
-                <section>
-                  <div className="section-heading">
-                    <h2>Business applications</h2>
-                  </div>
-                  {data.businesses
-                    .filter((b) => b.status === 'PENDING')
-                    .map((b) => (
-                      <article className="business-card" key={b.id}>
-                        <h2>{b.businessName}</h2>
-                        <p>
-                          {b.city} · {b.sector.toLowerCase()}
-                        </p>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-small"
-                          onClick={() =>
-                            setEditor({ kind: 'status', business: b, status: 'APPROVED' })
-                          }
-                        >
-                          Review application
-                        </button>
-                      </article>
-                    ))}
-                  {!data.businesses.some((b) => b.status === 'PENDING') && (
-                    <p className="small-copy">No pending applications.</p>
-                  )}
-                </section>
-              </div>
-              <section className="workspace-section">
-                <div className="section-heading">
-                  <h2>Latest activity</h2>
-                </div>
-                <ActivityList items={data.activity.slice(0, 10)} />
-              </section>
-            </>
+            <AdminWorkspaceOverview
+              data={data}
+              onReview={(business) => setEditor({ kind: 'status', business, status: 'APPROVED' })}
+            />
           )}
           {tab === 'businesses' && (
-            <>
-              <div className="toolbar">
-                <input
-                  aria-label="Find a business"
-                  placeholder="Search by name or city"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <div className="business-list">
-                {data.businesses
-                  .filter((b) =>
-                    `${b.businessName} ${b.city}`.toLowerCase().includes(search.toLowerCase()),
-                  )
-                  .map((b) => (
+            <AdminRecords<Business>
+              collection="businesses"
+              searchLabel="Find a business"
+              placeholder="Name, city or state"
+              statuses={['PENDING', 'APPROVED', 'SUSPENDED']}
+            >
+              {(businesses) => (
+                <div className="business-list">
+                  {businesses.map((b) => (
                     <article className="business-card" key={b.id}>
                       <div className="business-card-header">
                         <div>
@@ -265,105 +243,151 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
                       </div>
                     </article>
                   ))}
-              </div>
-            </>
+                </div>
+              )}
+            </AdminRecords>
           )}
           {tab === 'payments' && (
             <>
               <ExceptionList exceptions={data.exceptions} />
-              <div className="toolbar">
-                <input
-                  aria-label="Find a payment"
-                  placeholder="Payment reference or provider transaction"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Reference</th>
-                      <th>Paid amount</th>
-                      <th>7even</th>
-                      <th>Provider fee</th>
-                      <th>Business expected</th>
-                      <th>Payment / delivery</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.payments
-                      .filter((p) =>
-                        `${p.reference} ${p.providerTransactionId}`
-                          .toLowerCase()
-                          .includes(search.toLowerCase()),
-                      )
-                      .map((p) => (
-                        <tr key={p.id}>
-                          <td>
-                            <strong>{p.reference}</strong>
-                            <small>
-                              {p.mode === 'mock'
-                                ? `Local test · ${p.provider === 'paystack' ? 'Paystack' : p.provider === 'crypto' ? 'USDC on Base' : 'Flutterwave'}`
-                                : p.provider === 'crypto'
-                                  ? 'USDC on Base'
-                                  : p.provider === 'paystack'
-                                    ? 'Paystack'
-                                    : 'Flutterwave'}
-                            </small>
-                            <small className="crypto-address">
-                              {p.providerTransactionId ?? 'Provider ID pending'}
-                            </small>
-                            <small>{dateLabel(p.createdAt)}</small>
-                          </td>
-                          <td>
-                            <Money minor={p.amountMinor} />
-                          </td>
-                          <td>
-                            <Money minor={p.commissionMinor} />
-                            {p.provider === 'crypto' && (
-                              <small>
-                                Owed: <Money minor={p.commissionOwedMinor} />
-                              </small>
-                            )}
-                          </td>
-                          <td>
-                            {p.feeMinor === null ? 'Not confirmed' : <Money minor={p.feeMinor} />}
-                          </td>
-                          <td>
-                            <Money minor={p.merchantExpectedMinor} />
-                          </td>
-                          <td>
-                            <StatusBadge status={p.status} />
-                            <small>
-                              {p.settlementKind === 'WALLET'
-                                ? 'Wallet delivery: '
-                                : 'Bank settlement: '}
-                              <StatusBadge status={p.settlementStatus} />
-                            </small>
-                            {['PAID', 'REVIEW_REQUIRED', 'REFUND_PENDING'].includes(p.status) && (
-                              <button
-                                type="button"
-                                className="text-button"
-                                onClick={() => refund(p)}
-                              >
-                                {p.status === 'REFUND_PENDING'
-                                  ? 'Continue refund'
-                                  : 'Review refund'}
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="small-copy">
-                Expected business amount is an accounting allocation. Marking a payment successful
-                does not prove bank or wallet delivery. Direct-wallet commission is owed by the
-                business, not collected cash. Reconciliation requires matching provider evidence.
-              </p>
+              <AdminRecords<Payment>
+                collection="payments"
+                searchLabel="Find a payment"
+                placeholder="Reference, provider ID or business"
+                statuses={[
+                  'UNPAID',
+                  'PENDING',
+                  'PAID',
+                  'FAILED',
+                  'UNKNOWN',
+                  'REFUND_PENDING',
+                  'REFUNDED',
+                  'REVIEW_REQUIRED',
+                ]}
+              >
+                {(payments) => (
+                  <>
+                    <section
+                      className="table-wrap admin-payments-table"
+                      data-scrolls
+                      aria-label="Payments. Scroll horizontally to see delivery and refund actions."
+                      // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to scroll the payment table.
+                      tabIndex={0}
+                    >
+                      <p className="table-scroll-cue">
+                        Scroll table for delivery and refund actions →
+                      </p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Reference</th>
+                            <th>Paid amount</th>
+                            <th>7even</th>
+                            <th>Provider fee</th>
+                            <th>Business expected</th>
+                            <th>Payment / delivery</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {payments.map((p) => (
+                            <tr key={p.id}>
+                              <td>
+                                <strong>{p.reference}</strong>
+                                <small>
+                                  {p.mode === 'mock'
+                                    ? `Local test · ${p.provider === 'paystack' ? 'Paystack' : p.provider === 'crypto' ? 'USDC on Base' : 'Flutterwave'}`
+                                    : p.provider === 'crypto'
+                                      ? 'USDC on Base'
+                                      : p.provider === 'paystack'
+                                        ? 'Paystack'
+                                        : 'Flutterwave'}
+                                </small>
+                                <small className="crypto-address">
+                                  {p.providerTransactionId ?? 'Provider ID pending'}
+                                </small>
+                                <small>{dateLabel(p.createdAt)}</small>
+                              </td>
+                              <td>
+                                <Money minor={p.amountMinor} />
+                              </td>
+                              <td>
+                                <Money minor={p.commissionMinor} />
+                                {p.provider === 'crypto' && (
+                                  <small>
+                                    Owed: <Money minor={p.commissionOwedMinor} />
+                                  </small>
+                                )}
+                              </td>
+                              <td>
+                                {p.feeMinor === null ? (
+                                  'Not confirmed'
+                                ) : (
+                                  <Money minor={p.feeMinor} />
+                                )}
+                              </td>
+                              <td>
+                                <Money minor={p.merchantExpectedMinor} />
+                              </td>
+                              <td>
+                                <StatusBadge status={p.status} />
+                                <small>
+                                  {p.settlementKind === 'WALLET'
+                                    ? 'Wallet delivery: '
+                                    : 'Bank settlement: '}
+                                  <StatusBadge status={p.settlementStatus} />
+                                </small>
+                                {['PAID', 'REVIEW_REQUIRED', 'REFUND_PENDING'].includes(
+                                  p.status,
+                                ) && (
+                                  <button
+                                    type="button"
+                                    className="text-button"
+                                    disabled={refundingId !== null}
+                                    onClick={() => void refund(p)}
+                                  >
+                                    {refundingId === p.id
+                                      ? 'Loading reservation…'
+                                      : p.status === 'REFUND_PENDING'
+                                        ? 'Continue refund'
+                                        : 'Review refund'}
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </section>
+                    <p className="small-copy">
+                      Expected business amount is an accounting allocation. Marking a payment
+                      successful does not prove bank or wallet delivery. Direct-wallet commission is
+                      owed by the business, not collected cash. Reconciliation requires matching
+                      provider evidence.
+                    </p>
+                  </>
+                )}
+              </AdminRecords>
             </>
+          )}
+          {tab === 'reservations' && (
+            <AdminRecords<Reservation>
+              collection="reservations"
+              searchLabel="Find a reservation"
+              placeholder="Guest, reference, place or business"
+              statuses={[
+                'HELD',
+                'CONFIRMED',
+                'CHECKED_IN',
+                'FULFILLED',
+                'CANCELLED',
+                'EXPIRED',
+                'PAYMENT_REVIEW',
+              ]}
+            >
+              {(reservations) => (
+                <AdminReservationsTable reservations={reservations} businesses={data.businesses} />
+              )}
+            </AdminRecords>
           )}
           {tab === 'policy' && (
             <div className="two-column">
@@ -407,7 +431,13 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
                 Attributable actions retain their original time, actor and affected record.
                 Financial corrections add compensating entries.
               </p>
-              <ActivityList items={data.activity} />
+              <AdminRecords<Activity>
+                collection="audit"
+                searchLabel="Find an activity record"
+                placeholder="Action, person or record"
+              >
+                {(items) => <ActivityList items={items} />}
+              </AdminRecords>
             </>
           )}
         </>
@@ -498,8 +528,7 @@ function AdminEditor({
           idempotencyKey: key,
           body,
         });
-      }
-      else if (editor.kind === 'subaccount')
+      } else if (editor.kind === 'subaccount')
         await api(`/admin/businesses/${editor.business.id}/subaccount`, {
           method: 'POST',
           idempotencyKey: key,
@@ -566,8 +595,9 @@ function AdminEditor({
             {editor.status === 'APPROVED' && editor.business.sector === 'STAY' && (
               <section className="workspace-section" aria-label="Hotel verification checklist">
                 <p className="notice">
-                  Approval enables publication. Confirm each item only after reviewing real partner evidence.
-                  Enter a source URL or an internal case/document reference for every check.
+                  Approval enables publication. Confirm each item only after reviewing real partner
+                  evidence. Enter a source URL or an internal case/document reference for every
+                  check.
                 </p>
                 <Field label="Maximum inventory age before it should be treated as stale (hours)">
                   <input
@@ -582,11 +612,7 @@ function AdminEditor({
                 {hotelVerificationChecks.map((check) => (
                   <div className="verification-check" key={check.key}>
                     <label className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        name={`confirmed_${check.key}`}
-                        required
-                      />
+                      <input type="checkbox" name={`confirmed_${check.key}`} required />
                       <span>{check.label}</span>
                     </label>
                     <Field label={`Evidence reference · ${check.label}`}>

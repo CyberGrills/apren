@@ -102,7 +102,9 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
   ];
   const adminLinks = [
     { path: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
+    { path: '/admin/inventory', label: 'Listings & inventory', icon: Store },
     { path: '/admin/businesses', label: 'Businesses', icon: Store },
+    { path: '/admin/reservations', label: 'Reservations', icon: CalendarDays },
     { path: '/admin/payments', label: 'Payments & settlement', icon: CreditCard },
     { path: '/admin/operations', label: 'Operations', icon: Settings2 },
     { path: '/admin/policy', label: 'Points policy', icon: Gift },
@@ -208,7 +210,7 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
           <div>
             {session?.paymentMode === 'mock' && <span className="tag">Test payments</span>}
             <span className={`connection-indicator ${online ? '' : 'offline'}`}>
-              {online ? 'Connected' : 'Offline'}
+              {online ? 'Online' : 'Offline'}
             </span>
             <time dateTime={new Date().toISOString()}>
               {new Intl.DateTimeFormat('en-NG', {
