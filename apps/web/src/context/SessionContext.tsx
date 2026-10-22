@@ -57,7 +57,17 @@ function useSessionState() {
     window.dispatchEvent(new Event('seven:logout'));
     await refresh();
   }
-  return { session, user: session?.user ?? null, loading, error, refresh, login, register, logout };
+  return {
+    session,
+    user: session?.user ?? null,
+    loading,
+    error,
+    refresh,
+    login,
+    register,
+    logout,
+    completeLogin: adoptSession,
+  };
 }
 const SessionContext = createContext<ReturnType<typeof useSessionState> | null>(null);
 export function SessionProvider({ children }: { children: ReactNode }) {

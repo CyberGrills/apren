@@ -1,6 +1,7 @@
 import type { SessionUser } from '@7even/contracts';
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AccountSignInMethods } from '../../components/AccountSignInMethods.tsx';
 import { ErrorNotice, Field, useFeedback } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -111,6 +112,7 @@ export function ProfileView({ user }: { user: SessionUser }) {
         <button className="btn btn-secondary" type="button" onClick={signOut} disabled={busy}>
           Sign out
         </button>
+        <AccountSignInMethods />
       </aside>
     </div>
   );

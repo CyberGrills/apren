@@ -70,6 +70,8 @@ The reception app shares cloud inventory with online customers. Limited service 
 
 Password recovery securely claims an existing walk-in account. Development `.test` messages go only to ignored `.local/recovery-mailbox.json` with private file permissions. Production delivery uses configured TLS SMTP. Reset links are short-lived and single-use; tokens are hashed at rest and never logged. Without a configured mailer, production recovery returns a uniform unavailable response.
 
+Google, Apple and passkey sign-in share the existing sessions. Connect provider accounts and add passkeys from Profile after signing in. Google and Apple remain unavailable until their server credentials and callback URLs are configured. See [sign-in setup](docs/sign-in-setup.md) for environment names, supported domains, testing limits and the required migration/release steps.
+
 The optional SMTP adapter uses installed Nodemailer 10.1.2. Its earlier package-download blocker is resolved; real SMTP acceptance and mailbox delivery remain untested. The Base adapter and browser wallet actions use installed viem 2.57.7. Both are pinned by the root lockfile.
 
 ## Project map and review

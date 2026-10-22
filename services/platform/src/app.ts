@@ -35,6 +35,9 @@ import { processInbox, processOutbox } from './worker.ts';
 import { findLocations, retainedLocationState } from './locations.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
+import { mountSocialAuth, socialAuthAvailability } from './socialAuth.ts';
+import type { SocialProvider, SocialProviderId } from './socialAuth.ts';
+import { mountPasskeyRoutes, passkeysEnabled } from './passkeys.ts';
 
 export interface AppOptions {
   pool?: Pool;
@@ -44,6 +47,7 @@ export interface AppOptions {
   environment?: string;
   webhookSecret?: string;
   sendRecovery?: RecoveryMailer['sendRecovery'];
+  socialProviders?: Partial<Record<SocialProviderId, SocialProvider>>;
 }
 const canonical = (value: unknown): string =>
   JSON.stringify(value, (_key, item: unknown) =>
@@ -155,7 +159,9 @@ export function createApp(options: AppOptions = {}) {
       }
       if (
         !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
-        !['/api/webhooks/flutterwave', '/api/webhooks/paystack'].includes(req.path)
+        !['/api/webhooks/flutterwave', '/api/webhooks/paystack'].includes(req.path) &&
+        // Apple's form_post callback is protected by its one-use, browser-bound OAuth state.
+        !(req.method === 'POST' && req.path === '/api/auth/social/apple/callback')
       ) {
         const origin = req.get('Origin');
         if (!origin || !allowedOrigins.has(origin))
@@ -175,7 +181,8 @@ export function createApp(options: AppOptions = {}) {
         (process.env.VERCEL_ENV ?? environment) !== 'production';
       if (
         previewReadOnly &&
-        !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+        (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) ||
+          /^\/api\/auth\/social\/(google|apple)\/callback$/.test(req.path)) &&
         req.path !== '/api/ai/interpret-search'
       ) {
         return fail(
@@ -424,6 +431,14 @@ export function createApp(options: AppOptions = {}) {
     };
   });
   route('get', '/auth/session', async (_req, res) => sessionData(res));
+  route('get', '/auth/methods', async () => {
+    const social = socialAuthAvailability(publicOrigin);
+    return {
+      google: { enabled: Boolean(options.socialProviders?.google) || social.google },
+      apple: { enabled: Boolean(options.socialProviders?.apple) || social.apple },
+      passkeys: { enabled: passkeysEnabled(publicOrigin) },
+    };
+  });
   route('post', '/auth/register', async (req, res) => {
     const input = parse(C.registerInput, req);
     await rateLimitLogin(pool, req.ip ?? 'unknown', input.email);
@@ -2126,6 +2141,14 @@ export function createApp(options: AppOptions = {}) {
     publicOrigin,
     ...(sendRecovery ? { sendRecovery } : {}),
   });
+  mountSocialAuth(app, {
+    pool,
+    environment,
+    publicOrigin,
+    issueSession,
+    ...(options.socialProviders ? { providers: options.socialProviders } : {}),
+  });
+  mountPasskeyRoutes(app, { pool, environment, publicOrigin, issueSession });
   app.use('/api', (_req, _res, next) =>
     next(new ApiError(404, 'NOT_FOUND', 'This API route was not found.')),
   );

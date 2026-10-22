@@ -1,7 +1,11 @@
 import { ArrowUpRight } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
+import {
+  AuthenticationOptions,
+  socialErrorMessage,
+} from '../../components/AuthenticationOptions.tsx';
 import { ErrorNotice, Field, useFeedback } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { safeWorkspaceReturnTo } from '../../lib/workspaceNavigation.ts';
@@ -9,14 +13,27 @@ import { editorialImages, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; workspace?: 'admin' }) {
   const { login, register } = useSession();
-  const { showSuccess } = useFeedback();
-  const [params] = useSearchParams();
+  const { showSuccess, showError } = useFeedback();
+  const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const admin = workspace === 'admin';
   const registration = !admin && mode === 'register';
   const returnTo = safeWorkspaceReturnTo(params.get('returnTo') ?? params.get('next'), admin);
+  useEffect(() => {
+    const authError = params.get('authError');
+    if (!authError) return;
+    showError(socialErrorMessage(authError));
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete('authError');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [params, setParams, showError]);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -111,6 +128,17 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
                 ? 'Make yourself at home.'
                 : 'Sign in to 7even.'}
           </h2>
+          <AuthenticationOptions
+            returnTo={returnTo}
+            registration={registration}
+            admin={admin}
+            busy={busy}
+            setBusy={setBusy}
+            onAuthenticated={() => {
+              showSuccess('Your account is ready to use on this device.', 'Signed in.');
+              navigate(returnTo, { replace: true });
+            }}
+          />
           <form onSubmit={submit}>
             {registration && (
               <Field label="Your name">
