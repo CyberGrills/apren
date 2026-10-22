@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useApi } from '../../hooks/useApi.ts';
 import {
   type DirectoryFilter,
   type DirectoryKind,
@@ -36,12 +35,94 @@ export function DirectoryPage() {
   const kind: DirectoryFilter = validKinds.has(requestedKind) ? requestedKind : 'STAY';
   const [search, setSearch] = useState('');
   const [stateFilter, setStateFilter] = useState('');
-  const directoryPath = `/directory?kind=${kind}&pageSize=100`;
-  const {
-    data: directoryData,
-    error: directoryError,
-    reload: reloadDirectory,
-  } = useApi<DirectoryApiResponse>(directoryPath);
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(
+    /\/+$/,
+    '',
+  );
+  const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as
+    | string
+    | undefined;
+  const [directoryData, setDirectoryData] = useState<DirectoryApiResponse | null>(null);
+  const [directoryError, setDirectoryError] = useState(false);
+  const [retryCounter, setRetryCounter] = useState(0);
+  const reloadDirectory = () => setRetryCounter((value) => value + 1);
+
+  useEffect(() => {
+    if (!supabaseUrl || !supabasePublishableKey) {
+      setDirectoryError(true);
+      setDirectoryData(null);
+      return;
+    }
+    const controller = new AbortController();
+    setDirectoryError(false);
+    const headers = {
+      apikey: supabasePublishableKey,
+      Authorization: `Bearer ${supabasePublishableKey}`,
+    };
+    const stateParams = new URLSearchParams({
+      select: 'stateName,capital,region,hotelDirectoryUrl',
+      order: 'stateName.asc',
+    });
+    const listingParams = new URLSearchParams({
+      select:
+        'id,kind,name,state,city,area,address,description,imageUrl,imageSourceUrl,sourceName,sourceUrl,status,bookable',
+      order: 'state.asc,city.asc,name.asc',
+      limit: '100',
+    });
+    if (kind !== 'ALL') listingParams.set('kind', `eq.${kind}`);
+
+    async function loadDirectory() {
+      try {
+        const [statesResponse, listingsResponse] = await Promise.all([
+          fetch(`${supabaseUrl}/rest/v1/seven_state_directories?${stateParams.toString()}`, {
+            headers,
+            signal: controller.signal,
+            cache: retryCounter > 0 ? 'reload' : 'default',
+          }),
+          fetch(`${supabaseUrl}/rest/v1/seven_discovery_directory?${listingParams.toString()}`, {
+            headers,
+            signal: controller.signal,
+            cache: retryCounter > 0 ? 'reload' : 'default',
+          }),
+        ]);
+        if (!statesResponse.ok || !listingsResponse.ok) {
+          throw new Error(
+            'Directory read failed with HTTP ' +
+              statesResponse.status +
+              '/' +
+              listingsResponse.status,
+          );
+        }
+        const states = (await statesResponse.json()) as NigeriaStateDirectory[];
+        const rows = (await listingsResponse.json()) as Array<
+          Omit<DirectoryListing, 'imageSourceName'>
+        >;
+        const listings: DirectoryListing[] = rows.map((listing) => {
+          let imageSourceName = 'Source website';
+          try {
+            imageSourceName = new URL(listing.imageSourceUrl).hostname;
+          } catch {
+            // Keep the neutral attribution label if a source URL is malformed.
+          }
+          return {
+            ...listing,
+            id: String(listing.id),
+            imageSourceName,
+            status: 'DIRECTORY_ONLY',
+            bookable: false,
+          };
+        });
+        setDirectoryData({ states, listings, total: listings.length, page: 1, pageSize: 100 });
+        setDirectoryError(false);
+      } catch {
+        if (controller.signal.aborted) return;
+        setDirectoryData(null);
+        setDirectoryError(true);
+      }
+    }
+    void loadDirectory();
+    return () => controller.abort();
+  }, [kind, retryCounter]);
   const displayedStates = directoryData?.states?.length
     ? directoryData.states
     : nigeriaStateDirectories;
