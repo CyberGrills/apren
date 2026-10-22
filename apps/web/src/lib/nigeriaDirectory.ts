@@ -284,9 +284,9 @@ export const sourcedDirectoryListings: DirectoryListing[] = [
     description:
       'Hotel directory lead. Confirm current room inventory, rates and booking terms with the operator.',
     imageUrl:
-      'https://media-exp1.licdn.com/dms/image/C4D1BAQFqOMRnVNbdnQ/company-background_10000/0/1558979936817?e=2159024400&t=dddRz2URVUo31Mr6nWe9PGNdzDaN_gAgi34GTw1bowM&v=beta',
-    imageSourceName: 'Transcorp Hilton Abuja LinkedIn',
-    imageSourceUrl: 'https://www.linkedin.com/company/transcorp-hilton-abuja',
+      'https://images.timbu.com/hotels-ng/supplier_transcorp_hilton_abuja_115051_9_900x550.jpg',
+    imageSourceName: 'Hotels.ng / Timbu',
+    imageSourceUrl: 'https://hotels.ng/hotel/72523-transcorp-hilton-abuja-abuja',
     sourceName: 'Transcorp Hilton Abuja',
     sourceUrl: 'https://www.hilton.com/en/hotels/abuhitw-transcorp-hilton-abuja/',
     status: 'DIRECTORY_ONLY',
@@ -342,10 +342,10 @@ export const sourcedDirectoryListings: DirectoryListing[] = [
     description:
       'Hotel directory lead. Confirm the current property name, operator and availability before making plans.',
     imageUrl:
-      'https://assets.sunnewsonline.com/2023/02/gcUKbaNi-Transcorp-Hilton-header_Calabar2-1.jpg',
-    imageSourceName: 'The Sun Nigeria',
-    imageSourceUrl: 'https://sunnewsonline.com/',
-    sourceName: 'The Sun Nigeria',
+      'https://blog.vectatravels.com/wp-content/uploads/2021/01/Transcorp-Hotel-calabar-1024x683.jpg',
+    imageSourceName: 'Vecta Travels',
+    imageSourceUrl: 'https://blog.vectatravels.com/resorts-hotels-calabar/',
+    sourceName: 'Vecta Travels',
     sourceUrl: 'https://www.transcorphotels.com/',
     status: 'DIRECTORY_ONLY',
     bookable: false,
@@ -395,11 +395,9 @@ export const sourcedDirectoryListings: DirectoryListing[] = [
     address: '27 Oluwaleyimu Street, off Allen Avenue, Ikeja, Lagos',
     description:
       'African and continental restaurant with eat-in and catering services. Check current service details with the venue.',
-    imageUrl:
-      'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0d/0a/1c/6a/calabar-kitchen.jpg?h=-1&s=1&w=1600',
-    imageSourceName: 'Tripadvisor restaurant photo',
-    imageSourceUrl:
-      'https://www.tripadvisor.com/Restaurant_Review-g304026-d4161685-Reviews-Calabar_Kitchen-Lagos_Lagos_State.html',
+    imageUrl: 'https://m.timbu.com/poi/3085/calabar-3085-58a183bde7fea.jpg',
+    imageSourceName: 'Hotels.ng restaurant photo',
+    imageSourceUrl: 'https://hotels.ng/places/restaurant/3085-calabar-kitchen-ikeja',
     sourceName: 'Calabar Kitchen',
     sourceUrl: 'https://www.calabar-kitchen.com/',
     status: 'DIRECTORY_ONLY',
@@ -454,13 +452,11 @@ export const sourcedDirectoryListings: DirectoryListing[] = [
     description:
       'Restaurant directory lead. Confirm the venue address, opening hours and current table arrangements before travelling.',
     imageUrl:
-      'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/04/0e/de/ef/wakkis.jpg?h=-1&s=1&w=1100',
-    imageSourceName: 'Tripadvisor restaurant photo',
-    imageSourceUrl:
-      'https://www.tripadvisor.com/Restaurant_Review-g293825-d2368906-Reviews-Wakkis-Abuja_Federal_Capital_Territory.html',
-    sourceName: 'Tripadvisor',
-    sourceUrl:
-      'https://www.tripadvisor.com/Restaurant_Review-g293825-d2368906-Reviews-Wakkis-Abuja_Federal_Capital_Territory.html',
+      'https://pub-5bcc3edf34304d04b59dc91e1ad9d2fd.r2.dev/nigeria.tortoisepath.com/uploads/2024/01/13070208/Wakkis-Food-Abuja-Abuja-Nigeria-TortoisePathcom-8-jpeg.webp',
+    imageSourceName: 'TortoisePath restaurant photo',
+    imageSourceUrl: 'https://nigeria.tortoisepath.com/place/wakkis-food-abuja/',
+    sourceName: 'TortoisePath',
+    sourceUrl: 'https://nigeria.tortoisepath.com/place/wakkis-food-abuja/',
     status: 'DIRECTORY_ONLY',
     bookable: false,
   },
