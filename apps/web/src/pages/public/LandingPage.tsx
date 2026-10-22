@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { EmptyState, ErrorNotice, Loading, OfferingCard } from '../../components/ui.tsx';
+import { EmptyState, Loading, OfferingCard } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
+import { listingsForKind } from '../../lib/nigeriaDirectory.ts';
+import { DirectoryListingCard } from './DirectoryListingCard.tsx';
 import { addDays, localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 type MarketplaceKind = Sector | 'ALL';
@@ -75,6 +77,12 @@ export function LandingPage() {
   }
 
   const heading = categoryHeadings[kind];
+  const directoryPreview =
+    kind === 'ALL'
+      ? (['STAY', 'DINING', 'EXPERIENCE'] as const).flatMap((category) =>
+          listingsForKind(category).slice(0, 2),
+        )
+      : listingsForKind(kind).slice(0, 6);
 
   return (
     <div className="public-page seven-marketplace">
@@ -210,7 +218,21 @@ export function LandingPage() {
           </div>
 
           {loading && <Loading />}
-          {error && <ErrorNotice message={error} retry={reload} />}
+          {error && (
+            <div className="seven-api-unavailable" role="status">
+              <div>
+                <h2>Live 7even inventory is reconnecting</h2>
+                <p>
+                  Current 7even prices, room availability and bookings are not available in this
+                  preview yet. You can explore source-backed directory entries below, but they
+                  cannot be booked through 7even.
+                </p>
+              </div>
+              <button type="button" className="btn btn-secondary" onClick={() => void reload()}>
+                Try again
+              </button>
+            </div>
+          )}
           {data && data.length > 0 && (
             <div className="seven-listing-grid">
               {data.map((offering) => (
@@ -236,6 +258,37 @@ export function LandingPage() {
                 </Link>
               }
             />
+          )}
+
+          {!loading && (Boolean(error) || data?.length === 0) && (
+            <div className="seven-directory-preview">
+              <div className="seven-directory-preview-heading">
+                <div>
+                  <p className="seven-kicker">The wider Nigeria directory</p>
+                  <h2>Explore places by category</h2>
+                  <p>
+                    These source-linked leads help you discover places while the 7even partner
+                    catalogue is being connected. They are not verified or bookable 7even offers.
+                  </p>
+                </div>
+                <Link
+                  className="seven-all-results"
+                  to={kind === 'ALL' ? '/directory?kind=ALL' : `/directory?kind=${kind}`}
+                >
+                  Browse directory <span aria-hidden="true">↗</span>
+                </Link>
+              </div>
+              <div className="seven-directory-grid">
+                {directoryPreview.map((listing) => (
+                  <DirectoryListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+              {kind === 'STAY' && (
+                <Link className="seven-directory-all-states" to="/directory?kind=STAY">
+                  Browse hotels by all 36 states and the FCT <span aria-hidden="true">→</span>
+                </Link>
+              )}
+            </div>
           )}
         </section>
 

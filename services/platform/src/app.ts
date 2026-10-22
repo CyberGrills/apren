@@ -471,6 +471,50 @@ export function createApp(options: AppOptions = {}) {
     });
   });
 
+  route('get', '/directory', async (req) => {
+    const kind = z.enum(['ALL', 'STAY', 'DINING', 'EXPERIENCE']).parse(
+      typeof req.query.kind === 'string' ? req.query.kind.toUpperCase() : 'ALL',
+    );
+    const state = req.query.state === undefined
+      ? ''
+      : z.string().trim().max(100).parse(req.query.state);
+    const searchText = req.query.q === undefined
+      ? ''
+      : z.string().trim().max(160).parse(req.query.q);
+    const page = Math.max(1, Math.min(10000, Number(req.query.page) || 1));
+    const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 100));
+    const where = `listing_status='DIRECTORY_ONLY' AND is_bookable=false
+      AND ($1='ALL' OR kind=$1)
+      AND ($2='' OR state_name=$2)
+      AND ($3='' OR lower(concat_ws(' ',display_name,state_name,city,area,address_text)) LIKE '%' || lower($3) || '%')`;
+    const [states, totalRow, listings] = await Promise.all([
+      rows<{ stateName: string; capital: string; region: string; hotelDirectoryUrl: string }>(
+        pool,
+        `SELECT state_name AS "stateName", capital, region,
+                hotel_directory_url AS "hotelDirectoryUrl"
+         FROM seven.state_directories WHERE is_active ORDER BY state_name COLLATE "C"`,
+      ),
+      one<{ total: number }>(
+        pool,
+        `SELECT count(*)::int AS total FROM seven.discovery_listings WHERE ${where}`,
+        [kind, state, searchText],
+      ),
+      rows(
+        pool,
+        `SELECT discovery_listing_id::text AS id, kind, display_name AS name,
+                state_name AS state, city, area, address_text AS address,
+                description, image_url AS "imageUrl", image_source_url AS "imageSourceUrl",
+                split_part(split_part(image_source_url, '://', 2), '/', 1) AS "imageSourceName",
+                source_name AS "sourceName", source_url AS "sourceUrl",
+                'DIRECTORY_ONLY'::text AS status, false AS bookable, source_checked_at AS "sourceCheckedAt"
+         FROM seven.discovery_listings WHERE ${where}
+         ORDER BY state_name COLLATE "C", city COLLATE "C", display_name COLLATE "C"
+         LIMIT $4 OFFSET $5`,
+        [kind, state, searchText, pageSize, (page - 1) * pageSize],
+      ),
+    ]);
+    return { states, listings, total: totalRow?.total ?? 0, page, pageSize };
+  });
   route('get', '/offerings', async (req) => {
     const page = Math.max(1, Math.min(10000, Number(req.query.page) || 1));
     const size = Math.max(1, Math.min(100, Number(req.query.pageSize) || 30));

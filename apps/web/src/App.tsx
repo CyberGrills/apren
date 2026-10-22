@@ -1,5 +1,5 @@
 import type { Role } from '@7even/contracts';
-import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Component, type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   BrowserRouter,
   Link,
@@ -10,9 +10,11 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { FeedbackProvider } from './components/Feedback.tsx';
-import { WorkspaceShell } from './components/WorkspaceShell.tsx';
 import { ErrorNotice, Loading, PageHeader } from './components/ui.tsx';
+import { WorkspaceShell } from './components/WorkspaceShell.tsx';
 import { SessionProvider, useSession } from './context/SessionContext.tsx';
+import { HelpPage } from './pages/account/HelpPage.tsx';
+import { PasswordPage, RecoveryPage } from './pages/account/RecoveryPages.tsx';
 import {
   AccountPage,
   CryptoCheckoutPage,
@@ -22,17 +24,17 @@ import {
 import {
   AuthPage,
   BusinessApplicationPage,
+  DirectoryPage,
   ExplorePage,
   LandingPage,
   OfferingPage,
 } from './pages/public/index.ts';
 import { AdminPage } from './pages/workspace/AdminPage.tsx';
 import { BusinessPage } from './pages/workspace/BusinessPage.tsx';
-import { VenuesPage } from './pages/workspace/VenuesPage.tsx';
 import { OperationsPage } from './pages/workspace/OperationsPage.tsx';
-import { HelpPage } from './pages/account/HelpPage.tsx';
-import { RecoveryPage, PasswordPage } from './pages/account/RecoveryPages.tsx';
 import { ReceptionPage } from './pages/workspace/ReceptionPage.tsx';
+import { VenuesPage } from './pages/workspace/VenuesPage.tsx';
+
 function Protected({ roles }: { roles?: Role[] }) {
   const { user, loading, error, refresh } = useSession();
   const location = useLocation();
@@ -150,6 +152,7 @@ export function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/explore" element={<ExplorePage />} />
+              <Route path="/directory" element={<DirectoryPage />} />
               <Route path="/places/:id" element={<OfferingPage />} />
               <Route path="/login" element={<AuthPage mode="login" />} />
               <Route path="/register" element={<AuthPage mode="register" />} />
