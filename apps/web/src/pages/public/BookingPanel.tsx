@@ -44,6 +44,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [held, setHeld] = useState<Reservation | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isStay = offering.kind === 'STAY';
@@ -67,6 +68,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
   });
   function clearQuote() {
     setQuote(null);
+    setPolicyAccepted(false);
     setError(null);
     keys.current = {
       quote: crypto.randomUUID(),
@@ -98,6 +100,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       keys.current.reserve = crypto.randomUUID();
       keys.current.checkout = crypto.randomUUID();
       setQuote(nextQuote);
+      setPolicyAccepted(false);
       if (isStay) {
         recoveryCheckoutViewed.current = true;
         void recordRecoveryEvent({
@@ -286,12 +289,25 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               ? `Held until ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(held.holdExpiresAt ?? quote.expiresAt))} WAT. Your booking is confirmed after payment is verified.`
               : 'This price expires shortly. Availability is held only when you continue.'}
           </p>
+          <label className="checkout-policy-acceptance">
+            <input
+              type="checkbox"
+              checked={policyAccepted}
+              onChange={(event) => setPolicyAccepted(event.target.checked)}
+              disabled={busy}
+            />
+            <span>
+              I have reviewed the cancellation policy ({offering.cancellationHours} hours before
+              the booking starts) and understand that this reservation is not confirmed until
+              7even verifies my payment.
+            </span>
+          </label>
           <button
             type="button"
             className="btn btn-primary booking-cta"
             ref={paymentButtonRef}
             onClick={checkout}
-            disabled={busy}
+            disabled={busy || !policyAccepted}
           >
             {busy
               ? 'Opening payment…'
