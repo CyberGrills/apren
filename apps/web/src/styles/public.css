@@ -2936,3 +2936,14 @@
 .checkout-policy-acceptance span {
   min-width: 0;
 }
+
+
+.payment-method-unavailable {
+  cursor: not-allowed;
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.payment-method-unavailable small {
+  display: block;
+}
