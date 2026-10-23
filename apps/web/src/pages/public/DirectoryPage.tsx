@@ -129,7 +129,15 @@ export function DirectoryPage() {
 
   const listings = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('en-NG');
-    const sourceListings = directoryData?.listings ?? listingsForKind(kind);
+    const sourceListings = directoryData
+      ? [
+          ...directoryData.listings,
+          ...listingsForKind(kind).filter(
+            (staticListing) =>
+              !directoryData.listings.some((liveListing) => liveListing.id === staticListing.id),
+          ),
+        ]
+      : listingsForKind(kind);
     return sourceListings.filter((listing) => {
       if (stateFilter && listing.state !== stateFilter) return false;
       if (!query) return true;
