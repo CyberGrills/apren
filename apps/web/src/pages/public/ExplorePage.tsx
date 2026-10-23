@@ -66,13 +66,6 @@ export function ExplorePage() {
       setAiLoading(false);
     }
   }
-  function changeKind(value: string) {
-    const next = new URLSearchParams(params);
-    if (value) next.set('kind', value);
-    else next.delete('kind');
-    next.delete('page');
-    setParams(next);
-  }
   return (
     <div className="public-page">
       <PublicHeader />
@@ -82,7 +75,6 @@ export function ExplorePage() {
           <h1>Find your kind of stay.</h1>
           <p>Search hotel stays by destination, dates, budget and the kind of trip you have in mind.</p>
         </div>
-        {(
         <form className="explore-filters explore-ai-search" onSubmit={searchWithAssistant}>
           <div className="explore-filter-heading">
             <Search size={17} aria-hidden="true" />
@@ -106,7 +98,6 @@ export function ExplorePage() {
           {aiError && <p className="explore-ai-error" role="status">{aiError}</p>}
           <p className="explore-ai-note">AI translates your request into search filters. Hotel availability, prices and booking confirmations come from 7even’s booking system.</p>
         </form>
-        )}
 
         <form className="explore-filters" key={params.toString()} onSubmit={filter}>
           <div className="explore-filter-heading">
@@ -133,8 +124,7 @@ export function ExplorePage() {
               defaultValue={params.get('startDate') ?? ''}
             />
           </div>
-          {(
-            <>
+          <>
               <div>
                 <label htmlFor="explore-end">Check-out</label>
                 <input
@@ -145,8 +135,7 @@ export function ExplorePage() {
                   defaultValue={params.get('endDate') ?? ''}
                 />
               </div>
-              {(
-                <div>
+              <div>
                   <label htmlFor="explore-rooms">Rooms</label>
                   <input
                     id="explore-rooms"
@@ -159,9 +148,7 @@ export function ExplorePage() {
                     defaultValue={params.get('rooms') ?? '1'}
                   />
                 </div>
-              )}
             </>
-          )}
           <button type="submit" className="btn btn-primary">
             <Search size={17} aria-hidden="true" /> Find places
           </button>
