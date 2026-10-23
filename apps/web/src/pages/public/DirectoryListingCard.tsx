@@ -79,18 +79,6 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
             ))}
           </div>
         )}
-        {listing.whatsappNumber && (
-          <a
-            className="btn btn-secondary seven-directory-direct-booking"
-            href={`https://wa.me/${listing.whatsappNumber}?text=${encodeURIComponent(
-              `Hello Kiniz team, I found Kiniz Apartments & Hotel on 7EVEN. Please confirm current room availability, rates, and cancellation terms for my dates before I make a booking.`,
-            )}`}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Message Kiniz on WhatsApp <span aria-hidden="true">↗</span>
-          </a>
-        )}
         {listing.contactPhone && (
           <p className="seven-directory-contact">
             Call Kiniz: <a href={`tel:${listing.contactPhone.replace(/[^+\d]/g, '')}`}>{listing.contactPhone}</a>
