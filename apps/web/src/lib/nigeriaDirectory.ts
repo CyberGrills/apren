@@ -27,7 +27,6 @@ export interface DirectoryListing {
   officialBookingUrl?: string;
   contactPhone?: string;
   contactEmail?: string;
-  whatsappNumber?: string;
   externalListings?: { label: string; url: string }[];
   publishedRateNotes?: { roomType: string; rate: string; source: string; url: string }[];
 }
@@ -278,7 +277,6 @@ export const sourcedDirectoryListings: DirectoryListing[] = [
     officialBookingUrl: 'https://kinizapartments.ng/cs/accommodation/executive-1-room-ensuite/',
     contactPhone: '+234 903 000 2147',
     contactEmail: 'info@kinizapartments.ng',
-    whatsappNumber: '919167640610',
     externalListings: [
       { label: 'Official Kiniz booking site', url: 'https://kinizapartments.ng/cs/accommodation/executive-1-room-ensuite/' },
       { label: 'Airbnb · Two-bedroom duplex', url: 'https://www.airbnb.com/rooms/1748812631839796794' },
