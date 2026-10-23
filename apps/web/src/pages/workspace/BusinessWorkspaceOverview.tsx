@@ -2,7 +2,7 @@ import type { BusinessOverview } from '@7even/contracts';
 import { ArrowUpRight, Check, ChevronRight, ClipboardList, Clock3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi.ts';
-import { PageHeader } from '../../components/ui.tsx';
+import { Metric, PageHeader } from '../../components/ui.tsx';
 import { nextBusinessTask } from '../../lib/listingReadiness.ts';
 import { ListingChecks, ReadinessRefresh } from './ListingReadiness.tsx';
 import {
@@ -38,11 +38,11 @@ function BookingRecoveryPanel() {
         <p className="small-copy" role="status">Recovery activity is not available yet.</p>
       ) : (
         <>
-          <MetricsStrip metrics={[
-            { label: 'Abandoned sessions', value: String(data?.abandoned_sessions ?? 0) },
-            { label: 'Consent recorded', value: String(data?.consented_abandons ?? 0) },
-            { label: 'Unresolved sessions', value: String(data?.unresolved_abandons ?? 0) },
-          ]} />
+          <div className="metrics-grid">
+            <Metric label="Abandoned sessions" value={data?.abandoned_sessions ?? 0} note="Observed booking intent" />
+            <Metric label="Consent recorded" value={data?.consented_abandons ?? 0} note="Contact permission recorded" />
+            <Metric label="Unresolved sessions" value={data?.unresolved_abandons ?? 0} note="No verified booking outcome linked" />
+          </div>
           <p className="small-copy">
             Funnel telemetry only. A booking is not counted as recovered until its reservation,
             payment and cancellation outcome can be verified against server records.
