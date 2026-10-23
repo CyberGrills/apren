@@ -76,7 +76,7 @@ export function ProfileView({ user }: { user: SessionUser }) {
       <section className="customer-profile-editor" aria-labelledby="profile-details-title">
         <div className="customer-profile-intro">
           <div className="customer-profile-avatar" aria-hidden="true">
-            {name.trim().split(/\\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '7'}
+            {name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '7'}
           </div>
           <div>
             <span className="public-eyebrow">Your 7even profile</span>
