@@ -484,9 +484,9 @@ export async function applyReceipt(
       db,
       `SELECT q.recovery_session_id AS session_id, q.offering_id
        FROM seven.reservations reservation
-       JOIN seven.quotes q USING(quote_id)
-       JOIN seven.offerings o USING(offering_id)
-       JOIN seven.sectors s USING(sector_id)
+       JOIN seven.quotes q ON q.quote_id = reservation.quote_id
+       JOIN seven.offerings o ON o.offering_id = q.offering_id
+       JOIN seven.sectors s ON s.sector_id = o.sector_id
        WHERE reservation.reservation_id=$1 AND s.sector_code='STAY'`,
       [r.id],
     );
