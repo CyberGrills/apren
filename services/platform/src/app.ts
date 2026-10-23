@@ -484,7 +484,7 @@ export function createApp(options: AppOptions = {}) {
     const input = parse(C.profileInput, req);
     return mutate(req, res, async (db, actor) => {
       const profileDetails = Object.fromEntries(
-        (['city', 'state', 'dateOfBirth', 'preferredLanguage', 'tripPurpose'] as const)
+        (['city', 'state', 'dateOfBirth', 'preferredLanguage', 'tripPurpose', 'preferredRoomType', 'bedPreference'] as const)
           .filter((key) => input[key] !== undefined)
           .map((key) => [key, input[key]]),
       );
