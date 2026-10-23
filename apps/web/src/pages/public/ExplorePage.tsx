@@ -315,7 +315,7 @@ export function ExplorePage() {
             </button>
           </nav>
         )}
-        {data?.length === 0 && (
+        {data?.length === 0 && directoryMatches.length === 0 && (
           <EmptyState
             title="No places match this search yet."
             description="Try another city or date, or browse everything currently available."
