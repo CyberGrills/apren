@@ -20,6 +20,7 @@ export interface ApiOptions {
   body?: unknown;
   idempotencyKey?: string;
   signal?: AbortSignal;
+  keepalive?: boolean;
 }
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const method = options.method ?? 'GET';
@@ -32,6 +33,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     headers,
     credentials: 'same-origin',
     signal: options.signal,
+    keepalive: options.keepalive,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   const body = (await response.json().catch(() => null)) as ApiEnvelope<T> | ApiErrorBody | null;
