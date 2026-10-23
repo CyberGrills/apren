@@ -11,7 +11,7 @@ type RecoveryReason = 'PRICE' | 'DATES' | 'POLICY' | 'PAYMENT' | 'QUESTION' | 'U
 
 let fallbackSessionId: string | null = null;
 
-function sessionId(): string {
+export function recoverySessionId(): string {
   try {
     const key = 'seven.recovery.session.v1';
     const existing = sessionStorage.getItem(key);
@@ -39,7 +39,7 @@ export async function recordRecoveryEvent(input: {
       keepalive: input.keepalive ?? false,
       body: {
         eventId: crypto.randomUUID(),
-        sessionId: sessionId(),
+        sessionId: recoverySessionId(),
         offeringId: input.offeringId,
         event: input.event,
         ...(input.amountMinor !== undefined ? { amountMinor: input.amountMinor } : {}),
