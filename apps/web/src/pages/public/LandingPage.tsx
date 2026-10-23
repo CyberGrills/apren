@@ -50,13 +50,16 @@ export function LandingPage() {
   function search(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const query = new URLSearchParams({ kind: 'STAY' });
-    if (city.trim()) query.set('city', city.trim());
-    if (date) query.set('startDate', date);
-    if (endDate) query.set('endDate', endDate);
-    if (purpose !== 'ANY') query.set('tripPurpose', purpose.toLowerCase());
-    if (budget && Number.isFinite(Number(budget)) && Number(budget) > 0) {
-      query.set('maxBudgetNaira', String(Math.round(Number(budget))));
-    }
+    const preferences = [
+      city.trim() ? `in ${city.trim()}` : '',
+      date ? `check in on ${date}` : '',
+      endDate ? `check out on ${endDate}` : '',
+      purpose !== 'ANY' ? purposeLabels[purpose].en : '',
+      budget && Number.isFinite(Number(budget)) && Number(budget) > 0
+        ? `under ₦${Math.round(Number(budget)).toLocaleString('en-NG')} per night`
+        : '',
+    ].filter(Boolean);
+    if (preferences.length) query.set('q', `Find a hotel stay ${preferences.join(', ')}`);
     navigate(`/explore?${query}`);
   }
 
