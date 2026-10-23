@@ -483,10 +483,12 @@ export async function applyReceipt(
     }>(
       db,
       `SELECT q.recovery_session_id AS session_id, q.offering_id
-       FROM seven.quotes q
+       FROM seven.reservations reservation
+       JOIN seven.quotes q USING(quote_id)
        JOIN seven.offerings o USING(offering_id)
-       WHERE q.quote_id=$1 AND o.kind='STAY'`,
-      [r.quoteId],
+       JOIN seven.sectors s USING(sector_id)
+       WHERE reservation.reservation_id=$1 AND s.sector_code='STAY'`,
+      [r.id],
     );
     if (recovery?.session_id) {
       await db.query(
