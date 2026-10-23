@@ -40,3 +40,11 @@ CREATE INDEX booking_recovery_events_offering_time_idx
   ON seven.booking_recovery_events(offering_id, occurred_at DESC);
 COMMENT ON TABLE seven.booking_recovery_events IS
   'Pseudonymous booking-funnel telemetry for the 7even recovery pilot. This table does not authorize outbound messaging; consent evidence and approved provider templates are required separately.';
+
+ALTER TABLE seven.booking_recovery_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY booking_recovery_events_app_access
+  ON seven.booking_recovery_events FOR ALL TO seven_app
+  USING (true) WITH CHECK (true);
+CREATE POLICY booking_recovery_events_readonly_access
+  ON seven.booking_recovery_events FOR SELECT TO seven_readonly
+  USING (true);
