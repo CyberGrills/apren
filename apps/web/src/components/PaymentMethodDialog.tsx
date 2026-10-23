@@ -5,7 +5,7 @@ import type {
   PaymentOptions,
   Reservation,
 } from '@7even/contracts';
-import { CreditCard, Wallet } from 'lucide-react';
+import { Building2, CreditCard, Wallet } from 'lucide-react';
 import { useRef, useState, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi.ts';
@@ -106,7 +106,7 @@ export function PaymentMethodDialog({
             </div>
           ) : (
             <fieldset className="payment-methods" disabled={busy}>
-              <legend>Payment method</legend>
+              <legend>Choose how to pay</legend>
               <label className={`payment-method ${method === 'FIAT' ? 'selected' : ''}`}>
                 <input
                   type="radio"
@@ -152,6 +152,17 @@ export function PaymentMethodDialog({
                   </small>
                 </span>
               </label>
+              <div className="payment-method payment-method-unavailable" aria-disabled="true">
+                <Building2 size={22} aria-hidden="true" />
+                <span>
+                  <strong>Pay at the property</strong>
+                  <span>Pay the hotel directly when you arrive</span>
+                  <small>
+                    Not available for this property yet. We will only enable this option when the
+                    hotel has approved pay-at-property bookings and confirmed its reservation terms.
+                  </small>
+                </span>
+              </div>
             </fieldset>
           )}
           <div className="form-actions">
