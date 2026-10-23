@@ -122,11 +122,14 @@ function uniqueAvailableWindow(
   rooms: number,
   asOfMs: number,
 ): HotelInventoryWindow | null {
-  const matching = hotel.windows.filter(
-    (window) => window.serviceDate === date && hasCapacity(window, rooms, asOfMs),
-  );
-  // The booking transaction expects one inventory window per hotel/room offer/night.
-  return matching.length === 1 ? matching[0]! : null;
+  // Ambiguity is about every record for this service date, not only records that
+  // happen to be available. Filtering stale/full records first can hide duplicates
+  // and make a date look bookable when the underlying inventory is inconsistent.
+  const matching = hotel.windows.filter((window) => window.serviceDate === date);
+  // The booking transaction expects exactly one inventory window per offer/night.
+  if (matching.length !== 1) return null;
+  const window = matching[0]!;
+  return hasCapacity(window, rooms, asOfMs) ? window : null;
 }
 
 function cityFit(hotelCity: string, requestedCity: string): number {
