@@ -81,7 +81,7 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         )}
         {listing.contactPhone && (
           <p className="seven-directory-contact">
-            Call Kiniz: <a href={`tel:${listing.contactPhone.replace(/[^+\\d]/g, '')}`}>{listing.contactPhone}</a>
+            Call Kiniz: <a href={`tel:${listing.contactPhone.replace(/[^+\d]/g, '')}`}>{listing.contactPhone}</a>
           </p>
         )}
         {listing.contactEmail && (
