@@ -109,7 +109,7 @@ export function ExplorePage() {
             listing.address,
             listing.description,
           ].join(' ').toLocaleLowerCase('en-NG');
-          return directorySearch.split(/\\s+/).every((term) => haystack.includes(term));
+          return directorySearch.split(/\s+/).every((term) => haystack.includes(term));
         })
       : [];
   function changeKind(value: string) {
