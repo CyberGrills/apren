@@ -163,6 +163,8 @@ export async function userProjection(db: Connection, userId: string): Promise<Se
       dateOfBirth: u.profile_details?.dateOfBirth ?? null,
       preferredLanguage: u.profile_details?.preferredLanguage === 'pcm' ? 'pcm' : 'en',
       tripPurpose: u.profile_details?.tripPurpose ?? 'ANY',
+      preferredRoomType: u.profile_details?.preferredRoomType ?? 'ANY',
+      bedPreference: u.profile_details?.bedPreference ?? 'ANY',
     },
     role,
     businessId: u.business_id ?? null,
