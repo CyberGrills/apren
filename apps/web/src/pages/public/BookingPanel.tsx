@@ -6,7 +6,7 @@ import { PaymentMethodDialog } from '../../components/PaymentMethodDialog.tsx';
 import { ErrorNotice, Field, Money } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
-import { recordRecoveryEvent } from '../../lib/recoveryTelemetry.ts';
+import { recordRecoveryEvent, recoverySessionId } from '../../lib/recoveryTelemetry.ts';
 import { addDays, friendlyDate, localDateNow } from './PublicShell.tsx';
 
 export function BookingPanel({ offering }: { offering: Offering }) {
@@ -85,6 +85,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
     try {
       const body = {
         offeringId: offering.id,
+        ...(isStay ? { recoverySessionId: recoverySessionId() } : {}),
         startDate,
         quantity: Number(quantity),
         ...(isStay ? { endDate } : { windowId }),
