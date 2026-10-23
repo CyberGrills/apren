@@ -49,7 +49,8 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
     if (admin || registration || vibeRotationDone.current) return;
     vibeRotationDone.current = true;
     try {
-      const lastIndex = Number(window.localStorage.getItem(LOGIN_VIBE_STORAGE_KEY));
+      const storedIndex = window.localStorage.getItem(LOGIN_VIBE_STORAGE_KEY);
+      const lastIndex = storedIndex === null ? Number.NaN : Number(storedIndex);
       const nextIndex =
         Number.isInteger(lastIndex) && lastIndex >= 0 && lastIndex < loginVibes.length
           ? (lastIndex + 1) % loginVibes.length
