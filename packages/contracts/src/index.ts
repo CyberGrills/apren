@@ -64,7 +64,7 @@ export const profileInput = z.strictObject({
   phone: z.string().trim().max(30).optional(),
   city: z.string().trim().max(100).optional(),
   state: nigeriaStateInput,
-  dateOfBirth: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).nullable().optional(),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   preferredLanguage: z.enum(['en', 'pcm']).optional(),
   tripPurpose: z.enum(['ANY', 'COUPLES', 'BUSINESS', 'FAMILY', 'SOFT_LIFE']).optional(),
 });
