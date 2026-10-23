@@ -1,14 +1,44 @@
 import { ArrowUpRight, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 
 export { editorialImages } from '../../lib/editorialImages.ts';
 
+export type SevenLanguage = 'en' | 'pcm';
+export function readSevenLanguage(): SevenLanguage {
+  try {
+    return window.localStorage.getItem('7even-language-style') === 'pcm' ? 'pcm' : 'en';
+  } catch {
+    return 'en';
+  }
+}
 export function PublicHeader() {
   const { user } = useSession();
   const [open, setOpen] = useState(false);
+  const [language, setLanguage] = useState<SevenLanguage>(readSevenLanguage);
+  useEffect(() => {
+    const syncLanguage = (event: Event) => {
+      const next = (event as CustomEvent<SevenLanguage>).detail;
+      if (next === 'en' || next === 'pcm') setLanguage(next);
+    };
+    window.addEventListener('7even-language-change', syncLanguage);
+    return () => window.removeEventListener('7even-language-change', syncLanguage);
+  }, []);
+  useEffect(() => {
+    const saved = user?.profileDetails?.preferredLanguage;
+    if (saved === 'en' || saved === 'pcm') setLanguage(saved);
+  }, [user?.profileDetails?.preferredLanguage]);
+  function changeLanguage(next: SevenLanguage) {
+    setLanguage(next);
+    try {
+      window.localStorage.setItem('7even-language-style', next);
+    } catch {
+      // The current page still updates if browser storage is unavailable.
+    }
+    window.dispatchEvent(new CustomEvent('7even-language-change', { detail: next }));
+  }
   const workspace =
     user?.role === 'ADMIN'
       ? null
@@ -24,13 +54,17 @@ export function PublicHeader() {
           <Brand />
         </Link>
         <nav className="public-nav-desktop" aria-label="Main navigation">
-          <Link to="/explore?kind=STAY">Stays</Link>
-          <Link to="/explore?kind=DINING">Dining</Link>
-          <Link to="/explore?kind=EXPERIENCE">Experiences</Link>
+          <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Places to stay' : 'Stays'}</Link>
+          <Link to="/explore?kind=DINING">{language === 'pcm' ? 'Food' : 'Dining'}</Link>
+          <Link to="/explore?kind=EXPERIENCE">{language === 'pcm' ? 'Wetin to do' : 'Experiences'}</Link>
         </nav>
         <div className="public-nav-actions">
+          <div className="seven-language-switch" role="group" aria-label="Website language">
+            <button type="button" className={language === 'en' ? 'active' : ''} aria-pressed={language === 'en'} onClick={() => changeLanguage('en')}>English</button>
+            <button type="button" className={language === 'pcm' ? 'active' : ''} aria-pressed={language === 'pcm'} onClick={() => changeLanguage('pcm')}>Naija Pidgin</button>
+          </div>
           <Link to={user ? '/app/bookings' : '/login'} className="public-account-link">
-            {user ? 'Your plans' : 'Sign in'}
+            {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
           </Link>
           {workspace && (
             <Link to={workspace.href} className="public-business-link">
@@ -51,14 +85,15 @@ export function PublicHeader() {
       {open && (
         <nav className="public-mobile-nav public-container" aria-label="Mobile navigation">
           <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
-            Stays
+            {language === 'pcm' ? 'Places to stay' : 'Stays'}
           </Link>
           <Link to="/explore?kind=DINING" onClick={() => setOpen(false)}>
-            Dining
+            {language === 'pcm' ? 'Food' : 'Dining'}
           </Link>
           <Link to="/explore?kind=EXPERIENCE" onClick={() => setOpen(false)}>
-            Experiences
+            {language === 'pcm' ? 'Wetin to do' : 'Experiences'}
           </Link>
+          {user && <Link to="/app/profile" onClick={() => setOpen(false)}>{language === 'pcm' ? 'Your profile' : 'Profile'}</Link>}
           {workspace && (
             <Link to={workspace.href} onClick={() => setOpen(false)}>
               {workspace.label}

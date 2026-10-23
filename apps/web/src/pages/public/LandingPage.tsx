@@ -1,13 +1,13 @@
 import type { NigeriaLocation, Offering, Sector } from '@7even/contracts';
 import { BedDouble, Compass, LayoutGrid, Search, SlidersHorizontal, Utensils } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../../components/DatePicker.tsx';
 import { DestinationInput } from '../../components/LocationFields.tsx';
 import { EmptyState, Loading, OfferingCard, useFeedback } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { stayDatesError } from '../../lib/datePicker.ts';
-import { addDays, localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
+import { addDays, localDateNow, PublicFooter, PublicHeader, readSevenLanguage } from './PublicShell.tsx';
 
 type MarketplaceKind = Sector | 'ALL';
 
@@ -41,6 +41,15 @@ export function LandingPage() {
   const navigate = useNavigate();
   const { showError } = useFeedback();
   const [kind, setKind] = useState<MarketplaceKind>('STAY');
+  const [language, setLanguage] = useState(readSevenLanguage);
+  useEffect(() => {
+    const onLanguageChange = (event: Event) => {
+      const next = (event as CustomEvent<'en' | 'pcm'>).detail;
+      if (next === 'en' || next === 'pcm') setLanguage(next);
+    };
+    window.addEventListener('7even-language-change', onLanguageChange);
+    return () => window.removeEventListener('7even-language-change', onLanguageChange);
+  }, []);
   const [city, setCity] = useState('');
   const [destination, setDestination] = useState<NigeriaLocation | null>(null);
   const [startDate, setStartDate] = useState('');
@@ -68,7 +77,13 @@ export function LandingPage() {
     navigate(`/explore${query.size ? `?${query.toString()}` : ''}`);
   }
 
-  const heading = categoryHeadings[kind];
+  const englishHeading = categoryHeadings[kind];
+  const heading = language === 'pcm'
+    ? {
+        title: kind === 'STAY' ? 'Find where you go stay.' : kind === 'DINING' ? 'Food and table wey make sense.' : kind === 'EXPERIENCE' ? 'Make your day sweet.' : 'Find your next good place.',
+        description: kind === 'STAY' ? 'Find room for night, weekend waka, or the trip wey you dey plan.' : kind === 'DINING' ? 'Find restaurant and book table for correct enjoyment.' : kind === 'EXPERIENCE' ? 'Discover things to do and enjoy your time.' : 'Explore stays, food and experiences for your area.',
+      }
+    : englishHeading;
   return (
     <div className="public-page seven-marketplace">
       <PublicHeader />
@@ -85,7 +100,7 @@ export function LandingPage() {
               aria-pressed={kind === value}
             >
               <Icon size={23} strokeWidth={1.7} aria-hidden="true" />
-              <span>{label}</span>
+              <span>{language === 'pcm' ? ({ ALL: 'All', STAY: 'Places to stay', DINING: 'Food', EXPERIENCE: 'Things to do' } as Record<MarketplaceKind, string>)[value] : label}</span>
             </button>
           ))}
           <Link
@@ -93,7 +108,7 @@ export function LandingPage() {
             className="seven-more-filters"
           >
             <SlidersHorizontal size={17} aria-hidden="true" />
-            <span>More filters</span>
+            <span>{language === 'pcm' ? 'More options' : 'More filters'}</span>
           </Link>
         </nav>
 
@@ -121,7 +136,7 @@ export function LandingPage() {
                   <DatePicker
                     id="seven-checkin"
                     name="startDate"
-                    label="Check in"
+                    label={language === 'pcm' ? 'When you dey come' : 'Check in'}
                     value={startDate}
                     onChange={(value) => {
                       setStartDate(value);
@@ -133,7 +148,7 @@ export function LandingPage() {
                   <DatePicker
                     id="seven-checkout"
                     name="endDate"
-                    label="Check out"
+                    label={language === 'pcm' ? 'When you dey go' : 'Check out'}
                     value={endDate}
                     min={startDate ? addDays(startDate, 1) : localDateNow()}
                     onChange={setEndDate}
@@ -167,7 +182,7 @@ export function LandingPage() {
             )}
             <button className="seven-search-button" type="submit" aria-label="Search places">
               <Search size={20} aria-hidden="true" />
-              <span>Search</span>
+              <span>{language === 'pcm' ? 'Find am' : 'Search'}</span>
             </button>
           </form>
         </section>
@@ -178,7 +193,7 @@ export function LandingPage() {
         >
           <div className="seven-results-heading">
             <div>
-              <p className="seven-kicker">Discover with 7even</p>
+              <p className="seven-kicker">{language === 'pcm' ? 'Find your next place with 7even' : 'Discover with 7even'}</p>
               <h1 id="seven-results-title">{heading.title}</h1>
               <p className="seven-results-description">{heading.description}</p>
             </div>
@@ -194,7 +209,7 @@ export function LandingPage() {
           {error && (
             <div className="seven-api-unavailable" role="status">
               <div>
-                <h2>Live 7even inventory is reconnecting</h2>
+                <h2>{language === 'pcm' ? 'We dey reconnect room availability' : 'Live 7even inventory is reconnecting'}</h2>
                 <p>
                   Current 7even prices, room availability and bookings are not available in this
                   preview yet. You can explore source-backed directory entries below, but they

@@ -68,12 +68,12 @@ export function AccountPage({ tab = 'bookings' }: { tab?: AccountTab }) {
         </div>
         <nav className="customer-tabs" aria-label="Your account">
           {[
+            ['profile', 'Profile'],
             ['bookings', 'Bookings'],
             ['points', 'Points'],
             ['benefits', 'Benefits'],
             ['exchange', 'Exchange'],
             ['activity', 'Updates'],
-            ['profile', 'Profile'],
           ].map(([value, label]) => (
             <NavLink
               key={value}

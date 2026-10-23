@@ -483,9 +483,14 @@ export function createApp(options: AppOptions = {}) {
   route('patch', '/me', async (req, res) => {
     const input = parse(C.profileInput, req);
     return mutate(req, res, async (db, actor) => {
+      const profileDetails = Object.fromEntries(
+        (['city', 'state', 'dateOfBirth', 'preferredLanguage', 'tripPurpose'] as const)
+          .filter((key) => input[key] !== undefined)
+          .map((key) => [key, input[key]]),
+      );
       await db.query(
-        'UPDATE seven.users SET display_name=$2,phone=$3,updated_at=now() WHERE user_id=$1',
-        [actor.id, input.displayName, input.phone ?? ''],
+        'UPDATE seven.users SET display_name=$2,phone=$3,profile_details=profile_details || $4::jsonb,updated_at=now() WHERE user_id=$1',
+        [actor.id, input.displayName, input.phone ?? '', JSON.stringify(profileDetails)],
       );
       return S.userProjection(db, actor.id);
     });

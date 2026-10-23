@@ -62,6 +62,11 @@ export const loginInput = z.strictObject({ email, password: z.string().min(1).ma
 export const profileInput = z.strictObject({
   displayName: z.string().trim().min(2).max(100),
   phone: z.string().trim().max(30).optional(),
+  city: z.string().trim().max(100).optional(),
+  state: nigeriaStateInput,
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  preferredLanguage: z.enum(['en', 'pcm']).optional(),
+  tripPurpose: z.enum(['ANY', 'COUPLES', 'BUSINESS', 'FAMILY', 'SOFT_LIFE']).optional(),
 });
 export const businessApplicationInput = z.strictObject({
   businessName: shortText,
@@ -264,6 +269,13 @@ export interface SessionUser {
   businessId: string | null;
   venueIds: string[];
   phone?: string;
+  profileDetails?: {
+    city?: string;
+    state?: string | null;
+    dateOfBirth?: string | null;
+    preferredLanguage?: 'en' | 'pcm';
+    tripPurpose?: 'ANY' | 'COUPLES' | 'BUSINESS' | 'FAMILY' | 'SOFT_LIFE';
+  };
 }
 export interface SessionData {
   user: SessionUser | null;
