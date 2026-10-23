@@ -157,6 +157,13 @@ export async function userProjection(db: Connection, userId: string): Promise<Se
     email: u.email,
     displayName: u.display_name,
     phone: u.phone,
+    profileDetails: {
+      city: u.profile_details?.city ?? '',
+      state: u.profile_details?.state ?? null,
+      dateOfBirth: u.profile_details?.dateOfBirth ?? null,
+      preferredLanguage: u.profile_details?.preferredLanguage === 'pcm' ? 'pcm' : 'en',
+      tripPurpose: u.profile_details?.tripPurpose ?? 'ANY',
+    },
     role,
     businessId: u.business_id ?? null,
     venueIds: venues.map((v) => v.venue_id),
