@@ -111,6 +111,7 @@ export const availabilityInput = z.strictObject({
 });
 export const quoteInput = z.strictObject({
   offeringId: id,
+  recoverySessionId: id.optional(),
   startDate: localDate,
   endDate: localDate.optional(),
   windowId: id.optional(),
