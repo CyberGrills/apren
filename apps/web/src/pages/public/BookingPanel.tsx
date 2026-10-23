@@ -46,6 +46,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isStay = offering.kind === 'STAY';
   const paymentButtonRef = useRef<HTMLButtonElement>(null);
   const recoveryStarted = useRef(false);
   const recoveryCheckoutViewed = useRef(false);
@@ -64,7 +65,6 @@ export function BookingPanel({ offering }: { offering: Offering }) {
     reserve: crypto.randomUUID(),
     checkout: crypto.randomUUID(),
   });
-  const isStay = offering.kind === 'STAY';
   function clearQuote() {
     setQuote(null);
     setError(null);
