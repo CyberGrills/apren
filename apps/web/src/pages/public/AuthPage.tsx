@@ -56,9 +56,9 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
           ? (lastIndex + 1) % loginVibes.length
           : Math.floor(Math.random() * loginVibes.length);
       window.localStorage.setItem(LOGIN_VIBE_STORAGE_KEY, String(nextIndex));
-      setLoginVibe(loginVibes[nextIndex]);
+      setLoginVibe(loginVibes[nextIndex] ?? loginVibes[0]);
     } catch {
-      setLoginVibe(loginVibes[Math.floor(Math.random() * loginVibes.length)]);
+      setLoginVibe(loginVibes[Math.floor(Math.random() * loginVibes.length)] ?? loginVibes[0]);
     }
   }, [admin, registration]);
 
