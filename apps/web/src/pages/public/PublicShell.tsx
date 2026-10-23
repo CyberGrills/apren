@@ -6,9 +6,27 @@ import { useSession } from '../../context/SessionContext.tsx';
 
 export { editorialImages } from '../../lib/editorialImages.ts';
 
+export type SevenLanguage = 'en' | 'pcm';
+export function readSevenLanguage(): SevenLanguage {
+  try {
+    return window.localStorage.getItem('7even-language-style') === 'pcm' ? 'pcm' : 'en';
+  } catch {
+    return 'en';
+  }
+}
 export function PublicHeader() {
   const { user } = useSession();
   const [open, setOpen] = useState(false);
+  const [language, setLanguage] = useState<SevenLanguage>(readSevenLanguage);
+  function changeLanguage(next: SevenLanguage) {
+    setLanguage(next);
+    try {
+      window.localStorage.setItem('7even-language-style', next);
+    } catch {
+      // The current page still updates if browser storage is unavailable.
+    }
+    window.dispatchEvent(new CustomEvent('7even-language-change', { detail: next }));
+  }
   const workspace =
     user?.role === 'ADMIN'
       ? null
@@ -29,8 +47,12 @@ export function PublicHeader() {
           <Link to="/explore?kind=EXPERIENCE">Experiences</Link>
         </nav>
         <div className="public-nav-actions">
+          <div className="seven-language-switch" role="group" aria-label="Website language">
+            <button type="button" className={language === 'en' ? 'active' : ''} aria-pressed={language === 'en'} onClick={() => changeLanguage('en')}>English</button>
+            <button type="button" className={language === 'pcm' ? 'active' : ''} aria-pressed={language === 'pcm'} onClick={() => changeLanguage('pcm')}>Naija Pidgin</button>
+          </div>
           <Link to={user ? '/app/bookings' : '/login'} className="public-account-link">
-            {user ? 'Your plans' : 'Sign in'}
+            {user ? (language === 'pcm' ? 'Your plans' : 'Your plans') : language === 'pcm' ? 'Sign in' : 'Sign in'}
           </Link>
           {workspace && (
             <Link to={workspace.href} className="public-business-link">
