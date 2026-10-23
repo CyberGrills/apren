@@ -2629,10 +2629,46 @@
   .public-nav-actions { margin-left: auto; }
 }
 @media (max-width: 600px) {
-  .public-nav { min-height: 78px; flex-wrap: wrap; padding-block: 0.7rem; }
-  .public-nav-actions { gap: 0.5rem; margin-left: auto; }
-  .public-nav-desktop { display: none; }
-  .seven-language-switch button { min-height: 40px; font-size: 0.66rem; padding-inline: 0.55rem; }
-  .public-menu-button { display: inline-flex; }
+  .public-nav {
+    min-height: 0;
+    flex-wrap: wrap;
+    padding-block: 0.7rem 0.85rem;
+    column-gap: 0.7rem;
+    row-gap: 0.55rem;
+  }
+  .public-brand {
+    order: 1;
+  }
+  .public-nav-actions {
+    display: contents;
+  }
+  .public-nav-desktop {
+    display: none;
+  }
+  .public-account-link {
+    order: 2;
+    margin-left: auto;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .public-menu-button {
+    order: 3;
+    display: inline-flex;
+  }
+  .public-nav-actions .seven-language-switch {
+    order: 4;
+    flex: 0 0 100%;
+    justify-content: center;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+  }
+  .seven-language-switch button {
+    min-height: 40px;
+    font-size: 0.75rem;
+    padding-inline: 0.85rem;
+  }
 }
 
