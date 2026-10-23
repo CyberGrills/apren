@@ -5,7 +5,7 @@ import { z } from 'zod';
 import * as C from '@7even/contracts';
 import { one, rows, fail } from './db.ts';
 
-const eventSchema = z.strictObject({
+export const bookingRecoveryEventSchema = z.strictObject({
   eventId: z.uuid(),
   sessionId: z.uuid(),
   offeringId: z.uuid(),
@@ -23,6 +23,13 @@ const eventSchema = z.strictObject({
   contactChannel: z.enum(['NONE', 'WHATSAPP', 'EMAIL']).default('NONE'),
   contactConsent: z.boolean().default(false),
   consentTextVersion: z.string().trim().min(1).max(80).nullable().optional(),
+}).superRefine((input, context) => {
+  if (input.contactConsent && (input.contactChannel === 'NONE' || !input.consentTextVersion)) {
+    context.addIssue({ code: 'custom', path: ['contactConsent'], message: 'A channel and consent text version are required.' });
+  }
+  if (!input.contactConsent && (input.contactChannel !== 'NONE' || input.consentTextVersion)) {
+    context.addIssue({ code: 'custom', path: ['contactConsent'], message: 'A contact channel requires explicit consent.' });
+  }
 });
 
 type RecoveryActor = (res: Response) => C.SessionUser;
@@ -36,7 +43,7 @@ export function mountBookingRecovery(app: Express, context: RecoveryContext): vo
   const { pool, actor } = context;
 
   app.post('/api/recovery/events', async (req, res) => {
-    const input = eventSchema.parse(req.body);
+    const input = bookingRecoveryEventSchema.parse(req.body);
     if (input.contactConsent) {
       if (input.contactChannel === 'NONE' || !input.consentTextVersion)
         return fail(422, 'CONSENT_EVIDENCE_REQUIRED', 'A channel and consent text version are required.');
