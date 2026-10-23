@@ -147,7 +147,7 @@ export async function createQuote(
     cancellationHours: offer.cancellationHours,
   };
   await db.query(
-    "INSERT INTO seven.quotes(quote_id,user_id,offering_id,starts_at,ends_at,quantity,amounts,inventory_ids,expires_at,terms_snapshot) VALUES($1,$2,$3,$4,$5,$6,$7,$8,now()+interval '10 minutes',$9)",
+    "INSERT INTO seven.quotes(quote_id,user_id,offering_id,starts_at,ends_at,quantity,amounts,inventory_ids,expires_at,terms_snapshot,recovery_session_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,now()+interval '10 minutes',$9,$10)",
     [
       id,
       actor.id,
@@ -158,6 +158,7 @@ export async function createQuote(
       price,
       JSON.stringify(selected.map((w) => w.id)),
       terms,
+      input.recoverySessionId ?? null,
     ],
   );
   await observation(db, offer.businessId, offer.id, 'QUOTE', `quote:${id}`);
