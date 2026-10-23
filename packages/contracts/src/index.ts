@@ -67,6 +67,8 @@ export const profileInput = z.strictObject({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   preferredLanguage: z.enum(['en', 'pcm']).optional(),
   tripPurpose: z.enum(['ANY', 'COUPLES', 'BUSINESS', 'FAMILY', 'SOFT_LIFE']).optional(),
+  preferredRoomType: z.enum(['ANY', 'STANDARD', 'DELUXE', 'SUITE']).optional(),
+  bedPreference: z.enum(['ANY', 'KING', 'TWIN']).optional(),
 });
 export const businessApplicationInput = z.strictObject({
   businessName: shortText,
@@ -275,6 +277,8 @@ export interface SessionUser {
     dateOfBirth?: string | null;
     preferredLanguage?: 'en' | 'pcm';
     tripPurpose?: 'ANY' | 'COUPLES' | 'BUSINESS' | 'FAMILY' | 'SOFT_LIFE';
+    preferredRoomType?: 'ANY' | 'STANDARD' | 'DELUXE' | 'SUITE';
+    bedPreference?: 'ANY' | 'KING' | 'TWIN';
   };
 }
 export interface SessionData {
