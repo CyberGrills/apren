@@ -255,6 +255,24 @@ export const nigeriaStateDirectories: NigeriaStateDirectory[] = [
 
 export const sourcedDirectoryListings: DirectoryListing[] = [
   {
+    id: 'stay-kiniz-apartments-hotel-uyo',
+    kind: 'STAY',
+    name: 'Kiniz Apartments & Hotel',
+    state: 'Akwa Ibom',
+    city: 'Uyo',
+    area: 'Osongama Estate',
+    address: '20 Basumoh Gas Road, Osongama Estate, Uyo, Akwa Ibom State, Nigeria',
+    description:
+      'A hotel and apartment stay listed by Hotels.com, with balcony rooms, an outdoor pool, a full-service spa, a bar and lounge, three restaurants, breakfast, and airport-shuttle service. This is a discovery-directory entry only: 7even has not verified the property, rates, or live room availability.',
+    imageUrl: 'https://images.trvl-media.com/lodging/136000000/135470000/135467700/135467630/26731097.jpg?impolicy=resizecrop&ra=fit&rw=297',
+    imageSourceName: 'Hotels.com',
+    imageSourceUrl: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/',
+    sourceName: 'Hotels.com',
+    sourceUrl: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/',
+    status: 'DIRECTORY_ONLY',
+    bookable: false,
+  },
+  {
     id: 'stay-eko-hotel-lagos',
     kind: 'STAY',
     name: 'Eko Hotel & Suites',
