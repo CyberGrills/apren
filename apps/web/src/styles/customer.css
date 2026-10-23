@@ -1168,3 +1168,93 @@
     font-size: 0.6rem;
   }
 }
+
+
+/* Guest profile layout: grouped fields and a clear account-security rail. */
+.customer-profile {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(250px, 0.8fr);
+  gap: 2rem;
+  align-items: start;
+}
+.customer-profile-editor,
+.customer-profile-account {
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: clamp(1.2rem, 3vw, 2.2rem);
+}
+.customer-profile-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  padding-bottom: 1.6rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.8rem;
+}
+.customer-profile-avatar {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 56px;
+  border-radius: 50%;
+  background: var(--surface-subtle);
+  color: var(--accent);
+  font: 1.5rem / 1 var(--font-display);
+}
+.customer-profile-intro h2,
+.customer-profile-account h2 {
+  font: 2rem / 1.1 var(--font-display);
+  letter-spacing: -0.035em;
+  margin: 0.5rem 0;
+}
+.customer-profile-intro p,
+.customer-profile-account p {
+  color: var(--muted);
+  font-size: 0.83rem;
+  line-height: 1.7;
+  margin: 0;
+}
+.customer-profile-section {
+  padding-block: 1.3rem 1.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.customer-profile-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem;
+  margin-top: 1rem;
+}
+.customer-profile-fields .field {
+  min-width: 0;
+}
+.customer-profile-fields .field-input {
+  width: 100%;
+  min-width: 0;
+}
+.customer-profile-save-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1.5rem;
+}
+.customer-profile-account {
+  display: grid;
+  gap: 1rem;
+}
+.customer-profile-account > .btn { width: 100%; }
+@media (max-width: 800px) {
+  .customer-profile { grid-template-columns: minmax(0, 1fr); }
+  .customer-profile-account { order: 2; }
+}
+@media (max-width: 520px) {
+  .customer-profile-fields { grid-template-columns: minmax(0, 1fr); }
+  .customer-profile-editor,
+  .customer-profile-account { padding: 1rem; }
+  .customer-profile-intro { gap: 0.8rem; }
+  .customer-profile-avatar { width: 46px; height: 46px; flex-basis: 46px; }
+  .customer-profile-intro h2 { font-size: 1.7rem; }
+}
+
