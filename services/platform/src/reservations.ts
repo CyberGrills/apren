@@ -52,6 +52,7 @@ export async function createQuote(
   actor: SessionUser,
   input: {
     offeringId: string;
+    recoverySessionId?: string;
     startDate: string;
     endDate?: string;
     windowId?: string;
