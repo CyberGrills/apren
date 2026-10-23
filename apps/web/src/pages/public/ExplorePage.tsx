@@ -1,4 +1,4 @@
-import type { Offering, Sector } from '@7even/contracts';
+import type { Offering } from '@7even/contracts';
 import { useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -9,26 +9,25 @@ import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 export function ExplorePage() {
   const [params, setParams] = useSearchParams();
-  const [aiMessage, setAiMessage] = useState('');
+  const [aiMessage, setAiMessage] = useState(() => params.get('q') ?? '');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const requestedKind = params.get('kind');
-  const kind =
-    requestedKind && ['STAY', 'DINING', 'EXPERIENCE'].includes(requestedKind)
-      ? (requestedKind as Sector)
-      : null;
+  const kind = 'STAY';
   const page = Math.min(10000, Math.max(1, Math.trunc(Number(params.get('page')) || 1)));
   const pageSize = 12;
   const query = new URLSearchParams(params);
+  query.set('kind', 'STAY');
+  query.delete('q');
+  query.delete('tripPurpose');
+  query.delete('maxBudgetNaira');
   query.set('pageSize', String(pageSize));
   query.set('page', String(page));
-  if (!kind) query.delete('kind');
   const { data, loading, error, reload } = useApi<Offering[]>(`/offerings?${query}`);
   function filter(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const next = new URLSearchParams();
-    if (kind && ['STAY', 'DINING', 'EXPERIENCE'].includes(kind)) next.set('kind', kind);
+    next.set('kind', 'STAY');
     for (const key of ['city', 'startDate', 'endDate', 'rooms']) {
       const value = String(form.get(key) ?? '').trim();
       if (value) next.set(key, value);
@@ -79,19 +78,11 @@ export function ExplorePage() {
       <PublicHeader />
       <main id="main-content" className="public-container explore-page">
         <div className="explore-heading">
-          <span className="public-eyebrow">Find your next plan</span>
-          <h1>
-            {kind === 'STAY'
-              ? 'Stay a little while.'
-              : kind === 'DINING'
-                ? 'There’s a table for that.'
-                : kind === 'EXPERIENCE'
-                  ? 'Make a day of it.'
-                  : 'Somewhere good to go.'}
-          </h1>
-          <p>Rooms, dining and experiences from businesses on 7even.</p>
+          <span className="public-eyebrow">Nigeria-first hotel discovery</span>
+          <h1>Find your kind of stay.</h1>
+          <p>Search hotel stays by destination, dates, budget and the kind of trip you have in mind.</p>
         </div>
-        {(!kind || kind === 'STAY') && (
+        {(
         <form className="explore-filters explore-ai-search" onSubmit={searchWithAssistant}>
           <div className="explore-filter-heading">
             <Search size={17} aria-hidden="true" />
@@ -116,25 +107,7 @@ export function ExplorePage() {
           <p className="explore-ai-note">AI translates your request into search filters. Hotel availability, prices and booking confirmations come from 7even’s booking system.</p>
         </form>
         )}
-        <fieldset className="explore-categories">
-          <legend className="sr-only">Browse categories</legend>
-          {[
-            ['', 'Everything'],
-            ['STAY', 'Stays'],
-            ['DINING', 'Dining'],
-            ['EXPERIENCE', 'Experiences'],
-          ].map(([value, label]) => (
-            <button
-              type="button"
-              key={value}
-              className={(kind ?? '') === value ? 'active' : ''}
-              aria-pressed={(kind ?? '') === value}
-              onClick={() => changeKind(value ?? '')}
-            >
-              {label}
-            </button>
-          ))}
-        </fieldset>
+
         <form className="explore-filters" key={params.toString()} onSubmit={filter}>
           <div className="explore-filter-heading">
             <SlidersHorizontal size={17} aria-hidden="true" />
@@ -151,7 +124,7 @@ export function ExplorePage() {
             />
           </div>
           <div>
-            <label htmlFor="explore-start">{kind === 'STAY' ? 'Check-in' : 'Date'}</label>
+            <label htmlFor="explore-start">Check-in</label>
             <input
               id="explore-start"
               name="startDate"
@@ -160,7 +133,7 @@ export function ExplorePage() {
               defaultValue={params.get('startDate') ?? ''}
             />
           </div>
-          {(!kind || kind === 'STAY') && (
+          {(
             <>
               <div>
                 <label htmlFor="explore-end">Check-out</label>
@@ -172,7 +145,7 @@ export function ExplorePage() {
                   defaultValue={params.get('endDate') ?? ''}
                 />
               </div>
-              {kind === 'STAY' && (
+              {(
                 <div>
                   <label htmlFor="explore-rooms">Rooms</label>
                   <input
@@ -201,7 +174,7 @@ export function ExplorePage() {
                 ? `${data.length} ${data.length === 1 ? 'place' : 'places'} to consider`
                 : 'Places on 7even'}
           </p>
-          <span>{kind === 'STAY' ? 'Live room availability checked on each search; final quote confirms price and capacity.' : 'Full prices shown before you reserve.'}</span>
+          <span>Live room availability is checked on each search; the final quote confirms price and capacity.</span>
         </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
@@ -248,10 +221,10 @@ export function ExplorePage() {
         )}
         {data?.length === 0 && (
           <EmptyState
-            title="No places match this search yet."
-            description="Try another city or date, or browse everything currently available."
+            title="No bookable hotel stays match this search yet."
+            description="Try another Nigerian city or date. Only properties with bookable inventory can appear here."
             action={
-              <button type="button" className="btn btn-secondary" onClick={() => setParams({})}>
+              <button type="button" className="btn btn-secondary" onClick={() => { setAiMessage(''); setParams({ kind: 'STAY' }); }}>
                 See all places
               </button>
             }
