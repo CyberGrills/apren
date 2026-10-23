@@ -474,6 +474,31 @@ export async function applyReceipt(
     `UPDATE seven.reservations SET workflow_state_id=${sid(valid ? 'CONFIRMED' : 'PAYMENT_REVIEW')},payment_state_id=${sid(matched ? 'PAID' : 'REVIEW_REQUIRED')},funding_payment_attempt_id=$2,revision=revision+1,updated_at=now() WHERE reservation_id=$1`,
     [r.id, p.payment_attempt_id],
   );
+  // Attribute only provider-verified, amount-matched, in-time hotel confirmations.
+  // Browser telemetry cannot create this outcome event.
+  if (valid && matched) {
+    const recovery = await one<{
+      session_id: string | null;
+      offering_id: string;
+    }>(
+      db,
+      `SELECT q.recovery_session_id AS session_id, q.offering_id
+       FROM seven.quotes q
+       JOIN seven.offerings o USING(offering_id)
+       WHERE q.quote_id=$1 AND o.kind='STAY'`,
+      [r.quoteId],
+    );
+    if (recovery?.session_id) {
+      await db.query(
+        `INSERT INTO seven.booking_recovery_events(
+           recovery_event_id,event_id,session_id,offering_id,event_code,
+           amount_minor,contact_channel,contact_consent,occurred_at
+         ) VALUES($1,$2,$3,$4,'BOOKING_CONFIRMED',$5,'NONE',false,now())
+         ON CONFLICT(event_id) DO NOTHING`,
+        [randomUUID(), randomUUID(), recovery.session_id, recovery.offering_id, String(receipt.amountMinor)],
+      );
+    }
+  }
   await audit(
     db,
     actor,
