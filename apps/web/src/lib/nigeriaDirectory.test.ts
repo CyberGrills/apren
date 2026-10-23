@@ -67,3 +67,16 @@ test('Kiniz Apartments & Hotel is searchable as a sourced Uyo directory lead, no
   assert.equal(kiniz.status, 'DIRECTORY_ONLY');
   assert.equal(kiniz.bookable, false);
 });
+
+
+test('Kiniz directory lead exposes source-linked rate references and booking channels without enabling 7even checkout', () => {
+  const kiniz = listingsForKind('STAY').find((entry) => entry.id === 'stay-kiniz-apartments-hotel-uyo');
+  assert.ok(kiniz);
+  assert.equal(kiniz.bookable, false);
+  assert.equal(kiniz.status, 'DIRECTORY_ONLY');
+  assert.match(kiniz.officialBookingUrl ?? '', /^https:\/\/kinizapartments\.ng\//);
+  assert.equal(kiniz.externalListings?.some((source) => source.url.includes('airbnb.com/rooms/1748812631839796794')), true);
+  assert.equal(kiniz.publishedRateNotes?.some((note) => note.source === 'Kiniz official website'), true);
+  assert.equal(kiniz.publishedRateNotes?.some((note) => note.source === 'Hotels.ng'), true);
+  assert.equal(kiniz.publishedRateNotes?.some((note) => note.source === 'BookDirect.ng'), true);
+});
