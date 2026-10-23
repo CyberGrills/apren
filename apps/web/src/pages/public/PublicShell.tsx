@@ -42,9 +42,9 @@ export function PublicHeader() {
           <Brand />
         </Link>
         <nav className="public-nav-desktop" aria-label="Main navigation">
-          <Link to="/explore?kind=STAY">Stays</Link>
-          <Link to="/explore?kind=DINING">Dining</Link>
-          <Link to="/explore?kind=EXPERIENCE">Experiences</Link>
+          <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Places to stay' : 'Stays'}</Link>
+          <Link to="/explore?kind=DINING">{language === 'pcm' ? 'Food' : 'Dining'}</Link>
+          <Link to="/explore?kind=EXPERIENCE">{language === 'pcm' ? 'Wetin to do' : 'Experiences'}</Link>
         </nav>
         <div className="public-nav-actions">
           <div className="seven-language-switch" role="group" aria-label="Website language">
@@ -73,13 +73,13 @@ export function PublicHeader() {
       {open && (
         <nav className="public-mobile-nav public-container" aria-label="Mobile navigation">
           <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
-            Stays
+            {language === 'pcm' ? 'Places to stay' : 'Stays'}
           </Link>
           <Link to="/explore?kind=DINING" onClick={() => setOpen(false)}>
-            Dining
+            {language === 'pcm' ? 'Food' : 'Dining'}
           </Link>
           <Link to="/explore?kind=EXPERIENCE" onClick={() => setOpen(false)}>
-            Experiences
+            {language === 'pcm' ? 'Wetin to do' : 'Experiences'}
           </Link>
           {workspace && (
             <Link to={workspace.href} onClick={() => setOpen(false)}>
