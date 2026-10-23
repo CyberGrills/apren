@@ -1,5 +1,5 @@
 import { ArrowUpRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
 import {
@@ -11,6 +11,27 @@ import { useSession } from '../../context/SessionContext.tsx';
 import { safeWorkspaceReturnTo } from '../../lib/workspaceNavigation.ts';
 import { editorialImages, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
+const loginVibes = [
+  'Omo, you don land. Make we continue your plans.',
+  'How far, padi? Your next stay dey wait.',
+  'No wahala — make we get you back inside.',
+  'Soft life no go book itself. Oya, sign in.',
+  'Abeg, make we continue where you stop.',
+  'Your next getaway fit start here. No long thing.',
+  'Go-slow fit hold road, e no go hold your better plans.',
+  'E choke! Make we find you a stay wey match your steeze.',
+  'Oya now, enter your account make we move.',
+  'You need small enjoyment? Your next stay dey one sign-in away.',
+  'Wetin be the plan today, padi? Make we pick up from here.',
+  'Island vibes or Mainland calm? Your next stay starts here.',
+  'No stress, no gbas-gbos. Sign in make we sort your booking.',
+  'Your next chapter dey call. Abeg, make we enter.',
+  'You don come back — correct move. Make we continue.',
+  'Make we arrange that soft-life escape, one step at a time.',
+] as const;
+
+const LOGIN_VIBE_STORAGE_KEY = '7even-login-vibe-index';
+
 export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; workspace?: 'admin' }) {
   const { login, register } = useSession();
   const { showSuccess, showError } = useFeedback();
@@ -18,9 +39,28 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginVibe, setLoginVibe] = useState<string>(loginVibes[0]);
+  const vibeRotationDone = useRef(false);
   const admin = workspace === 'admin';
   const registration = !admin && mode === 'register';
   const returnTo = safeWorkspaceReturnTo(params.get('returnTo') ?? params.get('next'), admin);
+
+  useEffect(() => {
+    if (admin || registration || vibeRotationDone.current) return;
+    vibeRotationDone.current = true;
+    try {
+      const lastIndex = Number(window.localStorage.getItem(LOGIN_VIBE_STORAGE_KEY));
+      const nextIndex =
+        Number.isInteger(lastIndex) && lastIndex >= 0 && lastIndex < loginVibes.length
+          ? (lastIndex + 1) % loginVibes.length
+          : Math.floor(Math.random() * loginVibes.length);
+      window.localStorage.setItem(LOGIN_VIBE_STORAGE_KEY, String(nextIndex));
+      setLoginVibe(loginVibes[nextIndex]);
+    } catch {
+      setLoginVibe(loginVibes[Math.floor(Math.random() * loginVibes.length)]);
+    }
+  }, [admin, registration]);
+
   useEffect(() => {
     const authError = params.get('authError');
     if (!authError) return;
@@ -34,6 +74,7 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
       { replace: true },
     );
   }, [params, setParams, showError]);
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -60,6 +101,7 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
       setBusy(false);
     }
   }
+
   return (
     <div className="public-page">
       {admin ? (
@@ -105,7 +147,7 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
               ? 'Review businesses, follow reservations and keep platform operations in order.'
               : registration
                 ? 'Keep your bookings in one place. Earn points when eligible bookings are completed, then choose a reward you like.'
-                : 'Your next stay, your points and the plans you’ve already made.'}
+                : loginVibe}
           </p>
           {!admin && (
             <figure>
