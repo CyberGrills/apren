@@ -12,7 +12,6 @@ export function ExplorePage() {
   const [aiMessage, setAiMessage] = useState(() => params.get('q') ?? '');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const kind = 'STAY';
   const page = Math.min(10000, Math.max(1, Math.trunc(Number(params.get('page')) || 1)));
   const pageSize = 12;
   const query = new URLSearchParams(params);
