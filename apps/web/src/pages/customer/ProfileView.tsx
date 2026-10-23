@@ -7,6 +7,8 @@ import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
 
 type TripPurpose = 'ANY' | 'COUPLES' | 'BUSINESS' | 'FAMILY' | 'SOFT_LIFE';
+type PreferredRoomType = 'ANY' | 'STANDARD' | 'DELUXE' | 'SUITE';
+type BedPreference = 'ANY' | 'KING' | 'TWIN';
 
 export function ProfileView({ user }: { user: SessionUser }) {
   const { refresh, logout } = useSession();
@@ -20,6 +22,8 @@ export function ProfileView({ user }: { user: SessionUser }) {
   const [dateOfBirth, setDateOfBirth] = useState(details.dateOfBirth ?? '');
   const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'pcm'>(details.preferredLanguage ?? 'en');
   const [tripPurpose, setTripPurpose] = useState<TripPurpose>(details.tripPurpose ?? 'ANY');
+  const [preferredRoomType, setPreferredRoomType] = useState<PreferredRoomType>(details.preferredRoomType ?? 'ANY');
+  const [bedPreference, setBedPreference] = useState<BedPreference>(details.bedPreference ?? 'ANY');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const attempt = useRef(crypto.randomUUID());
@@ -39,6 +43,8 @@ export function ProfileView({ user }: { user: SessionUser }) {
           dateOfBirth: dateOfBirth || null,
           preferredLanguage,
           tripPurpose,
+          preferredRoomType,
+          bedPreference,
         },
         idempotencyKey: attempt.current,
       });
@@ -129,6 +135,21 @@ export function ProfileView({ user }: { user: SessionUser }) {
                   <option value="BUSINESS">Business trip</option>
                   <option value="FAMILY">Family stay</option>
                   <option value="SOFT_LIFE">Relaxation / soft life</option>
+                </select>
+              </Field>
+              <Field label="Preferred room type" hint="A preference only; the hotel must confirm the room and price.">
+                <select className="field-input" value={preferredRoomType} onChange={(e) => setPreferredRoomType(e.target.value as PreferredRoomType)}>
+                  <option value="ANY">No preference</option>
+                  <option value="STANDARD">Standard</option>
+                  <option value="DELUXE">Deluxe</option>
+                  <option value="SUITE">Suite</option>
+                </select>
+              </Field>
+              <Field label="Bed setup" hint="Optional preference; availability is confirmed by the property.">
+                <select className="field-input" value={bedPreference} onChange={(e) => setBedPreference(e.target.value as BedPreference)}>
+                  <option value="ANY">No preference</option>
+                  <option value="KING">King bed</option>
+                  <option value="TWIN">Twin beds</option>
                 </select>
               </Field>
             </div>
