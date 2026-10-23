@@ -97,20 +97,30 @@ export function DirectoryPage() {
         const rows = (await listingsResponse.json()) as Array<
           Omit<DirectoryListing, 'imageSourceName'>
         >;
+        // Preserve curated source metadata (published rate references, official links,
+        // contact details and image attribution) when a matching live row exists.
+        // Database values remain authoritative for fields they actually provide.
+        const staticListingsById = new Map(
+          listingsForKind('ALL').map((listing) => [listing.id, listing]),
+        );
         const listings: DirectoryListing[] = rows.map((listing) => {
-          let imageSourceName = 'Source website';
+          const id = String(listing.id);
+          const curated = staticListingsById.get(id);
+          let derivedImageSourceName = 'Source website';
           try {
-            imageSourceName = new URL(listing.imageSourceUrl).hostname;
+            derivedImageSourceName = new URL(listing.imageSourceUrl).hostname;
           } catch {
-            // Keep the neutral attribution label if a source URL is malformed.
+            // Use curated attribution below when the live source URL is absent or malformed.
           }
           return {
+            ...(curated ?? {}),
             ...listing,
-            id: String(listing.id),
-            imageSourceName,
+            id,
+            imageSourceName: curated?.imageSourceName ?? derivedImageSourceName,
+            // Directory API records are discovery leads, never proof of partner verification.
             status: 'DIRECTORY_ONLY',
             bookable: false,
-          };
+          } as DirectoryListing;
         });
         setDirectoryData({ states, listings, total: listings.length, page: 1, pageSize: 100 });
         setDirectoryError(false);
