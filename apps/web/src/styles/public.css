@@ -2846,3 +2846,70 @@
   .seven-directory-card:hover,
   .seven-directory-card:hover .seven-directory-image-link img { transform: none; }
 }
+
+
+.seven-directory-rate-notes {
+  margin-top: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.seven-directory-rate-warning {
+  color: var(--muted);
+  font-size: .72rem;
+  line-height: 1.65;
+}
+.seven-directory-rate-notes ul {
+  display: grid;
+  gap: .7rem;
+  list-style: none;
+  padding: 0;
+  margin: .85rem 0 0;
+}
+.seven-directory-rate-notes li {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: .75rem;
+  font-size: .72rem;
+  line-height: 1.45;
+}
+.seven-directory-rate-notes li > span:first-child {
+  display: grid;
+  gap: .15rem;
+}
+.seven-directory-rate-notes li small {
+  color: var(--muted);
+  font-size: .65rem;
+}
+.seven-directory-rate-notes li > span:last-child {
+  text-align: right;
+  font-weight: 600;
+}
+.seven-directory-external-links {
+  display: grid;
+  gap: .2rem;
+  margin-top: 1rem;
+}
+.seven-directory-external-links a,
+.seven-directory-contact a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+  font-size: .76rem;
+  line-height: 1.7;
+}
+.seven-directory-contact {
+  margin: .45rem 0;
+  font-size: .75rem;
+  color: var(--muted);
+}
+.seven-directory-direct-booking {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 1rem;
+  text-decoration: none;
+  padding: .75rem 1rem;
+}
