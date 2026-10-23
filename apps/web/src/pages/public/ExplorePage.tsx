@@ -13,6 +13,8 @@ import {
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
 import { stayDatesError } from '../../lib/datePicker.ts';
+import { sourcedDirectoryListings } from '../../lib/nigeriaDirectory.ts';
+import { DirectoryListingCard } from './DirectoryListingCard.tsx';
 import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 export function ExplorePage() {
@@ -88,6 +90,28 @@ export function ExplorePage() {
       setAiLoading(false);
     }
   }
+  const directorySearch = [params.get('city'), params.get('q'), params.get('search')]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join(' ')
+    .trim()
+    .toLocaleLowerCase('en-NG');
+  const directoryMatches =
+    !loading && (!data || data.length === 0) && directorySearch.length >= 2
+      ? sourcedDirectoryListings.filter((listing) => {
+          if (listing.kind !== 'STAY') return false;
+          const state = params.get('state')?.toLocaleLowerCase('en-NG');
+          if (state && !listing.state.toLocaleLowerCase('en-NG').includes(state)) return false;
+          const haystack = [
+            listing.name,
+            listing.state,
+            listing.city,
+            listing.area,
+            listing.address,
+            listing.description,
+          ].join(' ').toLocaleLowerCase('en-NG');
+          return directorySearch.split(/\\s+/).every((term) => haystack.includes(term));
+        })
+      : [];
   function changeKind(value: string) {
     const next = new URLSearchParams(params);
     if (value) next.set('kind', value);
@@ -233,6 +257,23 @@ export function ExplorePage() {
         </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
+        {directoryMatches.length > 0 && (
+          <section className="seven-directory-search-results" aria-labelledby="directory-search-results-title">
+            <div className="seven-directory-search-heading">
+              <div>
+                <span className="public-eyebrow">Wider 7even discovery</span>
+                <h2 id="directory-search-results-title">We found this place in our directory.</h2>
+                <p>It is not live bookable inventory yet. Open the source listing or contact the property while 7even verifies partner access and current room availability.</p>
+              </div>
+              <span className="seven-directory-result-count">{directoryMatches.length} {directoryMatches.length === 1 ? 'match' : 'matches'}</span>
+            </div>
+            <div className="seven-directory-grid">
+              {directoryMatches.map((listing) => (
+                <DirectoryListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          </section>
+        )}
         {data && data.length > 0 && (
           <section className="explore-results" aria-labelledby="explore-results-title">
             <h2 className="sr-only" id="explore-results-title">
@@ -245,7 +286,7 @@ export function ExplorePage() {
             </div>
           </section>
         )}
-        {data && (page > 1 || data.length >= pageSize) && (
+        {data && data.length > 0 && (page > 1 || data.length >= pageSize) && (
           <nav className="explore-pagination" aria-label="Results pages">
             <button
               type="button"
