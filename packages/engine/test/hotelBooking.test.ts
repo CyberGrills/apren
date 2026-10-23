@@ -110,6 +110,27 @@ describe('7even real-time hotel booking optimizer', () => {
       asOf,
     }), []);
   });
+  it('rejects duplicate service-date windows even when only one is currently available', () => {
+    const fullDuplicate = candidate('full-duplicate', '100000');
+    fullDuplicate.windows = [
+      { ...fullDuplicate.windows[0]!, id: 'available', remaining: 4 },
+      { ...fullDuplicate.windows[0]!, id: 'full', remaining: 0 },
+    ];
+    const staleDuplicate = candidate('stale-duplicate', '100000');
+    staleDuplicate.windows = [
+      { ...staleDuplicate.windows[0]!, id: 'available', endAt: '2026-10-21T10:00:00.000Z' },
+      { ...staleDuplicate.windows[0]!, id: 'stale', endAt: '2026-10-18T10:00:00.000Z' },
+    ];
+
+    for (const hotel of [fullDuplicate, staleDuplicate]) {
+      assert.deepEqual(optimizeHotelBookings([hotel], {
+        checkInDate: '2026-10-20',
+        checkOutDate: '2026-10-21',
+        asOf,
+      }), []);
+    }
+  });
+
   it('preserves full-corpus ranking when candidates are processed in bounded batches with global statistics', () => {
     const hotels = [
       candidate('hotel-01', '2500000', 'Lagos', 4),
