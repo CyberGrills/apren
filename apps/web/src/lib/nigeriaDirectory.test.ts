@@ -36,7 +36,7 @@ test('directory records are source-backed and never marked bookable', () => {
 });
 
 test('category filters only return the requested directory category, alphabetically sorted', () => {
-  assert.equal(listingsForKind('STAY').length, 7);
+  assert.equal(listingsForKind('STAY').length, 8);
   assert.equal(listingsForKind('DINING').length, 4);
   assert.equal(listingsForKind('EXPERIENCE').length, 8);
   for (const kind of ['STAY', 'DINING', 'EXPERIENCE'] as const) {
@@ -54,4 +54,16 @@ test('category filters only return the requested directory category, alphabetica
         .map((entry) => [entry.state, entry.city, entry.name]),
     );
   }
+});
+
+
+test('Kiniz Apartments & Hotel is searchable as a sourced Uyo directory lead, not live inventory', () => {
+  const kiniz = listingsForKind('STAY').find((entry) => entry.id === 'stay-kiniz-apartments-hotel-uyo');
+  assert.ok(kiniz);
+  assert.equal(kiniz.name, 'Kiniz Apartments & Hotel');
+  assert.equal(kiniz.city, 'Uyo');
+  assert.equal(kiniz.state, 'Akwa Ibom');
+  assert.match(kiniz.sourceUrl, /^https:\/\/www\.hotels\.com\//);
+  assert.equal(kiniz.status, 'DIRECTORY_ONLY');
+  assert.equal(kiniz.bookable, false);
 });
