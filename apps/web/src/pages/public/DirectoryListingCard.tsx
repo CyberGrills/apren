@@ -54,7 +54,47 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         >
           Photo: {listing.imageSourceName}
         </a>
-        <p className="seven-directory-disclaimer">Not bookable on 7even yet.</p>
+        {listing.publishedRateNotes && (
+          <section className="seven-directory-rate-notes" aria-label="Published third-party rate references">
+            <p className="public-eyebrow">Published rate references · not live quotes</p>
+            <p className="seven-directory-rate-warning">
+              Sources disagree on prices. These are public snapshots, not guaranteed 7even rates or date-specific availability. Confirm the final total and cancellation terms with the property before paying.
+            </p>
+            <ul>
+              {listing.publishedRateNotes.map((note) => (
+                <li key={`${note.source}:${note.roomType}`}>
+                  <span><strong>{note.roomType}</strong><small>{note.source}</small></span>
+                  <span>{note.rate}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {listing.externalListings && (
+          <div className="seven-directory-external-links" aria-label="Other booking and source listings">
+            {listing.externalListings.map((source) => (
+              <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener">
+                {source.label} <span aria-hidden="true">↗</span>
+              </a>
+            ))}
+          </div>
+        )}
+        {listing.contactPhone && (
+          <p className="seven-directory-contact">
+            Call Kiniz: <a href={`tel:${listing.contactPhone.replace(/[^+\\d]/g, '')}`}>{listing.contactPhone}</a>
+          </p>
+        )}
+        {listing.contactEmail && (
+          <p className="seven-directory-contact">
+            Email: <a href={`mailto:${listing.contactEmail}`}>{listing.contactEmail}</a>
+          </p>
+        )}
+        {listing.officialBookingUrl && (
+          <a className="btn btn-primary seven-directory-direct-booking" href={listing.officialBookingUrl} target="_blank" rel="noreferrer noopener">
+            Check dates with Kiniz <span aria-hidden="true">↗</span>
+          </a>
+        )}
+        <p className="seven-directory-disclaimer">Not bookable or payable through 7even yet. Use the official or marketplace booking flow for date-specific rates and payment protections.</p>
       </div>
     </article>
   );
