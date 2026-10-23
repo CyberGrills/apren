@@ -2619,8 +2619,14 @@
 @media (max-width: 900px) {
   .public-nav { gap: 1rem; }
   .public-nav-actions { gap: 0.75rem; }
+  .public-nav-desktop { gap: 1.2rem; }
   .public-business-link { display: none; }
   .seven-language-switch button { padding-inline: 0.5rem; }
+}
+@media (max-width: 800px) and (min-width: 601px) {
+  .public-nav { flex-wrap: wrap; padding-block: 0.75rem; }
+  .public-nav-desktop { order: 3; width: 100%; justify-content: center; padding-bottom: 0.4rem; }
+  .public-nav-actions { margin-left: auto; }
 }
 @media (max-width: 600px) {
   .public-nav { min-height: 78px; flex-wrap: wrap; padding-block: 0.7rem; }
