@@ -1,6 +1,7 @@
 import type { Offering } from '@7even/contracts';
 import { ArrowLeft, ArrowUpRight, Check, MapPin } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { recordRecoveryEvent } from '../../lib/recoveryTelemetry.ts';
 import { Link, useParams } from 'react-router-dom';
 import { ErrorNotice, Loading } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
@@ -27,6 +28,11 @@ export function OfferingPage() {
 
 function OfferingDetail({ offering }: { offering: Offering }) {
   const [image, setImage] = useState(0);
+  useEffect(() => {
+    if (offering.kind === 'STAY' && !offering.isSample) {
+      void recordRecoveryEvent({ offeringId: offering.id, event: 'ROOM_VIEW' });
+    }
+  }, [offering.id, offering.kind, offering.isSample]);
   const fallback =
     offering.kind === 'STAY'
       ? editorialImages.room

@@ -1,7 +1,8 @@
 import type { BusinessOverview } from '@7even/contracts';
 import { ArrowUpRight, Check, ChevronRight, ClipboardList, Clock3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { PageHeader } from '../../components/ui.tsx';
+import { useApi } from '../../hooks/useApi.ts';
+import { Metric, PageHeader } from '../../components/ui.tsx';
 import { nextBusinessTask } from '../../lib/listingReadiness.ts';
 import { ListingChecks, ReadinessRefresh } from './ListingReadiness.tsx';
 import {
@@ -10,6 +11,59 @@ import {
   type ReservationCommand,
   ReservationTable,
 } from './shared.tsx';
+
+function BookingRecoveryPanel() {
+  const { data, loading, error, reload } = useApi<{
+    abandoned_sessions: number;
+    consented_abandons: number;
+    confirmed_after_abandon: number;
+    unresolved_abandons: number;
+    reasons: Array<{ reason: string | null; sessions: number }>;
+  }>('/business/recovery/summary');
+
+  return (
+    <section className="workbench-section" aria-labelledby="booking-recovery-title">
+      <div className="section-heading">
+        <div>
+          <p className="workbench-kicker">Revenue recovery · pilot</p>
+          <h2 id="booking-recovery-title">Booking opportunities</h2>
+        </div>
+        <button type="button" className="text-button" onClick={reload} disabled={loading}>
+          Refresh
+        </button>
+      </div>
+      {loading ? (
+        <p className="small-copy" role="status">Loading recovery activity…</p>
+      ) : error ? (
+        <p className="small-copy" role="status">Recovery activity is not available yet.</p>
+      ) : (
+        <>
+          <div className="metrics-grid">
+            <Metric label="Abandoned sessions" value={data?.abandoned_sessions ?? 0} note="Observed booking intent" />
+            <Metric label="Consent recorded" value={data?.consented_abandons ?? 0} note="Contact permission recorded" />
+            <Metric label="Unresolved sessions" value={data?.unresolved_abandons ?? 0} note="No verified booking outcome linked" />
+          </div>
+          <p className="small-copy">
+            Funnel telemetry only. A booking is not counted as recovered until its reservation,
+            payment and cancellation outcome can be verified against server records.
+          </p>
+          {data?.reasons?.length ? (
+            <ul className="business-recovery-reasons">
+              {data.reasons.map((item) => (
+                <li key={item.reason ?? 'UNKNOWN'}>
+                  <span>{item.reason ?? 'Unclassified'}</span>
+                  <strong>{item.sessions}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="small-copy">No eligible booking-funnel events recorded yet.</p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
 
 export function BusinessWorkspaceOverview({
   data,
@@ -146,6 +200,7 @@ export function BusinessWorkspaceOverview({
         </div>
         <MetricsStrip metrics={data.metrics} />
       </section>
+      {business.sector === 'STAY' && <BookingRecoveryPanel />}
       <section className="workbench-section">
         <div className="section-heading">
           <h2>Reservations</h2>

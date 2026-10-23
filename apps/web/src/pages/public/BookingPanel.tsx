@@ -1,11 +1,12 @@
 import type { Offering, Quote, Reservation } from '@7even/contracts';
 import { ArrowUpRight, LockKeyhole } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { PaymentMethodDialog } from '../../components/PaymentMethodDialog.tsx';
 import { ErrorNotice, Field, Money } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
+import { recordRecoveryEvent } from '../../lib/recoveryTelemetry.ts';
 import { addDays, friendlyDate, localDateNow } from './PublicShell.tsx';
 
 export function BookingPanel({ offering }: { offering: Offering }) {
@@ -45,13 +46,25 @@ export function BookingPanel({ offering }: { offering: Offering }) {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isStay = offering.kind === 'STAY';
   const paymentButtonRef = useRef<HTMLButtonElement>(null);
+  const recoveryStarted = useRef(false);
+  const recoveryCheckoutViewed = useRef(false);
+  const recoveryHeld = useRef(false);
+  useEffect(() => {
+    const onPageHide = () => {
+      if (recoveryStarted.current && recoveryCheckoutViewed.current && !recoveryHeld.current && isStay) {
+        void recordRecoveryEvent({ offeringId: offering.id, event: 'ABANDON', keepalive: true });
+      }
+    };
+    window.addEventListener('pagehide', onPageHide);
+    return () => window.removeEventListener('pagehide', onPageHide);
+  }, [offering.id, isStay]);
   const keys = useRef({
     quote: crypto.randomUUID(),
     reserve: crypto.randomUUID(),
     checkout: crypto.randomUUID(),
   });
-  const isStay = offering.kind === 'STAY';
   function clearQuote() {
     setQuote(null);
     setError(null);
@@ -65,6 +78,10 @@ export function BookingPanel({ offering }: { offering: Offering }) {
     event.preventDefault();
     setBusy(true);
     setError(null);
+    if (isStay && !recoveryStarted.current) {
+      recoveryStarted.current = true;
+      void recordRecoveryEvent({ offeringId: offering.id, event: 'BOOKING_START' });
+    }
     try {
       const body = {
         offeringId: offering.id,
@@ -80,6 +97,14 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       keys.current.reserve = crypto.randomUUID();
       keys.current.checkout = crypto.randomUUID();
       setQuote(nextQuote);
+      if (isStay) {
+        recoveryCheckoutViewed.current = true;
+        void recordRecoveryEvent({
+          offeringId: offering.id,
+          event: 'CHECKOUT_VIEW',
+          amountMinor: nextQuote.price.totalMinor,
+        });
+      }
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : 'We could not check this price. Please try again.',
@@ -100,6 +125,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
           body: { quoteId: quote.id },
           idempotencyKey: keys.current.reserve,
         }));
+      recoveryHeld.current = true;
       setHeld(reservation);
       setPaymentOpen(true);
     } catch (cause) {
