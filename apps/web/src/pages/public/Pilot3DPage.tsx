@@ -21,7 +21,14 @@ export function Pilot3DPage() {
     if (searching) return;
     const dateError = stayDatesError(checkIn, checkOut);
     if (dateError) { showError(dateError); return; }
-    const query = new URLSearchParams({ kind: 'STAY', city: destination.trim(), q: destination.trim() });
+    const destinationParts = destination.split(',').map((part) => part.trim()).filter(Boolean);
+    const city = (destinationParts[0] ?? '').slice(0, 160);
+    const state = destinationParts.length > 1 ? destinationParts.slice(1).join(', ').slice(0, 100) : '';
+    const query = new URLSearchParams({ kind: 'STAY', city });
+    if (state) query.set('state', state);
+    // The API's live inventory endpoint filters by city/state, not hotel-name text.
+    // Keep the raw phrase for the explicitly non-bookable directory fallback only.
+    query.set('q', destination.trim());
     if (checkIn) query.set('startDate', checkIn);
     if (checkOut) query.set('endDate', checkOut);
     if (budget.trim() && Number.isFinite(Number(budget))) query.set('maxBaseTotalMinor', String(Math.round(Number(budget) * 100)));
@@ -57,7 +64,7 @@ export function Pilot3DPage() {
         </section>
         <section className="pilot3d-search-wrap public-container" aria-label="Search hotel stays">
           <form className="pilot3d-search" onSubmit={submitSearch}>
-            <label className="pilot3d-input destination-input"><span>Where to?</span><input value={destination} onChange={event => setDestination(event.target.value)} placeholder="City, area or hotel" required maxLength={120} /></label>
+            <label className="pilot3d-input destination-input"><span>Where to?</span><input value={destination} onChange={event => setDestination(event.target.value)} placeholder="City, or City, State (e.g. Uyo, Akwa Ibom)" required maxLength={120} /></label>
             <label className="pilot3d-input"><span>Check in</span><input type="date" value={checkIn} onChange={event => setCheckIn(event.target.value)} /></label>
             <label className="pilot3d-input"><span>Check out</span><input type="date" min={checkIn || undefined} value={checkOut} onChange={event => setCheckOut(event.target.value)} /></label>
             <label className="pilot3d-input"><span>Total stay budget (₦)</span><input inputMode="numeric" type="number" min="0" step="1000" value={budget} onChange={event => setBudget(event.target.value)} /></label>
@@ -78,7 +85,7 @@ export function Pilot3DPage() {
             />
             <p>Map location is based on your destination search. It does not represent verified 7even hotel pins or confirm property availability.</p>
           </section>
-          <p className="pilot3d-search-note" aria-live="polite">{searching ? "Your guide is heading out to find stays… " : ""}Search results use 7even's existing discovery flow. A listing is not bookable unless its availability and rate are confirmed.</p>
+          <p className="pilot3d-search-note" aria-live="polite">{searching ? "Your guide is heading out to find stays… " : ""}Use a city or “City, State” so the live inventory filter can match correctly. Search results use 7even's existing discovery flow. A listing is not bookable unless its availability and rate are confirmed.</p>
         </section>
         <section className="pilot3d-journey public-container">
           <div><span className="public-eyebrow">The experience we’re building</span><h2>Move through the stay,<br /><em>not just a list.</em></h2></div>
