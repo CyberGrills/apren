@@ -30,6 +30,7 @@ import {
   LandingPage,
   OfferingPage,
 } from './pages/public/index.ts';
+import { Pilot3DPage } from './pages/public/Pilot3DPage.tsx';
 import { AdminInventoryPage } from './pages/workspace/AdminInventoryPage.tsx';
 import { AdminPage } from './pages/workspace/AdminPage.tsx';
 import { BusinessPage } from './pages/workspace/BusinessPage.tsx';
@@ -153,6 +154,7 @@ export function App() {
             <ScrollPosition />
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/pilot" element={<Pilot3DPage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/directory" element={<DirectoryPage />} />
               <Route path="/places/:id" element={<OfferingPage />} />
