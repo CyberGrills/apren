@@ -29,3 +29,12 @@
 @media (prefers-reduced-motion:reduce) { .pilot3d-world-grid,.pilot3d-block,.pilot3d-pin,.pilot3d-avatar,.avatar-body,.avatar-body i,.avatar-body b { animation:none!important; } }
 @media (max-width:1100px) { .pilot3d-search { grid-template-columns:repeat(3,minmax(0,1fr)); }.pilot3d-input:nth-child(3) { border-right:0; }.pilot3d-submit { min-height:58px; grid-column:span 3; } }
 @media (max-width:760px) { .pilot3d-hero { grid-template-columns:1fr; gap:2rem; padding-top:2.5rem; }.pilot3d-copy h1 { font-size:clamp(3.1rem,12vw,5rem); }.pilot3d-world { min-height:360px; }.pilot3d-search { grid-template-columns:repeat(2,minmax(0,1fr)); }.pilot3d-input { padding:.85rem; }.pilot3d-input:nth-child(2),.pilot3d-input:nth-child(4) { border-right:0; }.pilot3d-submit { grid-column:span 2; }.pilot3d-journey { grid-template-columns:1fr; gap:1rem; }.pilot3d-steps { grid-template-columns:1fr; gap:1rem; }.pilot3d-steps article { display:grid; grid-template-columns:36px 1fr; column-gap:.5rem; }.pilot3d-steps article>span { grid-row:span 2; padding-top:.2rem; }.pilot3d-steps h3 { margin:.1rem 0 .3rem; }.pilot3d-steps p { margin:0; }.pilot3d-safety { grid-template-columns:1fr; gap:.5rem; margin-bottom:2rem; }.pilot3d-map-caption { left:.8rem; bottom:.8rem; } }
+
+.pilot3d-world.is-searching .pilot3d-avatar { animation:pilot3d-sprint .22s ease-in-out infinite alternate; }
+.pilot3d-world.is-searching .pilot3d-world-grid { animation-duration:2s; }
+.pilot3d-world.is-searching .pilot3d-pin { animation-duration:.45s; }
+.pilot3d-world.is-searching .pilot3d-live-dot { animation:pilot3d-pulse .5s ease-in-out infinite alternate; }
+.pilot3d-submit:disabled { cursor:progress; opacity:.82; }
+@keyframes pilot3d-sprint { from { translate:-18px -2px; rotate:-7deg; } to { translate:22px -8px; rotate:7deg; } }
+@keyframes pilot3d-pulse { to { transform:scale(1.5); box-shadow:0 0 0 8px #c4f39a20; } }
+@media (prefers-reduced-motion:reduce) { .pilot3d-world.is-searching .pilot3d-avatar,.pilot3d-world.is-searching .pilot3d-world-grid,.pilot3d-world.is-searching .pilot3d-pin,.pilot3d-world.is-searching .pilot3d-live-dot { animation:none!important; } }
