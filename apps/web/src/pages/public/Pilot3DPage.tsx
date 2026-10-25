@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFeedback } from '../../components/ui.tsx';
 import { stayDatesError } from '../../lib/datePicker.ts';
+import { buildPilotSearchParams } from '../../lib/pilotSearch.ts';
 import { PublicFooter, PublicHeader } from './PublicShell.tsx';
 import './Pilot3DPage.css';
 
@@ -21,18 +22,13 @@ export function Pilot3DPage() {
     if (searching) return;
     const dateError = stayDatesError(checkIn, checkOut);
     if (dateError) { showError(dateError); return; }
-    const destinationParts = destination.split(',').map((part) => part.trim()).filter(Boolean);
-    const city = (destinationParts[0] ?? '').slice(0, 160);
-    const state = destinationParts.length > 1 ? destinationParts.slice(1).join(', ').slice(0, 100) : '';
-    const query = new URLSearchParams({ kind: 'STAY', city });
-    if (state) query.set('state', state);
-    // The API's live inventory endpoint filters by city/state, not hotel-name text.
-    // Keep the raw phrase for the explicitly non-bookable directory fallback only.
-    query.set('q', destination.trim());
-    if (checkIn) query.set('startDate', checkIn);
-    if (checkOut) query.set('endDate', checkOut);
-    if (budget.trim() && Number.isFinite(Number(budget))) query.set('maxBaseTotalMinor', String(Math.round(Number(budget) * 100)));
-    query.set('rooms', rooms);
+    const query = buildPilotSearchParams({
+      destination: destination.trim(),
+      checkIn,
+      checkOut,
+      budgetNaira: budget,
+      rooms,
+    });
     setSearching(true);
     window.setTimeout(() => navigate(`/explore?${query.toString()}`), window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650);
   }
