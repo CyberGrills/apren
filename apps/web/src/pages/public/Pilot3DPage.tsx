@@ -14,18 +14,18 @@ export function Pilot3DPage() {
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [budget, setBudget] = useState('80000');
-  const [guests, setGuests] = useState('2');
+  const [rooms, setRooms] = useState('1');
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searching) return;
     const dateError = stayDatesError(checkIn, checkOut);
     if (dateError) { showError(dateError); return; }
-    const query = new URLSearchParams({ kind: 'STAY', city: destination.trim() });
+    const query = new URLSearchParams({ kind: 'STAY', city: destination.trim(), q: destination.trim() });
     if (checkIn) query.set('startDate', checkIn);
     if (checkOut) query.set('endDate', checkOut);
     if (budget.trim() && Number.isFinite(Number(budget))) query.set('maxBaseTotalMinor', String(Math.round(Number(budget) * 100)));
-    query.set('rooms', guests);
+    query.set('rooms', rooms);
     setSearching(true);
     window.setTimeout(() => navigate(`/explore?${query.toString()}`), window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650);
   }
@@ -61,9 +61,23 @@ export function Pilot3DPage() {
             <label className="pilot3d-input"><span>Check in</span><input type="date" value={checkIn} onChange={event => setCheckIn(event.target.value)} /></label>
             <label className="pilot3d-input"><span>Check out</span><input type="date" min={checkIn || undefined} value={checkOut} onChange={event => setCheckOut(event.target.value)} /></label>
             <label className="pilot3d-input"><span>Total stay budget (₦)</span><input inputMode="numeric" type="number" min="0" step="1000" value={budget} onChange={event => setBudget(event.target.value)} /></label>
-            <label className="pilot3d-input"><span>Rooms</span><select value={guests} onChange={event => setGuests(event.target.value)}><option value="1">1 room</option><option value="2">2 rooms</option><option value="3">3 rooms</option><option value="4">4 rooms</option><option value="5">5+ rooms</option></select></label>
+            <label className="pilot3d-input"><span>Rooms</span><select value={rooms} onChange={event => setRooms(event.target.value)}><option value="1">1 room</option><option value="2">2 rooms</option><option value="3">3 rooms</option><option value="4">4 rooms</option><option value="5">5+ rooms</option></select></label>
             <button className="btn btn-primary pilot3d-submit" type="submit" disabled={searching}><Search size={18} /> {searching ? "Finding stays…" : "Explore stays"} <ArrowDownRight size={17} /></button>
           </form>
+          <section className="pilot3d-live-map" aria-labelledby="pilot3d-map-heading">
+            <div className="pilot3d-live-map-heading">
+              <div><span className="public-eyebrow">Destination context</span><h2 id="pilot3d-map-heading">Find your way around.</h2></div>
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination.trim())}`} target="_blank" rel="noreferrer">Open full map</a>
+            </div>
+            <iframe
+              title={`Map of ${destination.trim() || 'your destination'}`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(destination.trim() || 'Uyo, Akwa Ibom, Nigeria')}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+            <p>Map location is based on your destination search. It does not represent verified 7even hotel pins or confirm property availability.</p>
+          </section>
           <p className="pilot3d-search-note" aria-live="polite">{searching ? "Your guide is heading out to find stays… " : ""}Search results use 7even's existing discovery flow. A listing is not bookable unless its availability and rate are confirmed.</p>
         </section>
         <section className="pilot3d-journey public-container">
