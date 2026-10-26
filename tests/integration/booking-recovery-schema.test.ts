@@ -45,7 +45,7 @@ describe('booking recovery event contract', () => {
     let requestCount = 0;
     const pool = {
       query: async (sql: string) => {
-        assert.match(sql, /seven\\.account_rate_limits/);
+        assert.match(sql, /seven\.account_rate_limits/);
         requestCount += 1;
         return { rows: [{ request_count: requestCount }] };
       },
