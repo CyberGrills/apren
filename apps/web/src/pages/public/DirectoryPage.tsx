@@ -5,6 +5,7 @@ import {
   type DirectoryKind,
   type DirectoryListing,
   directoryKindLabels,
+  directoryListingMatchKey,
   listingsForKind,
   type NigeriaStateDirectory,
   nigeriaStateDirectories,
@@ -100,12 +101,12 @@ export function DirectoryPage() {
         // Preserve curated source metadata (published rate references, official links,
         // contact details and image attribution) when a matching live row exists.
         // Database values remain authoritative for fields they actually provide.
-        const staticListingsById = new Map(
-          listingsForKind('ALL').map((listing) => [listing.id, listing]),
+        const staticListingsByKey = new Map(
+          listingsForKind('ALL').map((listing) => [directoryListingMatchKey(listing), listing]),
         );
         const listings: DirectoryListing[] = rows.map((listing) => {
           const id = String(listing.id);
-          const curated = staticListingsById.get(id);
+          const curated = staticListingsByKey.get(directoryListingMatchKey(listing));
           let derivedImageSourceName = 'Source website';
           try {
             derivedImageSourceName = new URL(listing.imageSourceUrl).hostname;
@@ -144,7 +145,9 @@ export function DirectoryPage() {
           ...directoryData.listings,
           ...listingsForKind(kind).filter(
             (staticListing) =>
-              !directoryData.listings.some((liveListing) => liveListing.id === staticListing.id),
+              !directoryData.listings.some(
+              (liveListing) => directoryListingMatchKey(liveListing) === directoryListingMatchKey(staticListing),
+            ),
           ),
         ]
       : listingsForKind(kind);
