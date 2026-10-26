@@ -8,6 +8,12 @@ export interface NigeriaStateDirectory {
   hotelDirectoryUrl: string;
 }
 
+/** Stable identity across static slug IDs and database-generated numeric IDs. */
+export function directoryListingMatchKey(listing: Pick<DirectoryListing, 'kind' | 'name' | 'state' | 'city'>): string {
+  const normalize = (value: string) => value.normalize('NFKC').trim().toLocaleLowerCase('en-NG').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return [listing.kind, listing.name, listing.state, listing.city].map(normalize).join('|');
+}
+
 export interface DirectoryListing {
   id: string;
   kind: DirectoryKind;
