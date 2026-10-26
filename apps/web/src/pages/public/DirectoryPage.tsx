@@ -145,7 +145,9 @@ export function DirectoryPage() {
           ...directoryData.listings,
           ...listingsForKind(kind).filter(
             (staticListing) =>
-              !directoryData.listings.some((liveListing) => liveListing.id === staticListing.id),
+              !directoryData.listings.some(
+              (liveListing) => directoryListingMatchKey(liveListing) === directoryListingMatchKey(staticListing),
+            ),
           ),
         ]
       : listingsForKind(kind);
