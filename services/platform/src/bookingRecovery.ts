@@ -4,6 +4,7 @@ import type { Pool } from 'pg';
 import { z } from 'zod';
 import * as C from '@7even/contracts';
 import { one, rows, fail } from './db.ts';
+import { rateLimitBookingRecoveryEvent } from './accounts.ts';
 
 export const bookingRecoveryEventSchema = z.strictObject({
   eventId: z.uuid(),
@@ -43,6 +44,7 @@ export function mountBookingRecovery(app: Express, context: RecoveryContext): vo
   const { pool, actor } = context;
 
   app.post('/api/recovery/events', async (req, res) => {
+    await rateLimitBookingRecoveryEvent(pool, req.ip ?? 'unknown');
     const input = bookingRecoveryEventSchema.parse(req.body);
     if (input.contactConsent) {
       if (input.contactChannel === 'NONE' || !input.consentTextVersion)

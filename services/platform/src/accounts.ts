@@ -59,6 +59,12 @@ export async function rateLimitAiSearch(pool: Pool, ip: string): Promise<void> {
   await limit(pool, `ai-search:ip:${clientIp}`, 20);
 }
 
+/** Shared PostgreSQL throttling for public recovery telemetry; IPs are hashed before storage. */
+export async function rateLimitBookingRecoveryEvent(pool: Pool, ip: string): Promise<void> {
+  const clientIp = ip.trim().slice(0, 100) || 'unknown';
+  await limit(pool, `recovery-event:ip:${clientIp}`, 120);
+}
+
 async function revokeCredentials(db: Connection, userId: string, passwordHash: string, recoveryId?: string): Promise<void> {
   // Caller holds the user row lock. Keep user -> recovery -> session ordering everywhere.
   await db.query('UPDATE seven.users SET password_hash=$2,updated_at=now() WHERE user_id=$1', [userId, passwordHash]);

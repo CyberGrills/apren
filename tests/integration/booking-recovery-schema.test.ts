@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import type { Pool } from 'pg';
+import { rateLimitBookingRecoveryEvent } from '../../services/platform/src/accounts.ts';
+import { ApiError } from '../../services/platform/src/db.ts';
 import { bookingRecoveryEventSchema } from '../../services/platform/src/bookingRecovery.ts';
 
 const valid = {
@@ -37,5 +40,22 @@ describe('booking recovery event contract', () => {
     assert.equal(bookingRecoveryEventSchema.safeParse({
       ...valid, contactConsent: false, contactChannel: 'EMAIL',
     }).success, false);
+  });
+  it('limits public recovery events to 120 requests per IP per shared 15-minute window', async () => {
+    let requestCount = 0;
+    const pool = {
+      query: async (sql: string) => {
+        assert.match(sql, /seven\.account_rate_limits/);
+        requestCount += 1;
+        return { rows: [{ request_count: requestCount }] };
+      },
+    } as unknown as Pool;
+
+    for (let i = 0; i < 120; i += 1) await rateLimitBookingRecoveryEvent(pool, '203.0.113.20');
+    await assert.rejects(
+      () => rateLimitBookingRecoveryEvent(pool, '203.0.113.20'),
+      (error: unknown) => error instanceof ApiError && error.status === 429 && error.code === 'RATE_LIMITED',
+    );
+    assert.equal(requestCount, 121);
   });
 });
