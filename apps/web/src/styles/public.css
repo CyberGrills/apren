@@ -2947,3 +2947,27 @@
 .payment-method-unavailable small {
   display: block;
 }
+
+/* Keep the homepage filters control in normal flow so it never covers the
+   category row or the search card at desktop and mobile breakpoints. */
+.seven-marketplace .seven-category-row {
+  justify-content: flex-start;
+  gap: 1rem;
+  overflow-x: auto;
+}
+.seven-marketplace .seven-more-filters {
+  position: static;
+  flex-shrink: 0;
+  transform: none;
+  margin-left: auto;
+}
+@media (max-width: 600px) {
+  .seven-marketplace .seven-category-row {
+    gap: 0.5rem;
+    padding-inline: 1rem;
+  }
+  .seven-marketplace .seven-more-filters {
+    padding-inline: 0.65rem;
+    white-space: nowrap;
+  }
+}
