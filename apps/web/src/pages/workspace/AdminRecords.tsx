@@ -13,6 +13,7 @@ export function AdminRecords<T>({
   searchLabel,
   placeholder,
   statuses = [],
+  initialStatus,
   children,
 }: {
   collection: Collection;
@@ -20,11 +21,12 @@ export function AdminRecords<T>({
   searchLabel: string;
   placeholder: string;
   statuses?: readonly string[];
+  initialStatus?: string;
   children: (items: T[]) => ReactNode;
 }) {
   const [draft, setDraft] = useState('');
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(initialStatus ?? '');
   const [page, setPage] = useState(1);
   const query = new URLSearchParams({ page: String(page), pageSize: '25' });
   if (search) query.set('q', search);
