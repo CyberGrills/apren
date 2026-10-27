@@ -12,6 +12,15 @@ const publicStyles = source('../../apps/web/src/styles/public.css');
 const account = source('../../apps/web/src/pages/customer/AccountPage.tsx');
 const app = source('../../apps/web/src/App.tsx');
 
+test('sample offerings disable the booking and payment flow', () => {
+  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
+  assert.match(bookingPanel, /if \(offering\.isSample\)/);
+  assert.match(bookingPanel, /Booking unavailable/);
+  assert.match(bookingPanel, /not verified live inventory/);
+  assert.match(bookingPanel, /Dates, room counts, quotes,[\s\S]*?payment are disabled/);
+});
+
+
 test('public navigation retains stays, dining and experiences', () => {
   assert.match(publicShell, /Hotels & stays/);
   assert.match(publicShell, /kind=DINING/);
