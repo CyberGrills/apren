@@ -207,10 +207,16 @@ export function OfferingCard({ offering }: { offering: Offering }) {
             </p>
           </div>
         )}
-        <div className="offering-price">
-          <Money minor={offering.priceMinor} />
-          <span>/ {offering.unitLabel}</span>
-        </div>
+        {offering.isSample ? (
+          <p className="offering-sample-disclaimer" role="note">
+            Illustrative listing only. This place is not available to book through 7even.
+          </p>
+        ) : (
+          <div className="offering-price">
+            <Money minor={offering.priceMinor} />
+            <span>/ {offering.unitLabel}</span>
+          </div>
+        )}
       </div>
     </article>
   );

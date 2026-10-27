@@ -72,3 +72,9 @@ test('guest account navigation stays focused on profile, bookings and updates', 
   assert.match(account, /\['activity', 'Updates'\]/);
   assert.doesNotMatch(account, /\['points', 'Points'\]|\['benefits', 'Benefits'\]|\['exchange', 'Exchange'\]/);
 });
+
+test('sample offerings never present illustrative prices as bookable rates', () => {
+  const ui = source('../../apps/web/src/components/ui.tsx');
+  assert.match(ui, /offering\.isSample \? \([\s\S]*?Illustrative listing only\. This place is not available to book through 7even\./);
+  assert.match(ui, /: \([\s\S]*?<Money minor={offering\.priceMinor} \/>/);
+});
