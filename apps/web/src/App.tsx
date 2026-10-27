@@ -25,7 +25,6 @@ import {
 import {
   AuthPage,
   BusinessApplicationPage,
-  DirectoryPage,
   ExplorePage,
   LandingPage,
   OfferingPage,
@@ -154,7 +153,7 @@ export function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/explore" element={<ExplorePage />} />
-              <Route path="/directory" element={<DirectoryPage />} />
+              <Route path="/directory" element={<Navigate to="/explore?kind=STAY" replace />} />
               <Route path="/places/:id" element={<OfferingPage />} />
               <Route path="/login" element={<AuthPage mode="login" />} />
               <Route path="/admin/login" element={<AuthPage mode="login" workspace="admin" />} />
