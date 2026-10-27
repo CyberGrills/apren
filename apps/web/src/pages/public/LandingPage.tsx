@@ -1,5 +1,5 @@
 import type { NigeriaLocation, Offering, Sector } from '@7even/contracts';
-import { BedDouble, Compass, LayoutGrid, Search, SlidersHorizontal, Utensils } from 'lucide-react';
+import { BedDouble, Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../../components/DatePicker.tsx';
@@ -11,11 +11,10 @@ import { addDays, localDateNow, PublicFooter, PublicHeader, readSevenLanguage } 
 
 type MarketplaceKind = Sector | 'ALL';
 
-const categories: { value: MarketplaceKind; label: string; Icon: typeof BedDouble }[] = [
-  { value: 'ALL', label: 'All', Icon: LayoutGrid },
-  { value: 'STAY', label: 'Stays', Icon: BedDouble },
+const categories: { value: MarketplaceKind; label: string; Icon: typeof Hotel }[] = [
+  { value: 'STAY', label: 'Hotels & stays', Icon: Hotel },
   { value: 'DINING', label: 'Dining', Icon: Utensils },
-  { value: 'EXPERIENCE', label: 'Experiences', Icon: Compass },
+  { value: 'EXPERIENCE', label: 'Things to do', Icon: Compass },
 ];
 
 const categoryHeadings: Record<MarketplaceKind, { title: string; description: string }> = {
@@ -155,7 +154,7 @@ export function LandingPage() {
                   />
                 </div>
                 <div className="seven-search-field seven-search-rooms">
-                  <label htmlFor="seven-rooms">Rooms</label>
+                  <label htmlFor="seven-rooms" className="seven-rooms-label"><BedDouble size={15} aria-hidden="true" /> Rooms</label>
                   <select
                     id="seven-rooms"
                     value={rooms}
@@ -211,9 +210,8 @@ export function LandingPage() {
               <div>
                 <h2>{language === 'pcm' ? 'We dey reconnect room availability' : 'Live 7even inventory is reconnecting'}</h2>
                 <p>
-                  Current 7even prices, room availability and bookings are not available in this
-                  preview yet. You can explore source-backed directory entries below, but they
-                  cannot be booked through 7even.
+                  Current 7even prices and room availability could not be loaded. Try again shortly;
+                  we will not show unverified properties as bookable stays.
                 </p>
               </div>
               <button type="button" className="btn btn-secondary" onClick={() => void reload()}>
@@ -237,7 +235,7 @@ export function LandingPage() {
               }
               description={
                 kind === 'STAY'
-                  ? '7even only shows properties that have passed the required verification review and have current room availability confirmed by their partner. Try another category, or come back as new stays are approved.'
+                  ? '7even only shows properties that have passed the required verification review and have current room availability confirmed by their partner. Try another city or date, or come back as new stays are approved.'
                   : 'There are no published places in this category right now. New listings will appear after the business has completed onboarding and published its offering.'
               }
               action={

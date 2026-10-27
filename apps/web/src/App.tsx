@@ -25,7 +25,6 @@ import {
 import {
   AuthPage,
   BusinessApplicationPage,
-  DirectoryPage,
   ExplorePage,
   LandingPage,
   OfferingPage,
@@ -154,7 +153,7 @@ export function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/explore" element={<ExplorePage />} />
-              <Route path="/directory" element={<DirectoryPage />} />
+              <Route path="/directory" element={<Navigate to="/explore?kind=STAY" replace />} />
               <Route path="/places/:id" element={<OfferingPage />} />
               <Route path="/login" element={<AuthPage mode="login" />} />
               <Route path="/admin/login" element={<AuthPage mode="login" workspace="admin" />} />
@@ -168,9 +167,9 @@ export function App() {
                 <Route path="/app/security" element={<PasswordPage />} />
                 <Route path="/business/apply" element={<BusinessApplicationPage />} />
                 <Route path="/app/bookings" element={<AccountPage tab="bookings" />} />
-                <Route path="/app/points" element={<AccountPage tab="points" />} />
-                <Route path="/app/benefits" element={<AccountPage tab="benefits" />} />
-                <Route path="/app/exchange" element={<AccountPage tab="exchange" />} />
+                <Route path="/app/points" element={<Navigate to="/app/bookings" replace />} />
+                <Route path="/app/benefits" element={<Navigate to="/app/bookings" replace />} />
+                <Route path="/app/exchange" element={<Navigate to="/app/bookings" replace />} />
                 <Route path="/app/profile" element={<AccountPage tab="profile" />} />
                 <Route path="/app/activity" element={<AccountPage tab="activity" />} />
                 <Route path="/checkout/test/:paymentId" element={<TestCheckoutPage />} />

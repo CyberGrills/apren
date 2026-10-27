@@ -135,7 +135,7 @@ export function DatePicker({ name, id, value, onChange, min, label = 'Date' }: D
         aria-controls={`${fieldId}-dialog`}
         onClick={showCalendar}
       >
-        <span id={`${fieldId}-value`}>{selectedLabel || 'Choose a date'}</span>
+        <span className="date-picker__value"><CalendarDays size={16} aria-hidden="true" /><span id={`${fieldId}-value`}>{selectedLabel || 'Choose a date'}</span></span>
         <ChevronDown size={16} aria-hidden="true" />
       </button>
       <dialog

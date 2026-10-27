@@ -1645,7 +1645,7 @@
   gap: 0.4rem;
 }
 .seven-search-input-wrap svg {
-  display: none;
+  display: block;
   flex-shrink: 0;
   color: #717171;
 }
@@ -2946,4 +2946,36 @@
 
 .payment-method-unavailable small {
   display: block;
+}
+
+/* Keep category navigation and the More filters control in normal flow. */
+.seven-marketplace .seven-category-row {
+  justify-content: flex-start;
+  gap: 1rem;
+  overflow: visible;
+}
+.seven-marketplace .seven-more-filters {
+  position: static;
+  flex-shrink: 0;
+  transform: none;
+  margin-left: auto;
+}
+@media (max-width: 600px) {
+  .seven-marketplace .seven-category-row {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    padding-inline: 1rem;
+    overflow: visible;
+  }
+  .seven-marketplace .seven-category {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+  .seven-marketplace .seven-more-filters {
+    flex: 0 0 100%;
+    justify-content: flex-end;
+    min-height: 42px;
+    padding-inline: 0.85rem;
+    white-space: nowrap;
+  }
 }

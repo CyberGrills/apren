@@ -54,9 +54,9 @@ export function PublicHeader() {
           <Brand />
         </Link>
         <nav className="public-nav-desktop" aria-label="Main navigation">
-          <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Places to stay' : 'Stays'}</Link>
+          <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}</Link>
           <Link to="/explore?kind=DINING">{language === 'pcm' ? 'Food' : 'Dining'}</Link>
-          <Link to="/explore?kind=EXPERIENCE">{language === 'pcm' ? 'Wetin to do' : 'Experiences'}</Link>
+          <Link to="/explore?kind=EXPERIENCE">{language === 'pcm' ? 'Things to do' : 'Things to do'}</Link>
         </nav>
         <div className="public-nav-actions">
           <div className="seven-language-switch" role="group" aria-label="Website language">
@@ -85,13 +85,13 @@ export function PublicHeader() {
       {open && (
         <nav className="public-mobile-nav public-container" aria-label="Mobile navigation">
           <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
-            {language === 'pcm' ? 'Places to stay' : 'Stays'}
+            {language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}
           </Link>
           <Link to="/explore?kind=DINING" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Food' : 'Dining'}
           </Link>
           <Link to="/explore?kind=EXPERIENCE" onClick={() => setOpen(false)}>
-            {language === 'pcm' ? 'Wetin to do' : 'Experiences'}
+            {language === 'pcm' ? 'Things to do' : 'Things to do'}
           </Link>
           {user && <Link to="/app/profile" onClick={() => setOpen(false)}>{language === 'pcm' ? 'Your profile' : 'Profile'}</Link>}
           {workspace && (
@@ -119,11 +119,11 @@ export function PublicFooter() {
             Worth your time.
           </p>
           <nav aria-label="Footer">
-            <Link to="/explore">Find a place</Link>
+            <Link to="/explore?kind=STAY">Find a stay</Link>
             <Link to="/business/apply">Bring your business</Link>
-            <Link to="/app/points">Your points</Link>
+            <Link to="/app/bookings">Your bookings</Link>
             <Link to="/help">Help</Link>
-            <Link to="/booking-rules">Booking and points</Link>
+            <Link to="/booking-rules">Booking rules</Link>
           </nav>
         </div>
         <div className="public-footer-bottom">

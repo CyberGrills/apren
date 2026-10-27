@@ -6,40 +6,20 @@ import { useSession } from '../../context/SessionContext.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { PublicFooter, PublicHeader } from '../public/PublicShell.tsx';
 import { ActivityView } from './ActivityView.tsx';
-import { BenefitsView } from './BenefitsView.tsx';
 import { BookingList } from './BookingList.tsx';
-import { ExchangeView } from './ExchangeView.tsx';
-import { PointsView } from './PointsView.tsx';
 import { ProfileView } from './ProfileView.tsx';
 
-type AccountTab = 'bookings' | 'points' | 'benefits' | 'exchange' | 'profile' | 'activity';
+type AccountTab = 'bookings' | 'profile' | 'activity';
 const headings: Record<AccountTab, { eyebrow: string; title: string; description: string }> = {
   bookings: {
-    eyebrow: 'Your plans',
+    eyebrow: 'Your stays',
     title: 'Something to look forward to.',
-    description: 'Your stays, tables and days out. Every booking, with its current status.',
-  },
-  points: {
-    eyebrow: 'Your points',
-    title: 'Good visits add up.',
-    description: 'A clear record of what you earn, what you use and what is ready for next time.',
-  },
-  benefits: {
-    eyebrow: 'Your benefits',
-    title: 'A little something for next time.',
-    description:
-      'Your claimed rewards, their use-by dates and the details you need when you visit.',
-  },
-  exchange: {
-    eyebrow: 'Your exchanges',
-    title: 'Pass something good along.',
-    description:
-      'Give an eligible benefit or swap with someone you know. Every offer stays on the record.',
+    description: 'Your hotel and apartment reservations, with their current status.',
   },
   activity: {
     eyebrow: 'Your updates',
     title: 'A word about your plans.',
-    description: 'Booking updates, invitations and the things that need your attention.',
+    description: 'Booking updates and the things that need your attention.',
   },
   profile: {
     eyebrow: 'Your profile',
@@ -70,9 +50,6 @@ export function AccountPage({ tab = 'bookings' }: { tab?: AccountTab }) {
           {[
             ['profile', 'Profile'],
             ['bookings', 'Bookings'],
-            ['points', 'Points'],
-            ['benefits', 'Benefits'],
-            ['exchange', 'Exchange'],
             ['activity', 'Updates'],
           ].map(([value, label]) => (
             <NavLink
@@ -94,11 +71,6 @@ export function AccountPage({ tab = 'bookings' }: { tab?: AccountTab }) {
         {data && user && (
           <div className="customer-content">
             {tab === 'bookings' && <BookingList reservations={data.reservations} reload={reload} />}
-            {tab === 'points' && <PointsView points={data.points} reload={reload} />}
-            {tab === 'benefits' && <BenefitsView benefits={data.benefits} reload={reload} />}
-            {tab === 'exchange' && (
-              <ExchangeView trades={data.trades} userId={user.id} reload={reload} />
-            )}
             {tab === 'profile' && <ProfileView user={user} />}
             {tab === 'activity' && (
               <ActivityView notifications={data.notifications} reload={reload} />
