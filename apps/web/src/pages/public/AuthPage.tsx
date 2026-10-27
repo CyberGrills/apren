@@ -33,7 +33,7 @@ const loginVibes = [
 const LOGIN_VIBE_STORAGE_KEY = '7even-login-vibe-index';
 
 export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; workspace?: 'admin' }) {
-  const { login, register } = useSession();
+  const { login, register, session, loading: sessionLoading } = useSession();
   const { showSuccess, showError } = useFeedback();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -61,6 +61,13 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
       setLoginVibe(loginVibes[Math.floor(Math.random() * loginVibes.length)] ?? loginVibes[0]);
     }
   }, [admin, registration]);
+
+  useEffect(() => {
+    // The social-login API rejects login attempts when this browser already has a session.
+    // Send authenticated visitors out of the public auth screen instead of showing a dead-end.
+    if (admin || sessionLoading || !session?.user) return;
+    navigate(returnTo, { replace: true });
+  }, [admin, sessionLoading, session?.user, navigate, returnTo]);
 
   useEffect(() => {
     const authError = params.get('authError');
