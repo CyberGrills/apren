@@ -1,5 +1,5 @@
 import type { NigeriaLocation, Offering, Sector } from '@7even/contracts';
-import { BedDouble, Hotel, Search, SlidersHorizontal } from 'lucide-react';
+import { BedDouble, Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../../components/DatePicker.tsx';
@@ -13,6 +13,8 @@ type MarketplaceKind = Sector | 'ALL';
 
 const categories: { value: MarketplaceKind; label: string; Icon: typeof Hotel }[] = [
   { value: 'STAY', label: 'Hotels & stays', Icon: Hotel },
+  { value: 'DINING', label: 'Dining', Icon: Utensils },
+  { value: 'EXPERIENCE', label: 'Things to do', Icon: Compass },
 ];
 
 const categoryHeadings: Record<MarketplaceKind, { title: string; description: string }> = {
