@@ -1,5 +1,5 @@
 import type { NigeriaLocation, Offering, Sector } from '@7even/contracts';
-import { BedDouble, Search, SlidersHorizontal } from 'lucide-react';
+import { BedDouble, Hotel, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../../components/DatePicker.tsx';
@@ -11,8 +11,8 @@ import { addDays, localDateNow, PublicFooter, PublicHeader, readSevenLanguage } 
 
 type MarketplaceKind = Sector | 'ALL';
 
-const categories: { value: MarketplaceKind; label: string; Icon: typeof BedDouble }[] = [
-  { value: 'STAY', label: 'Hotels & stays', Icon: BedDouble },
+const categories: { value: MarketplaceKind; label: string; Icon: typeof Hotel }[] = [
+  { value: 'STAY', label: 'Hotels & stays', Icon: Hotel },
 ];
 
 const categoryHeadings: Record<MarketplaceKind, { title: string; description: string }> = {
@@ -152,7 +152,7 @@ export function LandingPage() {
                   />
                 </div>
                 <div className="seven-search-field seven-search-rooms">
-                  <label htmlFor="seven-rooms">Rooms</label>
+                  <label htmlFor="seven-rooms" className="seven-rooms-label"><BedDouble size={15} aria-hidden="true" /> Rooms</label>
                   <select
                     id="seven-rooms"
                     value={rooms}
