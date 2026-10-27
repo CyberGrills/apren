@@ -11,15 +11,18 @@ const explore = source('../../apps/web/src/pages/public/ExplorePage.tsx');
 const account = source('../../apps/web/src/pages/customer/AccountPage.tsx');
 const app = source('../../apps/web/src/App.tsx');
 
-test('public navigation presents hotel stays rather than dining or experiences', () => {
+test('public navigation retains stays, dining and experiences', () => {
   assert.match(publicShell, /Hotels & stays/);
-  assert.doesNotMatch(publicShell, /kind=DINING|kind=EXPERIENCE/);
-  assert.doesNotMatch(landing, /label: 'Dining'|label: 'Experiences'/);
+  assert.match(publicShell, /kind=DINING/);
+  assert.match(publicShell, /kind=EXPERIENCE/);
+  assert.match(landing, /label: 'Dining'/);
+  assert.match(landing, /label: 'Things to do'/);
 });
 
-test('guest search always requests stay inventory, including AI interpreted searches', () => {
-  assert.match(explore, /query\.set\('kind', 'STAY'\)/);
-  assert.match(explore, /next\.set\('kind', 'STAY'\)/);
+test('explore preserves the selected sector while stay-only search uses AI filters', () => {
+  assert.match(explore, /query\.set\('kind', kind\)/);
+  assert.match(explore, /next\.set\('kind', kind\)/);
+  assert.match(explore, /const isStaySearch = kind === 'STAY'/);
   assert.doesNotMatch(explore, /sourcedDirectoryListings|DirectoryListingCard/);
 });
 
