@@ -37,6 +37,16 @@
 .date-picker__trigger span {
   min-width: 0;
 }
+.date-picker__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.date-picker__value svg {
+  color: var(--date-picker-forest);
+  flex-shrink: 0;
+}
 .date-picker__trigger svg {
   flex-shrink: 0;
 }
