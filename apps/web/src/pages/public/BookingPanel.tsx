@@ -142,6 +142,24 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       setBusy(false);
     }
   }
+  if (offering.isSample) {
+    return (
+      <aside className="booking-panel booking-panel-unavailable" aria-labelledby="booking-title">
+        <div className="booking-panel-top">
+          <span className="public-eyebrow">Sample listing</span>
+          <h2 id="booking-title">Booking unavailable</h2>
+        </div>
+        <p role="status">
+          This is an illustrative listing, not verified live inventory. Dates, room counts, quotes,
+          reservations, and payment are disabled until the property is verified.
+        </p>
+        <Link className="btn btn-secondary booking-cta" to="/explore?kind=STAY">
+          Browse stays
+        </Link>
+      </aside>
+    );
+  }
+
   return (
     <aside className="booking-panel" aria-labelledby="booking-title">
       <div className="booking-panel-top">
