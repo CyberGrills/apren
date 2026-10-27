@@ -1,4 +1,4 @@
-import type { Offering, Sector } from '@7even/contracts';
+import type { Offering } from '@7even/contracts';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -13,8 +13,6 @@ import {
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
 import { stayDatesError } from '../../lib/datePicker.ts';
-import { sourcedDirectoryListings } from '../../lib/nigeriaDirectory.ts';
-import { DirectoryListingCard } from './DirectoryListingCard.tsx';
 import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 export function ExplorePage() {
@@ -22,31 +20,28 @@ export function ExplorePage() {
   const { showError } = useFeedback();
   const [aiMessage, setAiMessage] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  const requestedKind = params.get('kind');
-  const kind =
-    requestedKind && ['STAY', 'DINING', 'EXPERIENCE'].includes(requestedKind)
-      ? (requestedKind as Sector)
-      : null;
+  // The guest-facing marketplace is intentionally hotel/stay-only.
+  const kind = 'STAY' as const;
   const page = Math.min(10000, Math.max(1, Math.trunc(Number(params.get('page')) || 1)));
   const pageSize = 12;
   const query = new URLSearchParams(params);
   query.set('pageSize', String(pageSize));
   query.set('page', String(page));
-  if (!kind) query.delete('kind');
+  query.set('kind', 'STAY');
   const { data, loading, error, reload } = useApi<Offering[]>(`/offerings?${query}`);
   function filter(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const dateError =
-      !kind || kind === 'STAY'
-        ? stayDatesError(String(form.get('startDate') ?? ''), String(form.get('endDate') ?? ''))
-        : null;
+    const dateError = stayDatesError(
+      String(form.get('startDate') ?? ''),
+      String(form.get('endDate') ?? ''),
+    );
     if (dateError) {
       showError(dateError);
       return;
     }
     const next = new URLSearchParams();
-    if (kind && ['STAY', 'DINING', 'EXPERIENCE'].includes(kind)) next.set('kind', kind);
+    next.set('kind', 'STAY');
     for (const key of ['state', 'city', 'startDate', 'endDate', 'rooms']) {
       const value = String(form.get(key) ?? '').trim();
       if (value) next.set(key, value);
@@ -81,7 +76,10 @@ export function ExplorePage() {
         showError(result.intent.clarification);
         return;
       }
-      setParams(new URLSearchParams({ ...result.searchParams, page: '1' }));
+      const nextParams = new URLSearchParams(result.searchParams);
+      nextParams.set('kind', 'STAY');
+      nextParams.set('page', '1');
+      setParams(nextParams);
     } catch (cause) {
       showError(
         cause instanceof Error ? cause.message : 'AI search is unavailable. Use the filters below.',
@@ -90,53 +88,16 @@ export function ExplorePage() {
       setAiLoading(false);
     }
   }
-  const directorySearch = [params.get('city'), params.get('q'), params.get('search')]
-    .filter((value): value is string => Boolean(value?.trim()))
-    .join(' ')
-    .trim()
-    .toLocaleLowerCase('en-NG');
-  const directoryMatches =
-    !loading && (!data || data.length === 0) && directorySearch.length >= 2
-      ? sourcedDirectoryListings.filter((listing) => {
-          if (listing.kind !== 'STAY') return false;
-          const state = params.get('state')?.toLocaleLowerCase('en-NG');
-          if (state && !listing.state.toLocaleLowerCase('en-NG').includes(state)) return false;
-          const haystack = [
-            listing.name,
-            listing.state,
-            listing.city,
-            listing.area,
-            listing.address,
-            listing.description,
-          ].join(' ').toLocaleLowerCase('en-NG');
-          return directorySearch.split(/\s+/).every((term) => haystack.includes(term));
-        })
-      : [];
-  function changeKind(value: string) {
-    const next = new URLSearchParams(params);
-    if (value) next.set('kind', value);
-    else next.delete('kind');
-    next.delete('page');
-    setParams(next);
-  }
   return (
     <div className="public-page">
       <PublicHeader />
       <main id="main-content" className="public-container explore-page">
         <div className="explore-heading">
           <span className="public-eyebrow">Find your next plan</span>
-          <h1>
-            {kind === 'STAY'
-              ? 'Stay a little while.'
-              : kind === 'DINING'
-                ? 'There’s a table for that.'
-                : kind === 'EXPERIENCE'
-                  ? 'Make a day of it.'
-                  : 'Somewhere good to go.'}
-          </h1>
-          <p>Rooms, dining and experiences from businesses on 7even.</p>
+          <h1>Find your next stay.</h1>
+          <p>Discover hotels and apartments across Nigeria with availability checked by 7even.</p>
         </div>
-        {(!kind || kind === 'STAY') && (
+        {(
           <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
             <div className="explore-ai-field">
               <label htmlFor="explore-ai-query">
@@ -169,25 +130,6 @@ export function ExplorePage() {
             </p>
           </form>
         )}
-        <fieldset className="explore-categories">
-          <legend className="sr-only">Browse categories</legend>
-          {[
-            ['', 'Everything'],
-            ['STAY', 'Stays'],
-            ['DINING', 'Dining'],
-            ['EXPERIENCE', 'Experiences'],
-          ].map(([value, label]) => (
-            <button
-              type="button"
-              key={value}
-              className={(kind ?? '') === value ? 'active' : ''}
-              aria-pressed={(kind ?? '') === value}
-              onClick={() => changeKind(value ?? '')}
-            >
-              {label}
-            </button>
-          ))}
-        </fieldset>
         <form className="explore-filters" key={params.toString()} onSubmit={filter}>
           <div className="explore-filter-heading">
             <SlidersHorizontal size={17} aria-hidden="true" />
@@ -199,7 +141,7 @@ export function ExplorePage() {
             initialCity={params.get('city') ?? ''}
           />
           <div>
-            <label htmlFor="explore-start">{kind === 'STAY' ? 'Check-in' : 'Date'}</label>
+            <label htmlFor="explore-start">Check-in</label>
             <input
               id="explore-start"
               name="startDate"
@@ -220,7 +162,7 @@ export function ExplorePage() {
                   defaultValue={params.get('endDate') ?? ''}
                 />
               </div>
-              {kind === 'STAY' && (
+              {(
                 <div>
                   <label htmlFor="explore-rooms">Rooms</label>
                   <input
@@ -250,30 +192,11 @@ export function ExplorePage() {
                 : 'Places on 7even'}
           </p>
           <span>
-            {kind === 'STAY'
-              ? 'Live room availability checked on each search; final quote confirms price and capacity.'
-              : 'Full prices shown before you reserve.'}
+            Live room availability is checked on each search; the final quote confirms price and capacity.
           </span>
         </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
-        {directoryMatches.length > 0 && (
-          <section className="seven-directory-search-results" aria-labelledby="directory-search-results-title">
-            <div className="seven-directory-search-heading">
-              <div>
-                <span className="public-eyebrow">Wider 7even discovery</span>
-                <h2 id="directory-search-results-title">We found this place in our directory.</h2>
-                <p>It is not live bookable inventory yet. Open the source listing or contact the property while 7even verifies partner access and current room availability.</p>
-              </div>
-              <span className="seven-directory-result-count">{directoryMatches.length} {directoryMatches.length === 1 ? 'match' : 'matches'}</span>
-            </div>
-            <div className="seven-directory-grid">
-              {directoryMatches.map((listing) => (
-                <DirectoryListingCard key={listing.id} listing={listing} />
-              ))}
-            </div>
-          </section>
-        )}
         {data && data.length > 0 && (
           <section className="explore-results" aria-labelledby="explore-results-title">
             <h2 className="sr-only" id="explore-results-title">
@@ -315,13 +238,13 @@ export function ExplorePage() {
             </button>
           </nav>
         )}
-        {data?.length === 0 && directoryMatches.length === 0 && (
+        {data?.length === 0 && (
           <EmptyState
             title="No places match this search yet."
-            description="Try another city or date, or browse everything currently available."
+            description="Try another city or date. Only verified 7even stays appear as bookable results."
             action={
-              <button type="button" className="btn btn-secondary" onClick={() => setParams({})}>
-                See all places
+              <button type="button" className="btn btn-secondary" onClick={() => setParams({ kind: 'STAY' })}>
+                See all stays
               </button>
             }
           />
