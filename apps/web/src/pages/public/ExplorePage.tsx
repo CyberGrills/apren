@@ -20,8 +20,6 @@ export function ExplorePage() {
   const { showError } = useFeedback();
   const [aiMessage, setAiMessage] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  // The guest-facing marketplace is intentionally hotel/stay-only.
-  const kind = 'STAY' as const;
   const page = Math.min(10000, Math.max(1, Math.trunc(Number(params.get('page')) || 1)));
   const pageSize = 12;
   const query = new URLSearchParams(params);
