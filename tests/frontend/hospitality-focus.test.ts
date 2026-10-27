@@ -8,6 +8,7 @@ const source = (path: string) =>
 const publicShell = source('../../apps/web/src/pages/public/PublicShell.tsx');
 const landing = source('../../apps/web/src/pages/public/LandingPage.tsx');
 const explore = source('../../apps/web/src/pages/public/ExplorePage.tsx');
+const publicStyles = source('../../apps/web/src/styles/public.css');
 const account = source('../../apps/web/src/pages/customer/AccountPage.tsx');
 const app = source('../../apps/web/src/App.tsx');
 
@@ -24,6 +25,18 @@ test('explore preserves the selected sector while stay-only search uses AI filte
   assert.match(explore, /next\.set\('kind', kind\)/);
   assert.match(explore, /const isStaySearch = kind === 'STAY'/);
   assert.doesNotMatch(explore, /sourcedDirectoryListings|DirectoryListingCard/);
+});
+
+
+test('Explore redesign keeps all three categories and mobile filters in normal document flow', () => {
+  assert.match(explore, /aria-label="Explore categories"/);
+  assert.match(explore, /label: 'Hotels & stays'/);
+  assert.match(explore, /label: 'Dining'/);
+  assert.match(explore, /label: 'Things to do'/);
+  assert.match(explore, /aria-controls="explore-filter-form"/);
+  assert.match(explore, /filtersOpen \? 'is-open' : ''/);
+  assert.match(publicStyles, /\.explore-filters\.is-open\s*\{\s*display:\s*grid;/);
+  assert.match(publicStyles, /@media \(max-width: 640px\)/);
 });
 
 test('external directory and legacy rewards routes do not act as booking destinations', () => {
