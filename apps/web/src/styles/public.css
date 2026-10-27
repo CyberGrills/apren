@@ -1645,7 +1645,7 @@
   gap: 0.4rem;
 }
 .seven-search-input-wrap svg {
-  display: none;
+  display: block;
   flex-shrink: 0;
   color: #717171;
 }
@@ -2948,12 +2948,11 @@
   display: block;
 }
 
-/* Keep the homepage filters control in normal flow so it never covers the
-   category row or the search card at desktop and mobile breakpoints. */
+/* Keep category navigation and the More filters control in normal flow. */
 .seven-marketplace .seven-category-row {
   justify-content: flex-start;
   gap: 1rem;
-  overflow-x: auto;
+  overflow: visible;
 }
 .seven-marketplace .seven-more-filters {
   position: static;
@@ -2963,11 +2962,20 @@
 }
 @media (max-width: 600px) {
   .seven-marketplace .seven-category-row {
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
     padding-inline: 1rem;
+    overflow: visible;
+  }
+  .seven-marketplace .seven-category {
+    min-width: 0;
+    flex: 1 1 0;
   }
   .seven-marketplace .seven-more-filters {
-    padding-inline: 0.65rem;
+    flex: 0 0 100%;
+    justify-content: flex-end;
+    min-height: 42px;
+    padding-inline: 0.85rem;
     white-space: nowrap;
   }
 }
