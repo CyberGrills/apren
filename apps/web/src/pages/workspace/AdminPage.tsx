@@ -141,6 +141,63 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
       {loading && <Loading />}
       {error && <ErrorNotice message={error} retry={reload} />}
       {actionError && <ErrorNotice message={actionError} />}
+      {tab === 'businesses' && (
+        <AdminRecords<Business>
+          collection="businesses"
+          searchLabel="Find a business"
+          placeholder="Name, city or state"
+          statuses={['PENDING', 'APPROVED', 'SUSPENDED']}
+        >
+          {(businesses) => (
+            <div className="business-list">
+              {businesses.map((b) => (
+                <article className="business-card" key={b.id}>
+                  <div className="business-card-header">
+                    <div>
+                      <p className="eyebrow">
+                        {b.isSample ? 'Sample business' : b.sector.toLowerCase()} · {b.city}
+                      </p>
+                      <h2>{b.businessName}</h2>
+                    </div>
+                    <StatusBadge status={b.status} />
+                  </div>
+                  <p>{b.description}</p>
+                  <p>{b.address} · {b.phone}</p>
+                  <p>{b.subaccountConfigured ? `Bank mapping: ${b.accountLabel}` : 'No verified bank subaccount.'}</p>
+                  {(b.paymentAccounts ?? []).map((account) => (
+                    <div className="admin-payment-account" key={account.id}>
+                      <p>
+                        <strong>{account.provider === 'crypto' ? 'USDC business wallet' : account.provider === 'paystack' ? 'Paystack' : 'Flutterwave'}</strong>{' '}
+                        · <StatusBadge status={account.status} />{' '}
+                        {account.mode === 'mock' && <span className="tag">Local test</span>}
+                      </p>
+                      <code className="crypto-address">{account.accountCode}</code>
+                      {account.provider === 'crypto' && account.status === 'PENDING' && (
+                        <button type="button" className="btn btn-secondary btn-small" onClick={() => setEditor({ kind: 'cryptoWallet', business: b, account })}>
+                          Review wallet ownership
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {b.cryptoCommissionOwedMinor && <p>USDC commission owed: <Money minor={b.cryptoCommissionOwedMinor} /></p>}
+                  <div className="row-actions">
+                    {b.status !== 'APPROVED' ? (
+                      <button type="button" className="btn btn-primary btn-small" onClick={() => setEditor({ kind: 'status', business: b, status: 'APPROVED' })}>
+                        <Check size={14} /> Review approval
+                      </button>
+                    ) : (
+                      <button type="button" className="btn btn-danger btn-small" onClick={() => setEditor({ kind: 'status', business: b, status: 'SUSPENDED' })}>
+                        Suspend business
+                      </button>
+                    )}
+                    <button type="button" className="btn btn-secondary btn-small" onClick={() => setEditor({ kind: 'subaccount', business: b })}>Bank subaccount</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </AdminRecords>
+      )}
       {data && (
         <>
           {tab === 'overview' && (
@@ -148,104 +205,6 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
               data={data}
               onReview={(business) => setEditor({ kind: 'status', business, status: 'APPROVED' })}
             />
-          )}
-          {tab === 'businesses' && (
-            <AdminRecords<Business>
-              collection="businesses"
-              searchLabel="Find a business"
-              placeholder="Name, city or state"
-              statuses={['PENDING', 'APPROVED', 'SUSPENDED']}
-            >
-              {(businesses) => (
-                <div className="business-list">
-                  {businesses.map((b) => (
-                    <article className="business-card" key={b.id}>
-                      <div className="business-card-header">
-                        <div>
-                          <p className="eyebrow">
-                            {b.isSample ? 'Sample business' : b.sector.toLowerCase()} · {b.city}
-                          </p>
-                          <h2>{b.businessName}</h2>
-                        </div>
-                        <StatusBadge status={b.status} />
-                      </div>
-                      <p>{b.description}</p>
-                      <p>
-                        {b.address} · {b.phone}
-                      </p>
-                      <p>
-                        {b.subaccountConfigured
-                          ? `Bank mapping: ${b.accountLabel}`
-                          : 'No verified bank subaccount.'}
-                      </p>
-                      {(b.paymentAccounts ?? []).map((account) => (
-                        <div className="admin-payment-account" key={account.id}>
-                          <p>
-                            <strong>
-                              {account.provider === 'crypto'
-                                ? 'USDC business wallet'
-                                : account.provider === 'paystack'
-                                  ? 'Paystack'
-                                  : 'Flutterwave'}
-                            </strong>{' '}
-                            · <StatusBadge status={account.status} />{' '}
-                            {account.mode === 'mock' && <span className="tag">Local test</span>}
-                          </p>
-                          <code className="crypto-address">{account.accountCode}</code>
-                          {account.provider === 'crypto' && account.status === 'PENDING' && (
-                            <button
-                              type="button"
-                              className="btn btn-secondary btn-small"
-                              onClick={() =>
-                                setEditor({ kind: 'cryptoWallet', business: b, account })
-                              }
-                            >
-                              Review wallet ownership
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      {b.cryptoCommissionOwedMinor && (
-                        <p>
-                          USDC commission owed: <Money minor={b.cryptoCommissionOwedMinor} />
-                        </p>
-                      )}
-                      <div className="row-actions">
-                        {b.status !== 'APPROVED' ? (
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-small"
-                            onClick={() =>
-                              setEditor({ kind: 'status', business: b, status: 'APPROVED' })
-                            }
-                          >
-                            <Check size={14} />
-                            Review approval
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-small"
-                            onClick={() =>
-                              setEditor({ kind: 'status', business: b, status: 'SUSPENDED' })
-                            }
-                          >
-                            Suspend business
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-small"
-                          onClick={() => setEditor({ kind: 'subaccount', business: b })}
-                        >
-                          Bank subaccount
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </AdminRecords>
           )}
           {tab === 'payments' && (
             <>
@@ -442,7 +401,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
           )}
         </>
       )}
-      {editor && data && (
+      {editor && (editor.kind !== 'policy' || data) && (
         <AdminEditor editor={editor} data={data} onClose={() => setEditor(null)} onDone={reload} />
       )}
       {command && (
@@ -485,7 +444,7 @@ function AdminEditor({
   onDone,
 }: {
   editor: Editor;
-  data: AdminOverview;
+  data: AdminOverview | null;
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -691,7 +650,7 @@ function AdminEditor({
             </Field>
           </>
         )}
-        {editor.kind === 'policy' && (
+        {editor.kind === 'policy' && data && (
           <>
             <Field
               label="Eligible spend in kobo"
