@@ -75,9 +75,9 @@ test('guest account navigation stays focused on profile, bookings and updates', 
 
 test('checkout shows service fees separately when the quote includes one', () => {
   const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
-  assert.match(bookingPanel, /quote\\.price\\.serviceMinor !== '0'/);
-  assert.match(bookingPanel, /<dt>Service fee<\\/dt>[\\s\\S]*?<Money minor={quote\\.price\\.serviceMinor} \\/>/);
-  assert.match(bookingPanel, /<dt>Total<\\/dt>[\\s\\S]*?<Money minor={quote\\.price\\.totalMinor} \\/>/);
+  assert.match(bookingPanel, /quote\.price\.serviceMinor !== '0'/);
+  assert.match(bookingPanel, /<dt>Service fee<\/dt>[\s\S]*?<Money minor={quote\.price\.serviceMinor} \/>/);
+  assert.match(bookingPanel, /<dt>Total<\/dt>[\s\S]*?<Money minor={quote\.price\.totalMinor} \/>/);
 });
 
 test('sample offerings never present illustrative prices as bookable rates', () => {
