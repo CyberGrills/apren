@@ -150,6 +150,11 @@ export function App() {
         <FeedbackProvider>
           <SessionProvider>
             <ScrollPosition />
+            <div className="apren-watermark" aria-hidden="true">
+              {Array.from({ length: 24 }, (_, index) => (
+                <span key={index}>āprən × 7even</span>
+              ))}
+            </div>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/explore" element={<ExplorePage />} />

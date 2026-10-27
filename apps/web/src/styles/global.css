@@ -798,3 +798,46 @@ th:last-child {
     padding: 2rem 1.5rem;
   }
 }
+
+
+/* Subtle, non-interactive brand watermark shared by every routed page. */
+.apren-watermark {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  color: var(--brand-primary, #2b4a33);
+  opacity: 0.045;
+}
+.apren-watermark span {
+  display: block;
+  white-space: nowrap;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(0.85rem, 1.8vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  transform: rotate(-28deg);
+}
+@media (max-width: 640px) {
+  .apren-watermark {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+    opacity: 0.035;
+  }
+  .apren-watermark span {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apren-watermark span {
+    transform: none;
+  }
+}
