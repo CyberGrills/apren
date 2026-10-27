@@ -1,6 +1,6 @@
 import { ArrowUpRight, Menu, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 
@@ -16,8 +16,31 @@ export function readSevenLanguage(): SevenLanguage {
 }
 export function PublicHeader() {
   const { user } = useSession();
+  const location = useLocation();
+  const headerRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [language, setLanguage] = useState<SevenLanguage>(readSevenLanguage);
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname, location.search]);
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [open]);
   useEffect(() => {
     const syncLanguage = (event: Event) => {
       const next = (event as CustomEvent<SevenLanguage>).detail;
@@ -48,7 +71,7 @@ export function PublicHeader() {
           ? { label: 'Open reception', href: '/reception' }
           : { label: 'For business', href: '/business/apply' };
   return (
-    <header className="public-header">
+    <header className="public-header" ref={headerRef}>
       <div className="public-container public-nav">
         <Link to="/" aria-label="7even home" className="public-brand">
           <Brand />
@@ -76,14 +99,15 @@ export function PublicHeader() {
             className="public-menu-button"
             aria-label={open ? 'Close navigation' : 'Open navigation'}
             aria-expanded={open}
-            onClick={() => setOpen(!open)}
+            aria-controls="public-mobile-nav"
+            onClick={() => setOpen((current) => !current)}
           >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
       {open && (
-        <nav className="public-mobile-nav public-container" aria-label="Mobile navigation">
+        <nav id="public-mobile-nav" className="public-mobile-nav" aria-label="Mobile navigation">
           <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}
           </Link>
