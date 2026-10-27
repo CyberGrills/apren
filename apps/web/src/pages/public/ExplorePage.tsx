@@ -97,8 +97,7 @@ export function ExplorePage() {
           <h1>Find your next stay.</h1>
           <p>Discover hotels and apartments across Nigeria with availability checked by 7even.</p>
         </div>
-        {(
-          <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
+        <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
             <div className="explore-ai-field">
               <label htmlFor="explore-ai-query">
                 <Search size={17} aria-hidden="true" />
@@ -128,8 +127,7 @@ export function ExplorePage() {
               Your request goes to OpenAI to turn it into search filters. Prices and availability
               come from 7even.
             </p>
-          </form>
-        )}
+        </form>
         <form className="explore-filters" key={params.toString()} onSubmit={filter}>
           <div className="explore-filter-heading">
             <SlidersHorizontal size={17} aria-hidden="true" />
@@ -150,9 +148,7 @@ export function ExplorePage() {
               defaultValue={params.get('startDate') ?? ''}
             />
           </div>
-          {(!kind || kind === 'STAY') && (
-            <>
-              <div>
+          <div>
                 <label htmlFor="explore-end">Check-out</label>
                 <input
                   id="explore-end"
@@ -161,9 +157,8 @@ export function ExplorePage() {
                   min={params.get('startDate') || localDateNow()}
                   defaultValue={params.get('endDate') ?? ''}
                 />
-              </div>
-              {(
-                <div>
+          </div>
+          <div>
                   <label htmlFor="explore-rooms">Rooms</label>
                   <input
                     id="explore-rooms"
@@ -175,10 +170,7 @@ export function ExplorePage() {
                     required
                     defaultValue={params.get('rooms') ?? '1'}
                   />
-                </div>
-              )}
-            </>
-          )}
+          </div>
           <button type="submit" className="btn btn-primary">
             <Search size={17} aria-hidden="true" /> Find places
           </button>
