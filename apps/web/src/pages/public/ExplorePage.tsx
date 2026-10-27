@@ -1,5 +1,5 @@
 import type { Offering, Sector } from '@7even/contracts';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { StateCityFields } from '../../components/LocationFields.tsx';
@@ -19,6 +19,7 @@ export function ExplorePage() {
   const [params, setParams] = useSearchParams();
   const { showError } = useFeedback();
   const [aiMessage, setAiMessage] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const page = Math.min(10000, Math.max(1, Math.trunc(Number(params.get('page')) || 1)));
   const pageSize = 12;
@@ -109,6 +110,37 @@ export function ExplorePage() {
           <h1>{heading.title}</h1>
           <p>{heading.description}</p>
         </div>
+        <nav className="explore-category-tabs" aria-label="Explore categories">
+          {[
+            { value: 'STAY', label: 'Hotels & stays', Icon: Hotel },
+            { value: 'DINING', label: 'Dining', Icon: Utensils },
+            { value: 'EXPERIENCE', label: 'Things to do', Icon: Compass },
+          ].map(({ value, label, Icon }) => (
+            <button
+              type="button"
+              key={value}
+              className={kind === value ? 'active' : ''}
+              aria-pressed={kind === value}
+              onClick={() => setParams({ kind: value })}
+            >
+              <Icon size={18} aria-hidden="true" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="explore-filter-toolbar">
+          <span>Search by destination and dates, then refine your results.</span>
+          <button
+            type="button"
+            className="explore-filter-toggle"
+            aria-expanded={filtersOpen}
+            aria-controls="explore-filter-form"
+            onClick={() => setFiltersOpen((open) => !open)}
+          >
+            <SlidersHorizontal size={17} aria-hidden="true" />
+            {filtersOpen ? 'Hide filters' : 'More filters'}
+          </button>
+        </div>
         {isStaySearch && <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
             <div className="explore-ai-field">
               <label htmlFor="explore-ai-query">
@@ -140,7 +172,7 @@ export function ExplorePage() {
               come from 7even.
             </p>
         </form>}
-        <form className="explore-filters" key={params.toString()} onSubmit={filter}>
+        <form id="explore-filter-form" className={`explore-filters ${filtersOpen ? 'is-open' : ''}`} key={params.toString()} onSubmit={filter}>
           <div className="explore-filter-heading">
             <SlidersHorizontal size={17} aria-hidden="true" />
             <span>Make it yours</span>
@@ -196,11 +228,11 @@ export function ExplorePage() {
             {loading
               ? 'Finding places…'
               : data
-                ? `${data.length} ${data.length === 1 ? 'place' : 'places'} to consider`
+                ? `${data.length} ${data.length === 1 ? 'place' : 'places'} on this page`
                 : 'Places on 7even'}
           </p>
           <span>
-            Live room availability is checked on each search; the final quote confirms price and capacity.
+            Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.
           </span>
         </div>
         {loading && <Loading />}
