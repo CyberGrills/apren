@@ -1,4 +1,4 @@
-import type { Offering } from '@7even/contracts';
+import type { Offering, Sector } from '@7even/contracts';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -22,25 +22,39 @@ export function ExplorePage() {
   const [aiLoading, setAiLoading] = useState(false);
   const page = Math.min(10000, Math.max(1, Math.trunc(Number(params.get('page')) || 1)));
   const pageSize = 12;
+  const requestedKind = params.get('kind');
+  const kind: Sector =
+    requestedKind === 'DINING' || requestedKind === 'EXPERIENCE' ? requestedKind : 'STAY';
+  const isStaySearch = kind === 'STAY';
+  const heading = kind === 'DINING'
+    ? { title: 'Find dining worth your time.', description: 'Discover restaurants and places to eat listed on 7even.' }
+    : kind === 'EXPERIENCE'
+      ? { title: 'Find things to do.', description: 'Discover local experiences and activities listed on 7even.' }
+      : { title: 'Find your next stay.', description: 'Discover hotels and apartments across Nigeria with availability checked by 7even.' };
   const query = new URLSearchParams(params);
   query.set('pageSize', String(pageSize));
   query.set('page', String(page));
-  query.set('kind', 'STAY');
+  query.set('kind', kind);
   const { data, loading, error, reload } = useApi<Offering[]>(`/offerings?${query}`);
   function filter(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const dateError = stayDatesError(
-      String(form.get('startDate') ?? ''),
-      String(form.get('endDate') ?? ''),
-    );
+    const dateError = isStaySearch
+      ? stayDatesError(
+          String(form.get('startDate') ?? ''),
+          String(form.get('endDate') ?? ''),
+        )
+      : null;
     if (dateError) {
       showError(dateError);
       return;
     }
     const next = new URLSearchParams();
-    next.set('kind', 'STAY');
-    for (const key of ['state', 'city', 'startDate', 'endDate', 'rooms']) {
+    next.set('kind', kind);
+    const filterKeys = isStaySearch
+      ? ['state', 'city', 'startDate', 'endDate', 'rooms']
+      : ['state', 'city', 'startDate'];
+    for (const key of filterKeys) {
       const value = String(form.get(key) ?? '').trim();
       if (value) next.set(key, value);
     }
@@ -75,7 +89,7 @@ export function ExplorePage() {
         return;
       }
       const nextParams = new URLSearchParams(result.searchParams);
-      nextParams.set('kind', 'STAY');
+      nextParams.set('kind', kind);
       nextParams.set('page', '1');
       setParams(nextParams);
     } catch (cause) {
@@ -92,10 +106,10 @@ export function ExplorePage() {
       <main id="main-content" className="public-container explore-page">
         <div className="explore-heading">
           <span className="public-eyebrow">Find your next plan</span>
-          <h1>Find your next stay.</h1>
-          <p>Discover hotels and apartments across Nigeria with availability checked by 7even.</p>
+          <h1>{heading.title}</h1>
+          <p>{heading.description}</p>
         </div>
-        <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
+        {isStaySearch && <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
             <div className="explore-ai-field">
               <label htmlFor="explore-ai-query">
                 <Search size={17} aria-hidden="true" />
@@ -125,7 +139,7 @@ export function ExplorePage() {
               Your request goes to OpenAI to turn it into search filters. Prices and availability
               come from 7even.
             </p>
-        </form>
+        </form>}
         <form className="explore-filters" key={params.toString()} onSubmit={filter}>
           <div className="explore-filter-heading">
             <SlidersHorizontal size={17} aria-hidden="true" />
@@ -146,7 +160,9 @@ export function ExplorePage() {
               defaultValue={params.get('startDate') ?? ''}
             />
           </div>
-          <div>
+          {isStaySearch ? (
+            <>
+              <div>
                 <label htmlFor="explore-end">Check-out</label>
                 <input
                   id="explore-end"
@@ -155,20 +171,22 @@ export function ExplorePage() {
                   min={params.get('startDate') || localDateNow()}
                   defaultValue={params.get('endDate') ?? ''}
                 />
-          </div>
-          <div>
-                  <label htmlFor="explore-rooms">Rooms</label>
-                  <input
-                    id="explore-rooms"
-                    name="rooms"
-                    type="number"
-                    min={1}
-                    max={100}
-                    step={1}
-                    required
-                    defaultValue={params.get('rooms') ?? '1'}
-                  />
-          </div>
+              </div>
+              <div>
+                <label htmlFor="explore-rooms">Rooms</label>
+                <input
+                  id="explore-rooms"
+                  name="rooms"
+                  type="number"
+                  min={1}
+                  max={100}
+                  step={1}
+                  required
+                  defaultValue={params.get('rooms') ?? '1'}
+                />
+              </div>
+            </>
+          ) : null}
           <button type="submit" className="btn btn-primary">
             <Search size={17} aria-hidden="true" /> Find places
           </button>
@@ -231,10 +249,12 @@ export function ExplorePage() {
         {data?.length === 0 && (
           <EmptyState
             title="No places match this search yet."
-            description="Try another city or date. Only verified 7even stays appear as bookable results."
+            description={isStaySearch
+              ? 'Try another city or date. Only verified 7even stays appear as bookable results.'
+              : 'Try another location or check back as more businesses publish their listings.'}
             action={
-              <button type="button" className="btn btn-secondary" onClick={() => setParams({ kind: 'STAY' })}>
-                See all stays
+              <button type="button" className="btn btn-secondary" onClick={() => setParams({ kind })}>
+                {isStaySearch ? 'See all stays' : 'Clear filters'}
               </button>
             }
           />
