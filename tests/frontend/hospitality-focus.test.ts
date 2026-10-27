@@ -78,3 +78,12 @@ test('sample offerings never present illustrative prices as bookable rates', () 
   assert.match(ui, /offering\.isSample \? \([\s\S]*?Illustrative listing only\. This place is not available to book through 7even\./);
   assert.match(ui, /: \([\s\S]*?<Money minor={offering\.priceMinor} \/>/);
 });
+
+
+test('āprən × 7even watermark is global, decorative and does not intercept page interaction', () => {
+  assert.match(app, /className="apren-watermark" aria-hidden="true"/);
+  assert.match(app, /āprən × 7even/);
+  assert.match(app, /Array\.from\(\{ length: 24 \}/);
+  assert.match(source('../../apps/web/src/styles/global.css'), /\.apren-watermark\s*\{[\s\S]*?position:\s*fixed/);
+  assert.match(source('../../apps/web/src/styles/global.css'), /pointer-events:\s*none/);
+});
