@@ -2184,11 +2184,25 @@ export function createApp(options: AppOptions = {}) {
   app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (res.headersSent) return;
     if (error instanceof z.ZodError) {
+      const flattened = z.flattenError(error);
+      // Keep diagnostics useful without returning rejected input values or secrets.
+      console.warn('7even request validation failed', {
+        requestId: res.locals.requestId,
+        issues: error.issues.map((issue) => ({
+          code: issue.code,
+          path: issue.path.map(String),
+        })),
+      });
       res.status(422).json({
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Check the details and try again.',
-          fields: z.flattenError(error).fieldErrors,
+          fields: flattened.fieldErrors,
+          formErrors: flattened.formErrors,
+          issues: error.issues.map((issue) => ({
+            code: issue.code,
+            path: issue.path.map(String),
+          })),
           requestId: res.locals.requestId,
         },
       });
