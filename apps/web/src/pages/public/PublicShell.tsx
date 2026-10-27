@@ -1,5 +1,5 @@
 import { ArrowUpRight, Menu, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
@@ -17,11 +17,22 @@ export function readSevenLanguage(): SevenLanguage {
 export function PublicHeader() {
   const { user } = useSession();
   const location = useLocation();
+  const headerRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [language, setLanguage] = useState<SevenLanguage>(readSevenLanguage);
   useEffect(() => {
     setOpen(false);
   }, [location.pathname, location.search]);
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -60,7 +71,7 @@ export function PublicHeader() {
           ? { label: 'Open reception', href: '/reception' }
           : { label: 'For business', href: '/business/apply' };
   return (
-    <header className="public-header">
+    <header className="public-header" ref={headerRef}>
       <div className="public-container public-nav">
         <Link to="/" aria-label="7even home" className="public-brand">
           <Brand />
