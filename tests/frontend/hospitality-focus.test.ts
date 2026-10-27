@@ -39,6 +39,17 @@ test('Explore redesign keeps all three categories and mobile filters in normal d
   assert.match(publicStyles, /@media \(max-width: 640px\)/);
 });
 
+test('hamburger navigation closes predictably and stays within the mobile viewport', () => {
+  assert.match(publicShell, /aria-controls="public-mobile-nav"/);
+  assert.match(publicShell, /aria-expanded={open}/);
+  assert.match(publicShell, /event\.key === 'Escape'/);
+  assert.match(publicShell, /closeOnOutsideClick/);
+  assert.match(publicShell, /\[location\.pathname, location\.search\]/);
+  assert.match(publicStyles, /\.public-mobile-nav\s*\{[\s\S]*?box-shadow/);
+  assert.match(publicStyles, /@media \(max-width: 600px\)/);
+  assert.match(publicStyles, /max-height: min\(70vh, 32rem\)/);
+});
+
 test('external directory and legacy rewards routes do not act as booking destinations', () => {
   assert.match(app, /path="\/directory" element={<Navigate to="\/explore\?kind=STAY" replace \/>}/);
   assert.match(app, /path="\/app\/points" element={<Navigate to="\/app\/bookings" replace \/>}/);
