@@ -167,9 +167,9 @@ export function App() {
                 <Route path="/app/security" element={<PasswordPage />} />
                 <Route path="/business/apply" element={<BusinessApplicationPage />} />
                 <Route path="/app/bookings" element={<AccountPage tab="bookings" />} />
-                <Route path="/app/points" element={<AccountPage tab="points" />} />
-                <Route path="/app/benefits" element={<AccountPage tab="benefits" />} />
-                <Route path="/app/exchange" element={<AccountPage tab="exchange" />} />
+                <Route path="/app/points" element={<Navigate to="/app/bookings" replace />} />
+                <Route path="/app/benefits" element={<Navigate to="/app/bookings" replace />} />
+                <Route path="/app/exchange" element={<Navigate to="/app/bookings" replace />} />
                 <Route path="/app/profile" element={<AccountPage tab="profile" />} />
                 <Route path="/app/activity" element={<AccountPage tab="activity" />} />
                 <Route path="/checkout/test/:paymentId" element={<TestCheckoutPage />} />
