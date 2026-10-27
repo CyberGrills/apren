@@ -289,6 +289,14 @@ export function BookingPanel({ offering }: { offering: Offering }) {
                 </dd>
               </div>
             )}
+            {quote.price.serviceMinor !== '0' && (
+              <div>
+                <dt>Service fee</dt>
+                <dd>
+                  <Money minor={quote.price.serviceMinor} />
+                </dd>
+              </div>
+            )}
             <div>
               <dt>Tax</dt>
               <dd>
