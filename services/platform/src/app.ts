@@ -140,6 +140,14 @@ export function createApp(options: AppOptions = {}) {
   );
   app.use(async (req, res, next) => {
     try {
+      // Provider availability is public metadata. Do not let a stale or broken
+      // session cookie/database lookup prevent the login screen from rendering
+      // its available sign-in methods.
+      if (req.method === 'GET' && req.path === '/api/auth/methods') {
+        res.locals.actor = null;
+        res.locals.csrf = null;
+        return next();
+      }
       const token = req.headers.cookie
         ?.split(';')
         .map((v) => v.trim())
