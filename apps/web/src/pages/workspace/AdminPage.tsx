@@ -147,6 +147,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
           searchLabel="Find a business"
           placeholder="Name, city or state"
           statuses={['PENDING', 'APPROVED', 'SUSPENDED']}
+          initialStatus="PENDING"
         >
           {(businesses) => (
             <div className="business-list">
