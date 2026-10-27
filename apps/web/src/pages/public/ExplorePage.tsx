@@ -31,7 +31,7 @@ export function ExplorePage() {
     ? { title: 'Find dining worth your time.', description: 'Discover restaurants and places to eat listed on 7even.' }
     : kind === 'EXPERIENCE'
       ? { title: 'Find things to do.', description: 'Discover local experiences and activities listed on 7even.' }
-      : { title: 'Find your next stay.', description: 'Discover hotels and apartments across Nigeria with availability checked by 7even.' };
+      : { title: 'Find your next stay.', description: 'Discover hotels and apartments across Nigeria, with clear booking details before you commit.' };
   const query = new URLSearchParams(params);
   query.set('pageSize', String(pageSize));
   query.set('page', String(page));
@@ -183,7 +183,7 @@ export function ExplorePage() {
             initialCity={params.get('city') ?? ''}
           />
           <div>
-            <label htmlFor="explore-start">Check-in</label>
+            <label htmlFor="explore-start">{isStaySearch ? 'Check-in' : 'Date'}</label>
             <input
               id="explore-start"
               name="startDate"
