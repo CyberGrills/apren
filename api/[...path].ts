@@ -1,6 +1,7 @@
 import { createApp } from "../services/platform/src/app.ts";
 import { createPool } from "../services/platform/src/db.ts";
 import { paymentReadiness } from "../services/platform/src/providerRegistry.ts";
+import { schemaIsReady } from "../services/platform/src/schemaReadiness.ts";
 
 const vercelEnvironment = process.env.VERCEL_ENV;
 const environment =
@@ -60,7 +61,11 @@ export default async function handler(req: HandlerRequest, res: HandlerResponse)
     let pool: ReturnType<typeof createPool> | undefined;
     try {
       pool = createPool();
-      await pool.query("SELECT 1 FROM seven.migrations LIMIT 1");
+      if (!(await schemaIsReady(pool))) {
+        return res.status(503).json({
+          error: { code: "SCHEMA_NOT_READY", message: "Database schema migrations are incomplete." },
+        });
+      }
       const payments = paymentReadiness(environment);
       return res.status(200).json({
         data: { status: "ready", storage: "postgresql", paymentMode: payments.mode, payments },

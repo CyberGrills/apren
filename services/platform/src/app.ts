@@ -29,6 +29,7 @@ import * as P from './payments.ts';
 import * as B from './benefits.ts';
 import { mountOperations } from './operations.ts';
 import { mountBookingRecovery } from './bookingRecovery.ts';
+import { schemaIsReady } from './schemaReadiness.ts';
 import { mountAccountRoutes, rateLimitAiSearch, rateLimitLogin } from './accounts.ts';
 import type { RecoveryMailer } from './accounts.ts';
 import { configuredRecoveryMailer } from './recoveryMailer.ts';
@@ -393,7 +394,13 @@ export function createApp(options: AppOptions = {}) {
   }
   route('get', '/health/live', async () => ({ status: 'ok' }));
   route('get', '/health/ready', async () => {
-    await pool.query('SELECT 1 FROM seven.migrations LIMIT 1');
+    let ready = false;
+    try {
+      ready = await schemaIsReady(pool);
+    } catch {
+      return fail(503, 'DATABASE_NOT_READY', 'Database connection or schema is not ready.');
+    }
+    if (!ready) return fail(503, 'SCHEMA_NOT_READY', 'Database schema migrations are incomplete.');
     const payments = paymentReadiness(environment);
     return { status: 'ready', storage: 'postgresql', paymentMode: payments.mode, payments };
   });
