@@ -14,18 +14,20 @@ interface ReadinessRow {
 function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
   return {
     query: async (sql: string, values?: unknown[]) => {
-      assert.match(sql, /migration_name\s*=\s*\$1/);
-      assert.match(sql, /to_regclass\('seven\.booking_recovery_events'\)/);
-      assert.match(sql, /column_name\s*=\s*'recovery_session_id'/);
-      assert.match(sql, /seven_app_server_access/);
-      assert.match(sql, /seven_readonly_select_access/);
+      assert.match(sql, /migration_name\\s*=\\s*\\$1/);
+      assert.match(sql, /to_regclass\\('seven\\.booking_recovery_events'\\)/);
+      assert.match(sql, /column_name\\s*=\\s*'recovery_session_id'/);
+      assert.match(sql, /booking_recovery_events_app_access/);
+      assert.match(sql, /booking_recovery_events_readonly_access/);
+      assert.match(sql, /roles @> ARRAY\\['seven_app'\\]::name\\[\\]/);
+      assert.match(sql, /roles @> ARRAY\\['seven_readonly'\\]::name\\[\\]/);
       assert.deepEqual(values, [REQUIRED_SCHEMA_MIGRATION]);
       return { rows: row ? [row] : [] };
     },
   } as unknown as Pick<Pool, 'query'>;
 }
 
-test('schema readiness requires the migration, recovery table, quote column and RLS policy contract', async () => {
+test('schema readiness requires the migration, recovery table, quote column and actual RLS policy contract', async () => {
   const complete = {
     migration_applied: true,
     booking_recovery_events_present: true,
@@ -42,7 +44,7 @@ test('schema readiness requires the migration, recovery table, quote column and 
 
 test('readiness marker matches the highest numbered migration in the repository', async () => {
   const files = (await readdir(new URL('../../database/migrations/', import.meta.url)))
-    .filter((file) => /^\d+.*\.sql$/.test(file))
+    .filter((file) => /^\\d+.*\\.sql$/.test(file))
     .sort();
   assert.ok(files.length > 0);
   assert.equal(files.at(-1), REQUIRED_SCHEMA_MIGRATION);
@@ -51,8 +53,8 @@ test('readiness marker matches the highest numbered migration in the repository'
 test('both API entry points use schema-aware readiness rather than an old ledger row', async () => {
   const api = await readFile(new URL('../../api/[...path].ts', import.meta.url), 'utf8');
   const app = await readFile(new URL('../../services/platform/src/app.ts', import.meta.url), 'utf8');
-  assert.match(api, /schemaIsReady\(pool\)/);
-  assert.match(app, /schemaIsReady\(pool\)/);
-  assert.doesNotMatch(api, /SELECT 1 FROM seven\.migrations LIMIT 1/);
-  assert.doesNotMatch(app, /SELECT 1 FROM seven\.migrations LIMIT 1/);
+  assert.match(api, /schemaIsReady\\(pool\\)/);
+  assert.match(app, /schemaIsReady\\(pool\\)/);
+  assert.doesNotMatch(api, /SELECT 1 FROM seven\\.migrations LIMIT 1/);
+  assert.doesNotMatch(app, /SELECT 1 FROM seven\\.migrations LIMIT 1/);
 });
