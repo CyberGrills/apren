@@ -4,11 +4,12 @@ import test from 'node:test';
 import type { Pool } from 'pg';
 import { REQUIRED_SCHEMA_MIGRATION, schemaIsReady } from '../../services/platform/src/schemaReadiness.ts';
 
-function fakePool(row: { migration_applied: boolean; booking_recovery_events_present: boolean } | undefined): Pick<Pool, 'query'> {
+function fakePool(row: { migration_applied: boolean; booking_recovery_events_present: boolean; quote_recovery_session_column_present: boolean } | undefined): Pick<Pool, 'query'> {
   return {
     query: async (sql: string, values?: unknown[]) => {
       assert.match(sql, /migration_name\s*=\s*\$1/);
       assert.match(sql, /to_regclass\('seven\.booking_recovery_events'\)/);
+      assert.match(sql, /column_name='recovery_session_id'/);
       assert.deepEqual(values, [REQUIRED_SCHEMA_MIGRATION]);
       return { rows: row ? [row] : [] };
     },
@@ -16,9 +17,10 @@ function fakePool(row: { migration_applied: boolean; booking_recovery_events_pre
 }
 
 test('schema readiness requires the latest migration and booking-recovery table', async () => {
-  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: true })), true);
-  assert.equal(await schemaIsReady(fakePool({ migration_applied: false, booking_recovery_events_present: true })), false);
-  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: false })), false);
+  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: true, quote_recovery_session_column_present: true })), true);
+  assert.equal(await schemaIsReady(fakePool({ migration_applied: false, booking_recovery_events_present: true, quote_recovery_session_column_present: true })), false);
+  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: false, quote_recovery_session_column_present: true })), false);
+  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: true, quote_recovery_session_column_present: false })), false);
   assert.equal(await schemaIsReady(fakePool(undefined)), false);
 });
 
