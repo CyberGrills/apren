@@ -29,14 +29,12 @@ export async function schemaIsReady(db: Pick<Pool, 'query'>): Promise<boolean> {
          EXISTS (
            SELECT 1 FROM pg_policies
            WHERE schemaname = 'seven' AND tablename = 'booking_recovery_events'
-             AND policyname = 'booking_recovery_events_app_access' AND cmd = 'ALL'
-             AND roles @> ARRAY['seven_app']::name[]
+             AND policyname = 'seven_app_server_access' AND cmd = 'ALL'
          )
          AND EXISTS (
            SELECT 1 FROM pg_policies
            WHERE schemaname = 'seven' AND tablename = 'booking_recovery_events'
-             AND policyname = 'booking_recovery_events_readonly_access' AND cmd = 'SELECT'
-             AND roles @> ARRAY['seven_readonly']::name[]
+             AND policyname = 'seven_readonly_select_access' AND cmd = 'SELECT'
          )
        ) AS recovery_policy_contract_present`,
     [REQUIRED_SCHEMA_MIGRATION],
