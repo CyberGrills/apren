@@ -4,12 +4,19 @@ import test from 'node:test';
 import type { Pool } from 'pg';
 import { REQUIRED_SCHEMA_MIGRATION, schemaIsReady } from '../../services/platform/src/schemaReadiness.ts';
 
-function fakePool(row: { migration_applied: boolean; booking_recovery_events_present: boolean; quote_recovery_session_column_present: boolean; recovery_policy_contract_present: boolean } | undefined): Pick<Pool, 'query'> {
+interface ReadinessRow {
+  migration_applied: boolean;
+  booking_recovery_events_present: boolean;
+  quote_recovery_session_column_present: boolean;
+  recovery_policy_contract_present: boolean;
+}
+
+function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
   return {
     query: async (sql: string, values?: unknown[]) => {
       assert.match(sql, /migration_name\s*=\s*\$1/);
       assert.match(sql, /to_regclass\('seven\.booking_recovery_events'\)/);
-      assert.match(sql, /column_name='recovery_session_id'/);
+      assert.match(sql, /column_name\s*=\s*'recovery_session_id'/);
       assert.match(sql, /seven_app_server_access/);
       assert.match(sql, /seven_readonly_select_access/);
       assert.deepEqual(values, [REQUIRED_SCHEMA_MIGRATION]);
@@ -18,13 +25,19 @@ function fakePool(row: { migration_applied: boolean; booking_recovery_events_pre
   } as unknown as Pick<Pool, 'query'>;
 }
 
-test('schema readiness requires the latest migration and booking-recovery table', async () => {
-  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: true, quote_recovery_session_column_present: true, recovery_policy_contract_present: true })), true);
-  assert.equal(await schemaIsReady(fakePool({ migration_applied: false, booking_recovery_events_present: true, quote_recovery_session_column_present: true, recovery_policy_contract_present: true })), false);
-  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: false, quote_recovery_session_column_present: true, recovery_policy_contract_present: true })), false);
-  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: true, quote_recovery_session_column_present: false, recovery_policy_contract_present: true })), false);
-  assert.equal(await schemaIsReady(fakePool({ migration_applied: true, booking_recovery_events_present: true, quote_recovery_session_column_present: true, recovery_policy_contract_present: false })), false);
-  assert.equal(await schemaIsReady(fakePool(undefined)), false);
+test('schema readiness requires the migration, recovery table, quote column and RLS policy contract', async () => {
+  const complete = {
+    migration_applied: true,
+    booking_recovery_events_present: true,
+    quote_recovery_session_column_present: true,
+    recovery_policy_contract_present: true,
+  };
+  assert.equal(await schemaIsReady(fakePool(complete)), true);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, migration_applied: false })), false);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, booking_recovery_events_present: false })), false);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, quote_recovery_session_column_present: false })), false);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, recovery_policy_contract_present: false })), false);
+  assert.equal(await schemaIsReady(fakePool()), false);
 });
 
 test('readiness marker matches the highest numbered migration in the repository', async () => {
