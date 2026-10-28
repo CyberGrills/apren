@@ -19,7 +19,7 @@ The engine health count includes published hotel offerings whose businesses are 
 ## Investigate with an administrator account
 
 1. Open `/admin/login` using an account already assigned the ADMIN role. The public navigation does not advertise this link. Knowing the URL does not grant access.
-2. Open `/admin/inventory`. The database status comes from a PostgreSQL readiness query that checks the current required migration and the booking-recovery event table, not just the existence of an old migration-ledger row. A `503 SCHEMA_NOT_READY` requires an authorized operator to inspect migration state; do not apply migrations blindly.
+2. Open `/admin/inventory`. The database status comes from a PostgreSQL readiness query that checks the current required migration, booking-recovery event table, and quote attribution column, not just the existence of an old migration-ledger row. A `503 SCHEMA_NOT_READY` requires an authorized operator to inspect migration state; do not apply migrations blindly.
 3. Compare businesses, listings, published listings, eligible listings and blocked listings. Totals include every matching record, even when detail lists are capped.
 4. Inspect the affected business. For a business outside the latest 100 summaries, find it in the paginated business records and open `/admin/inventory?businessId=<business UUID>`. The corresponding read-only API is `/api/admin/listing-readiness?businessId=<business UUID>`.
 5. Follow the blocker shown for each offering. Missing state is a location-search warning, not a general publication blocker.
