@@ -1,7 +1,7 @@
 import type { Pool, QueryResultRow } from 'pg';
 
 /** Latest migration required by the current API contract. Keep covered by the migration-order test. */
-export const REQUIRED_SCHEMA_MIGRATION = '025_booking_recovery_rls_policy_contract.sql';
+export const REQUIRED_SCHEMA_MIGRATION = '026_quote_recovery_session_attribution.sql';
 
 interface SchemaReadinessRow extends QueryResultRow {
   migration_applied: boolean;
