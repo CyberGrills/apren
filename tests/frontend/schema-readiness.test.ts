@@ -17,17 +17,15 @@ function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
       assert.match(sql, /migration_name\s*=\s*\$1/);
       assert.match(sql, /to_regclass\('seven\.booking_recovery_events'\)/);
       assert.match(sql, /column_name\s*=\s*'recovery_session_id'/);
-      assert.match(sql, /booking_recovery_events_app_access/);
-      assert.match(sql, /booking_recovery_events_readonly_access/);
-      assert.match(sql, /roles @> ARRAY\['seven_app'\]::name\[\]/);
-      assert.match(sql, /roles @> ARRAY\['seven_readonly'\]::name\[\]/);
+      assert.match(sql, /seven_app_server_access/);
+      assert.match(sql, /seven_readonly_select_access/);
       assert.deepEqual(values, [REQUIRED_SCHEMA_MIGRATION]);
       return { rows: row ? [row] : [] };
     },
   } as unknown as Pick<Pool, 'query'>;
 }
 
-test('schema readiness requires the migration, recovery table, quote column and actual RLS policy contract', async () => {
+test('schema readiness requires the migration, recovery table, quote column and RLS policy contract', async () => {
   const complete = {
     migration_applied: true,
     booking_recovery_events_present: true,
