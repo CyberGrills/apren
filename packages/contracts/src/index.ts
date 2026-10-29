@@ -257,8 +257,19 @@ export const receptionEventInput = z.strictObject({
     .max(50),
 });
 
+export interface ApiValidationIssue {
+  code: string;
+  path: (string | number)[];
+}
 export interface ApiErrorBody {
-  error: { code: string; message: string; requestId?: string; fields?: Record<string, string[]> };
+  error: {
+    code: string;
+    message: string;
+    requestId?: string;
+    fields?: Record<string, string[]>;
+    formErrors?: string[];
+    issues?: ApiValidationIssue[];
+  };
 }
 export interface ApiEnvelope<T> {
   data: T;
