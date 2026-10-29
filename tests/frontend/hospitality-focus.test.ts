@@ -44,6 +44,14 @@ test('empty later explore pages offer a way back without discarding active filte
 });
 
 
+test('destination input label uses its generated unique input id', () => {
+  const locations = source('../../apps/web/src/components/LocationFields.tsx');
+  assert.match(locations, /const inputId = `\$\{id\}-input`/);
+  assert.match(locations, /<label htmlFor=\{inputId\}>Where<\/label>/);
+  assert.match(locations, /<input\s+id=\{inputId\}/);
+  assert.doesNotMatch(locations, /id="seven-city"|htmlFor="seven-city"/);
+});
+
 test('Explore checkout minimum follows check-in and requires at least one night', () => {
   assert.match(explore, /min={startDate \? addCalendarDays\(startDate, 1\) : localDateNow\(\)}/);
   assert.match(explore, /if \(endDate && nextStart && endDate <= nextStart\) setEndDate\(''\)/);
