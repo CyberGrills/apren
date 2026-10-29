@@ -144,4 +144,9 @@ test('virtual pilot scroll scene is stay-only, pinned, and respects reduced moti
   assert.match(styles, /\.seven-pilot-avatar \{ animation: none !important; \}/);
   assert.match(pilot, /No booking action is triggered/);
   assert.match(pilot, /aria-hidden="true"/);
+  assert.match(pilot, /className="seven-pilot-portrait"/);
+  assert.match(pilot, /linearGradient id="pilot-skin"/);
+  assert.match(pilot, /pattern id="pilot-coils"/);
+  assert.match(pilot, /linearGradient id="pilot-jacket"/);
+  assert.doesNotMatch(pilot, /seven-pilot-hair|seven-pilot-eye-left|seven-pilot-mouth/);
 });
