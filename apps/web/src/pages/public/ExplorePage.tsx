@@ -3,6 +3,8 @@ import { Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-reac
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { StateCityFields } from '../../components/LocationFields.tsx';
+import { GoogleMapsScene } from '../../components/GoogleMapsScene.tsx';
+import { ScrollPilotScene } from '../../components/ScrollPilotScene.tsx';
 import {
   EmptyState,
   ErrorNotice,
@@ -236,6 +238,8 @@ export function ExplorePage() {
             <Search size={17} aria-hidden="true" /> Find places
           </button>
         </form>
+        {isStaySearch && <GoogleMapsScene />}
+        {isStaySearch && <ScrollPilotScene />}
         <div className="explore-results-heading">
           <p aria-live="polite">
             {loading

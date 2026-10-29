@@ -122,3 +122,26 @@ test('failed city loading exposes one retry control instead of duplicate retry a
   assert.match(locations, /<ErrorNotice[\s\S]*?retry=\{\(\) => setAttempt\(\(value\) => value \+ 1\)\}/);
   assert.doesNotMatch(locations, /className="location-retry"|Reload cities/);
 });
+
+
+test('Google Maps proof of concept is lazy, key-gated, and does not fabricate property markers', () => {
+  const mapScene = source('../../apps/web/src/components/GoogleMapsScene.tsx');
+  assert.match(mapScene, /VITE_GOOGLE_MAPS_API_KEY/);
+  assert.match(mapScene, /IntersectionObserver/);
+  assert.match(mapScene, /Property pins will appear only when 7even has verified coordinates/);
+  assert.match(mapScene, /does not request your location or change search, booking, or payment state/);
+  assert.doesNotMatch(mapScene, /new google\.maps\.Marker/);
+  assert.match(explore, /isStaySearch && <GoogleMapsScene \/>/);
+});
+
+
+test('virtual pilot scroll scene is stay-only, pinned, and respects reduced motion', () => {
+  const pilot = source('../../apps/web/src/components/ScrollPilotScene.tsx');
+  const styles = source('../../apps/web/src/components/scroll-pilot-scene.css');
+  assert.match(explore, /isStaySearch && <ScrollPilotScene \/>/);
+  assert.match(styles, /position: sticky/);
+  assert.match(styles, /prefers-reduced-motion: reduce/);
+  assert.match(styles, /\.seven-pilot-avatar \{ animation: none !important; \}/);
+  assert.match(pilot, /No booking action is triggered/);
+  assert.match(pilot, /aria-hidden="true"/);
+});
