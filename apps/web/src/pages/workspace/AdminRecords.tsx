@@ -82,7 +82,7 @@ export function AdminRecords<T>({
               onClick={() => {
                 setDraft('');
                 setSearch('');
-                setStatus('');
+                setStatus(initialStatus ?? '');
                 setPage(1);
               }}
             >
