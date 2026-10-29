@@ -125,7 +125,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
               <Settings2 size={16} />
               Change earning policy
             </button>
-          ) : (
+          ) : tab === 'payments' ? (
             <button
               type="button"
               className="btn btn-secondary"
@@ -135,7 +135,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
               <RefreshCw size={16} />
               {reconciling ? 'Reconciling…' : 'Reconcile records'}
             </button>
-          )
+          ) : undefined
         }
       />
       {loading && <Loading />}
