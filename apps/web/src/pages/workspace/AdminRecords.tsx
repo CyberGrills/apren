@@ -1,8 +1,9 @@
 import type { AdminRecordsPage, Business, Reservation } from '@7even/contracts';
 import { ChevronLeft, ChevronRight, RefreshCw, Search } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { EmptyState, ErrorNotice, Loading, Money, StatusBadge } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
+import { clampPageToResultRange } from '../../lib/adminPagination.ts';
 import { dateLabel } from './shared.tsx';
 
 type Collection = 'businesses' | 'payments' | 'reservations' | 'audit';
@@ -35,6 +36,12 @@ export function AdminRecords<T>({
     `${endpoint ?? `/admin/records/${collection}`}?${query}`,
   );
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+  useEffect(() => {
+    if (!loading && data) {
+      const correctedPage = clampPageToResultRange(page, data.page, data.total, data.pageSize);
+      if (correctedPage !== page) setPage(correctedPage);
+    }
+  }, [data, loading, page]);
   return (
     <section className="admin-records" aria-label={`${collection} records`}>
       <search aria-label={`Search ${collection}`}>
