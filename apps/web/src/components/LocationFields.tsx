@@ -152,6 +152,7 @@ export function DestinationInput({
   onSelect: (location: NigeriaLocation) => void;
 }) {
   const id = useId();
+  const inputId = `${id}-input`;
   const root = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<NigeriaLocation[]>([]);
@@ -206,11 +207,11 @@ export function DestinationInput({
   }
   return (
     <div className="destination-control" ref={root}>
-      <label htmlFor="seven-city">Where</label>
+      <label htmlFor={inputId}>Where</label>
       <div className="seven-search-input-wrap">
         <MapPin size={16} aria-hidden="true" />
         <input
-          id="seven-city"
+          id={inputId}
           value={value}
           placeholder="Start with Uyo, or explore Nigeria"
           role="combobox"
