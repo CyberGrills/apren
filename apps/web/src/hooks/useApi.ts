@@ -8,8 +8,9 @@ export function useApi<T>(path: string | null) {
   const loadedPath = useRef<string | null>(null);
   const reload = useCallback(() => {
     setError(null);
+    setLoading(Boolean(path));
     setRevision((value) => value + 1);
-  }, []);
+  }, [path]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: revision deliberately invalidates the read after a committed mutation.
   useEffect(() => {
     if (!path) {
