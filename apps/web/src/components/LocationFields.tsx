@@ -123,19 +123,10 @@ export function StateCityFields({
           ))}
         </select>
         {error && (
-          <>
-            <ErrorNotice
-              message="Cities could not load. Please try again."
-              retry={() => setAttempt((value) => value + 1)}
-            />
-            <button
-              className="location-retry"
-              type="button"
-              onClick={() => setAttempt((value) => value + 1)}
-            >
-              Reload cities
-            </button>
-          </>
+          <ErrorNotice
+            message="Cities could not load. Please try again."
+            retry={() => setAttempt((value) => value + 1)}
+          />
         )}
       </div>
     </>
