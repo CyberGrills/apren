@@ -1,4 +1,4 @@
-import type { ApiEnvelope, ApiErrorBody } from '@7even/contracts';
+import type { ApiEnvelope, ApiErrorBody, ApiValidationIssue } from '@7even/contracts';
 let csrfToken: string | null = null;
 export function setCsrfToken(value: string | null) {
   csrfToken = value;
@@ -7,12 +7,18 @@ export class ApiError extends Error {
   status: number;
   code: string;
   fields?: Record<string, string[]>;
+  formErrors?: string[];
+  issues?: ApiValidationIssue[];
+  requestId?: string;
   constructor(status: number, body: ApiErrorBody['error']) {
     super(body.message);
     this.name = 'ApiError';
     this.status = status;
     this.code = body.code;
     this.fields = body.fields;
+    this.formErrors = body.formErrors;
+    this.issues = body.issues;
+    this.requestId = body.requestId;
   }
 }
 export interface ApiOptions {
