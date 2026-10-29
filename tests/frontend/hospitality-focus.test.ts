@@ -115,3 +115,10 @@ test('āprən × 7even watermark is global, decorative and does not intercept pa
   assert.match(source('../../apps/web/src/styles/global.css'), /\.apren-watermark\s*\{[\s\S]*?position:\s*fixed/);
   assert.match(source('../../apps/web/src/styles/global.css'), /pointer-events:\s*none/);
 });
+
+
+test('failed city loading exposes one retry control instead of duplicate retry actions', () => {
+  const locations = source('../../apps/web/src/components/LocationFields.tsx');
+  assert.match(locations, /<ErrorNotice[\\s\\S]*?retry=\{\(\) => setAttempt\(\(value\) => value \+ 1\)\}/);
+  assert.doesNotMatch(locations, /className="location-retry"|Reload cities/);
+});
