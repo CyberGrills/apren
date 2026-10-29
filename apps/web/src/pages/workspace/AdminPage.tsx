@@ -19,7 +19,7 @@ import {
   StatusBadge,
 } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
-import { api } from '../../lib/api.ts';
+import { ApiError, api } from '../../lib/api.ts';
 import { CryptoRefundDialog } from './CryptoRefundDialog.tsx';
 import { AdminWorkspaceOverview } from './AdminWorkspaceOverview.tsx';
 import { AdminRecords, AdminReservationsTable } from './AdminRecords.tsx';
@@ -523,7 +523,26 @@ function AdminEditor({
       onDone();
       onClose();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save this decision.');
+      if (cause instanceof ApiError && cause.code === 'VALIDATION_ERROR') {
+        const fieldMessages = Object.entries(cause.fields ?? {}).flatMap(([field, messages]) =>
+          messages.map((message) => `${field}: ${message}`),
+        );
+        const diagnosticPaths = (cause.issues ?? [])
+          .filter((issue) => issue.path.length > 0)
+          .map((issue) => `${issue.path.join('.')} (${issue.code})`);
+        const details = [
+          ...(cause.formErrors ?? []),
+          ...fieldMessages,
+          ...diagnosticPaths.filter((path) => !fieldMessages.some((message) => message.startsWith(`${path.split(' (')[0]}:`))),
+        ];
+        setError(
+          details.length > 0
+            ? `Check the highlighted decision details: ${[...new Set(details)].join(' · ')}`
+            : `The server rejected these details as invalid. Reference: ${cause.requestId ?? 'not provided'}.`,
+        );
+      } else {
+        setError(cause instanceof Error ? cause.message : 'Could not save this decision.');
+      }
     } finally {
       setBusy(false);
     }
