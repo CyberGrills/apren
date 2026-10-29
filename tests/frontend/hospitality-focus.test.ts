@@ -44,6 +44,12 @@ test('empty later explore pages offer a way back without discarding active filte
 });
 
 
+test('Explore checkout minimum follows check-in and requires at least one night', () => {
+  assert.match(explore, /min={startDate \? addCalendarDays\(startDate, 1\) : localDateNow\(\)}/);
+  assert.match(explore, /if \(endDate && nextStart && endDate <= nextStart\) setEndDate\(''\)/);
+  assert.match(explore, /value={endDate}[\s\S]*?onChange={\(event\) => setEndDate\(event.target.value\)}/);
+});
+
 test('Explore redesign keeps all three categories and mobile filters in normal document flow', () => {
   assert.match(explore, /aria-label="Explore categories"/);
   assert.match(explore, /label: 'Hotels & stays'/);
