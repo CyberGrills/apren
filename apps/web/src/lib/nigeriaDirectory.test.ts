@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  directoryListingMatchKey,
   listingsForKind,
   nigeriaStateDirectories,
   sourcedDirectoryListings,
@@ -79,4 +80,21 @@ test('Kiniz directory lead exposes source-linked rate references and booking cha
   assert.equal(kiniz.publishedRateNotes?.some((note) => note.source === 'Kiniz official website'), true);
   assert.equal(kiniz.publishedRateNotes?.some((note) => note.source === 'Hotels.ng'), true);
   assert.equal(kiniz.publishedRateNotes?.some((note) => note.source === 'BookDirect.ng'), true);
+});
+
+
+test('directory matching is stable across numeric database IDs and curated slug IDs', () => {
+  const curated = listingsForKind('DINING')[0];
+  assert.ok(curated);
+  const live = { ...curated, id: '42' };
+  assert.notEqual(live.id, curated.id);
+  assert.equal(directoryListingMatchKey(live), directoryListingMatchKey(curated));
+});
+
+test('directory matching distinguishes different cities, states, and categories', () => {
+  const curated = listingsForKind('DINING')[0];
+  assert.ok(curated);
+  assert.notEqual(directoryListingMatchKey(curated), directoryListingMatchKey({ ...curated, city: 'Different City' }));
+  assert.notEqual(directoryListingMatchKey(curated), directoryListingMatchKey({ ...curated, state: 'Different State' }));
+  assert.notEqual(directoryListingMatchKey(curated), directoryListingMatchKey({ ...curated, kind: 'EXPERIENCE' }));
 });
