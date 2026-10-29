@@ -76,8 +76,9 @@ export function GoogleMapsScene() {
       return;
     }
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
           setNearViewport(true);
           observer.disconnect();
         }
