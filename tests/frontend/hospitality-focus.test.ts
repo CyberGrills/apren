@@ -119,6 +119,6 @@ test('āprən × 7even watermark is global, decorative and does not intercept pa
 
 test('failed city loading exposes one retry control instead of duplicate retry actions', () => {
   const locations = source('../../apps/web/src/components/LocationFields.tsx');
-  assert.match(locations, /<ErrorNotice[\\s\\S]*?retry=\{\(\) => setAttempt\(\(value\) => value \+ 1\)\}/);
+  assert.match(locations, /<ErrorNotice[\s\S]*?retry=\{\(\) => setAttempt\(\(value\) => value \+ 1\)\}/);
   assert.doesNotMatch(locations, /className="location-retry"|Reload cities/);
 });
