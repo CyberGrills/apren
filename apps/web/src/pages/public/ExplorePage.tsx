@@ -1,6 +1,6 @@
 import type { Offering, Sector } from '@7even/contracts';
 import { Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { StateCityFields } from '../../components/LocationFields.tsx';
 import {
@@ -14,12 +14,19 @@ import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
 import { stayDatesError } from '../../lib/datePicker.ts';
 import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
+import { addCalendarDays } from '../../lib/datePicker.ts';
 
 export function ExplorePage() {
   const [params, setParams] = useSearchParams();
   const { showError } = useFeedback();
   const [aiMessage, setAiMessage] = useState('');
+  const [startDate, setStartDate] = useState(params.get('startDate') ?? '');
+  const [endDate, setEndDate] = useState(params.get('endDate') ?? '');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  useEffect(() => {
+    setStartDate(params.get('startDate') ?? '');
+    setEndDate(params.get('endDate') ?? '');
+  }, [params]);
   const [aiLoading, setAiLoading] = useState(false);
   const page = Math.min(10000, Math.max(1, Math.trunc(Number(params.get('page')) || 1)));
   const pageSize = 12;
@@ -189,7 +196,12 @@ export function ExplorePage() {
               name="startDate"
               type="date"
               min={localDateNow()}
-              defaultValue={params.get('startDate') ?? ''}
+              value={startDate}
+              onChange={(event) => {
+                const nextStart = event.target.value;
+                setStartDate(nextStart);
+                if (endDate && nextStart && endDate <= nextStart) setEndDate('');
+              }}
             />
           </div>
           {isStaySearch ? (
@@ -200,8 +212,9 @@ export function ExplorePage() {
                   id="explore-end"
                   name="endDate"
                   type="date"
-                  min={params.get('startDate') || localDateNow()}
-                  defaultValue={params.get('endDate') ?? ''}
+                  min={startDate ? addCalendarDays(startDate, 1) : localDateNow()}
+                  value={endDate}
+                  onChange={(event) => setEndDate(event.target.value)}
                 />
               </div>
               <div>
