@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { StateCityFields } from '../../components/LocationFields.tsx';
 import { GoogleMapsScene } from '../../components/GoogleMapsScene.tsx';
+import { ScrollPilotScene } from '../../components/ScrollPilotScene.tsx';
 import {
   EmptyState,
   ErrorNotice,
@@ -238,6 +239,7 @@ export function ExplorePage() {
           </button>
         </form>
         {isStaySearch && <GoogleMapsScene />}
+        {isStaySearch && <ScrollPilotScene />}
         <div className="explore-results-heading">
           <p aria-live="polite">
             {loading

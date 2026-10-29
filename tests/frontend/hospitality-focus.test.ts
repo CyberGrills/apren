@@ -133,3 +133,15 @@ test('Google Maps proof of concept is lazy, key-gated, and does not fabricate pr
   assert.doesNotMatch(mapScene, /new google\.maps\.Marker/);
   assert.match(explore, /isStaySearch && <GoogleMapsScene \/>/);
 });
+
+
+test('virtual pilot scroll scene is stay-only, pinned, and respects reduced motion', () => {
+  const pilot = source('../../apps/web/src/components/ScrollPilotScene.tsx');
+  const styles = source('../../apps/web/src/components/scroll-pilot-scene.css');
+  assert.match(explore, /isStaySearch && <ScrollPilotScene \/>/);
+  assert.match(styles, /position: sticky/);
+  assert.match(styles, /prefers-reduced-motion: reduce/);
+  assert.match(styles, /\.seven-pilot-avatar \{ animation: none !important; \}/);
+  assert.match(pilot, /No booking action is triggered/);
+  assert.match(pilot, /aria-hidden="true"/);
+});
