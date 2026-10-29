@@ -36,6 +36,13 @@ test('explore preserves the selected sector while stay-only search uses AI filte
   assert.doesNotMatch(explore, /sourcedDirectoryListings|DirectoryListingCard/);
 });
 
+test('empty later explore pages offer a way back without discarding active filters', () => {
+  assert.match(explore, /page > 1 \? \(/);
+  assert.match(explore, /Previous results/);
+  assert.match(explore, /const previous = new URLSearchParams\(params\)/);
+  assert.match(explore, /previous\.set\('page', String\(page - 1\)\)/);
+});
+
 
 test('Explore redesign keeps all three categories and mobile filters in normal document flow', () => {
   assert.match(explore, /aria-label="Explore categories"/);

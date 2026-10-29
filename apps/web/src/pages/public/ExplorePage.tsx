@@ -285,9 +285,32 @@ export function ExplorePage() {
               ? 'Try another city or date. Only verified 7even stays appear as bookable results.'
               : 'Try another location or check back as more businesses publish their listings.'}
             action={
-              <button type="button" className="btn btn-secondary" onClick={() => setParams({ kind })}>
-                {isStaySearch ? 'See all stays' : 'Clear filters'}
-              </button>
+              page > 1 ? (
+                <div className="explore-empty-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      const previous = new URLSearchParams(params);
+                      previous.set('page', String(page - 1));
+                      setParams(previous);
+                    }}
+                  >
+                    Previous results
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setParams({ kind })}
+                  >
+                    {isStaySearch ? 'See all stays' : 'Clear filters'}
+                  </button>
+                </div>
+              ) : (
+                <button type="button" className="btn btn-secondary" onClick={() => setParams({ kind })}>
+                  {isStaySearch ? 'See all stays' : 'Clear filters'}
+                </button>
+              )
             }
           />
         )}
