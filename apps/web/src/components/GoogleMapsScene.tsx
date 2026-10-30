@@ -31,18 +31,46 @@ function loadGoogleMaps(apiKey: string): Promise<GoogleMapsApi> {
   mapsScriptPromise = new Promise<GoogleMapsApi>((resolve, reject) => {
     const existing = document.querySelector<HTMLScriptElement>('script[data-7even-google-maps]');
     const script = existing ?? document.createElement('script');
-    const timeout = window.setTimeout(() => reject(new Error('Google Maps took too long to load.')), 12000);
+    let timeoutId = 0;
+    let settled = false;
 
-    const finish = () => {
-      window.clearTimeout(timeout);
-      if (window.google?.maps) resolve(window.google);
-      else reject(new Error('Google Maps did not initialize.'));
-    };
+    function cleanup() {
+      window.clearTimeout(timeoutId);
+      script.removeEventListener('load', finish);
+      script.removeEventListener('error', handleError);
+    }
+
+    function fail(error: Error) {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      // This loader owns scripts carrying this marker. Remove a failed or
+      // timed-out script so a later mount can create a fresh request.
+      if (script.dataset.sevenGoogleMaps === 'true') script.remove();
+      reject(error);
+    }
+
+    function finish() {
+      if (settled) return;
+      if (window.google?.maps) {
+        settled = true;
+        cleanup();
+        resolve(window.google);
+      } else {
+        fail(new Error('Google Maps did not initialize.'));
+      }
+    }
+
+    function handleError() {
+      fail(new Error('Google Maps could not load.'));
+    }
+
+    timeoutId = window.setTimeout(
+      () => fail(new Error('Google Maps took too long to load.')),
+      12000,
+    );
     script.addEventListener('load', finish, { once: true });
-    script.addEventListener('error', () => {
-      window.clearTimeout(timeout);
-      reject(new Error('Google Maps could not load.'));
-    }, { once: true });
+    script.addEventListener('error', handleError, { once: true });
 
     if (!existing) {
       script.dataset.sevenGoogleMaps = 'true';
