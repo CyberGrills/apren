@@ -153,8 +153,8 @@ test('virtual pilot scroll scene is stay-only, pinned, and respects reduced moti
 
 test('failed Google Maps script is cleaned up so a later mount can retry', () => {
   const mapScene = source('../../apps/web/src/components/GoogleMapsScene.tsx');
-  assert.match(mapScene, /function fail\\(error: Error\\)[\\s\\S]*?script\\.remove\\(\\)/);
-  assert.match(mapScene, /timeoutId = window\\.setTimeout\\([\\s\\S]*?Google Maps took too long to load/);
-  assert.match(mapScene, /script\\.removeEventListener\\('load', finish\\)/);
-  assert.match(mapScene, /script\\.removeEventListener\\('error', handleError\\)/);
+  assert.match(mapScene, /function fail\(error: Error\)[\s\S]*?script\.remove\(\)/);
+  assert.match(mapScene, /timeoutId = window\.setTimeout\([\s\S]*?Google Maps took too long to load/);
+  assert.match(mapScene, /script\.removeEventListener\('load', finish\)/);
+  assert.match(mapScene, /script\.removeEventListener\('error', handleError\)/);
 });
