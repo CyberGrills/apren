@@ -148,7 +148,10 @@ test('virtual pilot scroll scene is stay-only, pinned, and respects reduced moti
   assert.match(pilot, /linearGradient id="pilot-skin"/);
   assert.match(pilot, /pattern id="pilot-coils"/);
   assert.match(pilot, /linearGradient id="pilot-jacket"/);
-  assert.doesNotMatch(pilot, /seven-pilot-hair|seven-pilot-eye-left|seven-pilot-mouth/);
+  assert.match(pilot, /className="seven-pilot-head"/);
+  assert.match(pilot, /className="seven-pilot-eyes"/);
+  assert.match(pilot, /className="seven-pilot-mouth"/);
+  assert.match(styles, /\.seven-pilot-avatar\.is-speaking \.seven-pilot-mouth/);
 });
 
 
@@ -242,7 +245,13 @@ test('Pidgin booking and payment dialog localize customer actions without changi
 test('virtual pilot audio is user-initiated, captioned, language-aware and stoppable', () => {
   const pilot = source('../../apps/web/src/components/ScrollPilotScene.tsx');
   assert.match(pilot, /useSevenLanguage/);
-  assert.match(pilot, /SpeechSynthesisUtterance/);
+  assert.match(pilot, /PILOT_VOICE_TRACKS/);
+  assert.match(pilot, /primary-en-ng\.mp3/);
+  assert.match(pilot, /primary-pcm-ng\.mp3/);
+  assert.match(pilot, /audioRef=\{audioRef\}/);
+  assert.match(pilot, /onCanPlay=/);
+  assert.match(pilot, /onError=/);
+  assert.doesNotMatch(pilot, /SpeechSynthesisUtterance|speechSynthesis/);
   assert.match(pilot, /onClick={speakPilot}/);
   assert.match(pilot, /Pause \/ resume/);
   assert.match(pilot, /aria-live="polite"/);
