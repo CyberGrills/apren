@@ -198,7 +198,7 @@ test('Pidgin booking panel uses distinct customer-facing copy and preserves paym
   assert.match(bookingPanel, /Wetin you go pay/);
   assert.match(bookingPanel, /We dey verify payment securely/);
   assert.match(bookingPanel, /We go confirm your booking after payment don verify/);
-  assert.match(bookingPanel, /payment never confirm/);
+  assert.match(bookingPanel, /reservation never confirm/);
   assert.match(bookingPanel, /cancellation rule/);
   assert.doesNotMatch(bookingPanel, /pcm \? 'Rooms' : 'Rooms'/);
   assert.doesNotMatch(bookingPanel, /pcm \? 'Your price' : 'Your price'/);
