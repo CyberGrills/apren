@@ -131,6 +131,7 @@ export function PublicHeader() {
 }
 
 export function PublicFooter() {
+  const language = useSevenLanguage();
   return (
     <footer className="public-footer">
       <div className="public-container">
@@ -139,13 +140,11 @@ export function PublicFooter() {
             <Brand />
           </Link>
           <p>
-            Good places.
-            <br />
-            Worth your time.
+            {language === 'pcm' ? <>Correct places.<br />Make your time count.</> : <>Good places.<br />Worth your time.</>}
           </p>
           <nav aria-label="Footer">
-            <Link to="/explore?kind=STAY">Find a stay</Link>
-            <Link to="/business/apply">Bring your business</Link>
+            <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Find place to stay' : 'Find a stay'}</Link>
+            <Link to="/business/apply">{language === 'pcm' ? 'List your business' : 'Bring your business'}</Link>
             <Link to="/app/bookings">Your bookings</Link>
             <Link to="/help">Help</Link>
             <Link to="/booking-rules">Booking rules</Link>
