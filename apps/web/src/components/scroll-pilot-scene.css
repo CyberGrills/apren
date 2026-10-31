@@ -179,3 +179,54 @@
 
 .seven-pilot-audio audio { display: none; }
 .seven-pilot-audio-actions button:disabled { cursor: not-allowed; opacity: .55; }
+
+
+/* Human-presence motion for the current illustrated pilot.
+   The speech movement is a visual speaking cue, not phoneme-accurate lip sync. */
+.seven-pilot-head {
+  transform-box: fill-box;
+  transform-origin: 50% 78%;
+}
+.seven-pilot-eyes {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: seven-pilot-blink 5.8s infinite;
+}
+.seven-pilot-mouth {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+.seven-pilot-avatar.is-speaking .seven-pilot-head {
+  animation: seven-pilot-speaking-nod 3.8s ease-in-out infinite;
+}
+.seven-pilot-avatar.is-speaking .seven-pilot-mouth {
+  animation: seven-pilot-speaking-mouth 360ms ease-in-out infinite alternate;
+}
+.seven-pilot-avatar.is-speaking .seven-pilot-portrait {
+  animation: seven-pilot-speaking-breath 4.2s ease-in-out infinite;
+}
+@keyframes seven-pilot-blink {
+  0%, 43%, 46%, 78%, 81%, 100% { transform: scaleY(1); }
+  44.5%, 79.5% { transform: scaleY(.08); }
+}
+@keyframes seven-pilot-speaking-mouth {
+  from { transform: scaleY(.58); }
+  to { transform: scaleY(1.12); }
+}
+@keyframes seven-pilot-speaking-nod {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  35% { transform: rotate(-.7deg) translateY(-1px); }
+  68% { transform: rotate(.45deg) translateY(.5px); }
+}
+@keyframes seven-pilot-speaking-breath {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1.5px) scale(1.004); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seven-pilot-eyes,
+  .seven-pilot-avatar.is-speaking .seven-pilot-head,
+  .seven-pilot-avatar.is-speaking .seven-pilot-mouth,
+  .seven-pilot-avatar.is-speaking .seven-pilot-portrait {
+    animation: none !important;
+  }
+}
