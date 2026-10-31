@@ -6,6 +6,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ErrorNotice, Loading } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { BookingPanel } from './BookingPanel.tsx';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 import { editorialImages, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 export function OfferingPage() {
@@ -27,6 +28,8 @@ export function OfferingPage() {
 }
 
 function OfferingDetail({ offering }: { offering: Offering }) {
+  const language = useSevenLanguage();
+  const pcm = language === 'pcm';
   const [image, setImage] = useState(0);
   useEffect(() => {
     if (offering.kind === 'STAY' && !offering.isSample) {
@@ -105,13 +108,13 @@ function OfferingDetail({ offering }: { offering: Offering }) {
             )}
           </figure>
           <section className="offering-about" aria-labelledby="about-title">
-            <span className="public-eyebrow">A little about the place</span>
-            <h2 id="about-title">Make yourself at home.</h2>
+            <span className="public-eyebrow">{pcm ? 'Small gist about this place' : 'A little about the place'}</span>
+            <h2 id="about-title">{pcm ? 'Make yourself comfortable.' : 'Make yourself at home.'}</h2>
             <p>{offering.description}</p>
           </section>
           {offering.amenities.length > 0 && (
             <section className="offering-amenities" aria-labelledby="included-title">
-              <h2 id="included-title">Good to know.</h2>
+              <h2 id="included-title">{pcm ? 'Good things to know.' : 'Good to know.'}</h2>
               <ul>
                 {offering.amenities.map((amenity) => (
                   <li key={amenity}>
@@ -123,23 +126,23 @@ function OfferingDetail({ offering }: { offering: Offering }) {
             </section>
           )}
           <section className="offering-policy" aria-labelledby="details-title">
-            <h2 id="details-title">Before you book.</h2>
+            <h2 id="details-title">{pcm ? 'Before you book.' : 'Before you book.'}</h2>
             <dl>
               <div>
-                <dt>The place</dt>
+                <dt>{pcm ? 'Location' : 'The place'}</dt>
                 <dd>
                   {offering.address}, {offering.city}
                 </dd>
               </div>
               <div>
-                <dt>Booking and payment</dt>
+                <dt>{pcm ? 'Booking and payment' : 'Booking and payment'}</dt>
                 <dd>
                   Your booking is confirmed after the payment provider's result has been verified. A
                   payment still being checked does not mean your reservation is confirmed.
                 </dd>
               </div>
               <div>
-                <dt>Cancellation</dt>
+                <dt>{pcm ? 'Cancellation' : 'Cancellation'}</dt>
                 <dd>
                   Cancel at least {offering.cancellationHours} hours before the start time, subject
                   to the business's policy. Refund and settlement status are shown separately in
@@ -147,7 +150,7 @@ function OfferingDetail({ offering }: { offering: Offering }) {
                 </dd>
               </div>
               <div>
-                <dt>Your points</dt>
+                <dt>{pcm ? 'Your points' : 'Your points'}</dt>
                 <dd>
                   Points are issued for eligible completed bookings. A booking that is cancelled or
                   refunded does not earn points.
