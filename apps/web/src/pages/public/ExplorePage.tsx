@@ -17,9 +17,11 @@ import { api } from '../../lib/api.ts';
 import { stayDatesError } from '../../lib/datePicker.ts';
 import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 import { addCalendarDays } from '../../lib/datePicker.ts';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
 export function ExplorePage() {
   const [params, setParams] = useSearchParams();
+  const language = useSevenLanguage();
   const { showError } = useFeedback();
   const [aiMessage, setAiMessage] = useState('');
   const [startDate, setStartDate] = useState(params.get('startDate') ?? '');
@@ -36,11 +38,17 @@ export function ExplorePage() {
   const kind: Sector =
     requestedKind === 'DINING' || requestedKind === 'EXPERIENCE' ? requestedKind : 'STAY';
   const isStaySearch = kind === 'STAY';
-  const heading = kind === 'DINING'
-    ? { title: 'Find dining worth your time.', description: 'Discover restaurants and places to eat listed on 7even.' }
-    : kind === 'EXPERIENCE'
-      ? { title: 'Find things to do.', description: 'Discover local experiences and activities listed on 7even.' }
-      : { title: 'Find your next stay.', description: 'Discover hotels and apartments across Nigeria, with clear booking details before you commit.' };
+  const heading = language === 'pcm'
+    ? kind === 'DINING'
+      ? { title: 'Find correct place chop.', description: 'Discover restaurants and places wey dey listed for 7even.' }
+      : kind === 'EXPERIENCE'
+        ? { title: 'Find wetin you fit do.', description: 'Discover things to do and experiences for your area.' }
+        : { title: 'Find where you fit stay.', description: 'Find hotels and apartments for Nigeria. Check booking details before you confirm.' }
+    : kind === 'DINING'
+      ? { title: 'Find dining worth your time.', description: 'Discover restaurants and places to eat listed on 7even.' }
+      : kind === 'EXPERIENCE'
+        ? { title: 'Find things to do.', description: 'Discover local experiences and activities listed on 7even.' }
+        : { title: 'Find your next stay.', description: 'Discover hotels and apartments across Nigeria, with clear booking details before you commit.' };
   const query = new URLSearchParams(params);
   query.set('pageSize', String(pageSize));
   query.set('page', String(page));
@@ -115,7 +123,7 @@ export function ExplorePage() {
       <PublicHeader />
       <main id="main-content" className="public-container explore-page">
         <div className="explore-heading">
-          <span className="public-eyebrow">Find your next plan</span>
+          <span className="public-eyebrow">{language === 'pcm' ? 'Wetin be your next plan?' : 'Find your next plan'}</span>
           <h1>{heading.title}</h1>
           <p>{heading.description}</p>
         </div>
@@ -138,7 +146,7 @@ export function ExplorePage() {
           ))}
         </nav>
         <div className="explore-filter-toolbar">
-          <span>Search by destination and dates, then refine your results.</span>
+          <span>{language === 'pcm' ? 'Search by location and date, then adjust wetin you need.' : 'Search by destination and dates, then refine your results.'}</span>
           <button
             type="button"
             className="explore-filter-toggle"
@@ -147,14 +155,14 @@ export function ExplorePage() {
             onClick={() => setFiltersOpen((open) => !open)}
           >
             <SlidersHorizontal size={17} aria-hidden="true" />
-            {filtersOpen ? 'Hide filters' : 'More filters'}
+            {filtersOpen ? 'Hide filters' : language === 'pcm' ? 'More options' : 'More filters'}
           </button>
         </div>
         {isStaySearch && <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
             <div className="explore-ai-field">
               <label htmlFor="explore-ai-query">
                 <Search size={17} aria-hidden="true" />
-                Describe your stay
+                {language === 'pcm' ? 'Tell us the kind place you need' : 'Describe your stay'}
               </label>
               <input
                 className="field-input"
@@ -174,17 +182,16 @@ export function ExplorePage() {
               className="btn btn-primary"
               disabled={aiLoading || aiMessage.trim().length < 2}
             >
-              {aiLoading ? 'Understanding your request…' : 'Search with AI'}
+              {aiLoading ? (language === 'pcm' ? 'We dey understand your request…' : 'Understanding your request…') : 'Search with AI'}
             </button>
             <p className="explore-ai-note" id="explore-ai-note">
-              Your request goes to OpenAI to turn it into search filters. Prices and availability
-              come from 7even.
+              {language === 'pcm' ? 'We use your request to set search filters. 7even supplies the prices and availability wey e get.' : 'Your request goes to OpenAI to turn it into search filters. Prices and availability come from 7even.'}
             </p>
         </form>}
         <form id="explore-filter-form" className={`explore-filters ${filtersOpen ? 'is-open' : ''}`} key={params.toString()} onSubmit={filter}>
           <div className="explore-filter-heading">
             <SlidersHorizontal size={17} aria-hidden="true" />
-            <span>Make it yours</span>
+            <span>{language === 'pcm' ? 'Set your search' : 'Make it yours'}</span>
           </div>
           <StateCityFields
             prefix="explore"
@@ -192,7 +199,7 @@ export function ExplorePage() {
             initialCity={params.get('city') ?? ''}
           />
           <div>
-            <label htmlFor="explore-start">{isStaySearch ? 'Check-in' : 'Date'}</label>
+            <label htmlFor="explore-start">{isStaySearch ? (language === 'pcm' ? 'When you go enter' : 'Check-in') : 'Date'}</label>
             <input
               id="explore-start"
               name="startDate"
@@ -209,7 +216,7 @@ export function ExplorePage() {
           {isStaySearch ? (
             <>
               <div>
-                <label htmlFor="explore-end">Check-out</label>
+                <label htmlFor="explore-end">{language === 'pcm' ? 'When you go comot' : 'Check-out'}</label>
                 <input
                   id="explore-end"
                   name="endDate"
@@ -235,7 +242,7 @@ export function ExplorePage() {
             </>
           ) : null}
           <button type="submit" className="btn btn-primary">
-            <Search size={17} aria-hidden="true" /> Find places
+            <Search size={17} aria-hidden="true" /> {language === 'pcm' ? 'Find places' : 'Find places'}
           </button>
         </form>
         {isStaySearch && <GoogleMapsScene />}
@@ -243,13 +250,13 @@ export function ExplorePage() {
         <div className="explore-results-heading">
           <p aria-live="polite">
             {loading
-              ? 'Finding places…'
+              ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
               : data
                 ? `${data.length} ${data.length === 1 ? 'place' : 'places'} on this page`
-                : 'Places on 7even'}
+                : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
           </p>
           <span>
-            Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.
+            {language === 'pcm' ? 'These listings come from 7even. Confirm room availability, final price and capacity before you book.' : 'Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.'}
           </span>
         </div>
         {loading && <Loading />}
@@ -297,9 +304,9 @@ export function ExplorePage() {
         )}
         {data?.length === 0 && (
           <EmptyState
-            title="No places match this search yet."
+            title={language === 'pcm' ? 'No place match this search yet.' : 'No places match this search yet.'}
             description={isStaySearch
-              ? 'Try another city or date. Only verified 7even stays appear as bookable results.'
+              ? (language === 'pcm' ? 'Try another city or date. Na only verified 7even stays go show as places wey you fit book.' : 'Try another city or date. Only verified 7even stays appear as bookable results.')
               : 'Try another location or check back as more businesses publish their listings.'}
             action={
               page > 1 ? (
