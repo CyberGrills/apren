@@ -149,7 +149,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
     return (
       <aside className="booking-panel booking-panel-unavailable" aria-labelledby="booking-title">
         <div className="booking-panel-top">
-          <span className="public-eyebrow">{pcm ? 'Sample listing' : 'Sample listing'}</span>
+          <span className="public-eyebrow">{pcm ? 'Sample place' : 'Sample listing'}</span>
           <h2 id="booking-title">{pcm ? 'Booking no dey available' : 'Booking unavailable'}</h2>
         </div>
         <p role="status">
@@ -279,9 +279,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             <div>
               <dt>
                 {quote.quantity} × {quote.units}{' '}
-                {isStay
-                  ? (pcm ? (quote.units === 1 ? 'night' : 'nights') : (quote.units === 1 ? 'night' : 'nights'))
-                  : (pcm ? 'booking units' : 'booking units')}
+                {isStay ? (quote.units === 1 ? 'night' : 'nights') : (pcm ? 'booking' : 'booking units')}
               </dt>
               <dd>
                 <Money minor={quote.price.subtotalMinor} />
@@ -289,7 +287,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             </div>
             {quote.price.discountMinor !== '0' && (
               <div>
-                <dt>{pcm ? 'Discount' : 'Discount'}</dt>
+                <dt>Discount</dt>
                 <dd>
                   −<Money minor={quote.price.discountMinor} />
                 </dd>
@@ -304,13 +302,13 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               </div>
             )}
             <div>
-              <dt>{pcm ? 'Tax' : 'Tax'}</dt>
+              <dt>Tax</dt>
               <dd>
                 <Money minor={quote.price.taxMinor} />
               </dd>
             </div>
             <div className="quote-total">
-              <dt>{pcm ? 'Total' : 'Total'}</dt>
+              <dt>Total</dt>
               <dd>
                 <Money minor={quote.price.totalMinor} />
               </dd>
