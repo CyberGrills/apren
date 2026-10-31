@@ -149,15 +149,16 @@ export function BookingPanel({ offering }: { offering: Offering }) {
     return (
       <aside className="booking-panel booking-panel-unavailable" aria-labelledby="booking-title">
         <div className="booking-panel-top">
-          <span className="public-eyebrow">Sample listing</span>
+          <span className="public-eyebrow">{pcm ? 'Sample listing' : 'Sample listing'}</span>
           <h2 id="booking-title">{pcm ? 'Booking no dey available' : 'Booking unavailable'}</h2>
         </div>
         <p role="status">
-          This is an illustrative listing, not verified live inventory. Dates, room counts, quotes,
-          reservations, and payment are disabled until the property is verified.
+          {pcm
+            ? 'Na sample listing be this, e no be confirmed hotel availability. We don disable dates, room numbers, price checks, reservations and payment until we verify the property.'
+            : 'This is an illustrative listing, not verified live inventory. Dates, room counts, quotes, reservations, and payment are disabled until the property is verified.'}
         </p>
         <Link className="btn btn-secondary booking-cta" to="/explore?kind=STAY">
-          {pcm ? 'Browse places to stay' : 'Browse stays'}
+          {pcm ? 'See places wey you fit stay' : 'Browse stays'}
         </Link>
       </aside>
     );
@@ -235,8 +236,8 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             </Field>
           )}
           <Field
-            label={isStay ? (pcm ? 'Rooms' : 'Rooms') : (pcm ? 'Guests' : 'Guests')}
-            hint={`Up to ${Math.min(100, offering.capacity)} per reservation.`}
+            label={isStay ? (pcm ? 'How many rooms?' : 'Rooms') : (pcm ? 'How many people?' : 'Guests')}
+            hint={pcm ? `You fit book up to ${Math.min(100, offering.capacity)} for one reservation.` : `Up to ${Math.min(100, offering.capacity)} per reservation.`}
           >
             <input
               className="field-input"
@@ -273,12 +274,14 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       </form>
       {quote && (
         <div className="quote-breakdown" aria-live="polite">
-          <p className="public-eyebrow">{pcm ? 'Your price' : 'Your price'}</p>
+          <p className="public-eyebrow">{pcm ? 'Wetin you go pay' : 'Your price'}</p>
           <dl>
             <div>
               <dt>
                 {quote.quantity} × {quote.units}{' '}
-                {isStay ? (quote.units === 1 ? 'night' : 'nights') : 'booking units'}
+                {isStay
+                  ? (pcm ? (quote.units === 1 ? 'night' : 'nights') : (quote.units === 1 ? 'night' : 'nights'))
+                  : (pcm ? 'booking units' : 'booking units')}
               </dt>
               <dd>
                 <Money minor={quote.price.subtotalMinor} />
@@ -286,7 +289,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             </div>
             {quote.price.discountMinor !== '0' && (
               <div>
-                <dt>Discount</dt>
+                <dt>{pcm ? 'Discount' : 'Discount'}</dt>
                 <dd>
                   −<Money minor={quote.price.discountMinor} />
                 </dd>
@@ -294,20 +297,20 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             )}
             {quote.price.serviceMinor !== '0' && (
               <div>
-                <dt>Service fee</dt>
+                <dt>{pcm ? 'Service charge' : 'Service fee'}</dt>
                 <dd>
                   <Money minor={quote.price.serviceMinor} />
                 </dd>
               </div>
             )}
             <div>
-              <dt>Tax</dt>
+              <dt>{pcm ? 'Tax' : 'Tax'}</dt>
               <dd>
                 <Money minor={quote.price.taxMinor} />
               </dd>
             </div>
             <div className="quote-total">
-              <dt>Total</dt>
+              <dt>{pcm ? 'Total' : 'Total'}</dt>
               <dd>
                 <Money minor={quote.price.totalMinor} />
               </dd>
@@ -315,7 +318,9 @@ export function BookingPanel({ offering }: { offering: Offering }) {
           </dl>
           <p className="public-small">
             {held
-              ? `Held until ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(held.holdExpiresAt ?? quote.expiresAt))} WAT. Your booking is confirmed after payment is verified.`
+              ? (pcm
+                  ? `We dey hold am till ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(held.holdExpiresAt ?? quote.expiresAt))} WAT. We go confirm your booking after payment don verify.`
+                  : `Held until ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(held.holdExpiresAt ?? quote.expiresAt))} WAT. Your booking is confirmed after payment is verified.`)
               : (pcm ? 'This price go expire soon. We go hold availability only when you continue.' : 'This price expires shortly. Availability is held only when you continue.')}
           </p>
           <label className="checkout-policy-acceptance">
@@ -326,9 +331,9 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               disabled={busy}
             />
             <span>
-              I have reviewed the cancellation policy ({offering.cancellationHours} hours before
-              the booking starts) and understand that this reservation is not confirmed until
-              7even verifies my payment.
+              {pcm
+                ? `I don check the cancellation rule (${offering.cancellationHours} hours before the booking starts). I understand say this booking no confirm until 7even verify my payment.`
+                : `I have reviewed the cancellation policy (${offering.cancellationHours} hours before the booking starts) and understand that this reservation is not confirmed until 7even verifies my payment.`}
             </span>
           </label>
           <button
@@ -339,10 +344,10 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             disabled={busy || !policyAccepted}
           >
             {busy
-              ? 'Opening payment…'
+              ? (pcm ? 'We dey open payment…' : 'Opening payment…')
               : held
-                ? 'Continue to payment'
-                : 'Reserve and continue to payment'}
+                ? (pcm ? 'Continue make payment' : 'Continue to payment')
+                : (pcm ? 'Reserve and continue make payment' : 'Reserve and continue to payment')}
             <ArrowUpRight size={17} aria-hidden="true" />
           </button>
         </div>
@@ -350,15 +355,16 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       {error && <ErrorNotice message={error} />}
       {held && (
         <Link className="public-text-link" to="/app/bookings">
-          View this in your bookings
+          {pcm ? 'See am for your bookings' : 'View this in your bookings'}
         </Link>
       )}
       <p className="booking-assurance">
         <LockKeyhole size={15} aria-hidden="true" /> {pcm ? 'We dey verify payment securely.' : 'Payments are checked on the server.'}
       </p>
       <p className="public-small">
-        Cancellation rules: {offering.cancellationHours} hours before the booking starts. The
-        business's policy applies.
+        {pcm
+          ? `Cancellation rule: cancel at least ${offering.cancellationHours} hours before the booking starts. The business own policy still apply.`
+          : `Cancellation rules: ${offering.cancellationHours} hours before the booking starts. The business's policy applies.`}
       </p>
       {paymentOpen && held && (
         <PaymentMethodDialog
