@@ -176,3 +176,6 @@
 @media (prefers-reduced-motion: reduce) {
   .seven-pilot-avatar.is-speaking { filter: none; }
 }
+
+.seven-pilot-audio audio { display: none; }
+.seven-pilot-audio-actions button:disabled { cursor: not-allowed; opacity: .55; }
