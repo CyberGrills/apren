@@ -146,25 +146,27 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
 }
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }> };
+let deferredInstallPrompt: InstallPromptEvent | null = null;
 
 function InstallAppPage() {
-  const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(null);
+  const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(() => deferredInstallPrompt);
   const [installed, setInstalled] = useState(false);
   const [ios, setIos] = useState(false);
   const [message, setMessage] = useState('');
   useEffect(() => {
     setIos(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
     setInstalled(window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
-    const onPrompt = (event: Event) => { event.preventDefault(); setInstallEvent(event as InstallPromptEvent); };
+    const onPrompt = () => setInstallEvent(deferredInstallPrompt);
+    window.addEventListener('seven-install-prompt-ready', onPrompt);
     const onInstalled = () => { setInstalled(true); setInstallEvent(null); setMessage('7even has been added to your device.'); };
-    window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
-    return () => { window.removeEventListener('beforeinstallprompt', onPrompt); window.removeEventListener('appinstalled', onInstalled); };
+    return () => { window.removeEventListener('seven-install-prompt-ready', onPrompt); window.removeEventListener('appinstalled', onInstalled); };
   }, []);
   async function install() {
     if (!installEvent) return;
     await installEvent.prompt();
     const choice = await installEvent.userChoice;
+    deferredInstallPrompt = null;
     setInstallEvent(null);
     setMessage(choice.outcome === 'accepted' ? 'Follow the prompt to finish adding 7even to your device.' : 'No problem. You can install 7even whenever you are ready.');
   }
@@ -193,6 +195,15 @@ function InstallAppPage() {
 }
 
 export function App() {
+  useEffect(() => {
+    const captureInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event as InstallPromptEvent;
+      window.dispatchEvent(new Event('seven-install-prompt-ready'));
+    };
+    window.addEventListener('beforeinstallprompt', captureInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', captureInstallPrompt);
+  }, []);
   return (
     <Boundary>
       <BrowserRouter>
