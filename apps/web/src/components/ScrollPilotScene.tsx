@@ -1,6 +1,64 @@
+import { useEffect, useState } from 'react';
+import { useSevenLanguage } from '../lib/sevenLanguage.ts';
 import './scroll-pilot-scene.css';
 
 export function ScrollPilotScene() {
+  const language = useSevenLanguage();
+  const [speaking, setSpeaking] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [voiceNote, setVoiceNote] = useState('');
+  const englishIntro = 'Welcome to 7even. I will help you explore places to stay across Nigeria. You can review location details and verified information at your own pace. A listing is not a confirmed booking, and you stay in control of every decision.';
+  const pidginIntro = 'You are welcome to 7even. I go help you explore places wey you fit stay for Nigeria. Check location and verified information with your time. Listing no mean say booking don confirm, and na you dey control every decision.';
+  const caption = language === 'pcm' ? pidginIntro : englishIntro;
+
+  useEffect(() => () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }, [language]);
+
+  function speakPilot() {
+    if (muted) return;
+    if (!('speechSynthesis' in window)) {
+      setVoiceNote('Audio speech is not supported in this browser. Read the captions below instead.');
+      return;
+    }
+    const engine = window.speechSynthesis;
+    engine.cancel();
+    const utterance = new SpeechSynthesisUtterance(caption);
+    const voices = engine.getVoices();
+    const voice = voices.find((item) => item.lang.toLowerCase() === 'en-ng') ??
+      voices.find((item) => item.lang.toLowerCase().startsWith('en-gb')) ??
+      voices.find((item) => item.lang.toLowerCase().startsWith('en-us'));
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      utterance.lang = 'en-NG';
+    }
+    utterance.rate = 0.94;
+    utterance.onstart = () => {
+      setSpeaking(true);
+      setVoiceNote(voice ? `Using ${voice.name}. Available voices depend on your device.` : 'Using your device default voice. Available voices depend on your device.');
+    };
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => {
+      setSpeaking(false);
+      setVoiceNote('Audio could not play on this device. Captions remain available.');
+    };
+    engine.speak(utterance);
+  }
+
+  function pausePilot() {
+    if (!('speechSynthesis' in window)) return;
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    else window.speechSynthesis.pause();
+  }
+
+  function mutePilot() {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setSpeaking(false);
+    setMuted((value) => !value);
+  }
+
   return (
     <section className="seven-pilot-scroll" aria-labelledby="seven-pilot-title">
       <div className="seven-pilot-sticky">
@@ -18,7 +76,7 @@ export function ScrollPilotScene() {
           <div className="seven-pilot-orbit seven-pilot-orbit-two" />
           <div className="seven-pilot-horizon" />
           <div className="seven-pilot-glow" />
-          <div className="seven-pilot-avatar">
+          <div className={speaking ? "seven-pilot-avatar is-speaking" : "seven-pilot-avatar"}>
             <svg
               className="seven-pilot-portrait"
               viewBox="0 0 340 430"
@@ -136,6 +194,16 @@ export function ScrollPilotScene() {
           </div>
           <div className="seven-pilot-orbit-label seven-pilot-label-top">DISCOVER</div>
           <div className="seven-pilot-orbit-label seven-pilot-label-bottom">DECIDE AT YOUR PACE</div>
+        </div>
+        <div className="seven-pilot-audio" aria-label="Virtual pilot audio controls">
+          <div className="seven-pilot-audio-actions">
+            <button type="button" className="btn btn-primary" onClick={speakPilot} disabled={muted || speaking}>Speak</button>
+            <button type="button" className="btn btn-secondary" onClick={pausePilot} disabled={!speaking}>Pause / resume</button>
+            <button type="button" className="btn btn-secondary" onClick={mutePilot} aria-pressed={muted}>{muted ? 'Unmute' : 'Mute'}</button>
+            <button type="button" className="btn btn-secondary" onClick={speakPilot} disabled={muted}>Replay</button>
+          </div>
+          <p className="seven-pilot-caption" aria-live="polite">{caption}</p>
+          <p className="seven-pilot-voice-note" role="status">{voiceNote || 'Audio starts only when you choose Speak. Available voices vary by device; captions are always shown.'}</p>
         </div>
       </div>
     </section>

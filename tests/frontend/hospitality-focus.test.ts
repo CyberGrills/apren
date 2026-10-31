@@ -237,3 +237,25 @@ test('Pidgin booking and payment dialog localize customer actions without changi
   assert.match(offering, /Make you enjoy your stay/);
   assert.match(offering, /Where the place dey/);
 });
+
+
+test('virtual pilot audio is user-initiated, captioned, language-aware and stoppable', () => {
+  const pilot = source('../../apps/web/src/components/ScrollPilotScene.tsx');
+  assert.match(pilot, /useSevenLanguage/);
+  assert.match(pilot, /SpeechSynthesisUtterance/);
+  assert.match(pilot, /onClick={speakPilot}/);
+  assert.match(pilot, /Pause \/ resume/);
+  assert.match(pilot, /aria-live="polite"/);
+  assert.match(pilot, /No booking action is triggered/);
+  assert.match(pilot, /useEffect\(\(\) => \(\) => \{/);
+});
+
+test('7even install page explains PWA installation without claiming app-store availability', () => {
+  const appSource = source('../../apps/web/src/App.tsx');
+  const shellSource = source('../../apps/web/src/pages/public/PublicShell.tsx');
+  assert.match(appSource, /path="\/install"/);
+  assert.match(appSource, /beforeinstallprompt/);
+  assert.match(appSource, /Add to Home Screen/);
+  assert.match(appSource, /not a Play Store or Apple App Store download/);
+  assert.match(shellSource, /to="\/install"/);
+});
