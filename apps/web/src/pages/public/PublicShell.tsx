@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
-import { useSevenLanguage, type SevenLanguage } from '../../lib/sevenLanguage.ts';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
 export { editorialImages } from '../../lib/editorialImages.ts';
 
