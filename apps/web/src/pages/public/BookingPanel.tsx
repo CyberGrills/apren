@@ -8,8 +8,11 @@ import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
 import { recordRecoveryEvent, recoverySessionId } from '../../lib/recoveryTelemetry.ts';
 import { addDays, friendlyDate, localDateNow } from './PublicShell.tsx';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
 export function BookingPanel({ offering }: { offering: Offering }) {
+  const language = useSevenLanguage();
+  const pcm = language === 'pcm';
   const { user } = useSession();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -147,14 +150,14 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       <aside className="booking-panel booking-panel-unavailable" aria-labelledby="booking-title">
         <div className="booking-panel-top">
           <span className="public-eyebrow">Sample listing</span>
-          <h2 id="booking-title">Booking unavailable</h2>
+          <h2 id="booking-title">{pcm ? 'Booking no dey available' : 'Booking unavailable'}</h2>
         </div>
         <p role="status">
           This is an illustrative listing, not verified live inventory. Dates, room counts, quotes,
           reservations, and payment are disabled until the property is verified.
         </p>
         <Link className="btn btn-secondary booking-cta" to="/explore?kind=STAY">
-          Browse stays
+          {pcm ? 'Browse places to stay' : 'Browse stays'}
         </Link>
       </aside>
     );
@@ -163,7 +166,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
   return (
     <aside className="booking-panel" aria-labelledby="booking-title">
       <div className="booking-panel-top">
-        <span className="public-eyebrow">Make a plan</span>
+        <span className="public-eyebrow">{pcm ? 'Make your plan' : 'Make a plan'}</span>
         <h2 id="booking-title">
           <Money minor={offering.priceMinor} currency={offering.currency} />
           <small>{offering.unitLabel}</small>
@@ -173,7 +176,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
         <fieldset disabled={busy || !!held} className="booking-fieldset">
           {isStay ? (
             <div className="public-form-row">
-              <Field label="Check-in">
+              <Field label={pcm ? 'When you go enter' : 'Check-in'}>
                 <input
                   className="field-input"
                   type="date"
@@ -187,7 +190,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
                   }}
                 />
               </Field>
-              <Field label="Check-out">
+              <Field label={pcm ? 'When you go comot' : 'Check-out'}>
                 <input
                   className="field-input"
                   type="date"
@@ -202,7 +205,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               </Field>
             </div>
           ) : (
-            <Field label="Choose a date and time">
+            <Field label={pcm ? 'Choose date and time' : 'Choose a date and time'}>
               <select
                 className="field-input"
                 required
@@ -214,7 +217,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
                   clearQuote();
                 }}
               >
-                <option value="">Choose an available time</option>
+                <option value="">{pcm ? 'Choose available time' : 'Choose an available time'}</option>
                 {offering.windows
                   .filter((window) => window.remaining > 0 && window.serviceDate >= localDateNow())
                   .map((window) => (
@@ -232,7 +235,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             </Field>
           )}
           <Field
-            label={isStay ? 'Rooms' : 'Guests'}
+            label={isStay ? (pcm ? 'Rooms' : 'Rooms') : (pcm ? 'Guests' : 'Guests')}
             hint={`Up to ${Math.min(100, offering.capacity)} per reservation.`}
           >
             <input
@@ -270,7 +273,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       </form>
       {quote && (
         <div className="quote-breakdown" aria-live="polite">
-          <p className="public-eyebrow">Your price</p>
+          <p className="public-eyebrow">{pcm ? 'Your price' : 'Your price'}</p>
           <dl>
             <div>
               <dt>
@@ -313,7 +316,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
           <p className="public-small">
             {held
               ? `Held until ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(held.holdExpiresAt ?? quote.expiresAt))} WAT. Your booking is confirmed after payment is verified.`
-              : 'This price expires shortly. Availability is held only when you continue.'}
+              : '{pcm ? 'This price go expire soon. We go hold availability only when you continue.' : 'This price expires shortly. Availability is held only when you continue.'}'}
           </p>
           <label className="checkout-policy-acceptance">
             <input
@@ -351,7 +354,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
         </Link>
       )}
       <p className="booking-assurance">
-        <LockKeyhole size={15} aria-hidden="true" /> Payments are checked on the server.
+        <LockKeyhole size={15} aria-hidden="true" /> {pcm ? 'We dey verify payment securely.' : 'Payments are checked on the server.'}
       </p>
       <p className="public-small">
         Cancellation rules: {offering.cancellationHours} hours before the booking starts. The
