@@ -3389,3 +3389,18 @@
     transition: none;
   }
 }
+
+
+/* App installation page and install entry points */
+.public-install-link { white-space: nowrap; }
+.seven-install-main { display: grid; min-height: 62vh; place-items: center; padding-block: clamp(2.5rem, 8vw, 6rem); }
+.seven-install-card { width: min(100%, 42rem); padding: clamp(1.5rem, 5vw, 3.25rem); border: 1px solid var(--line); border-radius: 1.25rem; background: var(--surface-subtle); box-shadow: 0 24px 70px rgb(18 35 27 / 7%); }
+.seven-install-card h1 { margin: .5rem 0 1rem; font-family: var(--font-display); font-size: clamp(2.5rem, 7vw, 4.25rem); font-weight: 500; line-height: .98; letter-spacing: -.04em; }
+.seven-install-lead, .seven-install-footnote, .seven-install-steps p { color: var(--muted); line-height: 1.75; }
+.seven-install-action { margin-top: 1.25rem; }
+.seven-install-steps { margin-top: 2rem; padding: 1.25rem; border: 1px solid var(--line); border-radius: .9rem; background: var(--surface); }
+.seven-install-steps h2 { margin: 0 0 .75rem; font-size: 1.05rem; }
+.seven-install-steps ol { display: grid; gap: .65rem; padding-left: 1.3rem; line-height: 1.6; }
+.seven-install-status, .seven-install-feedback { margin-top: 1.25rem; color: var(--accent); }
+.seven-install-footnote { margin-top: 2rem; font-size: .8rem; }
+@media (max-width: 600px) { .seven-install-main { min-height: 55vh; padding-inline: 1rem; } .seven-install-card { border-radius: 1rem; } .public-install-link { display: none; } }
