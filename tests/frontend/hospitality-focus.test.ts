@@ -219,3 +219,21 @@ test('language preference synchronizes across browser tabs through the storage e
   assert.match(language, /event\.newValue === 'pcm' \? 'pcm' : 'en'/);
   assert.match(language, /removeEventListener\('storage', syncFromStorage\)/);
 });
+
+
+test('Pidgin booking and payment dialog localize customer actions without changing payment routing', () => {
+  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
+  const paymentDialog = source('../../apps/web/src/components/PaymentMethodDialog.tsx');
+  const offering = source('../../apps/web/src/pages/public/OfferingPage.tsx');
+  assert.match(bookingPanel, /Sign in make you see the full price/);
+  assert.match(bookingPanel, /We dey check am/);
+  assert.match(paymentDialog, /useSevenLanguage/);
+  assert.match(paymentDialog, /How you wan pay/);
+  assert.match(paymentDialog, /Card or bank transfer/);
+  assert.match(paymentDialog, /We go confirm your reservation only after server don verify payment/);
+  assert.match(paymentDialog, /Continue make payment/);
+  assert.match(paymentDialog, /openCheckout\(checkout, navigate\)/);
+  assert.match(paymentDialog, /payments\/\$\{options\.existingPaymentId\}\/checkout/);
+  assert.match(offering, /Make you enjoy your stay/);
+  assert.match(offering, /Where the place dey/);
+});

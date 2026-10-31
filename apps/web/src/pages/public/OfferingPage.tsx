@@ -67,7 +67,7 @@ function OfferingDetail({ offering }: { offering: Offering }) {
         </div>
         <span className="offering-sector">
           {offering.kind === 'STAY'
-            ? (pcm ? 'Stay small, enjoy well' : 'Stay a while')
+            ? (pcm ? 'Make you enjoy your stay' : 'Stay a while')
             : offering.kind === 'DINING'
               ? (pcm ? 'Chop and enjoy' : 'Around the table')
               : (pcm ? 'Enjoy your day' : 'Make a day of it')}{' '}
@@ -134,7 +134,7 @@ function OfferingDetail({ offering }: { offering: Offering }) {
             <h2 id="details-title">{pcm ? 'Wetin you suppose know before booking.' : 'Before you book.'}</h2>
             <dl>
               <div>
-                <dt>{pcm ? 'Location' : 'The place'}</dt>
+                <dt>{pcm ? 'Where the place dey' : 'The place'}</dt>
                 <dd>
                   {offering.address}, {offering.city}
                 </dd>
@@ -148,7 +148,7 @@ function OfferingDetail({ offering }: { offering: Offering }) {
                 </dd>
               </div>
               <div>
-                <dt>{pcm ? 'Cancellation' : 'Cancellation'}</dt>
+                <dt>{pcm ? 'How cancellation dey work' : 'Cancellation'}</dt>
                 <dd>
                   {pcm
                     ? `Cancel at least ${offering.cancellationHours} hours before the booking starts, according to the business own policy. You go see refund and settlement status separately for your bookings.`

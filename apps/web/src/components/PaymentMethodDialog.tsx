@@ -13,6 +13,7 @@ import { api } from '../lib/api.ts';
 import { connectPaymentWallet, SAMPLE_PAYER } from '../lib/paymentWallet.ts';
 import { openCheckout } from '../pages/customer/checkout.ts';
 import { ErrorNotice, Loading, Modal, Money } from './ui.tsx';
+import { useSevenLanguage } from '../lib/sevenLanguage.ts';
 
 export function PaymentMethodDialog({
   reservation,
@@ -24,6 +25,8 @@ export function PaymentMethodDialog({
   returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const navigate = useNavigate();
+  const language = useSevenLanguage();
+  const pcm = language === 'pcm';
   const {
     data: options,
     loading,
@@ -68,7 +71,7 @@ export function PaymentMethodDialog({
       setActionError(
         cause instanceof Error
           ? cause.message
-          : 'Payment could not open. Check this booking before trying again.',
+          : (pcm ? 'Payment no fit open. Check this booking before you try again.' : 'Payment could not open. Check this booking before trying again.'),
       );
       reload();
     } finally {
@@ -78,7 +81,7 @@ export function PaymentMethodDialog({
   const selectedAvailable = method === 'FIAT' ? options?.fiat.available : options?.crypto.available;
   return (
     <Modal
-      title="How would you like to pay?"
+      title={pcm ? 'How you wan pay?' : 'How would you like to pay?'}
       onClose={onClose}
       busy={busy}
       returnFocusRef={returnFocusRef}
@@ -89,24 +92,24 @@ export function PaymentMethodDialog({
           <Money minor={reservation.price.totalMinor} />
         </strong>
       </div>
-      <p className="small-copy">Your reservation confirms after the server verifies payment.</p>
+      <p className="small-copy">{pcm ? 'We go confirm your reservation only after server don verify payment.' : 'Your reservation confirms after the server verifies payment.'}</p>
       {loading && <Loading />}
       {error && <ErrorNotice message={error} retry={reload} />}
       {existingError && <ErrorNotice message={existingError} retry={reloadExisting} />}
       {options && (
         <>
           {options.mode === 'mock' && (
-            <p className="notice">Local test checkout. No real money or tokens move.</p>
+            <p className="notice">{pcm ? 'Na local test checkout be this. No real money or token go move.' : 'Local test checkout. No real money or tokens move.'}</p>
           )}
           {options.existingPaymentId ? (
             <div className="notice">
               {checkingExisting || !existing
-                ? 'Checking the payment already started for this booking…'
+                ? (pcm ? 'We dey check payment wey don start for this booking…' : 'Checking the payment already started for this booking…')
                 : `This booking already has ${existing.method === 'USDC_BASE' ? 'a USDC payment' : `a ${existing.provider === 'paystack' ? 'Paystack' : 'Flutterwave'} payment`}. Continue that payment to avoid paying twice.`}
             </div>
           ) : (
             <fieldset className="payment-methods" disabled={busy}>
-              <legend>Choose how to pay</legend>
+              <legend>{pcm ? 'Choose how you wan pay' : 'Choose how to pay'}</legend>
               <label className={`payment-method ${method === 'FIAT' ? 'selected' : ''}`}>
                 <input
                   type="radio"
@@ -118,7 +121,7 @@ export function PaymentMethodDialog({
                 />
                 <CreditCard size={22} aria-hidden="true" />
                 <span>
-                  <strong>Card or bank payment</strong>
+                  <strong>{pcm ? 'Card or bank transfer' : 'Card or bank payment'}</strong>
                   <span>
                     {options.fiat.provider === 'paystack'
                       ? 'Paystack · ₦50,000 and below'
@@ -126,7 +129,7 @@ export function PaymentMethodDialog({
                   </span>
                   <small>
                     {options.fiat.reason ??
-                      'Pay the full price shown. No added 7even checkout fee.'}
+                      (pcm ? 'Pay the full price wey you see. 7even no add checkout fee.' : 'Pay the full price shown. No added 7even checkout fee.')}
                   </small>
                 </span>
               </label>
@@ -148,18 +151,17 @@ export function PaymentMethodDialog({
                   </span>
                   <small>
                     {options.crypto.reason ??
-                      'The next page locks the token amount. Your wallet shows the ETH network fee before you send.'}
+                      (pcm ? 'The next page go lock the token amount. Your wallet go show ETH network fee before you send.' : 'The next page locks the token amount. Your wallet shows the ETH network fee before you send.')}
                   </small>
                 </span>
               </label>
               <div className="payment-method payment-method-unavailable" aria-disabled="true">
                 <Building2 size={22} aria-hidden="true" />
                 <span>
-                  <strong>Pay at the property</strong>
-                  <span>Pay the hotel directly when you arrive</span>
+                  <strong>{pcm ? 'Pay for the hotel' : 'Pay at the property'}</strong>
+                  <span>{pcm ? 'Pay the hotel directly when you reach there' : 'Pay the hotel directly when you arrive'}</span>
                   <small>
-                    Not available for this property yet. We will only enable this option when the
-                    hotel has approved pay-at-property bookings and confirmed its reservation terms.
+                    {pcm ? 'This option never dey available for this property yet. We go only enable am when the hotel approve pay-at-property booking and confirm the reservation terms.' : 'Not available for this property yet. We will only enable this option when the hotel has approved pay-at-property bookings and confirmed its reservation terms.'}
                   </small>
                 </span>
               </div>
@@ -167,7 +169,7 @@ export function PaymentMethodDialog({
           )}
           <div className="form-actions">
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>
-              Go back
+              {pcm ? 'Go back' : 'Go back'}
             </button>
             <button
               type="button"
@@ -179,12 +181,12 @@ export function PaymentMethodDialog({
               onClick={() => void continuePayment()}
             >
               {busy
-                ? 'Opening payment…'
+                ? (pcm ? 'We dey open payment…' : 'Opening payment…')
                 : options.existingPaymentId
-                  ? 'Continue existing payment'
+                  ? (pcm ? 'Continue the payment wey don start' : 'Continue existing payment')
                   : method === 'USDC_BASE' && options.mode !== 'mock'
-                    ? 'Connect wallet and continue'
-                    : 'Continue to payment'}
+                    ? (pcm ? 'Connect wallet make we continue' : 'Connect wallet and continue')
+                    : (pcm ? 'Continue make payment' : 'Continue to payment')}
             </button>
           </div>
         </>
