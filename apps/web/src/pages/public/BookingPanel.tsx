@@ -316,7 +316,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
           <p className="public-small">
             {held
               ? `Held until ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(held.holdExpiresAt ?? quote.expiresAt))} WAT. Your booking is confirmed after payment is verified.`
-              : (pcm ? 'This price go expire soon. We go hold availability only when you continue.' : 'This price expires shortly. Availability is held only when you continue.)}
+              : (pcm ? 'This price go expire soon. We go hold availability only when you continue.' : 'This price expires shortly. Availability is held only when you continue.')}
           </p>
           <label className="checkout-policy-acceptance">
             <input
