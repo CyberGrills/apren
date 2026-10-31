@@ -9,6 +9,7 @@ import {
 import { ErrorNotice, Field, useFeedback } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { safeWorkspaceReturnTo } from '../../lib/workspaceNavigation.ts';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 import { editorialImages, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 const loginVibes = [
@@ -33,6 +34,8 @@ const loginVibes = [
 const LOGIN_VIBE_STORAGE_KEY = '7even-login-vibe-index';
 
 export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; workspace?: 'admin' }) {
+  const language = useSevenLanguage();
+  const pcm = !workspace && language === 'pcm';
   const { login, register, session, loading: sessionLoading } = useSession();
   const { showSuccess, showError } = useFeedback();
   const [params, setParams] = useSearchParams();
@@ -154,7 +157,7 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
             {admin
               ? 'Review businesses, follow reservations and keep platform operations in order.'
               : registration
-                ? 'Keep your bookings in one place. Earn points when eligible bookings are completed, then choose a reward you like.'
+                ? (pcm ? 'Keep your bookings one place. When eligible bookings complete, you fit earn points and choose reward wey you like.' : 'Keep your bookings in one place. Earn points when eligible bookings are completed, then choose a reward you like.')
                 : loginVibe}
           </p>
           {!admin && (
@@ -175,8 +178,8 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
             {admin
               ? 'Staff sign in.'
               : registration
-                ? 'Make yourself at home.'
-                : 'Sign in to 7even.'}
+                ? (pcm ? 'Make yourself comfortable.' : 'Make yourself at home.')
+                : (pcm ? 'Enter 7even.' : 'Sign in to 7even.')}
           </h2>
           <AuthenticationOptions
             returnTo={returnTo}
@@ -237,23 +240,23 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
           </form>
           {!registration && (
             <p>
-              <Link to="/forgot-password">Forgot your password?</Link>
+              <Link to="/forgot-password">{pcm ? 'You forget your password?' : 'Forgot your password?'}</Link>
             </p>
           )}
           {!admin && (
             <p className="auth-switch">
-              {registration ? 'Already have an account?' : 'New to 7even?'}{' '}
+              {registration ? (pcm ? 'You don get account already?' : 'Already have an account?') : (pcm ? 'New to 7even?' : 'New to 7even?')}{' '}
               <Link
                 to={`/${registration ? 'login' : 'register'}?returnTo=${encodeURIComponent(returnTo)}`}
               >
-                {registration ? 'Sign in' : 'Create an account'}
+                {registration ? 'Sign in' : (pcm ? 'Create account' : 'Create an account')}
               </Link>
             </p>
           )}
           <p className="public-small">
             {admin
               ? 'Use an account assigned to platform administration. Access is checked after sign in.'
-              : 'Your account holds your booking history, points and benefits. Payment details are handled by the payment provider.'}
+              : (pcm ? 'Your account keep your booking history, points and benefits. Payment details dey with the payment provider.' : 'Your account holds your booking history, points and benefits. Payment details are handled by the payment provider.')}
           </p>
         </section>
       </main>
