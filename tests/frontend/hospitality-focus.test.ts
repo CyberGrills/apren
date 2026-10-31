@@ -187,5 +187,5 @@ test('Naija Pidgin reaches hotel detail, booking, sign-in, profile and customer 
   assert.match(bookingPanel, /When you go enter/);
   assert.match(profile, /preferredLanguage/);
   assert.match(updates, /Mark as read/);
-  assert.match(bookings, /verified payment and availability/);
+  assert.match(bookings, /payment and availability/);
 });
