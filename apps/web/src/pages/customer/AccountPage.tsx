@@ -8,6 +8,7 @@ import { PublicFooter, PublicHeader } from '../public/PublicShell.tsx';
 import { ActivityView } from './ActivityView.tsx';
 import { BookingList } from './BookingList.tsx';
 import { ProfileView } from './ProfileView.tsx';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
 type AccountTab = 'bookings' | 'profile' | 'activity';
 const headings: Record<AccountTab, { eyebrow: string; title: string; description: string }> = {
@@ -30,8 +31,13 @@ const headings: Record<AccountTab, { eyebrow: string; title: string; description
 
 export function AccountPage({ tab = 'bookings' }: { tab?: AccountTab }) {
   const { user } = useSession();
+  const language = useSevenLanguage();
   const { data, loading, error, reload } = useApi<CustomerOverview>(user ? '/me/overview' : null);
-  const heading = headings[tab];
+  const heading = language === 'pcm' ? {
+    bookings: { eyebrow: 'Your stays', title: 'Your next enjoyment dey here.', description: 'See your hotel and apartment bookings, plus their current status.' },
+    activity: { eyebrow: 'Your updates', title: 'Wetin dey happen with your plans.', description: 'Booking updates and anything wey need your attention.' },
+    profile: { eyebrow: 'Your profile', title: 'Make yourself comfortable.', description: 'Your personal details for your 7even account.' },
+  }[tab] : headings[tab];
   return (
     <div className="public-page customer-page">
       <PublicHeader />
@@ -43,7 +49,7 @@ export function AccountPage({ tab = 'bookings' }: { tab?: AccountTab }) {
             <p>{heading.description}</p>
           </div>
           <Link className="public-text-link" to="/explore">
-            Find your next plan <ArrowUpRight size={18} aria-hidden="true" />
+            {language === 'pcm' ? 'Find your next place' : 'Find your next plan'} <ArrowUpRight size={18} aria-hidden="true" />
           </Link>
         </div>
         <nav className="customer-tabs" aria-label="Your account">
@@ -65,7 +71,7 @@ export function AccountPage({ tab = 'bookings' }: { tab?: AccountTab }) {
         {error && <ErrorNotice message={error} retry={reload} />}
         {!user && (
           <p>
-            Sign in to see your account. <Link to="/login">Sign in</Link>
+            {language === 'pcm' ? 'Sign in make you see your account.' : 'Sign in to see your account.'} <Link to="/login">Sign in</Link>
           </p>
         )}
         {data && user && (
