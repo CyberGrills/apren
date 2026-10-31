@@ -91,6 +91,7 @@ export function PublicHeader() {
             <button type="button" className={language === 'en' ? 'active' : ''} aria-pressed={language === 'en'} onClick={() => changeLanguage('en')}>English</button>
             <button type="button" className={language === 'pcm' ? 'active' : ''} aria-pressed={language === 'pcm'} onClick={() => changeLanguage('pcm')}>Naija Pidgin</button>
           </div>
+          <Link to="/install" className="public-install-link">Install app</Link>
           <Link to={user ? '/app/bookings' : '/login'} className="public-account-link">
             {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
           </Link>
@@ -119,6 +120,7 @@ export function PublicHeader() {
           <Link to="/explore?kind=DINING" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Food' : 'Dining'}
           </Link>
+          <Link to="/install" onClick={() => setOpen(false)}>Install app</Link>
           <Link to="/explore?kind=EXPERIENCE" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Things to do' : 'Things to do'}
           </Link>
@@ -150,6 +152,7 @@ export function PublicFooter() {
             <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Find place to stay' : 'Find a stay'}</Link>
             <Link to="/business/apply">{language === 'pcm' ? 'List your business' : 'Bring your business'}</Link>
             <Link to="/app/bookings">Your bookings</Link>
+            <Link to="/install">Install 7even</Link>
             <Link to="/help">Help</Link>
             <Link to="/booking-rules">Booking rules</Link>
           </nav>
