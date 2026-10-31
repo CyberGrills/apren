@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { EmptyState, ErrorNotice, useFeedback } from '../../components/ui.tsx';
 import { api } from '../../lib/api.ts';
 import { friendlyDate } from '../public/PublicShell.tsx';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
 export function ActivityView({
   notifications,
@@ -13,6 +14,8 @@ export function ActivityView({
   notifications: Notification[];
   reload: () => void;
 }) {
+  const language = useSevenLanguage();
+  const pcm = language === 'pcm';
   const { showSuccess } = useFeedback();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,13 +29,13 @@ export function ActivityView({
         method: 'POST',
         idempotencyKey: attempts.current[notification.id],
       });
-      showSuccess('This update is marked as read.', 'Update saved.');
+      showSuccess(pcm ? 'You don mark this update as read.' : 'This update is marked as read.', pcm ? 'Update saved.' : 'Update saved.');
       reload();
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : 'We could not update this notification. Please try again.',
+          : (pcm ? 'We no fit update this notification. Abeg try again.' : 'We could not update this notification. Please try again.'),
       );
     } finally {
       setBusy(null);
@@ -41,8 +44,8 @@ export function ActivityView({
   if (!notifications.length)
     return (
       <EmptyState
-        title="Nothing new for now."
-        description="Booking updates and invitations will appear here when there is something to review."
+        title={pcm ? 'Nothing new for now.' : 'Nothing new for now.'}
+        description={pcm ? 'Booking updates and invitations go show here when something need your attention.' : 'Booking updates and invitations will appear here when there is something to review.'}
       />
     );
   return (
@@ -64,7 +67,7 @@ export function ActivityView({
               <div className="customer-update-content">
                 <div className="customer-update-meta">
                   <span className="public-eyebrow">
-                    {notification.readAt ? 'Read' : 'New update'}
+                    {notification.readAt ? (pcm ? 'You don read am' : 'Read') : (pcm ? 'New update' : 'New update')}
                   </span>
                   <time dateTime={notification.createdAt}>
                     {friendlyDate(notification.createdAt)}
@@ -74,7 +77,7 @@ export function ActivityView({
                 <p>{notification.body}</p>
                 <div className="customer-update-actions">
                   <Link to={href} className="public-text-link">
-                    Review this update <ArrowUpRight size={16} aria-hidden="true" />
+                    {pcm ? 'Check this update' : 'Review this update'} <ArrowUpRight size={16} aria-hidden="true" />
                   </Link>
                   {!notification.readAt && (
                     <button
@@ -83,7 +86,7 @@ export function ActivityView({
                       disabled={busy === notification.id}
                       onClick={() => markRead(notification)}
                     >
-                      {busy === notification.id ? 'Saving…' : 'Mark as read'}
+                      {busy === notification.id ? (pcm ? 'We dey save…' : 'Saving…') : (pcm ? 'Mark as read' : 'Mark as read')}
                     </button>
                   )}
                 </div>

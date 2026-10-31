@@ -170,3 +170,22 @@ test('Naija Pidgin keeps verified availability and payment wording explicit', ()
   assert.match(explore, /Confirm room availability, final price and capacity before you book/);
   assert.match(explore, /Only verified 7even stays/);
 });
+
+
+test('Naija Pidgin reaches hotel detail, booking, sign-in, profile and customer updates', () => {
+  const languageHook = /useSevenLanguage/;
+  const offering = source('../../apps/web/src/pages/public/OfferingPage.tsx');
+  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
+  const auth = source('../../apps/web/src/pages/public/AuthPage.tsx');
+  const profile = source('../../apps/web/src/pages/customer/ProfileView.tsx');
+  const updates = source('../../apps/web/src/pages/customer/ActivityView.tsx');
+  const bookings = source('../../apps/web/src/pages/customer/BookingList.tsx');
+  for (const page of [offering, bookingPanel, auth, profile, updates, bookings]) {
+    assert.match(page, languageHook);
+    assert.match(page, /const pcm =/);
+  }
+  assert.match(bookingPanel, /When you go enter/);
+  assert.match(profile, /preferredLanguage/);
+  assert.match(updates, /Mark as read/);
+  assert.match(bookings, /payment and availability/);
+});
