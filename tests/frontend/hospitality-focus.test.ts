@@ -98,7 +98,7 @@ test('checkout shows service fees separately when the quote includes one', () =>
   const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
   assert.match(bookingPanel, /quote\.price\.serviceMinor !== '0'/);
   assert.match(bookingPanel, /<dt>\{pcm \? 'Service charge' : 'Service fee'\}<\/dt>[\s\S]*?<Money minor={quote\.price\.serviceMinor} \/>/);
-  assert.match(bookingPanel, /<dt>Total<\/dt>[\s\S]*?<Money minor={quote\.price\.totalMinor} \/>/);
+  assert.match(bookingPanel, /<dt>\{pcm \? 'Total' : 'Total'\}<\/dt>[\s\S]*?<Money minor={quote\.price\.totalMinor} \/>/);
 });
 
 test('sample offerings never present illustrative prices as bookable rates', () => {
