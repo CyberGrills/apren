@@ -1,5 +1,5 @@
 import { PILOT_VISEMES, type PilotViseme } from './pilotVisemeTimeline.ts';
-import type { PilotMorphTargetBinding, PilotMorphTargetMap } from './pilotMorphTargetDriver.ts';
+import type { PilotMorphTargetMap } from './pilotMorphTargetDriver.ts';
 
 export interface PilotCharacterManifest {
   version: 1;
@@ -59,7 +59,7 @@ export function validatePilotCharacterManifest(
   if (!isRecord(asset)) {
     errors.push('asset must be an object.');
   } else {
-    if (!isNonEmptyString(asset.path) || !asset.path.startsWith('/') || !asset.path.toLowerCase().endsWith('.glb')) {
+    if (!isNonEmptyString(asset.path) || !asset.path.startsWith('/') || asset.path.startsWith('//') || asset.path.includes('..') || asset.path.includes('?') || asset.path.includes('#') || !asset.path.toLowerCase().endsWith('.glb')) {
       errors.push('asset.path must be an absolute public path ending in .glb.');
     }
     for (const field of ['creator', 'license', 'attribution', 'rightsDocument']) {
