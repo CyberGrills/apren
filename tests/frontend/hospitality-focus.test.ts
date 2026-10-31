@@ -97,7 +97,7 @@ test('guest account navigation stays focused on profile, bookings and updates', 
 test('checkout shows service fees separately when the quote includes one', () => {
   const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
   assert.match(bookingPanel, /quote\.price\.serviceMinor !== '0'/);
-  assert.match(bookingPanel, /<dt>Service fee<\/dt>[\s\S]*?<Money minor={quote\.price\.serviceMinor} \/>/);
+  assert.match(bookingPanel, /<dt>\{pcm \? 'Service charge' : 'Service fee'\}<\/dt>[\s\S]*?<Money minor={quote\.price\.serviceMinor} \/>/);
   assert.match(bookingPanel, /<dt>Total<\/dt>[\s\S]*?<Money minor={quote\.price\.totalMinor} \/>/);
 });
 
@@ -198,7 +198,7 @@ test('Pidgin booking panel uses distinct customer-facing copy and preserves paym
   assert.match(bookingPanel, /Wetin you go pay/);
   assert.match(bookingPanel, /We dey verify payment securely/);
   assert.match(bookingPanel, /We go confirm your booking after payment don verify/);
-  assert.match(bookingPanel, /reservation never confirm/);
+  assert.match(bookingPanel, /this booking no confirm until 7even verify my payment/);
   assert.match(bookingPanel, /cancellation rule/);
   assert.doesNotMatch(bookingPanel, /pcm \? 'Rooms' : 'Rooms'/);
   assert.doesNotMatch(bookingPanel, /pcm \? 'Your price' : 'Your price'/);
@@ -209,7 +209,7 @@ test('Pidgin hotel details explain cancellation, payment verification and eligib
   assert.match(offering, /Wetin you suppose know before booking/);
   assert.match(offering, /payment provider don verify the payment/);
   assert.match(offering, /business own policy/);
-  assert.match(offering, /booking wey qualify after dem complete/);
+  assert.match(offering, /bookings wey qualify after dem complete/);
 });
 
 test('language preference synchronizes across browser tabs through the storage event', () => {
