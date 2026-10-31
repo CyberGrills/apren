@@ -148,6 +148,7 @@ export function ScrollPilotScene() {
                 <path d="M169 293 L170 383" stroke="#071f18" strokeWidth="2" opacity=".5" />
                 <path d="M83 320 L115 310 M224 310 L257 320" stroke="#8eaa91" strokeWidth="1.5" opacity=".24" />
 
+                <g className="seven-pilot-head">
                 <path d="M145 222 L145 274 Q170 300 195 274 L195 222 Z" fill="url(#pilot-skin)" />
                 <path d="M145 236 Q170 256 195 236 L195 266 Q170 286 145 266 Z" fill="#5a2c20" opacity=".4" />
 
@@ -166,6 +167,7 @@ export function ScrollPilotScene() {
                 <path d="M111 111 Q116 82 145 75" stroke="#78604c" strokeWidth="2" opacity=".35" fill="none" />
                 <path d="M137 78 Q169 65 200 78" stroke="#8e7761" strokeWidth="1.5" opacity=".22" fill="none" />
 
+                <g className="seven-pilot-eyes">
                 <path d="M128 143 Q143 133 157 142" stroke="#2b1712" strokeWidth="7" strokeLinecap="round" fill="none" />
                 <path d="M183 142 Q198 133 212 143" stroke="#2b1712" strokeWidth="7" strokeLinecap="round" fill="none" />
                 <path d="M128 148 Q142 141 156 148" stroke="#d8a078" strokeWidth="1.8" opacity=".6" fill="none" />
@@ -176,14 +178,18 @@ export function ScrollPilotScene() {
                 <ellipse cx="198" cy="157" rx="3.8" ry="4.2" fill="#17100e" />
                 <circle cx="144" cy="155.5" r="1.2" fill="#f5d4b1" />
                 <circle cx="199" cy="155.5" r="1.2" fill="#f5d4b1" />
+                </g>
 
                 <path d="M171 154 Q166 174 161 185 Q170 193 182 186" stroke="#5c2c20" strokeWidth="3" strokeLinecap="round" fill="none" opacity=".72" />
                 <path d="M163 186 Q171 190 181 185" stroke="#d38b60" strokeWidth="2" strokeLinecap="round" fill="none" opacity=".65" />
+                <g className="seven-pilot-mouth">
                 <path d="M146 207 Q170 223 195 206 Q190 232 170 232 Q151 230 146 207 Z" fill="#4a201a" />
                 <path d="M149 208 Q170 218 192 208 Q186 220 170 221 Q155 220 149 208 Z" fill="#f0d5bd" />
                 <path d="M153 225 Q170 232 188 224" stroke="#7d3829" strokeWidth="2" fill="none" opacity=".7" />
+                </g>
                 <path d="M124 181 Q134 190 145 185 M195 185 Q207 190 217 180" stroke="#e6a078" strokeWidth="2" fill="none" opacity=".24" />
 
+                </g>
                 <path d="M78 398 L92 320 Q95 305 109 301 L142 325 L170 355 L198 325 L231 301 Q245 305 248 320 L262 398 Z" fill="url(#pilot-jacket)" />
                 <path d="M142 325 L170 355 L198 325 L186 398 L154 398 Z" fill="#0d2a21" opacity=".62" />
                 <path d="M130 308 L150 328 L170 355 L151 373 L128 330 Z" fill="#e7dac0" />
