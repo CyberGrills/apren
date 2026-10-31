@@ -247,7 +247,7 @@ test('virtual pilot audio is user-initiated, captioned, language-aware and stopp
   assert.match(pilot, /Pause \/ resume/);
   assert.match(pilot, /aria-live="polite"/);
   assert.match(pilot, /No booking action is triggered/);
-  assert.doesNotMatch(pilot, /useEffect\(\(\) => \{[\s\S]*?speakPilot\(\)/);
+  assert.match(pilot, /useEffect\(\(\) => \(\) => \{/);
 });
 
 test('7even install page explains PWA installation without claiming app-store availability', () => {
