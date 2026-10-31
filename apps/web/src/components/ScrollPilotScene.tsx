@@ -3,6 +3,62 @@ import { useSevenLanguage } from '../lib/sevenLanguage.ts';
 import './scroll-pilot-scene.css';
 
 export function ScrollPilotScene() {
+  const language = useSevenLanguage();
+  const [speaking, setSpeaking] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [voiceNote, setVoiceNote] = useState('');
+  const englishIntro = 'Welcome to 7even. I will help you explore places to stay across Nigeria. You can review location details and verified information at your own pace. A listing is not a confirmed booking, and you stay in control of every decision.';
+  const pidginIntro = 'You are welcome to 7even. I go help you explore places wey you fit stay for Nigeria. Check location and verified information with your time. Listing no mean say booking don confirm, and na you dey control every decision.';
+  const caption = language === 'pcm' ? pidginIntro : englishIntro;
+
+  useEffect(() => () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }, [language]);
+
+  function speakPilot() {
+    if (muted) return;
+    if (!('speechSynthesis' in window)) {
+      setVoiceNote('Audio speech is not supported in this browser. Read the captions below instead.');
+      return;
+    }
+    const engine = window.speechSynthesis;
+    engine.cancel();
+    const utterance = new SpeechSynthesisUtterance(caption);
+    const voices = engine.getVoices();
+    const voice = voices.find((item) => item.lang.toLowerCase() === 'en-ng') ??
+      voices.find((item) => item.lang.toLowerCase().startsWith('en-gb')) ??
+      voices.find((item) => item.lang.toLowerCase().startsWith('en-us'));
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      utterance.lang = 'en-NG';
+    }
+    utterance.rate = 0.94;
+    utterance.onstart = () => {
+      setSpeaking(true);
+      setVoiceNote(voice ? `Using ${voice.name}. Available voices depend on your device.` : 'Using your device default voice. Available voices depend on your device.');
+    };
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => {
+      setSpeaking(false);
+      setVoiceNote('Audio could not play on this device. Captions remain available.');
+    };
+    engine.speak(utterance);
+  }
+
+  function pausePilot() {
+    if (!('speechSynthesis' in window)) return;
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    else window.speechSynthesis.pause();
+  }
+
+  function mutePilot() {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setSpeaking(false);
+    setMuted((value) => !value);
+  }
+
   return (
     <section className="seven-pilot-scroll" aria-labelledby="seven-pilot-title">
       <div className="seven-pilot-sticky">
