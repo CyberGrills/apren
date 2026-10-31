@@ -10,6 +10,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { FeedbackProvider } from './components/Feedback.tsx';
+import { PublicFooter, PublicHeader } from './pages/public/PublicShell.tsx';
 import { ErrorNotice, Loading, PageHeader } from './components/ui.tsx';
 import { WorkspaceShell } from './components/WorkspaceShell.tsx';
 import { SessionProvider, useSession } from './context/SessionContext.tsx';
@@ -143,6 +144,54 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
     return this.state.failed ? <FatalFailure /> : this.props.children;
   }
 }
+
+type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }> };
+
+function InstallAppPage() {
+  const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
+  const [ios, setIos] = useState(false);
+  const [message, setMessage] = useState('');
+  useEffect(() => {
+    setIos(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+    setInstalled(window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
+    const onPrompt = (event: Event) => { event.preventDefault(); setInstallEvent(event as InstallPromptEvent); };
+    const onInstalled = () => { setInstalled(true); setInstallEvent(null); setMessage('7even has been added to your device.'); };
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => { window.removeEventListener('beforeinstallprompt', onPrompt); window.removeEventListener('appinstalled', onInstalled); };
+  }, []);
+  async function install() {
+    if (!installEvent) return;
+    await installEvent.prompt();
+    const choice = await installEvent.userChoice;
+    setInstallEvent(null);
+    setMessage(choice.outcome === 'accepted' ? 'Follow the prompt to finish adding 7even to your device.' : 'No problem. You can install 7even whenever you are ready.');
+  }
+  return (
+    <div className="public-page seven-install-page">
+      <PublicHeader />
+      <main id="main-content" className="public-container seven-install-main">
+        <section className="seven-install-card" aria-labelledby="install-title">
+          <p className="public-eyebrow">7EVEN · YOUR TRAVEL COMPANION</p>
+          <h1 id="install-title">Take 7even with you.</h1>
+          <p className="seven-install-lead">Add 7even to your home screen for a focused, app-like experience. Your installed shortcut opens the same 7even service.</p>
+          {installed ? <p className="seven-install-status" role="status">7even is already installed on this device.</p> : installEvent ? (
+            <button type="button" className="btn btn-primary seven-install-action" onClick={() => void install()}>Install 7even</button>
+          ) : ios ? (
+            <div className="seven-install-steps"><h2>Install on iPhone or iPad</h2><ol><li>Open this page in Safari.</li><li>Tap the Share button.</li><li>Choose <strong>Add to Home Screen</strong>, then tap Add.</li></ol></div>
+          ) : (
+            <div className="seven-install-steps"><h2>Install from your browser</h2><ol><li>Open 7even in Chrome or another supported browser.</li><li>Open the browser menu.</li><li>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong>, if shown.</li></ol><p>Your browser controls whether installation is available on this device.</p></div>
+          )}
+          {message && <p className="seven-install-feedback" role="status">{message}</p>}
+          <p className="seven-install-footnote">7even is currently an installable web app (PWA), not a Play Store or Apple App Store download. Availability depends on your browser and device.</p>
+        </section>
+      </main>
+      <PublicFooter />
+    </div>
+  );
+}
+
 export function App() {
   return (
     <Boundary>
@@ -157,6 +206,7 @@ export function App() {
             </div>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/install" element={<InstallAppPage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/directory" element={<Navigate to="/explore?kind=STAY" replace />} />
               <Route path="/places/:id" element={<OfferingPage />} />
