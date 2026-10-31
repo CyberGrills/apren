@@ -1,62 +1,70 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSevenLanguage } from '../lib/sevenLanguage.ts';
 import './scroll-pilot-scene.css';
 
+const PILOT_VOICE_TRACKS = {
+  en: '/audio/virtual-pilot/primary-en-ng.mp3',
+  pcm: '/audio/virtual-pilot/primary-pcm-ng.mp3',
+} as const;
+
 export function ScrollPilotScene() {
   const language = useSevenLanguage();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [voiceNote, setVoiceNote] = useState('');
-  const englishIntro = 'Welcome to 7even. I will help you explore places to stay across Nigeria. You can review location details and verified information at your own pace. A listing is not a confirmed booking, and you stay in control of every decision.';
-  const pidginIntro = 'You are welcome to 7even. I go help you explore places wey you fit stay for Nigeria. Check location and verified information with your time. Listing no mean say booking don confirm, and na you dey control every decision.';
+  const [audioReady, setAudioReady] = useState(false);
+  const [voiceNote, setVoiceNote] = useState('The professional Nigerian voice recording is being prepared. Captions are available in the meantime.');
+  const englishIntro = "Hello, welcome to 7EVEN. I'm your virtual travel companion, here to help you discover places worth experiencing. Looking for a hotel in New York? Let's find a place that matches what you need. No guesswork. No made-up hotel availability. Just information you can trust. And if you need a little help along the way, I'm right here. Let's explore Nigeria, one destination at a time. Welcome to 7EVEN āprən.";
+  const pidginIntro = 'You are welcome to 7EVEN. I be your virtual travel companion, here to help you discover places wey worth experiencing. You dey find hotel for New York? Make we find place wey match wetin you need. No guesswork. No made-up hotel availability. Na only information wey you fit trust. And if you need small help as we dey go, I dey right here. Make we explore Nigeria, one destination at a time. Welcome to 7EVEN āprən.';
   const caption = language === 'pcm' ? pidginIntro : englishIntro;
+  const voiceTrack = language === 'pcm' ? PILOT_VOICE_TRACKS.pcm : PILOT_VOICE_TRACKS.en;
 
-  useEffect(() => () => {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-  }, [language]);
-
-  function speakPilot() {
-    if (muted) return;
-    if (!('speechSynthesis' in window)) {
-      setVoiceNote('Audio speech is not supported in this browser. Read the captions below instead.');
-      return;
-    }
-    const engine = window.speechSynthesis;
-    engine.cancel();
-    const utterance = new SpeechSynthesisUtterance(caption);
-    const voices = engine.getVoices();
-    const voice = voices.find((item) => item.lang.toLowerCase() === 'en-ng') ??
-      voices.find((item) => item.lang.toLowerCase().startsWith('en-gb')) ??
-      voices.find((item) => item.lang.toLowerCase().startsWith('en-us'));
-    if (voice) {
-      utterance.voice = voice;
-      utterance.lang = voice.lang;
-    } else {
-      utterance.lang = 'en-NG';
-    }
-    utterance.rate = 0.94;
-    utterance.onstart = () => {
-      setSpeaking(true);
-      setVoiceNote(voice ? `Using ${voice.name}. Available voices depend on your device.` : 'Using your device default voice. Available voices depend on your device.');
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    setSpeaking(false);
+    setAudioReady(false);
+    setVoiceNote('Preparing the professional Nigerian voice recording…');
+    audio.load();
+    return () => {
+      audio.pause();
     };
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => {
+  }, [voiceTrack]);
+
+  function playPilot() {
+    if (muted || !audioReady || !audioRef.current) return;
+    void audioRef.current.play().catch(() => {
       setSpeaking(false);
-      setVoiceNote('Audio could not play on this device. Captions remain available.');
-    };
-    engine.speak(utterance);
+      setVoiceNote('The recorded voice could not play. Captions remain available.');
+    });
   }
 
   function pausePilot() {
-    if (!('speechSynthesis' in window)) return;
-    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-    else window.speechSynthesis.pause();
+    audioRef.current?.pause();
+  }
+
+  function resumePilot() {
+    playPilot();
   }
 
   function mutePilot() {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    setSpeaking(false);
-    setMuted((value) => !value);
+    const nextMuted = !muted;
+    setMuted(nextMuted);
+    if (audioRef.current) {
+      audioRef.current.muted = nextMuted;
+      if (nextMuted) {
+        audioRef.current.pause();
+        setSpeaking(false);
+      }
+    }
+  }
+
+  function replayPilot() {
+    if (!audioRef.current || !audioReady || muted) return;
+    audioRef.current.currentTime = 0;
+    playPilot();
   }
 
   return (
@@ -196,14 +204,39 @@ export function ScrollPilotScene() {
           <div className="seven-pilot-orbit-label seven-pilot-label-bottom">DECIDE AT YOUR PACE</div>
         </div>
         <div className="seven-pilot-audio" aria-label="Virtual pilot audio controls">
+          <audio
+            ref={audioRef}
+            key={voiceTrack}
+            src={voiceTrack}
+            preload="metadata"
+            onCanPlay={() => {
+              setAudioReady(true);
+              setVoiceNote('Professional human voice recording ready.');
+            }}
+            onPlay={() => {
+              setSpeaking(true);
+              setVoiceNote('Playing the recorded human voice.');
+            }}
+            onPause={() => setSpeaking(false)}
+            onEnded={() => {
+              setSpeaking(false);
+              setVoiceNote('Voice introduction complete.');
+            }}
+            onError={() => {
+              setAudioReady(false);
+              setSpeaking(false);
+              setVoiceNote('The professional recording has not been added yet. Captions remain available.');
+            }}
+          />
           <div className="seven-pilot-audio-actions">
-            <button type="button" className="btn btn-primary" onClick={speakPilot} disabled={muted || speaking}>Speak</button>
-            <button type="button" className="btn btn-secondary" onClick={pausePilot} disabled={!speaking}>Pause / resume</button>
+            <button type="button" className="btn btn-primary" onClick={playPilot} disabled={muted || !audioReady || speaking}>Play voice</button>
+            <button type="button" className="btn btn-secondary" onClick={pausePilot} disabled={!speaking}>Pause</button>
+            <button type="button" className="btn btn-secondary" onClick={resumePilot} disabled={!audioReady || muted || speaking}>Resume</button>
             <button type="button" className="btn btn-secondary" onClick={mutePilot} aria-pressed={muted}>{muted ? 'Unmute' : 'Mute'}</button>
-            <button type="button" className="btn btn-secondary" onClick={speakPilot} disabled={muted}>Replay</button>
+            <button type="button" className="btn btn-secondary" onClick={replayPilot} disabled={!audioReady || muted}>Replay</button>
           </div>
           <p className="seven-pilot-caption" aria-live="polite">{caption}</p>
-          <p className="seven-pilot-voice-note" role="status">{voiceNote || 'Audio starts only when you choose Speak. Available voices vary by device; captions are always shown.'}</p>
+          <p className="seven-pilot-voice-note" role="status">{voiceNote}</p>
         </div>
       </div>
     </section>
