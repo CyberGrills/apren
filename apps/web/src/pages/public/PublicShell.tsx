@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
+import { useSevenLanguage, type SevenLanguage } from '../../lib/sevenLanguage.ts';
 
 export { editorialImages } from '../../lib/editorialImages.ts';
 
@@ -51,7 +52,11 @@ export function PublicHeader() {
   }, []);
   useEffect(() => {
     const saved = user?.profileDetails?.preferredLanguage;
-    if (saved === 'en' || saved === 'pcm') setLanguage(saved);
+    if (saved === 'en' || saved === 'pcm') {
+      setLanguage(saved);
+      try { window.localStorage.setItem('7even-language-style', saved); } catch { /* Account preference remains authoritative. */ }
+      window.dispatchEvent(new CustomEvent('7even-language-change', { detail: saved }));
+    }
   }, [user?.profileDetails?.preferredLanguage]);
   function changeLanguage(next: SevenLanguage) {
     setLanguage(next);
@@ -130,6 +135,7 @@ export function PublicHeader() {
 }
 
 export function PublicFooter() {
+  const language = useSevenLanguage();
   return (
     <footer className="public-footer">
       <div className="public-container">
@@ -138,13 +144,11 @@ export function PublicFooter() {
             <Brand />
           </Link>
           <p>
-            Good places.
-            <br />
-            Worth your time.
+            {language === 'pcm' ? <>Correct places.<br />Make your time count.</> : <>Good places.<br />Worth your time.</>}
           </p>
           <nav aria-label="Footer">
-            <Link to="/explore?kind=STAY">Find a stay</Link>
-            <Link to="/business/apply">Bring your business</Link>
+            <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Find place to stay' : 'Find a stay'}</Link>
+            <Link to="/business/apply">{language === 'pcm' ? 'List your business' : 'Bring your business'}</Link>
             <Link to="/app/bookings">Your bookings</Link>
             <Link to="/help">Help</Link>
             <Link to="/booking-rules">Booking rules</Link>
