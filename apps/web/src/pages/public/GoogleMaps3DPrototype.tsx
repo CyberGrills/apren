@@ -38,12 +38,12 @@ function loadGoogleMaps(key: string): Promise<void> {
     script.id = 'seven-google-maps-script';
     script.async = true;
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=beta&callback=${callbackName}`;
-    host[callbackName] = () => {
-      delete host[callbackName];
+    host.__sevenMapsReady = () => {
+      delete host.__sevenMapsReady;
       resolve();
     };
     script.onerror = () => {
-      delete host[callbackName];
+      delete host.__sevenMapsReady;
       mapsScriptPromise = null;
       reject(new Error('Google Maps could not be loaded. Check the API key, referrer restrictions and Maps JavaScript API access.'));
     };
