@@ -141,7 +141,7 @@ export function ExplorePage() {
               onClick={() => setParams({ kind: value })}
             >
               <Icon size={18} aria-hidden="true" />
-              <span>{label}</span>
+              <span>{language === 'pcm' ? (value === 'STAY' ? 'Places to stay' : value === 'DINING' ? 'Food' : 'Things to do') : label}</span>
             </button>
           ))}
         </nav>
@@ -171,7 +171,7 @@ export function ExplorePage() {
                 aria-describedby="explore-ai-note"
                 value={aiMessage}
                 onChange={(event) => setAiMessage(event.target.value)}
-                placeholder="e.g. Two nights in Lagos, a pool, and under ₦80,000"
+                placeholder={language === 'pcm' ? 'Example: Two nights for Lagos, swimming pool, budget naira 80,000' : 'e.g. Two nights in Lagos, a pool, and under ₦80,000'}
                 maxLength={2000}
                 minLength={2}
                 required
@@ -227,7 +227,7 @@ export function ExplorePage() {
                 />
               </div>
               <div>
-                <label htmlFor="explore-rooms">Rooms</label>
+                <label htmlFor="explore-rooms">{language === 'pcm' ? 'Rooms' : 'Rooms'}</label>
                 <input
                   id="explore-rooms"
                   name="rooms"
