@@ -248,15 +248,18 @@ test('virtual pilot audio is user-initiated, captioned, language-aware and stopp
   assert.match(pilot, /PILOT_VOICE_TRACKS/);
   assert.match(pilot, /primary-en-ng\.mp3/);
   assert.match(pilot, /primary-pcm-ng\.mp3/);
-  assert.match(pilot, /audioRef=\{audioRef\}/);
+  assert.match(pilot, /ref=\{audioRef\}/);
   assert.match(pilot, /onCanPlay=/);
   assert.match(pilot, /onError=/);
   assert.doesNotMatch(pilot, /SpeechSynthesisUtterance|speechSynthesis/);
-  assert.match(pilot, /onClick={speakPilot}/);
-  assert.match(pilot, /Pause \/ resume/);
+  assert.match(pilot, /onClick={playPilot}/);
+  assert.match(pilot, /onClick={pausePilot}/);
   assert.match(pilot, /aria-live="polite"/);
   assert.match(pilot, /No booking action is triggered/);
-  assert.match(pilot, /useEffect\(\(\) => \(\) => \{/);
+  assert.match(pilot, /function resumePilot\(\)/);
+  assert.match(pilot, /function mutePilot\(\)/);
+  assert.match(pilot, /function replayPilot\(\)/);
+  assert.match(pilot, /return \(\) => \{\s*audio\.pause\(\);/);
 });
 
 test('7even install page explains PWA installation without claiming app-store availability', () => {
