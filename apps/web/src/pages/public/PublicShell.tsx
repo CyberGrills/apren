@@ -52,7 +52,11 @@ export function PublicHeader() {
   }, []);
   useEffect(() => {
     const saved = user?.profileDetails?.preferredLanguage;
-    if (saved === 'en' || saved === 'pcm') setLanguage(saved);
+    if (saved === 'en' || saved === 'pcm') {
+      setLanguage(saved);
+      try { window.localStorage.setItem('7even-language-style', saved); } catch { /* Account preference remains authoritative. */ }
+      window.dispatchEvent(new CustomEvent('7even-language-change', { detail: saved }));
+    }
   }, [user?.profileDetails?.preferredLanguage]);
   function changeLanguage(next: SevenLanguage) {
     setLanguage(next);
