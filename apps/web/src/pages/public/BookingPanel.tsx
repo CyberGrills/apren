@@ -114,7 +114,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       }
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'We could not check this price. Please try again.',
+        cause instanceof Error ? cause.message : (pcm ? 'We no fit check this price now. Abeg try again.' : 'We could not check this price. Please try again.'),
       );
     } finally {
       setBusy(false);
@@ -139,7 +139,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       setError(
         cause instanceof Error
           ? cause.message
-          : 'We could not open payment. Check your bookings before starting another reservation.',
+          : (pcm ? 'We no fit open payment. Check your bookings before you start another reservation.' : 'We could not open payment. Check your bookings before starting another reservation.'),
       );
     } finally {
       setBusy(false);
@@ -258,7 +258,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             className="btn btn-primary booking-cta"
             to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
           >
-            Sign in to check the full price <ArrowUpRight size={17} aria-hidden="true" />
+            {pcm ? 'Sign in make you see the full price' : 'Sign in to check the full price'} <ArrowUpRight size={17} aria-hidden="true" />
           </Link>
         ) : (
           !held && (
@@ -267,7 +267,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               type="submit"
               disabled={busy || (!isStay && !windowId)}
             >
-              {busy ? 'Checking…' : quote ? 'Check price again' : 'See the full price'}
+              {busy ? (pcm ? 'We dey check am…' : 'Checking…') : quote ? (pcm ? 'Check price again' : 'Check price again') : (pcm ? 'See the full price' : 'See the full price')}
             </button>
           )
         )}
@@ -279,7 +279,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             <div>
               <dt>
                 {quote.quantity} × {quote.units}{' '}
-                {isStay ? (quote.units === 1 ? 'night' : 'nights') : (pcm ? 'booking' : 'booking units')}
+                {isStay ? (quote.units === 1 ? (pcm ? 'night' : 'night') : (pcm ? 'nights' : 'nights')) : (pcm ? 'booking' : 'booking units')}
               </dt>
               <dd>
                 <Money minor={quote.price.subtotalMinor} />
@@ -287,7 +287,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             </div>
             {quote.price.discountMinor !== '0' && (
               <div>
-                <dt>Discount</dt>
+                <dt>{pcm ? 'Discount' : 'Discount'}</dt>
                 <dd>
                   −<Money minor={quote.price.discountMinor} />
                 </dd>
@@ -302,13 +302,13 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               </div>
             )}
             <div>
-              <dt>Tax</dt>
+              <dt>{pcm ? 'Tax' : 'Tax'}</dt>
               <dd>
                 <Money minor={quote.price.taxMinor} />
               </dd>
             </div>
             <div className="quote-total">
-              <dt>Total</dt>
+              <dt>{pcm ? 'Total' : 'Total'}</dt>
               <dd>
                 <Money minor={quote.price.totalMinor} />
               </dd>
