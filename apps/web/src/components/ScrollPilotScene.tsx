@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { useSevenLanguage } from '../lib/sevenLanguage.ts';
 import './scroll-pilot-scene.css';
 
 export function ScrollPilotScene() {
@@ -18,7 +20,7 @@ export function ScrollPilotScene() {
           <div className="seven-pilot-orbit seven-pilot-orbit-two" />
           <div className="seven-pilot-horizon" />
           <div className="seven-pilot-glow" />
-          <div className="seven-pilot-avatar">
+          <div className={speaking ? "seven-pilot-avatar is-speaking" : "seven-pilot-avatar"}>
             <svg
               className="seven-pilot-portrait"
               viewBox="0 0 340 430"
@@ -136,6 +138,16 @@ export function ScrollPilotScene() {
           </div>
           <div className="seven-pilot-orbit-label seven-pilot-label-top">DISCOVER</div>
           <div className="seven-pilot-orbit-label seven-pilot-label-bottom">DECIDE AT YOUR PACE</div>
+        </div>
+        <div className="seven-pilot-audio" aria-label="Virtual pilot audio controls">
+          <div className="seven-pilot-audio-actions">
+            <button type="button" className="btn btn-primary" onClick={speakPilot} disabled={muted || speaking}>Speak</button>
+            <button type="button" className="btn btn-secondary" onClick={pausePilot} disabled={!speaking}>Pause / resume</button>
+            <button type="button" className="btn btn-secondary" onClick={mutePilot} aria-pressed={muted}>{muted ? 'Unmute' : 'Mute'}</button>
+            <button type="button" className="btn btn-secondary" onClick={speakPilot} disabled={muted}>Replay</button>
+          </div>
+          <p className="seven-pilot-caption" aria-live="polite">{caption}</p>
+          <p className="seven-pilot-voice-note" role="status">{voiceNote || 'Audio starts only when you choose Speak. Available voices vary by device; captions are always shown.'}</p>
         </div>
       </div>
     </section>
