@@ -150,3 +150,23 @@ test('virtual pilot scroll scene is stay-only, pinned, and respects reduced moti
   assert.match(pilot, /linearGradient id="pilot-jacket"/);
   assert.doesNotMatch(pilot, /seven-pilot-hair|seven-pilot-eye-left|seven-pilot-mouth/);
 });
+
+
+test('Naija Pidgin preference is shared across public pages and respects account preference', () => {
+  const language = source('../../apps/web/src/lib/sevenLanguage.ts');
+  const profile = source('../../apps/web/src/pages/customer/ProfileView.tsx');
+  assert.match(language, /7even-language-style/);
+  assert.match(language, /7even-language-change/);
+  assert.match(publicShell, /useSevenLanguage/);
+  assert.match(publicShell, /user\?\.profileDetails\?\.preferredLanguage/);
+  assert.match(landing, /7even-language-change/);
+  assert.match(explore, /useSevenLanguage/);
+  assert.match(account, /useSevenLanguage/);
+  assert.match(profile, /preferredLanguage/);
+  assert.match(profile, /Naija Pidgin/);
+});
+
+test('Naija Pidgin keeps verified availability and payment wording explicit', () => {
+  assert.match(explore, /Confirm room availability, final price and capacity before you book/);
+  assert.match(explore, /Only verified 7even stays/);
+});
