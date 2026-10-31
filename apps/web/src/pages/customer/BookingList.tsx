@@ -14,6 +14,7 @@ import {
 } from '../../components/ui.tsx';
 import { api, ApiError } from '../../lib/api.ts';
 import { friendlyDate } from '../public/PublicShell.tsx';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
 export function BookingList({
   reservations,
@@ -22,6 +23,8 @@ export function BookingList({
   reservations: Reservation[];
   reload: () => void;
 }) {
+  const language = useSevenLanguage();
+  const pcm = language === 'pcm';
   const { showSuccess } = useFeedback();
   const [paying, setPaying] = useState<Reservation | null>(null);
   const [cancel, setCancel] = useState<Reservation | null>(null);
@@ -55,7 +58,7 @@ export function BookingList({
       setError(
         cause instanceof Error
           ? cause.message
-          : 'We could not cancel this booking. Refresh it and try again.',
+          : (pcm ? 'We no fit cancel this booking. Refresh am and try again.' : 'We could not cancel this booking. Refresh it and try again.'),
       );
       if (cause instanceof ApiError && cause.status === 409) {
         setCancel(null);
@@ -68,11 +71,11 @@ export function BookingList({
   if (!reservations.length)
     return (
       <EmptyState
-        title="A little space for your next plan."
-        description="Your stays, tables and experiences will appear here once you make a reservation."
+        title={pcm ? 'Your next plan fit start here.' : 'A little space for your next plan.'}
+        description={pcm ? 'Your hotel stays, tables and experiences go show here once you make reservation.' : 'Your stays, tables and experiences will appear here once you make a reservation.'}
         action={
           <Link className="btn btn-primary" to="/explore">
-            Find somewhere good <ArrowUpRight size={17} aria-hidden="true" />
+            {pcm ? 'Find your next place' : 'Find somewhere good'} <ArrowUpRight size={17} aria-hidden="true" />
           </Link>
         }
       />
@@ -114,7 +117,7 @@ export function BookingList({
               </p>
               <dl className="customer-booking-details">
                 <div>
-                  <dt>Reference</dt>
+                  <dt>{pcm ? 'Booking reference' : 'Reference'}</dt>
                   <dd>{reservation.reference}</dd>
                 </div>
                 <div>
@@ -124,13 +127,13 @@ export function BookingList({
                   </dd>
                 </div>
                 <div>
-                  <dt>Payment</dt>
+                  <dt>{pcm ? 'Payment status' : 'Payment'}</dt>
                   <dd>
                     <StatusBadge status={reservation.paymentStatus} />
                   </dd>
                 </div>
                 <div>
-                  <dt>Payment delivery</dt>
+                  <dt>{pcm ? 'Payment to property' : 'Payment delivery'}</dt>
                   <dd>
                     <StatusBadge status={reservation.settlementStatus} />
                   </dd>
@@ -140,8 +143,8 @@ export function BookingList({
                 <p className="public-small">
                   {reservation.holdExpiresAt
                     ? `Held until ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(reservation.holdExpiresAt))} WAT.`
-                    : 'Your reservation is awaiting payment.'}{' '}
-                  Confirmation depends on verified payment and availability.
+                    : (pcm ? 'Your reservation dey wait for payment.' : 'Your reservation is awaiting payment.')}{' '}
+                  {pcm ? 'We go confirm am only after we verify payment and availability.' : 'Confirmation depends on verified payment and availability.'}
                 </p>
               )}
               {reservation.status === 'PAYMENT_REVIEW' && (
@@ -159,7 +162,7 @@ export function BookingList({
                       disabled={busy === reservation.id}
                       onClick={() => setPaying(reservation)}
                     >
-                      {busy === reservation.id ? 'Opening payment…' : 'Continue to payment'}
+                      {busy === reservation.id ? (pcm ? 'We dey open payment…' : 'Opening payment…') : 'Continue to payment'}
                     </button>
                   )}
                 {['HELD', 'CONFIRMED'].includes(reservation.status) && (
@@ -176,7 +179,7 @@ export function BookingList({
                   </button>
                 )}
                 <Link className="public-text-link" to={`/places/${reservation.offeringId}`}>
-                  View the place <ArrowUpRight size={16} aria-hidden="true" />
+                  {pcm ? 'View this place' : 'View the place'} <ArrowUpRight size={16} aria-hidden="true" />
                 </Link>
               </div>
             </div>
@@ -186,7 +189,7 @@ export function BookingList({
       {paying && <PaymentMethodDialog reservation={paying} onClose={() => setPaying(null)} />}
       {cancel && (
         <Modal
-          title="Cancel this booking?"
+          title={pcm ? 'You wan cancel this booking?' : 'Cancel this booking?'}
           busy={!!busy}
           onClose={() => {
             if (!busy) setCancel(null);
@@ -200,7 +203,7 @@ export function BookingList({
               The business's cancellation policy applies. If a refund is due, it will be tracked
               separately. This action does not promise an immediate refund.
             </p>
-            <Field label="Reason for cancelling">
+            <Field label={pcm ? 'Why you wan cancel am?' : 'Reason for cancelling'}>
               <textarea
                 className="field-input"
                 value={reason}
@@ -222,7 +225,7 @@ export function BookingList({
                 Keep booking
               </button>
               <button className="btn btn-primary" type="submit" disabled={!!busy}>
-                {busy ? 'Cancelling…' : 'Cancel booking'}
+                {busy ? (pcm ? 'We dey cancel…' : 'Cancelling…') : 'Cancel booking'}
               </button>
             </div>
           </form>
