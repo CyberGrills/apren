@@ -189,3 +189,33 @@ test('Naija Pidgin reaches hotel detail, booking, sign-in, profile and customer 
   assert.match(updates, /Mark as read/);
   assert.match(bookings, /payment and availability/);
 });
+
+
+test('Pidgin booking panel uses distinct customer-facing copy and preserves payment verification', () => {
+  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
+  assert.match(bookingPanel, /How many rooms\?/);
+  assert.match(bookingPanel, /How many people\?/);
+  assert.match(bookingPanel, /Wetin you go pay/);
+  assert.match(bookingPanel, /We dey verify payment securely/);
+  assert.match(bookingPanel, /We go confirm your booking after payment don verify/);
+  assert.match(bookingPanel, /reservation never confirm/);
+  assert.match(bookingPanel, /cancellation rule/);
+  assert.doesNotMatch(bookingPanel, /pcm \? 'Rooms' : 'Rooms'/);
+  assert.doesNotMatch(bookingPanel, /pcm \? 'Your price' : 'Your price'/);
+});
+
+test('Pidgin hotel details explain cancellation, payment verification and eligible points', () => {
+  const offering = source('../../apps/web/src/pages/public/OfferingPage.tsx');
+  assert.match(offering, /Wetin you suppose know before booking/);
+  assert.match(offering, /payment provider don verify the payment/);
+  assert.match(offering, /business own policy/);
+  assert.match(offering, /booking wey qualify after dem complete/);
+});
+
+test('language preference synchronizes across browser tabs through the storage event', () => {
+  const language = source('../../apps/web/src/lib/sevenLanguage.ts');
+  assert.match(language, /addEventListener\('storage', syncFromStorage\)/);
+  assert.match(language, /event\.key !== '7even-language-style'/);
+  assert.match(language, /event\.newValue === 'pcm' \? 'pcm' : 'en'/);
+  assert.match(language, /removeEventListener\('storage', syncFromStorage\)/);
+});

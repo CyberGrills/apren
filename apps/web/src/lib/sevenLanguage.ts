@@ -17,8 +17,16 @@ export function useSevenLanguage(): SevenLanguage {
       const next = (event as CustomEvent<SevenLanguage>).detail;
       if (next === 'en' || next === 'pcm') setLanguage(next);
     };
+    const syncFromStorage = (event: StorageEvent) => {
+      if (event.key !== '7even-language-style') return;
+      setLanguage(event.newValue === 'pcm' ? 'pcm' : 'en');
+    };
     window.addEventListener('7even-language-change', sync);
-    return () => window.removeEventListener('7even-language-change', sync);
+    window.addEventListener('storage', syncFromStorage);
+    return () => {
+      window.removeEventListener('7even-language-change', sync);
+      window.removeEventListener('storage', syncFromStorage);
+    };
   }, []);
   return language;
 }

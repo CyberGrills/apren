@@ -46,14 +46,18 @@ function OfferingDetail({ offering }: { offering: Offering }) {
   return (
     <>
       <Link to={`/explore?kind=${offering.kind}`} className="offering-back">
-        <ArrowLeft size={16} aria-hidden="true" /> Back to{' '}
-        {offering.kind === 'STAY' ? 'stays' : offering.kind === 'DINING' ? 'dining' : 'experiences'}
+        <ArrowLeft size={16} aria-hidden="true" /> {pcm ? 'Go back to' : 'Back to'}{' '}
+        {offering.kind === 'STAY'
+          ? (pcm ? 'places to stay' : 'stays')
+          : offering.kind === 'DINING'
+            ? (pcm ? 'food and dining' : 'dining')
+            : (pcm ? 'things to do' : 'experiences')}
       </Link>
       <header className="offering-heading">
         <div>
           <span className="public-eyebrow">
             {offering.businessName}
-            {offering.isSample && ' / Sample business'}
+            {offering.isSample && (pcm ? ' / Sample business' : ' / Sample business')}
           </span>
           <h1>{offering.title}</h1>
           <p>
@@ -63,10 +67,10 @@ function OfferingDetail({ offering }: { offering: Offering }) {
         </div>
         <span className="offering-sector">
           {offering.kind === 'STAY'
-            ? 'Stay a while'
+            ? (pcm ? 'Stay small, enjoy well' : 'Stay a while')
             : offering.kind === 'DINING'
-              ? 'Around the table'
-              : 'Make a day of it'}{' '}
+              ? (pcm ? 'Chop and enjoy' : 'Around the table')
+              : (pcm ? 'Enjoy your day' : 'Make a day of it')}{' '}
           <ArrowUpRight size={18} aria-hidden="true" />
         </span>
       </header>
@@ -86,12 +90,12 @@ function OfferingDetail({ offering }: { offering: Offering }) {
             />
             {pictures.length > 1 && (
               <fieldset className="offering-thumbnails">
-                <legend className="sr-only">Choose a photograph</legend>
+                <legend className="sr-only">{pcm ? 'Choose picture' : 'Choose a photograph'}</legend>
                 {pictures.map((src, index) => (
                   <button
                     type="button"
                     key={src}
-                    aria-label={`View photograph ${index + 1}`}
+                    aria-label={pcm ? `See picture ${index + 1}` : `View photograph ${index + 1}`}
                     aria-pressed={image === index}
                     onClick={() => setImage(index)}
                   >
@@ -102,8 +106,9 @@ function OfferingDetail({ offering }: { offering: Offering }) {
             )}
             {(!offering.images.length || offering.isSample) && (
               <figcaption>
-                Illustrative photography. Sample listings are for local testing and are not live
-                merchant inventory.
+                {pcm
+                  ? 'Na sample picture be this. Sample listings na for testing; dem no be confirmed live hotel inventory.'
+                  : 'Illustrative photography. Sample listings are for local testing and are not live merchant inventory.'}
               </figcaption>
             )}
           </figure>
@@ -126,7 +131,7 @@ function OfferingDetail({ offering }: { offering: Offering }) {
             </section>
           )}
           <section className="offering-policy" aria-labelledby="details-title">
-            <h2 id="details-title">{pcm ? 'Before you book.' : 'Before you book.'}</h2>
+            <h2 id="details-title">{pcm ? 'Wetin you suppose know before booking.' : 'Before you book.'}</h2>
             <dl>
               <div>
                 <dt>{pcm ? 'Location' : 'The place'}</dt>
@@ -137,23 +142,25 @@ function OfferingDetail({ offering }: { offering: Offering }) {
               <div>
                 <dt>{pcm ? 'Booking and payment' : 'Booking and payment'}</dt>
                 <dd>
-                  Your booking is confirmed after the payment provider's result has been verified. A
-                  payment still being checked does not mean your reservation is confirmed.
+                  {pcm
+                    ? 'We go confirm your booking only after payment provider don verify the payment. If payment still dey checked, e mean say your reservation never confirm.'
+                    : "Your booking is confirmed after the payment provider's result has been verified. A payment still being checked does not mean your reservation is confirmed."}
                 </dd>
               </div>
               <div>
                 <dt>{pcm ? 'Cancellation' : 'Cancellation'}</dt>
                 <dd>
-                  Cancel at least {offering.cancellationHours} hours before the start time, subject
-                  to the business's policy. Refund and settlement status are shown separately in
-                  your bookings.
+                  {pcm
+                    ? `Cancel at least ${offering.cancellationHours} hours before the booking starts, according to the business own policy. You go see refund and settlement status separately for your bookings.`
+                    : `Cancel at least ${offering.cancellationHours} hours before the start time, subject to the business's policy. Refund and settlement status are shown separately in your bookings.`}
                 </dd>
               </div>
               <div>
                 <dt>{pcm ? 'Your points' : 'Your points'}</dt>
                 <dd>
-                  Points are issued for eligible completed bookings. A booking that is cancelled or
-                  refunded does not earn points.
+                  {pcm
+                    ? 'You go get points for bookings wey qualify after dem complete. Cancelled or refunded booking no dey earn points.'
+                    : 'Points are issued for eligible completed bookings. A booking that is cancelled or refunded does not earn points.'}
                 </dd>
               </div>
             </dl>
