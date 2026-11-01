@@ -15,7 +15,8 @@ const bookingView = (row: Record<string, unknown>) => ({
   status: String(row.status), createdAt: new Date(String(row.created_at)).toISOString(),
 });
 
-export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Response) => C.SessionUser): void {
+export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Response) => C.SessionUser, environment: string): void {
+  if (environment === 'production') return;
   const route = (method: 'get' | 'post', path: string, handler: (req: any, res: Response) => Promise<unknown>) =>
     app[method](path, async (req, res) => res.json({ data: await handler(req, res) }));
   route('get', '/api/demo/catalog', async (req) => rows(pool,
