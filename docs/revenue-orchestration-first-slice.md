@@ -8,7 +8,7 @@ This is a deterministic decision layer, not a live PMS integration or an autonom
 3. Recommend a bounded next action from explicit rules.
 4. Require human approval for promotions and high-value proposals.
 5. Allow guest contact only when marketing consent is present.
-6. Calculate incremental net revenue in integer minor currency units.
+6. Calculate net revenue contribution in integer minor currency units. This arithmetic is not causal incrementality: do not describe it as recovered uplift until a pre-defined baseline or randomized/credible holdout comparison is persisted and reconciled.
 
 ## Inventory authority
 The PMS or authorized channel manager remains the source of truth. āprən must not create room inventory. The initial freshness windows (PMS 5 minutes; other trusted sources 2 minutes) are conservative implementation defaults that must be validated against partner SLAs, not claimed industry standards.

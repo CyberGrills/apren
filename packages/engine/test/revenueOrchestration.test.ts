@@ -48,7 +48,7 @@ describe('bounded revenue orchestration', () => {
       newRevenueMinor: 10000, recoveredRevenueMinor: 2000, upsellRevenueMinor: 1000,
       acquisitionCostMinor: 500, commissionMinor: 1000, discountMinor: 300, cancellationLossMinor: 200,
     }});
-    assert.equal(result.incrementalNetRevenueMinor, 11000);
+    assert.equal(result.netRevenueContributionMinor, 11000);
   });
   it('rejects future observations and negative economics', () => {
     assert.throws(() => decideRevenueAction({ ...base, inventoryObservedAt: '2026-10-22T02:00:00.000Z' }));

@@ -36,7 +36,7 @@ export interface RevenueDecision {
   action: RevenueAction;
   requiresHumanApproval: boolean;
   mayContactGuest: boolean;
-  incrementalNetRevenueMinor: number | null;
+  netRevenueContributionMinor: number | null;
   evidence: {
     inventorySource: RevenueDecisionInput['inventorySource'];
     inventoryAgeSeconds: number | null;
@@ -132,7 +132,7 @@ export function decideRevenueAction(input: RevenueDecisionInput): RevenueDecisio
     action,
     requiresHumanApproval,
     mayContactGuest,
-    incrementalNetRevenueMinor: net,
+    netRevenueContributionMinor: net,
     evidence: {
       inventorySource: input.inventorySource,
       inventoryAgeSeconds: age,
