@@ -36,6 +36,7 @@ export function LandingPage() {
               and <em>days out.</em>
             </h1>
             <p>{campaign.message}</p>
+            <div className="landing-demo-entry"><span className="public-eyebrow">Try the booking experience</span><p>Walk through a complete 7even hotel journey, from discovery to a simulated checkout.</p><Link className="public-text-link" to="/demo/stay">Explore the demo stay <ArrowUpRight size={18} aria-hidden="true" /></Link><small>Fictional property · No payment · No reservation</small></div>
             <div className="landing-footnote">
               <span aria-hidden="true">07</span>
               <p>
