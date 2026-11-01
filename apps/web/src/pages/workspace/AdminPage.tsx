@@ -2,6 +2,7 @@ import { useFeedback } from '../../components/Feedback.tsx';
 import type { AdminOverview, Business, Payment } from '@7even/contracts';
 import { Check, RefreshCw, Settings2 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ErrorNotice,
   Field,
@@ -105,6 +106,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
           {tab === 'overview' && (
             <>
               <MetricsStrip metrics={data.metrics} admin />
+              <section className="panel demo-dashboard-promo"><div><span className="public-eyebrow">Demo catalogue</span><h2>100 fictional hotel and apartment profiles</h2><p className="small-copy">Review the guest-facing catalogue without changing verified business records or live inventory.</p></div><Link className="btn btn-secondary" to="/demo/hotels">Open demo catalogue</Link></section>
               <div className="two-column">
                 <section>
                   <div className="section-heading">
