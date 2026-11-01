@@ -31,7 +31,7 @@ export function bookingRecoveryMetrics(counts: BookingRecoveryCounts): BookingRe
     {
       label: 'Bookings confirmed after abandonment',
       value: counts.confirmed_after_abandon,
-      note: 'Verified outcome; not causal uplift',
+      note: 'Not causal uplift; later cancellations/refunds are separate',
     },
     {
       label: 'Unresolved sessions',
