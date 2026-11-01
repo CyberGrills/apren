@@ -25,7 +25,7 @@ export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Resp
     const user = actor(res);
     return transaction(pool, async (db) => {
       const created = await one(db, 'INSERT INTO seven.demo_wallets(user_id) VALUES($1) ON CONFLICT(user_id) DO NOTHING RETURNING user_id', [user.id]);
-      if (created) await db.query("INSERT INTO seven.demo_wallet_entries(entry_id,user_id,entry_type,amount_minor,balance_after_minor,reference,idempotency_key,description) VALUES(gen_random_uuid(),$1,'INITIAL_CREDIT',50000000000,50000000000,'DEMO-INITIAL-'||$1::text,'initial-demo-credit','Initial test credits — no cash value')", [user.id]);
+      if (created) await db.query("INSERT INTO seven.demo_wallet_entries(entry_id,user_id,entry_type,amount_minor,balance_after_minor,reference,idempotency_key,description) VALUES(gen_random_uuid(),$1,'INITIAL_CREDIT',50000000000,50000000000,'DEMO-INITIAL-'||($1::uuid)::text,'initial-demo-credit','Initial test credits — no cash value')", [user.id]);
       const account = await one(db, 'SELECT balance_minor FROM seven.demo_wallets WHERE user_id=$1', [user.id]);
       const entries = await rows(db, 'SELECT entry_id AS id,entry_type AS type,amount_minor AS "amountMinor",balance_after_minor AS "balanceAfterMinor",reference,description,created_at AS "createdAt" FROM seven.demo_wallet_entries WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100', [user.id]);
       return { balanceMinor: String(account?.balance_minor ?? '0'), currency: 'NGN', fundedAmountMinor: '50000000000', cashValue: false, withdrawable: false, transferable: false, entries };
