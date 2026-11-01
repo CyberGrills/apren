@@ -29,6 +29,7 @@ import * as P from './payments.ts';
 import * as B from './benefits.ts';
 import { mountOperations } from './operations.ts';
 import { mountBookingRecovery } from './bookingRecovery.ts';
+import { mountDemoMarketplace } from './demoMarketplace.ts';
 import { schemaIsReady } from './schemaReadiness.ts';
 import { mountAccountRoutes, rateLimitAiSearch, rateLimitLogin } from './accounts.ts';
 import type { RecoveryMailer } from './accounts.ts';
@@ -2157,6 +2158,7 @@ export function createApp(options: AppOptions = {}) {
 
   mountOperations(app, { pool, actor: actorFor, mutate });
   mountBookingRecovery(app, { pool, actor: actorFor });
+  mountDemoMarketplace(app, pool, actorFor);
   mountAdminRecords(app, { pool, actor: actorFor });
   const sendRecovery = options.sendRecovery ?? configuredRecoveryMailer();
   mountAccountRoutes(app, {
