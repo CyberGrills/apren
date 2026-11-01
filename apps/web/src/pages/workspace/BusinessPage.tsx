@@ -106,6 +106,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
           {tab === 'overview' && (
             <>
               <MetricsStrip metrics={data.metrics} />
+              <section className="panel demo-dashboard-promo"><div><span className="public-eyebrow">Guest experience preview</span><h2>See the 7EVEN demo property catalogue</h2><p className="small-copy">Explore fictional listing layouts and illustrative photography. Your real business profile and live inventory remain separate.</p></div><Link className="btn btn-secondary" to="/demo/hotels">Preview catalogue</Link></section>
               <div className="section-heading">
                 <h2>Latest reservations</h2>
                 <Link to="/business/reservations" className="text-button">
