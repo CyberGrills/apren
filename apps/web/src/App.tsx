@@ -220,9 +220,19 @@ export function App() {
             </div>
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/demo/hotels" element={<DemoHotelsPage />} />
-              <Route path="/demo/marketplace" element={<DemoMarketplacePage />} />
-              <Route path="/demo/checkout" element={<DemoCheckoutPage />} />
+              {import.meta.env.PROD ? (
+                <>
+                  <Route path="/demo/hotels" element={<Navigate to="/explore?kind=STAY" replace />} />
+                  <Route path="/demo/marketplace" element={<Navigate to="/explore?kind=STAY" replace />} />
+                  <Route path="/demo/checkout" element={<Navigate to="/explore?kind=STAY" replace />} />
+                </>
+              ) : (
+                <>
+                  <Route path="/demo/hotels" element={<DemoHotelsPage />} />
+                  <Route path="/demo/marketplace" element={<DemoMarketplacePage />} />
+                  <Route path="/demo/checkout" element={<DemoCheckoutPage />} />
+                </>
+              )}
               <Route path="/install" element={<InstallAppPage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/directory" element={<Navigate to="/explore?kind=STAY" replace />} />
