@@ -1,5 +1,5 @@
 import type { NigeriaLocation, Offering, Sector } from '@7even/contracts';
-import { BedDouble, Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
+import { ArrowRight, BedDouble, Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../../components/DatePicker.tsx';
@@ -185,6 +185,8 @@ export function LandingPage() {
             </button>
           </form>
         </section>
+
+        <section className="public-container demo-catalog-entry"><div><span className="public-eyebrow">Product demonstration</span><p>Explore 100 fictional hotels and apartments across Nigeria. Demo content only; no live availability or booking.</p></div><Link className="btn btn-secondary" to="/demo/hotels">Browse demo properties <ArrowRight size={16} /></Link></section>
 
         <section
           className="public-container seven-marketplace-results"

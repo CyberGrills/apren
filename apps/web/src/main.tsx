@@ -11,6 +11,7 @@ import { SeasonProvider } from './context/SeasonContext.tsx';
 import { seasonAt } from './lib/season.ts';
 import './styles/global.css';
 import './styles/public.css';
+import './styles/demo-catalog.css';
 import './styles/customer.css';
 import './styles/workspace.css';
 import './styles/workbench.css';
