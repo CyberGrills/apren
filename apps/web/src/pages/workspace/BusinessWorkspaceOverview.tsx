@@ -46,8 +46,9 @@ function BookingRecoveryPanel() {
             ))}
           </div>
           <p className="small-copy">
-            Funnel telemetry only. A booking is not counted as recovered until its reservation,
-            payment and cancellation outcome can be verified against server records.
+            This count shows a server-verified booking/payment confirmation after an abandonment.
+            It does not prove recovery activity caused the booking; later cancellations and refunds
+            remain separate outcomes.
           </p>
           {data?.reasons?.length ? (
             <ul className="business-recovery-reasons">
