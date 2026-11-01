@@ -33,6 +33,7 @@ import {
 import { AdminInventoryPage } from './pages/workspace/AdminInventoryPage.tsx';
 import { DemoHotelsPage } from './pages/public/DemoHotelsPage.tsx';
 import { DemoMarketplacePage } from './pages/public/DemoMarketplacePage.tsx';
+import { DemoCheckoutPage } from './pages/public/DemoCheckoutPage.tsx';
 import { AdminPage } from './pages/workspace/AdminPage.tsx';
 import { BusinessPage } from './pages/workspace/BusinessPage.tsx';
 import { OperationsPage } from './pages/workspace/OperationsPage.tsx';
@@ -221,6 +222,7 @@ export function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/demo/hotels" element={<DemoHotelsPage />} />
               <Route path="/demo/marketplace" element={<DemoMarketplacePage />} />
+              <Route path="/demo/checkout" element={<DemoCheckoutPage />} />
               <Route path="/install" element={<InstallAppPage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/directory" element={<Navigate to="/explore?kind=STAY" replace />} />
