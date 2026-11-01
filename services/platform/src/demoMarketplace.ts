@@ -38,7 +38,7 @@ export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Resp
   route('post', '/api/demo/bookings', async (req, res) => {
     const user = actor(res);
     const input = z.strictObject({
-      itemId: z.string().regex(/^demo-(?:\\d{3}|dining-\\d{3}|experience-\\d{3})$/),
+      itemId: z.string().regex(/^demo-(?:\d{3}|dining-\d{3}|experience-\d{3})$/),
       startDate: z.iso.date(),
       endDate: z.iso.date().optional(),
       quantity: z.int().min(1).max(20),
