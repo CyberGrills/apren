@@ -18,6 +18,7 @@ describe('booking recovery dashboard metrics', () => {
       ['Unresolved sessions', 10],
     ]);
     assert.match(metrics[2]!.note, /not causal uplift/i);
+    assert.match(metrics[2]!.note, /cancellations\/refunds are separate/i);
   });
 
   it('preserves zero counts for a new hotel with no recovery activity', () => {
