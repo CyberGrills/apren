@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi.ts';
 import { Metric, PageHeader } from '../../components/ui.tsx';
 import { nextBusinessTask } from '../../lib/listingReadiness.ts';
+import { bookingRecoveryMetrics, type BookingRecoveryCounts } from '../../lib/bookingRecoveryMetrics.ts';
 import { ListingChecks, ReadinessRefresh } from './ListingReadiness.tsx';
 import {
   ActivityList,
@@ -13,11 +14,7 @@ import {
 } from './shared.tsx';
 
 function BookingRecoveryPanel() {
-  const { data, loading, error, reload } = useApi<{
-    abandoned_sessions: number;
-    consented_abandons: number;
-    confirmed_after_abandon: number;
-    unresolved_abandons: number;
+  const { data, loading, error, reload } = useApi<BookingRecoveryCounts & {
     reasons: Array<{ reason: string | null; sessions: number }>;
   }>('/business/recovery/summary');
 
@@ -39,9 +36,14 @@ function BookingRecoveryPanel() {
       ) : (
         <>
           <div className="metrics-grid">
-            <Metric label="Abandoned sessions" value={data?.abandoned_sessions ?? 0} note="Observed booking intent" />
-            <Metric label="Consent recorded" value={data?.consented_abandons ?? 0} note="Contact permission recorded" />
-            <Metric label="Unresolved sessions" value={data?.unresolved_abandons ?? 0} note="No verified booking outcome linked" />
+            {bookingRecoveryMetrics({
+              abandoned_sessions: data?.abandoned_sessions ?? 0,
+              consented_abandons: data?.consented_abandons ?? 0,
+              confirmed_after_abandon: data?.confirmed_after_abandon ?? 0,
+              unresolved_abandons: data?.unresolved_abandons ?? 0,
+            }).map((metric) => (
+              <Metric key={metric.label} label={metric.label} value={metric.value} note={metric.note} />
+            ))}
           </div>
           <p className="small-copy">
             Funnel telemetry only. A booking is not counted as recovered until its reservation,
