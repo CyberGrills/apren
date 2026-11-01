@@ -17,6 +17,10 @@ function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
     query: async (sql: string, values?: unknown[]) => {
       assert.match(sql, /migration_name\s*=\s*\$1/);
       assert.match(sql, /to_regclass\('seven\.booking_recovery_events'\)/);
+      assert.match(sql, /to_regclass\('seven\.demo_catalog_items'\)/);
+      assert.match(sql, /to_regclass\('seven\.demo_wallets'\)/);
+      assert.match(sql, /to_regclass\('seven\.demo_bookings'\)/);
+      assert.match(sql, /to_regclass\('seven\.demo_wallet_entries'\)/);
       assert.match(sql, /column_name\s*=\s*'recovery_session_id'/);
       assert.match(sql, /seven_app_server_access/);
       assert.match(sql, /seven_readonly_select_access/);
