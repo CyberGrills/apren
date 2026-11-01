@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowUpRight, CalendarDays, CheckCircle2, WalletCards } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PublicFooter, PublicHeader } from './PublicShell.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
