@@ -9,6 +9,7 @@ interface ReadinessRow {
   booking_recovery_events_present: boolean;
   quote_recovery_session_column_present: boolean;
   recovery_policy_contract_present: boolean;
+  demo_marketplace_schema_present: boolean;
 }
 
 function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
@@ -16,6 +17,10 @@ function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
     query: async (sql: string, values?: unknown[]) => {
       assert.match(sql, /migration_name\s*=\s*\$1/);
       assert.match(sql, /to_regclass\('seven\.booking_recovery_events'\)/);
+      assert.match(sql, /to_regclass\('seven\.demo_catalog_items'\)/);
+      assert.match(sql, /to_regclass\('seven\.demo_wallets'\)/);
+      assert.match(sql, /to_regclass\('seven\.demo_bookings'\)/);
+      assert.match(sql, /to_regclass\('seven\.demo_wallet_entries'\)/);
       assert.match(sql, /column_name\s*=\s*'recovery_session_id'/);
       assert.match(sql, /seven_app_server_access/);
       assert.match(sql, /seven_readonly_select_access/);
@@ -34,6 +39,7 @@ function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
 test('schema readiness requires the migration, recovery table, quote column and scoped RLS policy contract', async () => {
   const complete = {
     migration_applied: true,
+    demo_marketplace_schema_present: true,
     booking_recovery_events_present: true,
     quote_recovery_session_column_present: true,
     recovery_policy_contract_present: true,
@@ -43,6 +49,7 @@ test('schema readiness requires the migration, recovery table, quote column and 
   assert.equal(await schemaIsReady(fakePool({ ...complete, booking_recovery_events_present: false })), false);
   assert.equal(await schemaIsReady(fakePool({ ...complete, quote_recovery_session_column_present: false })), false);
   assert.equal(await schemaIsReady(fakePool({ ...complete, recovery_policy_contract_present: false })), false);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, demo_marketplace_schema_present: false })), false);
   assert.equal(await schemaIsReady(fakePool()), false);
 });
 
