@@ -5,6 +5,16 @@ import { createHash, randomUUID } from 'node:crypto';
 import { one, rows, transaction, fail, string } from './db.ts';
 import type * as C from '@7even/contracts';
 
+
+const bookingView = (row: Record<string, unknown>) => ({
+  id: String(row.booking_id), reference: String(row.reference), itemId: String(row.item_id),
+  kind: String(row.kind), title: String(row.item_title), city: String(row.city),
+  startDate: String(row.start_date).slice(0, 10),
+  endDate: row.end_date ? String(row.end_date).slice(0, 10) : null,
+  quantity: Number(row.quantity), totalMinor: String(row.total_minor),
+  status: String(row.status), createdAt: new Date(String(row.created_at)).toISOString(),
+});
+
 export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Response) => C.SessionUser): void {
   const route = (method: 'get' | 'post', path: string, handler: (req: any, res: Response) => Promise<unknown>) =>
     app[method](path, async (req, res) => res.json({ data: await handler(req, res) }));
@@ -39,7 +49,7 @@ export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Resp
       const previous = await one(db, 'SELECT * FROM seven.demo_bookings WHERE user_id=$1 AND idempotency_key=$2', [user.id, key]);
       if (previous) {
         if (previous.payload_hash !== hash) return fail(409, 'IDEMPOTENCY_CONFLICT', 'This key was used for a different demo booking.');
-        return previous;
+        return bookingView(previous);
       }
       const item = await one(db, 'SELECT * FROM seven.demo_catalog_items WHERE item_id=$1 AND is_active', [input.itemId]);
       if (!item) return fail(404, 'DEMO_ITEM_NOT_FOUND', 'Demo option not found.');
@@ -62,7 +72,7 @@ export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Resp
       await db.query('UPDATE seven.demo_wallets SET balance_minor=$2,updated_at=now() WHERE user_id=$1', [user.id, balance.toString()]);
       const booking = await one(db, 'INSERT INTO seven.demo_bookings(booking_id,user_id,item_id,kind,item_title,city,start_date,end_date,quantity,unit_price_minor,total_minor,reference,idempotency_key,payload_hash) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *', [bookingId, user.id, item.item_id, item.kind, item.title, item.city, input.startDate, input.endDate ?? null, input.quantity, item.unit_price_minor, total.toString(), bookingRef, key, hash]);
       await db.query("INSERT INTO seven.demo_wallet_entries(entry_id,user_id,booking_id,entry_type,amount_minor,balance_after_minor,reference,idempotency_key,description) VALUES($1,$2,$3,'DEBIT',$4,$5,$6,$7,$8)", [randomUUID(), user.id, bookingId, total.toString(), balance.toString(), bookingRef, 'debit:' + key, 'Demo booking: ' + item.title]);
-      return booking;
+      return bookingView(booking!);
     });
   });
 
