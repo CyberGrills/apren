@@ -46,6 +46,7 @@ export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Resp
     const key = string(req.get('Idempotency-Key'), 'Idempotency key', 8, 200);
     const hash = createHash('sha256').update(JSON.stringify(input)).digest('hex');
     return transaction(pool, async (db) => {
+      await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [user.id + ':demo:' + key]);
       const previous = await one(db, 'SELECT * FROM seven.demo_bookings WHERE user_id=$1 AND idempotency_key=$2', [user.id, key]);
       if (previous) {
         if (previous.payload_hash !== hash) return fail(409, 'IDEMPOTENCY_CONFLICT', 'This key was used for a different demo booking.');
