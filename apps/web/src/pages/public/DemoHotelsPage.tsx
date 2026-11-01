@@ -22,7 +22,7 @@ export function DemoHotelsPage() {
       <main className="public-container demo-catalog" id="main-content">
         <div className="demo-catalog-top">
           <Link to="/" className="public-text-link"><ArrowLeft size={16} /> Back to 7even</Link>
-          <span className="demo-only-pill">100 FICTIONAL DEMO PROPERTIES</span>
+          <Link to="/demo/marketplace" className="public-text-link">Try the interactive demo marketplace <ArrowLeft size={16}/></Link>
         </div>
         <header className="demo-catalog-heading">
           <span className="public-eyebrow">7EVEN · PRODUCT DEMONSTRATION</span>
