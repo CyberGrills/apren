@@ -66,4 +66,22 @@ export function mountDemoMarketplace(app: Express, pool: Pool, actor: (res: Resp
     });
   });
 
+  route('post', '/api/demo/bookings/:id/cancel', async (req, res) => {
+    const user = actor(res);
+    const bookingId = z.uuid().parse(req.params.id);
+    string(req.get('Idempotency-Key'), 'Idempotency key', 8, 200);
+    return transaction(pool, async (db) => {
+      const booking = await one(db, 'SELECT * FROM seven.demo_bookings WHERE booking_id=$1 AND user_id=$2 FOR UPDATE', [bookingId, user.id]);
+      if (!booking) return fail(404, 'NOT_FOUND', 'Demo booking not found.');
+      if (booking.status === 'CANCELLED') return booking;
+      const account = await one(db, 'SELECT balance_minor FROM seven.demo_wallets WHERE user_id=$1 FOR UPDATE', [user.id]);
+      if (!account) return fail(409, 'DEMO_WALLET_MISSING', 'Demo wallet not found.');
+      const balance = BigInt(account.balance_minor) + BigInt(booking.total_minor);
+      await db.query('UPDATE seven.demo_wallets SET balance_minor=$2,updated_at=now() WHERE user_id=$1', [user.id, balance.toString()]);
+      const updated = await one(db, "UPDATE seven.demo_bookings SET status='CANCELLED',cancelled_at=now() WHERE booking_id=$1 RETURNING *", [bookingId]);
+      await db.query("INSERT INTO seven.demo_wallet_entries(entry_id,user_id,booking_id,entry_type,amount_minor,balance_after_minor,reference,idempotency_key,description) VALUES($1,$2,$3,'REFUND',$4,$5,$6,$7,$8)", [randomUUID(), user.id, bookingId, booking.total_minor, balance.toString(), 'DRF-' + randomUUID(), 'refund:' + bookingId, 'Demo refund: ' + booking.item_title]);
+      return updated;
+    });
+  });
+
 }
