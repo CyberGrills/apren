@@ -1,5 +1,5 @@
 import type { NigeriaLocation, Offering, Sector } from '@7even/contracts';
-import { BedDouble, Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
+import { ArrowRight, BedDouble, Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../../components/DatePicker.tsx';
