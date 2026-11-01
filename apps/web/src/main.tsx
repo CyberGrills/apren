@@ -11,6 +11,7 @@ import { seasonAt } from './lib/season.ts';
 import './styles/global.css';
 import './styles/public.css';
 import './styles/demo-stay.css';
+import './styles/demo-catalog.css';
 import './styles/customer.css';
 import './styles/workspace.css';
 document.documentElement.dataset.season = seasonAt(new Date());
