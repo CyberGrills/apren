@@ -174,3 +174,22 @@ CREATE INDEX demo_wallet_entries_user_created_idx ON seven.demo_wallet_entries(u
 GRANT SELECT ON seven.demo_catalog_items TO seven_app, seven_readonly;
 GRANT SELECT,INSERT,UPDATE ON seven.demo_wallets,seven.demo_bookings TO seven_app;
 GRANT SELECT,INSERT ON seven.demo_wallet_entries TO seven_app;
+
+-- Keep the demo tables server-only and aligned with the seven schema's
+-- existing role/policy contract. The API performs user_id scoping.
+ALTER TABLE seven.demo_catalog_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE seven.demo_wallets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE seven.demo_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE seven.demo_wallet_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY seven_app_server_access ON seven.demo_catalog_items
+  FOR ALL TO seven_app USING (true) WITH CHECK (true);
+CREATE POLICY seven_readonly_select_access ON seven.demo_catalog_items
+  FOR SELECT TO seven_readonly USING (true);
+
+CREATE POLICY seven_app_server_access ON seven.demo_wallets
+  FOR ALL TO seven_app USING (true) WITH CHECK (true);
+CREATE POLICY seven_app_server_access ON seven.demo_bookings
+  FOR ALL TO seven_app USING (true) WITH CHECK (true);
+CREATE POLICY seven_app_server_access ON seven.demo_wallet_entries
+  FOR ALL TO seven_app USING (true) WITH CHECK (true);
