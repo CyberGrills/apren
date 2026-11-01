@@ -1435,3 +1435,5 @@
 .arrival-lead-card a { display: inline-block; margin-top: .4rem; font-size: .8rem; font-weight: 650; text-decoration: underline; text-underline-offset: .2em; }
 @media (max-width: 800px) { .arrival-lead-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .arrival-discovery-form, .arrival-lead-grid { grid-template-columns: 1fr; } .arrival-discovery-form > .btn { width: 100%; } .arrival-lead-heading { align-items: start; flex-direction: column; } }
+
+.landing-demo-entry{margin-top:2rem;padding:1.1rem 1.2rem;border:1px solid var(--line);max-width:440px;background:var(--surface)}.landing-demo-entry p{font-size:.8rem;line-height:1.65;color:var(--muted);margin:.5rem 0}.landing-demo-entry .public-text-link{padding:.3rem 0}.landing-demo-entry small{display:block;font-size:.65rem;color:var(--muted)}@media(max-width:900px){.landing-demo-entry{margin-top:1.5rem}}
