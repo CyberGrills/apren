@@ -17,6 +17,7 @@ const names = { STAY:'Hotels & apartments', DINING:'Dining', EXPERIENCE:'Things 
 
 export function DemoMarketplacePage() {
  const {user}=useSession();
+ const navigate=useNavigate();
  const [items,setItems]=useState<Item[]>([]);
  const [wallet,setWallet]=useState<Wallet|null>(null);
  const [bookings,setBookings]=useState<Booking[]>([]);
@@ -33,7 +34,7 @@ export function DemoMarketplacePage() {
  useEffect(()=>{void api<Item[]>('/demo/catalog').then(setItems).catch(e=>setError(e.message));},[]);
  useEffect(()=>{void refresh().catch(e=>setError(e.message));},[user?.id]);
  const visible=useMemo(()=>items.filter(i=>(kind==='ALL'||i.kind===kind)&&(i.title+i.city+i.state).toLowerCase().includes(query.toLowerCase())),[items,kind,query]);
- async function book(e:FormEvent,item:Item){e.preventDefault();if(!user)return;setBusy(item.id);setError('');setNotice('');try{const b=await api<Booking>('/demo/bookings',{method:'POST',body:{itemId:item.id,startDate:start,...(item.kind==='STAY'?{endDate:end}:{}),quantity},idempotencyKey:crypto.randomUUID()});setReceipt(b);setNotice('Demo booking confirmed. No real reservation or payment was made.');await refresh();}catch(cause){setError(cause instanceof Error?cause.message:'Could not complete demo booking.');}finally{setBusy('');}}
+ function book(e:FormEvent,item:Item){e.preventDefault();if(!user)return;const params=new URLSearchParams({itemId:item.id,startDate:start,quantity:String(quantity)});if(item.kind==='STAY')params.set('endDate',end);navigate('/demo/checkout?'+params.toString());}
  async function cancel(b:Booking){setBusy(b.id);setError('');try{await api('/demo/bookings/'+b.id+'/cancel',{method:'POST',body:{},idempotencyKey:crypto.randomUUID()});setNotice('Demo booking cancelled. Test credits returned.');await refresh();}catch(cause){setError(cause instanceof Error?cause.message:'Could not cancel demo booking.');}finally{setBusy('');}}
  const sampleImage=demoProperties[0]?.images[0]??'';
  return <div className="public-page"><PublicHeader/><main className="public-container demo-marketplace" id="main-content">
