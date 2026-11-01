@@ -22,6 +22,7 @@ import {
   OfferingPage,
 } from './pages/public/index.ts';
 import { GoogleMaps3DPrototype } from './pages/public/GoogleMaps3DPrototype.tsx';
+import { DemoStayPage } from './pages/public/DemoStayPage.tsx';
 import { AdminPage } from './pages/workspace/AdminPage.tsx';
 import { BusinessPage } from './pages/workspace/BusinessPage.tsx';
 import { VenuesPage } from './pages/workspace/VenuesPage.tsx';
@@ -145,6 +146,7 @@ export function App() {
             <ScrollPosition />
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/demo/stay" element={<DemoStayPage />} />
               {import.meta.env.DEV && <Route path="/dev/map-3d" element={<GoogleMaps3DPrototype />} />}
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/places/:id" element={<OfferingPage />} />
