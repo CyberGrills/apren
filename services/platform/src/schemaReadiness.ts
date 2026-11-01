@@ -1,7 +1,7 @@
 import type { Pool, QueryResultRow } from 'pg';
 
 /** Latest migration required by the current API contract. Covered by the migration-order test. */
-export const REQUIRED_SCHEMA_MIGRATION = '027_demo_marketplace_wallet.sql';
+export const REQUIRED_SCHEMA_MIGRATION = '028_demo_wallet_ledger_type.sql';
 
 interface SchemaReadinessRow extends QueryResultRow {
   migration_applied: boolean;
