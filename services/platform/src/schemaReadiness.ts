@@ -1,13 +1,14 @@
 import type { Pool, QueryResultRow } from 'pg';
 
 /** Latest migration required by the current API contract. Covered by the migration-order test. */
-export const REQUIRED_SCHEMA_MIGRATION = '026_quote_recovery_session_attribution.sql';
+export const REQUIRED_SCHEMA_MIGRATION = '027_demo_marketplace_wallet.sql';
 
 interface SchemaReadinessRow extends QueryResultRow {
   migration_applied: boolean;
   booking_recovery_events_present: boolean;
   quote_recovery_session_column_present: boolean;
   recovery_policy_contract_present: boolean;
+  demo_marketplace_schema_present: boolean;
 }
 
 /**
@@ -21,6 +22,10 @@ export async function schemaIsReady(db: Pick<Pool, 'query'>): Promise<boolean> {
          SELECT 1 FROM seven.migrations WHERE migration_name = $1
        ) AS migration_applied,
        to_regclass('seven.booking_recovery_events') IS NOT NULL AS booking_recovery_events_present,
+       (to_regclass('seven.demo_catalog_items') IS NOT NULL
+         AND to_regclass('seven.demo_wallets') IS NOT NULL
+         AND to_regclass('seven.demo_bookings') IS NOT NULL
+         AND to_regclass('seven.demo_wallet_entries') IS NOT NULL) AS demo_marketplace_schema_present,
        EXISTS (
          SELECT 1 FROM information_schema.columns
          WHERE table_schema = 'seven' AND table_name = 'quotes' AND column_name = 'recovery_session_id'
@@ -54,6 +59,7 @@ export async function schemaIsReady(db: Pick<Pool, 'query'>): Promise<boolean> {
     row?.migration_applied === true &&
     row?.booking_recovery_events_present === true &&
     row?.quote_recovery_session_column_present === true &&
-    row?.recovery_policy_contract_present === true
+    row?.recovery_policy_contract_present === true &&
+    row?.demo_marketplace_schema_present === true
   );
 }
