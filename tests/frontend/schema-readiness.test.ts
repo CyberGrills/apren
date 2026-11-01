@@ -9,6 +9,7 @@ interface ReadinessRow {
   booking_recovery_events_present: boolean;
   quote_recovery_session_column_present: boolean;
   recovery_policy_contract_present: boolean;
+  demo_marketplace_schema_present: boolean;
 }
 
 function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
@@ -34,6 +35,7 @@ function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
 test('schema readiness requires the migration, recovery table, quote column and scoped RLS policy contract', async () => {
   const complete = {
     migration_applied: true,
+    demo_marketplace_schema_present: true,
     booking_recovery_events_present: true,
     quote_recovery_session_column_present: true,
     recovery_policy_contract_present: true,
@@ -43,6 +45,7 @@ test('schema readiness requires the migration, recovery table, quote column and 
   assert.equal(await schemaIsReady(fakePool({ ...complete, booking_recovery_events_present: false })), false);
   assert.equal(await schemaIsReady(fakePool({ ...complete, quote_recovery_session_column_present: false })), false);
   assert.equal(await schemaIsReady(fakePool({ ...complete, recovery_policy_contract_present: false })), false);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, demo_marketplace_schema_present: false })), false);
   assert.equal(await schemaIsReady(fakePool()), false);
 });
 
