@@ -105,7 +105,7 @@ export function BusinessPhotoGallery() {
     if (allUploaded) showSuccess('Your photos have been submitted for review.');
   }
   async function mutate(action: () => Promise<unknown>) {
-    setBusy(path);
+    setBusy('gallery-action');
     setActionError('');
     try {
       await action();
