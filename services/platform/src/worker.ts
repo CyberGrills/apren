@@ -232,6 +232,12 @@ export async function processBookingRecoveryShadow(pool: Pool): Promise<number> 
     );
     for (const event of events) {
       const decision = buildRecoveryShadowDecision(event.event_code, new Date().toISOString());
+      const auditPayload = {
+        ...decision,
+        eventCode: event.event_code,
+        evidenceTrust: 'UNVERIFIED_CLIENT_TELEMETRY',
+        executionMode: 'SHADOW',
+      };
       await db.query(
         `INSERT INTO seven.booking_recovery_shadow_decisions(
            recovery_event_id,event_id,action_code,requires_human_approval,
@@ -244,7 +250,7 @@ export async function processBookingRecoveryShadow(pool: Pool): Promise<number> 
           decision.action,
           decision.requiresHumanApproval,
           decision.policyVersion,
-          JSON.stringify(decision),
+          JSON.stringify(auditPayload),
         ],
       );
     }
