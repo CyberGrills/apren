@@ -72,12 +72,13 @@ export function ExplorePage() {
     const state = params.get('state')?.trim().toLocaleLowerCase('en-NG') ?? '';
     const city = params.get('city')?.trim().toLocaleLowerCase('en-NG') ?? '';
     return (directoryData?.businesses ?? []).filter((profile) => {
-      if (profile.kind !== kind || profile.hasPublishedOffering) return false;
+      if (profile.kind !== kind) return false;
+      if ((data ?? []).some((offering) => offering.businessId === profile.id)) return false;
       if (state && (profile.state ?? '').toLocaleLowerCase('en-NG') !== state) return false;
       if (city && !profile.city.toLocaleLowerCase('en-NG').includes(city)) return false;
       return true;
     });
-  }, [directoryData, kind, params]);
+  }, [data, directoryData, kind, params]);
   const directoryListings = useMemo(() => {
     const state = params.get('state')?.trim().toLocaleLowerCase('en-NG') ?? '';
     const city = params.get('city')?.trim().toLocaleLowerCase('en-NG') ?? '';
