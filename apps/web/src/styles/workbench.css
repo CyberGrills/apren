@@ -689,3 +689,17 @@
  .business-photo-queue-actions .btn { width:100%; justify-content:center; }
  .business-photo-status-list li { align-items:flex-start; flex-direction:column; }
 }
+
+
+.admin-business-media { display:grid; gap:1.5rem; }
+.admin-media-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.25rem; }
+.admin-media-card { border:1px solid var(--line); background:var(--surface); min-width:0; }
+.admin-media-card > img,.admin-media-placeholder { width:100%; aspect-ratio:16/10; object-fit:cover; background:var(--surface-subtle); }
+.admin-media-placeholder { display:grid; place-items:center; color:var(--muted); font-size:.75rem; }
+.admin-media-copy { display:grid; gap:.65rem; padding:1.2rem; }
+.admin-media-copy h2 { font:400 1.35rem/1.2 var(--font-display); margin:0; overflow-wrap:anywhere; }
+.admin-media-copy p { margin:0; font-size:.8rem; }
+.admin-media-copy label { display:grid; gap:.4rem; font-size:.75rem; color:var(--muted); }
+.admin-media-copy textarea { width:100%; resize:vertical; }
+.admin-media-actions { display:flex; gap:.65rem; flex-wrap:wrap; }
+@media(max-width:700px) { .admin-media-grid { grid-template-columns:1fr; } }
