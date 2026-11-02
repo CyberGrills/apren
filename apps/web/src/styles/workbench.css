@@ -703,3 +703,8 @@
 .admin-media-copy textarea { width:100%; resize:vertical; }
 .admin-media-actions { display:flex; gap:.65rem; flex-wrap:wrap; }
 @media(max-width:700px) { .admin-media-grid { grid-template-columns:1fr; } }
+
+
+.business-photo-replace { position:relative; cursor:pointer; }
+.business-photo-replace input { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+.business-photo-replace:focus-within { outline:2px solid var(--accent); outline-offset:3px; }
