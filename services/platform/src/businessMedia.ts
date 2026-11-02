@@ -170,7 +170,7 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
     if (!head.ok) return fail(409, 'UPLOAD_NOT_FOUND', 'The image has not finished uploading.');
     const sizeHeader = head.headers.get('content-length');
     const actualSize = sizeHeader === null ? NaN : Number(sizeHeader);
-    const actualType = (head.headers.get('content-type') || '').split(';')[0];
+    const actualType = (head.headers.get('content-type') || '').split(';')[0] ?? '';
     if (!Number.isSafeInteger(actualSize) || actualSize !== Number(media.byte_size) || actualSize > MAX_BYTES || actualType !== media.mime_type) {
       await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
       return fail(422, 'IMAGE_METADATA_MISMATCH', 'Uploaded image metadata did not match the declared file.');
