@@ -23,6 +23,8 @@ CREATE POLICY seven_app_server_access
 CREATE POLICY seven_readonly_select_access
   ON seven.booking_recovery_shadow_decisions FOR SELECT TO seven_readonly
   USING (true);
+CREATE INDEX booking_recovery_events_shadow_scan_idx
+  ON seven.booking_recovery_events(event_code,received_at,recovery_event_id);
 CREATE INDEX booking_recovery_shadow_decisions_decided_idx
   ON seven.booking_recovery_shadow_decisions(decided_at DESC);
 COMMENT ON TABLE seven.booking_recovery_shadow_decisions IS
