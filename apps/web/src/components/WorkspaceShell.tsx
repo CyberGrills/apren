@@ -7,6 +7,7 @@ import {
   Gift,
   LayoutDashboard,
   Images,
+  Images,
   LogOut,
   Menu,
   Settings2,
@@ -105,6 +106,7 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
   const adminLinks = [
     { path: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
     { path: '/admin/inventory', label: 'Listings & inventory', icon: Store },
+    { path: '/admin/media', label: 'Photo review', icon: Images },
     { path: '/admin/businesses', label: 'Businesses', icon: Store },
     { path: '/admin/reservations', label: 'Reservations', icon: CalendarDays },
     { path: '/admin/payments', label: 'Payments & settlement', icon: CreditCard },
