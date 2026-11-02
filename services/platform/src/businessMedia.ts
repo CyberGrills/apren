@@ -205,8 +205,15 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
   app.get('/api/admin/business-media', async (_req, res) => {
     const admin = actor(res);
     if (admin.role !== 'ADMIN') return fail(403, 'FORBIDDEN', 'Platform administration access is required.');
-    const items = await rows(pool, "SELECT m.media_id,m.business_id,b.business_name,m.original_filename,m.mime_type,m.byte_size,m.caption,m.alt_text,m.created_at,m.replaced_media_id FROM seven.business_media m JOIN seven.businesses b USING(business_id) WHERE m.status='PENDING_REVIEW' ORDER BY m.created_at LIMIT 100");
-    res.json({ data: { items } });
+    const items = await rows(pool, "SELECT m.media_id,m.business_id,b.business_name,m.original_filename,m.mime_type,m.byte_size,m.caption,m.alt_text,m.created_at,m.replaced_media_id,m.storage_path FROM seven.business_media m JOIN seven.businesses b USING(business_id) WHERE m.status='PENDING_REVIEW' ORDER BY m.created_at LIMIT 100");
+    const withPreviews = await Promise.all(items.map(async item => {
+      const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(item.storage_path)), 'POST', { expiresIn: 900 });
+      const base = storageConfig().baseUrl;
+      const imageUrl = typeof signed.signedURL === 'string' ? (signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL) : null;
+      const { storage_path: _path, ...metadata } = item;
+      return { mediaId: metadata.media_id, businessId: metadata.business_id, businessName: metadata.business_name, originalFilename: metadata.original_filename, mimeType: metadata.mime_type, byteSize: Number(metadata.byte_size), caption: metadata.caption, altText: metadata.alt_text, createdAt: metadata.created_at, replacedMediaId: metadata.replaced_media_id, imageUrl };
+    }));
+    res.json({ data: { items: withPreviews } });
   });
 
   app.patch('/api/admin/business-media/:id/review', async (req, res) => {
