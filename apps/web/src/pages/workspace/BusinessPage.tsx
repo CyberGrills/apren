@@ -72,7 +72,9 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
           description={
             tab === 'demand'
               ? 'Measured activity from 7even, with the period and evidence beside every suggestion.'
-              : undefined
+              : tab === 'photos'
+                ? 'Manage original property photos and the gallery guests see after approval.'
+                : undefined
           }
           actions={
             owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
