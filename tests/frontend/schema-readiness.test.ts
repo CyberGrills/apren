@@ -57,10 +57,7 @@ test('readiness marker references an existing numbered migration', async () => {
   const files = (await readdir(new URL('../../database/migrations/', import.meta.url)))
     .filter((file) => /^\d+.*\.sql$/.test(file));
   assert.ok(files.length > 0);
-  assert.ok(
-    files.includes(REQUIRED_SCHEMA_MIGRATION),
-    \`required schema migration \${REQUIRED_SCHEMA_MIGRATION} must exist in the repository\`,
-  );
+  assert.ok(files.includes(REQUIRED_SCHEMA_MIGRATION));
 });
 
 test('both API entry points use schema-aware readiness rather than an old ledger row', async () => {
