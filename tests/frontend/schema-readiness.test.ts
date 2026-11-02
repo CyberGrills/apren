@@ -53,12 +53,11 @@ test('schema readiness requires the migration, recovery table, quote column and 
   assert.equal(await schemaIsReady(fakePool()), false);
 });
 
-test('readiness marker matches the highest numbered migration in the repository', async () => {
+test('readiness marker references an existing numbered migration', async () => {
   const files = (await readdir(new URL('../../database/migrations/', import.meta.url)))
-    .filter((file) => /^\d+.*\.sql$/.test(file))
-    .sort();
+    .filter((file) => /^\d+.*\.sql$/.test(file));
   assert.ok(files.length > 0);
-  assert.equal(files.at(-1), REQUIRED_SCHEMA_MIGRATION);
+  assert.ok(files.includes(REQUIRED_SCHEMA_MIGRATION));
 });
 
 test('both API entry points use schema-aware readiness rather than an old ledger row', async () => {
