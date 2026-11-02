@@ -124,7 +124,26 @@ export function PublicHeader() {
         </div>
       </div>
       {open && (
-        <nav id="public-mobile-nav" ref={mobileNavRef} className="public-mobile-nav" aria-label="Mobile navigation">
+        <nav
+          id="public-mobile-nav"
+          ref={mobileNavRef}
+          className="public-mobile-nav"
+          aria-label="Mobile navigation"
+          onKeyDown={(event) => {
+            if (event.key !== 'Tab') return;
+            const items = mobileNavRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), select:not([disabled])');
+            if (!items?.length) return;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault();
+              last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first.focus();
+            }
+          }}
+        >
           <SeasonThemeControl />
           <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}
