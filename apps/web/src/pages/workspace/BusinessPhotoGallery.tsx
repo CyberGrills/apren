@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ImagePlus, LoaderCircle, RefreshCw, Star, Trash2, Upload } from 'lucide-react';
 import { useFeedback } from '../../components/Feedback.tsx';
-import { ErrorNotice, Loading, PageHeader } from '../../components/ui.tsx';
+import { ErrorNotice, Loading } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
 
@@ -153,7 +153,6 @@ export function BusinessPhotoGallery() {
 
   return (
     <section className="business-photo-gallery">
-      <PageHeader eyebrow="Your business · Listing photos" title="Show guests what to expect." description="Upload original property photos. Every new image is checked by 7even before it appears publicly." />
       {error && <ErrorNotice message={error} retry={reload} />}
       {actionError && <ErrorNotice message={actionError} retry={() => setActionError('')} />}
       <div className="business-photo-guidance">
