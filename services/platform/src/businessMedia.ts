@@ -39,6 +39,22 @@ async function storageRequest(path: string, method: string, body?: unknown) {
   return response.status === 204 ? {} : response.json() as Promise<Record<string, unknown>>;
 }
 function encodedPath(path: string) { return path.split('/').map(encodeURIComponent).join('/'); }
+
+export async function businessMediaImageUrl(pool: Pool, businessId: string): Promise<string | null> {
+  try {
+    const media = await one(pool,
+      "SELECT storage_path FROM seven.business_media WHERE business_id=$1 AND status='APPROVED' ORDER BY is_cover DESC,sort_order,created_at LIMIT 1",
+      [businessId]);
+    if (!media) return null;
+    const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(media.storage_path)), 'POST', { expiresIn: 3600 });
+    const base = storageConfig().baseUrl;
+    if (typeof signed.signedURL !== 'string') return null;
+    return signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL;
+  } catch {
+    // A storage outage or an unapplied media migration must not break the public directory.
+    return null;
+  }
+}
 async function audit(client: PoolClient, actor: SessionUser, businessId: string, action: string, mediaId: string, details: Record<string, unknown> = {}) {
   await client.query(
     'INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details) VALUES($1,$2,$3,$4,$5,$6)',
