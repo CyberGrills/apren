@@ -13,9 +13,9 @@ export function SeasonThemeControl({ compact = false }: { compact?: boolean }) {
   const setPreference = useSetSeasonPreference();
   return (
     <label className={`season-theme-control${compact ? ' is-compact' : ''}`}>
-      <span>Theme</span>
+      <span>Season</span>
       <select
-        aria-label="Seasonal theme"
+        aria-label="Seasonal colour preference"
         value={preference}
         onChange={(event) => setPreference(event.target.value as SeasonPreference)}
       >

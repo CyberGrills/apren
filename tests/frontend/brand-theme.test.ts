@@ -40,7 +40,7 @@ const seasonalColors = {
   autumn: '#b77943',
   winter: '#466c78',
 } as const;
-for (const [season, color] of Object.entries(seasonalColors)) {
+test('the default seasonal accent falls back to the permanent 7EVEN primary brand colour', () => {\n  assert.equal(root['--season-accent'], 'var(--brand-primary)');\n});\nfor (const [season, color] of Object.entries(seasonalColors)) {
   test(`${season} changes only the campaign accent`, () => {
     assert.equal(root[`--season-${season}`]?.toLowerCase(), color);
     const selector = new RegExp(`:root\\[data-season="${season}"\\]\\s*\\{([^}]+)\\}`);
