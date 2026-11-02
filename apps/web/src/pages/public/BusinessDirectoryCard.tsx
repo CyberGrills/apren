@@ -41,7 +41,7 @@ export function BusinessDirectoryCard({ profile }: { profile: BusinessDirectoryP
             {profile.photos[0]?.caption && <span className="seven-business-photo-caption">{profile.photos[0].caption}</span>}
           </div>
           {profile.photos.length > 1 && <div className="seven-business-photo-thumbnails">
-            {profile.photos.slice(1, 5).map((photo, index) => (
+            {profile.photos.slice(1, 5).map((photo) => (
               <img key={photo.imageUrl} src={photo.imageUrl} alt={photo.altText} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
             ))}
           </div>}
