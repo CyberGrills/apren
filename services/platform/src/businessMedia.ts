@@ -152,10 +152,11 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
       [mediaId,businessId,owner.id,BUCKET,path,input.filename,input.mimeType,input.byteSize,input.caption,input.altText,input.replacesMediaId ?? null]);
     const signed = await storageRequest('/object/upload/sign/' + BUCKET + '/' + encodedPath(path), 'POST', { upsert: false });
     const signedURL = typeof signed.signedURL === 'string' ? signed.signedURL : typeof signed.url === 'string' ? signed.url : null;
-    if (!signedURL) return fail(502, 'UPLOAD_URL_FAILED', 'Secure upload could not be initialized.');
+    const token = typeof signed.token === 'string' ? signed.token : null;
+    if (!signedURL || !token) return fail(502, 'UPLOAD_URL_FAILED', 'Secure upload could not be initialized.');
     const base = storageConfig().baseUrl;
     const uploadUrl = signedURL.startsWith('http') ? signedURL : base + '/storage/v1' + signedURL;
-    res.status(201).json({ data: { mediaId, uploadUrl, token: signed.token ?? null, expiresIn: 900, requiredHeaders: { 'Content-Type': input.mimeType } } });
+    res.status(201).json({ data: { mediaId, uploadUrl, token, expiresIn: 900, requiredHeaders: { 'Content-Type': input.mimeType } } });
   });
 
   app.post('/api/business/media/:id/complete', async (req, res) => {
@@ -167,9 +168,10 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
     const config = storageConfig(); const path = encodedPath(String(media.storage_path));
     const head = await fetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'HEAD', headers: { apikey: config.secret, Authorization: 'Bearer ' + config.secret } });
     if (!head.ok) return fail(409, 'UPLOAD_NOT_FOUND', 'The image has not finished uploading.');
-    const actualSize = Number(head.headers.get('content-length') || media.byte_size);
-    const actualType = (head.headers.get('content-type') || media.mime_type).split(';')[0];
-    if (actualSize !== Number(media.byte_size) || actualSize > MAX_BYTES || actualType !== media.mime_type) {
+    const sizeHeader = head.headers.get('content-length');
+    const actualSize = sizeHeader === null ? NaN : Number(sizeHeader);
+    const actualType = (head.headers.get('content-type') || '').split(';')[0];
+    if (!Number.isSafeInteger(actualSize) || actualSize !== Number(media.byte_size) || actualSize > MAX_BYTES || actualType !== media.mime_type) {
       await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
       return fail(422, 'IMAGE_METADATA_MISMATCH', 'Uploaded image metadata did not match the declared file.');
     }
@@ -182,8 +184,14 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
       await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
       return fail(422, 'INVALID_IMAGE_CONTENT', 'The uploaded file content does not match an accepted image format.');
     }
-    await pool.query("UPDATE seven.business_media SET status='PENDING_REVIEW',updated_at=now() WHERE media_id=$1 AND business_id=$2 AND status='PENDING_UPLOAD'", [req.params.id,businessId]);
-    await pool.query('INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details) VALUES($1,$2,$3,$4,$5,$6)', [randomUUID(),owner.id,businessId,'business_media.submitted',req.params.id,{ mimeType: actualType, byteSize: actualSize }]);
+    await transaction(pool, async client => {
+      const updated = await client.query(
+        "UPDATE seven.business_media SET status='PENDING_REVIEW',updated_at=now() WHERE media_id=$1 AND business_id=$2 AND status='PENDING_UPLOAD' RETURNING media_id",
+        [req.params.id,businessId],
+      );
+      if (!updated.rowCount) return fail(409, 'UPLOAD_ALREADY_COMPLETED', 'This photo upload has already been completed.');
+      await audit(client,owner,businessId,'business_media.submitted',req.params.id,{ mimeType: actualType, byteSize: actualSize });
+    });
     res.json({ data: { mediaId: req.params.id, status: 'PENDING_REVIEW' } });
   });
 
@@ -203,6 +211,7 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
   app.patch('/api/business/media/:id/cover', async (req, res) => {
     const owner = actor(res); const businessId = businessIdFor(owner);
     await transaction(pool, async client => {
+      await client.query('SELECT business_id FROM seven.businesses WHERE business_id=$1 FOR UPDATE', [businessId]);
       const selected = await client.query("SELECT media_id FROM seven.business_media WHERE media_id=$1 AND business_id=$2 AND status='APPROVED' FOR UPDATE", [req.params.id,businessId]);
       if (!selected.rowCount) return fail(404, 'APPROVED_MEDIA_NOT_FOUND', 'Only approved photos can be selected as the cover.');
       await client.query('UPDATE seven.business_media SET is_cover=false,updated_at=now() WHERE business_id=$1 AND is_cover', [businessId]);
