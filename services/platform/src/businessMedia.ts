@@ -164,7 +164,7 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
       const found = await client.query("SELECT media_id FROM seven.business_media WHERE business_id=$1 AND status='APPROVED' AND media_id=ANY($2::uuid[]) FOR UPDATE", [businessId,input.mediaIds]);
       if (found.rowCount !== input.mediaIds.length) return fail(422, 'INVALID_GALLERY_ORDER', 'Only approved photos from this business can be reordered.');
       for (let i=0;i<input.mediaIds.length;i++) await client.query('UPDATE seven.business_media SET sort_order=$3,updated_at=now() WHERE business_id=$1 AND media_id=$2', [businessId,input.mediaIds[i],i]);
-      await audit(client,owner,businessId,'business_media.reordered',input.mediaIds[0],{ count: input.mediaIds.length });
+      await audit(client,owner,businessId,'business_media.reordered',input.mediaIds[0] ?? fail(422, 'INVALID_GALLERY_ORDER', 'At least one approved photo is required.'),{ count: input.mediaIds.length });
     });
     res.json({ data: { success: true } });
   });
