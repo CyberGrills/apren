@@ -48,6 +48,7 @@ export function BusinessPhotoGallery() {
   const [queued, setQueued] = useState<QueuedPhoto[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
+  const [dragging, setDragging] = useState(false);
   const { showSuccess } = useFeedback();
   const items = data?.items ?? [];
   const approved = useMemo(() => items.filter((item) => item.status === 'APPROVED'), [items]);
@@ -139,16 +140,21 @@ export function BusinessPhotoGallery() {
     <section className="business-photo-gallery">
       {error && <ErrorNotice message={error} retry={reload} />}
       {actionError && <ErrorNotice message={actionError} retry={() => setActionError('')} />}
+      <div className="business-photo-stats" aria-label="Photo gallery status">
+        <div><strong>{approved.length}</strong><span>Approved and guest-facing</span></div>
+        <div><strong>{pending.length}</strong><span>Awaiting review</span></div>
+        <div><strong>{rejected.length}</strong><span>Needs your attention</span></div>
+      </div>
       <div className="business-photo-guidance">
         <div><strong>Accepted formats</strong><span>JPEG, PNG, WebP or AVIF · up to 10 MB each</span></div>
         <div><strong>Review process</strong><span>Only approved photos appear on your public listing.</span></div>
       </div>
       <section className="business-photo-upload panel" aria-labelledby="photo-upload-heading">
         <div className="business-photo-upload-heading"><div><p className="eyebrow">Add to your listing</p><h2 id="photo-upload-heading">Upload property photos</h2><p className="small-copy">Choose several images from your phone or computer. Add a short caption and useful alt text for each one.</p></div><ImagePlus size={30} aria-hidden="true" /></div>
-        <label className="business-photo-drop">
+        <label className={"business-photo-drop " + (dragging ? "is-dragging" : "")} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }} onDrop={(event) => { event.preventDefault(); setDragging(false); chooseFiles(event.dataTransfer.files); }}>
           <Upload size={23} aria-hidden="true" />
           <strong>Choose photos</strong>
-          <span>Browse files on this device</span>
+          <span>Browse files or drag and drop · JPEG, PNG, WebP, AVIF · 10 MB max each</span>
           <input type="file" accept={accepted} multiple onChange={(event) => { chooseFiles(event.currentTarget.files); event.currentTarget.value = ''; }} />
         </label>
         {queued.length > 0 && <div className="business-photo-queue">
@@ -158,11 +164,11 @@ export function BusinessPhotoGallery() {
               <strong>{photo.file.name}</strong><span>{(photo.file.size / 1024 / 1024).toFixed(1)} MB</span>
               <label>Caption <input value={photo.caption} maxLength={300} onChange={(event) => updateQueued(photo.id, { caption: event.target.value })} placeholder="A bright, comfortable guest room" /></label>
               <label>Alt text <input value={photo.altText} maxLength={300} onChange={(event) => updateQueued(photo.id, { altText: event.target.value })} placeholder="Describe what is visible in this photo" required /></label>
-              {busy === photo.id && <div className="business-photo-progress" role="status"><span style={{ width: photo.progress + '%' }} /> <small>{photo.progress}%</small></div>}
+              {busy === photo.id && <div className="business-photo-progress" role="progressbar" aria-label={"Uploading " + photo.file.name} aria-valuemin={0} aria-valuemax={100} aria-valuenow={photo.progress}><span style={{ width: photo.progress + '%' }} /> <small>{photo.progress}%</small></div>}
             </div>
             <button type="button" className="icon-button" aria-label={'Remove ' + photo.file.name} onClick={() => removeQueued(photo.id)} disabled={busy === photo.id}><Trash2 size={17} /></button>
           </article>)}
-          <div className="business-photo-queue-actions"><span>{queued.length} photo{queued.length === 1 ? '' : 's'} ready</span><button type="button" className="btn btn-primary" onClick={() => void uploadAll()} disabled={!!busy || queued.some((photo) => photo.altText.trim().length < 3)}>{busy ? <LoaderCircle size={16} className="spin" /> : <Upload size={16} />} Submit for review</button></div>
+          <div className="business-photo-queue-actions"><span>{queued.length} photo{queued.length === 1 ? '' : 's'} ready to submit</span><button type="button" className="btn btn-primary" onClick={() => void uploadAll()} disabled={!!busy || queued.some((photo) => photo.altText.trim().length < 3)}>{busy ? <LoaderCircle size={16} className="spin" /> : <Upload size={16} />} Submit for review</button></div>
         </div>}
       </section>
       {loading && <Loading />}
