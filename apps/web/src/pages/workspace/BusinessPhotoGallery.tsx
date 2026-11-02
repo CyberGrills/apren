@@ -28,8 +28,8 @@ function uploadBinary(intent: UploadIntent, file: File, onProgress: (value: numb
     const signedTarget = new URL(intent.uploadUrl);
     signedTarget.searchParams.set('token', intent.token);
     request.open('PUT', signedTarget.toString());
-    request.setRequestHeader('Content-Type', file.type);
-    request.setRequestHeader('x-upsert', 'false');
+    const headers = { 'Content-Type': file.type, 'x-upsert': 'false', ...intent.requiredHeaders };
+    for (const [name, value] of Object.entries(headers)) request.setRequestHeader(name, value);
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
     };
