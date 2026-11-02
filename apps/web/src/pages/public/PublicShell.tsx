@@ -149,9 +149,13 @@ export function PublicFooter() {
     <footer className="public-footer">
       <div className="public-container">
         <div className="public-footer-top">
-          <Link to="/" aria-label="7even home">
-            <Brand />
-          </Link>
+          <div className="public-footer-brand-lockup">
+            <Link to="/" aria-label="7even home"><Brand /></Link>
+            <div className="apren-signature" aria-label="Powered by āprən">
+              <img src="/media/apren-mark.webp" alt="āprən" width="58" height="51" />
+              <span>Powered by āprən</span>
+            </div>
+          </div>
           <p>
             {language === 'pcm' ? <>Correct places.<br />Make your time count.</> : <>Good places.<br />Worth your time.</>}
           </p>
