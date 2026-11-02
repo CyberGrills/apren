@@ -44,8 +44,9 @@ function statusLabel(status: MediaStatus) {
 function uploadBinary(intent: UploadIntent, file: File, onProgress: (value: number) => void) {
   return new Promise<void>((resolve, reject) => {
     const request = new XMLHttpRequest();
-    request.open('PUT', intent.uploadUrl);
-    request.setRequestHeader('Authorization', 'Bearer ' + intent.token);
+    const signedTarget = new URL(intent.uploadUrl);
+    signedTarget.searchParams.set('token', intent.token);
+    request.open('PUT', signedTarget.toString());
     request.setRequestHeader('Content-Type', file.type);
     request.setRequestHeader('x-upsert', 'false');
     request.upload.onprogress = (event) => {
