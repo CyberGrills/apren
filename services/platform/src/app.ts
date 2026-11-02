@@ -39,6 +39,7 @@ import { processInbox, processOutbox } from './worker.ts';
 import { findLocations, retainedLocationState } from './locations.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
+import { mountBusinessMedia } from './businessMedia.ts';
 import { mountSocialAuth, socialAuthAvailability } from './socialAuth.ts';
 import type { SocialProvider, SocialProviderId } from './socialAuth.ts';
 import { mountPasskeyRoutes, passkeysEnabled } from './passkeys.ts';
@@ -2222,6 +2223,7 @@ export function createApp(options: AppOptions = {}) {
   mountBookingRecovery(app, { pool, actor: actorFor });
   mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
+  mountBusinessMedia(app, { pool, actor: actorFor });
   const sendRecovery = options.sendRecovery ?? configuredRecoveryMailer();
   mountAccountRoutes(app, {
     pool,
