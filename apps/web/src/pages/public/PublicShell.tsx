@@ -2,6 +2,8 @@ import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
+import { SeasonThemeControl } from '../../components/SeasonThemeControl.tsx';
+import { SeasonalCampaignBanner } from '../../components/SeasonalCampaignBanner.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
@@ -76,6 +78,7 @@ export function PublicHeader() {
           ? { label: 'Open reception', href: '/reception' }
           : { label: 'For business', href: '/business/apply' };
   return (
+    <>
     <header className="public-header" ref={headerRef}>
       <div className="public-container public-nav">
         <Link to="/" aria-label="7even home" className="public-brand">
@@ -87,6 +90,7 @@ export function PublicHeader() {
           <Link to="/explore?kind=EXPERIENCE">{language === 'pcm' ? 'Things to do' : 'Things to do'}</Link>
         </nav>
         <div className="public-nav-actions">
+          <SeasonThemeControl compact />
           <div className="seven-language-switch" role="group" aria-label="Website language">
             <button type="button" className={language === 'en' ? 'active' : ''} aria-pressed={language === 'en'} onClick={() => changeLanguage('en')}>English</button>
             <button type="button" className={language === 'pcm' ? 'active' : ''} aria-pressed={language === 'pcm'} onClick={() => changeLanguage('pcm')}>Naija Pidgin</button>
@@ -114,6 +118,7 @@ export function PublicHeader() {
       </div>
       {open && (
         <nav id="public-mobile-nav" className="public-mobile-nav" aria-label="Mobile navigation">
+          <SeasonThemeControl />
           <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}
           </Link>
@@ -133,6 +138,8 @@ export function PublicHeader() {
         </nav>
       )}
     </header>
+    {location.pathname === '/' && <SeasonalCampaignBanner />}
+    </>
   );
 }
 
