@@ -33,7 +33,9 @@ test('explore preserves the selected sector while stay-only search uses AI filte
   assert.match(explore, /query\.set\('kind', kind\)/);
   assert.match(explore, /next\.set\('kind', kind\)/);
   assert.match(explore, /const isStaySearch = kind === 'STAY'/);
-  assert.doesNotMatch(explore, /sourcedDirectoryListings|DirectoryListingCard/);
+  assert.match(explore, /useApi<ExploreDirectoryResponse>\(directoryPath\)/);
+  assert.match(explore, /BusinessDirectoryCard/);
+  assert.match(explore, /DirectoryListingCard/);
 });
 
 test('empty later explore pages offer a way back without discarding active filters', () => {
@@ -305,4 +307,20 @@ test('migration ledger RLS remains restricted to the two existing server roles',
   assert.match(migration, /FOR ALL TO seven_app/);
   assert.match(migration, /FOR SELECT TO seven_readonly/);
   assert.doesNotMatch(migration, /TO anon|TO authenticated/);
+});
+
+test('Explore surfaces approved directory profiles and source-backed dining and experience listings without enabling bookings', () => {
+  assert.match(explore, /\/directory\?kind=/);
+  assert.match(explore, /profile\.hasPublishedOffering/);
+  assert.match(explore, /if \(kind === 'STAY'\) return \[\]/);
+  assert.match(explore, /listing\.kind !== kind/);
+  assert.match(explore, /BusinessDirectoryCard key=\{profile\.id\}/);
+  assert.match(explore, /DirectoryListingCard key=\{listing\.id\}/);
+  assert.match(explore, /directoryProfiles\.length === 0 && directoryListings\.length === 0/);
+  const businessCard = source('../../apps/web/src/pages/public/BusinessDirectoryCard.tsx');
+  const listingCard = source('../../apps/web/src/pages/public/DirectoryListingCard.tsx');
+  assert.match(businessCard, /Directory only/);
+  assert.match(businessCard, /Property evidence requires review/);
+  assert.match(businessCard, /Booking is disabled/);
+  assert.match(listingCard, /Not bookable or payable through 7even yet/);
 });
