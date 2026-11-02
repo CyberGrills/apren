@@ -28,7 +28,7 @@
   --season-summer: #c67b55;
   --season-autumn: #b77943;
   --season-winter: #466c78;
-  --season-accent: var(--season-winter);
+  --season-accent: var(--brand-primary);
   --season-surface: color-mix(in oklch, var(--season-accent) 4%, var(--surface));
   --font-display: "Newsreader", Georgia, serif;
   --font-body: "Manrope", Arial, sans-serif;
