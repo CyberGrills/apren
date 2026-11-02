@@ -1,0 +1,144 @@
+.season-theme-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.season-theme-control select {
+  min-height: 40px;
+  padding: 0.45rem 1.8rem 0.45rem 0.65rem;
+  border: 1px solid var(--control-border);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.76rem;
+  letter-spacing: 0;
+}
+.season-theme-control.is-compact select {
+  min-height: 38px;
+  max-width: 116px;
+}
+.seven-seasonal-promo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 240px);
+  align-items: center;
+  gap: clamp(1.5rem, 5vw, 4rem);
+  margin-block: 2rem 3rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid var(--line);
+  background: var(--season-surface);
+}
+.seven-seasonal-promo-copy {
+  max-width: 42rem;
+}
+.seven-seasonal-promo-copy .seasonal-campaign-label {
+  margin: 0 0 1rem;
+}
+.seven-seasonal-promo-copy h2 {
+  max-width: 15ch;
+  margin: 0 0 0.9rem;
+  font: 500 clamp(2rem, 4.2vw, 3.4rem)/1.02 var(--font-display);
+  letter-spacing: -0.04em;
+}
+.seven-seasonal-promo-copy > p:not(.public-eyebrow) {
+  max-width: 48ch;
+  color: var(--muted);
+  line-height: 1.75;
+}
+.seven-seasonal-promo-copy .public-eyebrow {
+  margin-bottom: 0.8rem;
+}
+.seven-seasonal-flyer {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background-image: url('/media/seasonal-campaigns.webp');
+  background-repeat: no-repeat;
+  background-size: 200% 200%;
+  background-position: 0 0;
+  box-shadow: 0 12px 34px rgb(36 31 24 / 12%);
+}
+.apren-signature {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.8rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+.apren-signature img {
+  display: block;
+  width: 58px;
+  height: 51px;
+  object-fit: contain;
+}
+.public-footer-brand-lockup {
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+}
+.public-footer-brand-lockup .apren-signature {
+  margin-top: 0.15rem;
+}
+.workspace-sidebar .apren-signature {
+  margin: 0.65rem 0 1rem;
+}
+.workspace-sidebar .apren-signature img {
+  width: 48px;
+  height: 42px;
+}
+.workspace-topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+@media (max-width: 760px) {
+  .seven-seasonal-promo {
+    grid-template-columns: minmax(0, 1fr) minmax(112px, 34%);
+    gap: 1rem;
+    margin-block: 1.4rem 2rem;
+    padding: 1rem;
+  }
+  .seven-seasonal-promo-copy h2 {
+    font-size: clamp(1.55rem, 6vw, 2.2rem);
+  }
+  .seven-seasonal-promo-copy > p:not(.public-eyebrow) {
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+  .seven-seasonal-promo-copy .btn {
+    min-height: 42px;
+    padding-inline: 0.8rem;
+    font-size: 0.75rem;
+  }
+  .season-theme-control:not(.is-compact) {
+    justify-content: space-between;
+    padding: 0.55rem 0.75rem;
+  }
+}
+@media (max-width: 420px) {
+  .seven-seasonal-promo {
+    grid-template-columns: minmax(0, 1fr) 104px;
+    align-items: start;
+  }
+  .seven-seasonal-flyer {
+    margin-top: 0.3rem;
+  }
+  .season-theme-control.is-compact span {
+    display: none;
+  }
+  .season-theme-control.is-compact select {
+    max-width: 94px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seven-seasonal-flyer {
+    scroll-behavior: auto;
+  }
+}
