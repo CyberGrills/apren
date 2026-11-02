@@ -1,6 +1,6 @@
 import type { Offering, Sector } from '@7even/contracts';
 import { Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { StateCityFields } from '../../components/LocationFields.tsx';
 import { GoogleMapsScene } from '../../components/GoogleMapsScene.tsx';
@@ -18,6 +18,9 @@ import { stayDatesError } from '../../lib/datePicker.ts';
 import { localDateNow, PublicFooter, PublicHeader } from './PublicShell.tsx';
 import { addCalendarDays } from '../../lib/datePicker.ts';
 import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
+import { BusinessDirectoryCard, type BusinessDirectoryProfile } from './BusinessDirectoryCard.tsx';
+import { DirectoryListingCard } from './DirectoryListingCard.tsx';
+import type { DirectoryListing } from '../../lib/nigeriaDirectory.ts';
 
 export function ExplorePage() {
   const [params, setParams] = useSearchParams();
@@ -54,6 +57,40 @@ export function ExplorePage() {
   query.set('page', String(page));
   query.set('kind', kind);
   const { data, loading, error, reload } = useApi<Offering[]>(`/offerings?${query}`);
+  interface ExploreDirectoryResponse {
+    listings: DirectoryListing[];
+    businesses?: BusinessDirectoryProfile[];
+  }
+  const directoryPath = `/directory?kind=${kind}&page=1&pageSize=100`;
+  const {
+    data: directoryData,
+    loading: directoryLoading,
+    error: directoryError,
+    reload: reloadDirectory,
+  } = useApi<ExploreDirectoryResponse>(directoryPath);
+  const directoryProfiles = useMemo(() => {
+    const state = params.get('state')?.trim().toLocaleLowerCase('en-NG') ?? '';
+    const city = params.get('city')?.trim().toLocaleLowerCase('en-NG') ?? '';
+    return (directoryData?.businesses ?? []).filter((profile) => {
+      if (profile.kind !== kind || profile.hasPublishedOffering) return false;
+      if (state && (profile.state ?? '').toLocaleLowerCase('en-NG') !== state) return false;
+      if (city && !profile.city.toLocaleLowerCase('en-NG').includes(city)) return false;
+      return true;
+    });
+  }, [directoryData, kind, params]);
+  const directoryListings = useMemo(() => {
+    const state = params.get('state')?.trim().toLocaleLowerCase('en-NG') ?? '';
+    const city = params.get('city')?.trim().toLocaleLowerCase('en-NG') ?? '';
+    // Hotel source leads remain excluded from Explore. Stay discovery is limited to
+    // canonical business profiles and separately published 7even offerings.
+    if (kind === 'STAY') return [];
+    return (directoryData?.listings ?? []).filter((listing) => {
+      if (listing.kind !== kind) return false;
+      if (state && listing.state.toLocaleLowerCase('en-NG') !== state) return false;
+      if (city && !listing.city.toLocaleLowerCase('en-NG').includes(city)) return false;
+      return true;
+    });
+  }, [directoryData, kind, params]);
   function filter(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -261,6 +298,45 @@ export function ExplorePage() {
         </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
+        {directoryError && (
+          <div className="seven-api-unavailable seven-directory-api-note" role="status">
+            <p>Business directory profiles are temporarily unavailable. Published 7even offerings remain available below.</p>
+            <button type="button" className="btn btn-secondary" onClick={() => void reloadDirectory()}>
+              Retry business directory
+            </button>
+          </div>
+        )}
+        {directoryLoading && (
+          <p className="seven-directory-loading" role="status">Loading additional business listings…</p>
+        )}
+        {directoryProfiles.length > 0 && (
+          <section className="explore-results" aria-labelledby="explore-business-profiles-title">
+            <div className="explore-results-heading">
+              <h2 id="explore-business-profiles-title">Business profiles</h2>
+              <span>Directory listings only · not bookable through 7even</span>
+            </div>
+            <div className="explore-grid">
+              {directoryProfiles.map((profile) => (
+                <BusinessDirectoryCard key={profile.id} profile={profile} />
+              ))}
+            </div>
+          </section>
+        )}
+        {directoryListings.length > 0 && (
+          <section className="explore-results" aria-labelledby="explore-source-listings-title">
+            <div className="explore-results-heading">
+              <h2 id="explore-source-listings-title">
+                {kind === 'DINING' ? 'Dining around you' : 'Things to explore'}
+              </h2>
+              <span>Source-backed directory listings · confirm details with each venue</span>
+            </div>
+            <div className="explore-grid">
+              {directoryListings.map((listing) => (
+                <DirectoryListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          </section>
+        )}
         {data && data.length > 0 && (
           <section className="explore-results" aria-labelledby="explore-results-title">
             <h2 className="sr-only" id="explore-results-title">
@@ -302,7 +378,7 @@ export function ExplorePage() {
             </button>
           </nav>
         )}
-        {data?.length === 0 && (
+        {data?.length === 0 && directoryProfiles.length === 0 && directoryListings.length === 0 && (
           <EmptyState
             title={language === 'pcm' ? 'No place match this search yet.' : 'No places match this search yet.'}
             description={isStaySearch
