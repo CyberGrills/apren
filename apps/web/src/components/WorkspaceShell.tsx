@@ -7,7 +7,6 @@ import {
   Gift,
   LayoutDashboard,
   Images,
-  Images,
   LogOut,
   Menu,
   Settings2,
