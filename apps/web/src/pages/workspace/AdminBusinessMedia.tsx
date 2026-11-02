@@ -3,25 +3,13 @@ import { Check, RefreshCw, X } from 'lucide-react';
 import { useFeedback } from '../../components/Feedback.tsx';
 import { ErrorNotice, Loading, PageHeader } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
-import { api } from '../../lib/api.ts';
+import { businessMediaApi, businessMediaRoutes, type BusinessMediaReviewItem } from '../../lib/businessMediaApi.ts';
 
-interface ReviewItem {
-  mediaId: string;
-  businessId: string;
-  businessName: string;
-  originalFilename: string;
-  mimeType: string;
-  byteSize: number;
-  caption: string;
-  altText: string;
-  createdAt: string;
-  replacedMediaId: string | null;
-  imageUrl: string | null;
-}
+type ReviewItem = BusinessMediaReviewItem;
 interface ReviewResponse { items: ReviewItem[]; }
 
 export function AdminBusinessMedia() {
-  const { data, loading, error, reload } = useApi<ReviewResponse>('/admin/business-media');
+  const { data, loading, error, reload } = useApi<ReviewResponse>(businessMediaRoutes.adminList);
   const [reasons, setReasons] = useState<Record<string,string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
@@ -36,10 +24,7 @@ export function AdminBusinessMedia() {
     setBusy(item.mediaId);
     setActionError('');
     try {
-      await api('/admin/business-media/' + item.mediaId + '/review', {
-        method: 'PATCH',
-        body: { decision, ...(decision === 'REJECTED' ? { reason } : {}) },
-      });
+      await businessMediaApi.review(item.mediaId, decision, decision === 'REJECTED' ? reason : undefined);
       showSuccess(decision === 'APPROVED' ? 'Photo approved and published.' : 'Photo rejected.');
       reload();
     } catch (cause) {
