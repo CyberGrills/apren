@@ -29,7 +29,7 @@
   gap: clamp(1.5rem, 5vw, 4rem);
   margin-block: 2rem 3rem;
   padding: clamp(1.25rem, 4vw, 2.5rem);
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in oklch, var(--season-accent) 30%, var(--line));
   background: var(--season-surface);
 }
 .seven-seasonal-promo-copy {
