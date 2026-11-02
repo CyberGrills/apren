@@ -71,15 +71,30 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
       [businessId]);
     const items = await Promise.all(media.map(async item => {
       let imageUrl: string | null = null;
-      if (item.status === 'APPROVED') {
+      if (item.status === 'APPROVED' || item.status === 'PENDING_REVIEW' || item.status === 'REJECTED') {
         const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(item.storage_path)), 'POST', { expiresIn: 900 });
         if (typeof signed.signedURL === 'string') {
           const base = storageConfig().baseUrl;
           imageUrl = signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL;
         }
       }
-      const { storage_path: _path, ...publicItem } = item;
-      return { ...publicItem, imageUrl };
+      return {
+        mediaId: item.media_id,
+        originalFilename: item.original_filename,
+        mimeType: item.mime_type,
+        byteSize: Number(item.byte_size),
+        caption: item.caption,
+        altText: item.alt_text,
+        status: item.status,
+        rejectionReason: item.rejection_reason,
+        sortOrder: item.sort_order,
+        isCover: item.is_cover,
+        replacedMediaId: item.replaced_media_id,
+        reviewedAt: item.reviewed_at,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+        imageUrl,
+      };
     }));
     res.json({ data: { items } });
   });
