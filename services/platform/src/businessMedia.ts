@@ -40,19 +40,34 @@ async function storageRequest(path: string, method: string, body?: unknown) {
 }
 function encodedPath(path: string) { return path.split('/').map(encodeURIComponent).join('/'); }
 
-export async function businessMediaImageUrl(pool: Pool, businessId: string): Promise<string | null> {
+export interface BusinessMediaPreview {
+  imageUrl: string;
+  altText: string;
+  caption: string;
+  isCover: boolean;
+}
+
+export async function businessMediaGallery(pool: Pool, businessId: string): Promise<BusinessMediaPreview[]> {
   try {
-    const media = await one(pool,
-      "SELECT storage_path FROM seven.business_media WHERE business_id=$1 AND status='APPROVED' ORDER BY is_cover DESC,sort_order,created_at LIMIT 1",
+    const media = await rows(pool,
+      "SELECT storage_path,alt_text,caption,is_cover FROM seven.business_media WHERE business_id=$1 AND status='APPROVED' ORDER BY is_cover DESC,sort_order,created_at LIMIT 12",
       [businessId]);
-    if (!media) return null;
-    const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(media.storage_path)), 'POST', { expiresIn: 3600 });
-    const base = storageConfig().baseUrl;
-    if (typeof signed.signedURL !== 'string') return null;
-    return signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL;
+    return await Promise.all(media.map(async item => {
+      const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(item.storage_path)), 'POST', { expiresIn: 3600 });
+      const base = storageConfig().baseUrl;
+      const imageUrl = typeof signed.signedURL === 'string'
+        ? (signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL)
+        : null;
+      return imageUrl ? {
+        imageUrl,
+        altText: String(item.alt_text),
+        caption: String(item.caption),
+        isCover: Boolean(item.is_cover),
+      } : null;
+    })).then(items => items.filter((item): item is BusinessMediaPreview => item !== null));
   } catch {
     // A storage outage or an unapplied media migration must not break the public directory.
-    return null;
+    return [];
   }
 }
 async function audit(client: PoolClient, actor: SessionUser, businessId: string, action: string, mediaId: string, details: Record<string, unknown> = {}) {
