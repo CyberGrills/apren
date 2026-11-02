@@ -41,6 +41,12 @@ Outcome ledger + reconciliation + incremental-revenue measurement
 9. **Safe degradation.** If an adapter, ranking service or recovery route is unhealthy, fall back to read-only discovery or manual review. Never convert uncertainty into an invented rate or booking.
 10. **Auditable learning loop.** Preserve decision inputs, policy version, ranking reason and outcome events with appropriate privacy controls. Run proposed learned strategies in shadow mode, compare against the deterministic baseline, and roll out only with evidence and rollback controls.
 
+## Recovery event and decision alignment
+
+The persisted booking-recovery API accepts `PAYMENT_FAILED`, so the deterministic revenue decision contract must accept the same event. Payment failures now produce `REVIEW_PAYMENT_ISSUE` with human approval required and guest contact disabled. The decision is deliberately independent of inventory freshness: a payment failure must first be reconciled against provider and booking state, not treated as a demand signal or discount opportunity.
+
+This is a policy-contract alignment only. It does not yet connect persisted recovery rows to a live decision worker, retry a payment, mutate a booking, issue a refund, or contact a guest. That integration requires a separately reviewed, idempotent consumer and provider-state reconciliation tests.
+
 ## Implementation order
 
 ### Phase 1 — Establish reliable state

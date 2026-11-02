@@ -40,6 +40,13 @@ describe('bounded revenue orchestration', () => {
     assert.equal(result.requiresHumanApproval, true);
     assert.equal(result.mayContactGuest, false);
   });
+  it('routes payment failures to reconciliation review without retry or guest contact', () => {
+    const result = decideRevenueAction({ ...base, event: 'PAYMENT_FAILED', guestHasMarketingConsent: true });
+    assert.equal(result.action, 'REVIEW_PAYMENT_ISSUE');
+    assert.equal(result.requiresHumanApproval, true);
+    assert.equal(result.mayContactGuest, false);
+    assert.match(result.evidence.reason, /Reconcile the payment-provider and booking states/);
+  });
   it('recommends ancillary offers only after booking confirmation', () => {
     assert.equal(decideRevenueAction({ ...base, event: 'BOOKING_CONFIRMED' }).action, 'OFFER_ANCILLARY');
   });
