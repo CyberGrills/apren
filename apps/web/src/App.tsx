@@ -32,6 +32,7 @@ import {
   OfferingPage,
 } from './pages/public/index.ts';
 import { AdminInventoryPage } from './pages/workspace/AdminInventoryPage.tsx';
+import { AdminBusinessMedia } from './pages/workspace/AdminBusinessMedia.tsx';
 import { DemoHotelsPage } from './pages/public/DemoHotelsPage.tsx';
 import { DemoMarketplacePage } from './pages/public/DemoMarketplacePage.tsx';
 import { DemoCheckoutPage } from './pages/public/DemoCheckoutPage.tsx';
@@ -279,6 +280,7 @@ export function App() {
                 <Route path="/admin" element={<WorkspaceShell mode="admin" />}>
                   <Route index element={<AdminPage />} />
                   <Route path="inventory" element={<AdminInventoryPage />} />
+                  <Route path="media" element={<AdminBusinessMedia />} />
                   <Route path="operations" element={<OperationsPage />} />
                   {(['businesses', 'payments', 'reservations', 'policy', 'audit'] as const).map((tab) => (
                     <Route path={tab} element={<AdminPage tab={tab} />} key={tab} />
