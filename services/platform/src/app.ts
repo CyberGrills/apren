@@ -2158,7 +2158,7 @@ export function createApp(options: AppOptions = {}) {
 
   mountOperations(app, { pool, actor: actorFor, mutate });
   mountBookingRecovery(app, { pool, actor: actorFor });
-  mountDemoMarketplace(app, pool, actorFor);
+  mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
   const sendRecovery = options.sendRecovery ?? configuredRecoveryMailer();
   mountAccountRoutes(app, {
