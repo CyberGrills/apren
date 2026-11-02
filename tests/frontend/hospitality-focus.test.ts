@@ -311,7 +311,7 @@ test('migration ledger RLS remains restricted to the two existing server roles',
 
 test('Explore surfaces approved directory profiles and source-backed dining and experience listings without enabling bookings', () => {
   assert.match(explore, /\/directory\?kind=/);
-  assert.match(explore, /profile\.hasPublishedOffering/);
+  assert.match(explore, /offering\.businessId === profile\.id/);
   assert.match(explore, /if \(kind === 'STAY'\) return \[\]/);
   assert.match(explore, /listing\.kind !== kind/);
   assert.match(explore, /BusinessDirectoryCard key=\{profile\.id\}/);
