@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import type { Express, Response } from 'express';
 import type { Pool } from 'pg';
@@ -58,7 +58,6 @@ test('demo marketplace API routes remain mounted in local development', () => {
   assert.equal(registrations.length, 5);
   assert.ok(registrations.some((route) => route.path === '/api/demo/catalog'));
 });
-
 
 test('production homepage does not advertise the fictional demo catalogue', async () => {
   const landingPage = await readFile(
