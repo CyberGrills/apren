@@ -51,6 +51,13 @@ async function transaction<T>(pool: Pool, work: (client: PoolClient) => Promise<
   catch (error) { await client.query('ROLLBACK'); throw error; }
   finally { client.release(); }
 }
+function validImageSignature(type: string, bytes: Uint8Array): boolean {
+  if (type === 'image/jpeg') return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (type === 'image/png') return bytes.slice(0, 8).join(',') === '137,80,78,71,13,10,26,10';
+  if (type === 'image/webp') return String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
+  if (type === 'image/avif') return String.fromCharCode(...bytes.slice(4, 8)) === 'ftyp' && /avif|avis/.test(String.fromCharCode(...bytes.slice(8, 16)));
+  return false;
+}
 function objectPath(businessId: string, mediaId: string, filename: string) {
   const ext = filename.toLowerCase().split('.').pop() || 'img';
   return businessId + '/' + mediaId + '.' + (/^[a-z0-9]{2,5}$/.test(ext) ? ext : 'img');
@@ -87,6 +94,8 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
       altText: z.string().trim().min(3).max(300),
       replacesMediaId: z.uuid().optional(),
     }).parse(req.body);
+    const active = await one(pool, "SELECT count(*)::int AS total FROM seven.business_media WHERE business_id=$1 AND status IN ('PENDING_UPLOAD','PENDING_REVIEW')", [businessId]);
+    if (Number(active?.total ?? 0) >= 20) return fail(429, 'UPLOAD_LIMIT_REACHED', 'Finish or remove pending photo uploads before adding more.');
     const mediaId = randomUUID(); const path = objectPath(businessId, mediaId, input.filename);
     if (input.replacesMediaId) {
       const old = await one(pool, "SELECT media_id FROM seven.business_media WHERE media_id=$1 AND business_id=$2 AND status='APPROVED'", [input.replacesMediaId,businessId]);
@@ -117,6 +126,15 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
     if (actualSize !== Number(media.byte_size) || actualSize > MAX_BYTES || actualType !== media.mime_type) {
       await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
       return fail(422, 'IMAGE_METADATA_MISMATCH', 'Uploaded image metadata did not match the declared file.');
+    }
+    const sample = await fetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
+      headers: { apikey: config.secret, Authorization: 'Bearer ' + config.secret, Range: 'bytes=0-31' },
+    });
+    if (!sample.ok) return fail(422, 'INVALID_IMAGE_CONTENT', 'The uploaded file could not be inspected.');
+    const signature = new Uint8Array(await sample.arrayBuffer());
+    if (!validImageSignature(actualType, signature)) {
+      await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
+      return fail(422, 'INVALID_IMAGE_CONTENT', 'The uploaded file content does not match an accepted image format.');
     }
     await pool.query("UPDATE seven.business_media SET status='PENDING_REVIEW',updated_at=now() WHERE media_id=$1 AND business_id=$2 AND status='PENDING_UPLOAD'", [req.params.id,businessId]);
     await pool.query('INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details) VALUES($1,$2,$3,$4,$5,$6)', [randomUUID(),owner.id,businessId,'business_media.submitted',req.params.id,{ mimeType: actualType, byteSize: actualSize }]);
