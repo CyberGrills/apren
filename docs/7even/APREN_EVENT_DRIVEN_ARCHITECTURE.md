@@ -45,7 +45,7 @@ Outcome ledger + reconciliation + incremental-revenue measurement
 
 The persisted booking-recovery API accepts `PAYMENT_FAILED`, so the deterministic revenue decision contract must accept the same event. Payment failures now produce `REVIEW_PAYMENT_ISSUE` with human approval required and guest contact disabled. The decision is deliberately independent of inventory freshness: a payment failure must first be reconciled against provider and booking state, not treated as a demand signal or discount opportunity.
 
-This is a policy-contract alignment only. It does not yet connect persisted recovery rows to a live decision worker, retry a payment, mutate a booking, issue a refund, or contact a guest. That integration requires a separately reviewed, idempotent consumer and provider-state reconciliation tests.
+The scheduled recovery worker now consumes persisted funnel rows into an append-only shadow-decision audit. The consumer is idempotent, uses row-level locking, and cannot execute a payment, booking mutation, refund, inventory/rate write or guest message. It fails closed when authoritative inventory provenance is missing; the full boundary and rollout requirements are documented below.
 
 ## Implementation order
 
