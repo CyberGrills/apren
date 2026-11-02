@@ -14,7 +14,7 @@
 
 Shared semantic tokens in `apps/web/src/styles/global.css` point to these values. Sand is used for decorative separation; form boundaries use taupe to retain sufficient contrast. Operational actions remain Forest Green throughout the year. Success, warning and error colors keep their established meanings. The logo artwork and typography remain unchanged.
 
-## Proposed seasonal accents and schedule
+## Seasonal accent preference and schedule
 
 These four colors are the proposed campaign tokens supplied for this feature. They are not described as previously official 7even brand colors.
 
@@ -25,9 +25,9 @@ These four colors are the proposed campaign tokens supplied for this feature. Th
 | Autumn edit | 1 September through 30 November | Copper `#B77943` | Restaurant, Jason Leung / Unsplash |
 | Winter edit | 1 December through the last day of February | Slate blue `#466C78` | Hotel room, Vojtech Bruzek / Unsplash |
 
-The names identify editorial calendar campaigns. They do not describe Nigeria's climate or promise particular weather. Each campaign begins at midnight in Lagos. New Year stays in the Winter edit; leap-year February ends correctly. The visitor's selected device timezone does not change the launch-market calendar.
+The names identify editorial calendar campaigns. They do not describe Nigeria's climate or promise particular weather. Each campaign begins at midnight in Lagos. New Year stays in the Winter edit; leap-year February ends correctly. The visitor's selected device timezone does not change the launch-market calendar. The preference menu offers Automatic, Spring, Summer, Autumn and Winter; Automatic is the default and manual choices persist across sessions.
 
-Only `--season-accent` changes in the four `:root[data-season="…"]` rules. Its decorative dot and subtle campaign tint accompany a small edit label. The landing page reads the same selected season to change the support paragraph, hero image, descriptive alt text, caption and photographer credit. Main headline, search, operational controls, inventory, prices and points rules keep their existing behavior. Photographs are the four existing licensed editorial assets, each explicitly captioned as illustrative stock. [Photography register](../../apps/web/public/media/SOURCES.txt) records their provenance; they are not evidence of bookable partner inventory.
+The only permanent theme is the existing 7EVEN brand theme. The preference control is labelled **Season**, because it changes the seasonal campaign accent rather than switching the application to a different theme. If no season has been resolved yet, `--season-accent` safely falls back to the 7EVEN primary brand colour. Once a season is selected, only `--season-accent` changes in the four `:root[data-season="…"]` rules. Its decorative dot and subtle campaign tint accompany a small edit label. The landing page reads the same selected season to change the support paragraph, hero image, descriptive alt text, caption and photographer credit. Main headline, search, operational controls, inventory, prices and points rules keep their existing behavior. Photographs are the four existing licensed editorial assets, each explicitly captioned as illustrative stock. [Photography register](../../apps/web/public/media/SOURCES.txt) records their provenance; they are not evidence of bookable partner inventory.
 
 ## How automatic changes work
 
