@@ -12,60 +12,46 @@ const mediaApi = source('../../apps/web/src/lib/businessMediaApi.ts');
 const contract = source('../../docs/frontend/business-photo-gallery-api-contract.md');
 
 testCase('owner gallery supports multi-file upload, previews, progress, captions and alt text', () => {
-  assert.match(ownerGallery, /multiple onChange/);
-  assert.match(ownerGallery, /upload\\.onprogress/);
-  assert.match(ownerGallery, /URL\\.createObjectURL/);
-  assert.match(ownerGallery, /aria-valuenow/);
-  assert.match(ownerGallery, /drag and drop/);
-  assert.match(ownerGallery, /caption/);
-  assert.match(ownerGallery, /altText/);
-  assert.match(ownerGallery, /10 \\* 1024 \\* 1024/);
+  for (const feature of ['multiple onChange', 'upload.onprogress', 'URL.createObjectURL', 'aria-valuenow', 'drag and drop', 'caption', 'altText', '10 * 1024 * 1024']) {
+    assert.ok(ownerGallery.includes(feature), 'Missing owner gallery feature: ' + feature);
+  }
 });
 
 testCase('owner gallery exposes cover, ordering, replacement and removal controls', () => {
-  assert.match(ownerGallery, /replacesMediaId/);
-  assert.match(ownerGallery, /Set cover/);
-  assert.match(ownerGallery, /businessMediaApi\\.reorder/);
-  assert.match(ownerGallery, /businessMediaApi\\.remove/);
-  assert.match(ownerGallery, /businessMediaApi\\.setCover/);
+  for (const feature of ['replacesMediaId', 'Set cover', 'businessMediaApi.reorder', 'businessMediaApi.remove', 'businessMediaApi.setCover']) {
+    assert.ok(ownerGallery.includes(feature), 'Missing gallery control: ' + feature);
+  }
 });
 
 testCase('owner gallery communicates approved, pending and rejected photo states', () => {
-  assert.match(ownerGallery, /PENDING_REVIEW/);
-  assert.match(ownerGallery, /REJECTED/);
-  assert.match(ownerGallery, /Approved and guest-facing/);
-  assert.match(ownerGallery, /Needs your attention/);
+  for (const feature of ['PENDING_REVIEW', 'REJECTED', 'Approved and guest-facing', 'Needs your attention']) {
+    assert.ok(ownerGallery.includes(feature), 'Missing gallery state: ' + feature);
+  }
 });
 
 testCase('admin moderation supports search, replacement filter and approve/reject actions', () => {
-  assert.match(adminGallery, /setSearch/);
-  assert.match(adminGallery, /REPLACEMENTS/);
-  assert.match(adminGallery, /businessMediaApi\\.review/);
-  assert.match(adminGallery, /'APPROVED'/);
-  assert.match(adminGallery, /'REJECTED'/);
-  assert.match(adminGallery, /Add a clear reason before rejecting/);
+  for (const feature of ['setSearch', 'REPLACEMENTS', 'businessMediaApi.review', 'APPROVED', 'REJECTED', 'Add a clear reason before rejecting']) {
+    assert.ok(adminGallery.includes(feature), 'Missing moderation feature: ' + feature);
+  }
 });
 
 testCase('gallery routes and navigation are registered in the frontend', () => {
   assert.ok(app.includes('path="media" element={<AdminBusinessMedia />}'));
-  assert.match(app, /'photos'/);
-  assert.ok(navigation.includes("/business/photos"));
-  assert.ok(navigation.includes("/admin/media"));
+  assert.ok(app.includes("'photos'"));
+  assert.ok(navigation.includes('/business/photos'));
+  assert.ok(navigation.includes('/admin/media'));
 });
 
 testCase('public business cards can render the approved photo gallery', () => {
-  assert.match(businessCard, /profile\\.photos\\?\\.length/);
-  assert.match(businessCard, /seven-business-photo-thumbnails/);
-  assert.match(businessCard, /altText/);
+  assert.ok(businessCard.includes('profile.photos?.length'));
+  assert.ok(businessCard.includes('seven-business-photo-thumbnails'));
+  assert.ok(businessCard.includes('altText'));
 });
 
 testCase('typed frontend adapter and backend handoff contract define the same integration surface', () => {
-  for (const route of [
-    '/business/media',
-    '/business/media/upload-intents',
-    '/business/media/order',
-    '/admin/business-media',
-  ]) assert.ok(mediaApi.includes(route), 'Missing frontend route: ' + route);
+  for (const route of ['/business/media', '/business/media/upload-intents', '/business/media/order', '/admin/business-media']) {
+    assert.ok(mediaApi.includes(route), 'Missing frontend route: ' + route);
+  }
   for (const operation of ['createUploadIntent', 'completeUpload', 'updateDetails', 'setCover', 'reorder', 'remove', 'review']) {
     assert.ok(mediaApi.includes(operation), 'Missing frontend operation: ' + operation);
   }
