@@ -152,7 +152,7 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
           <Brand />
         </Link>
         <div className="apren-signature" aria-label="Powered by āprən">
-          <img src="/media/apren-mark.webp" alt="āprən" width="58" height="51" />
+          <strong className="apren-wordmark">āprən</strong>
           <span>Powered by āprən</span>
         </div>
         <p className="workspace-label">
