@@ -47,10 +47,10 @@ testCase('admin moderation supports search, replacement filter and approve/rejec
 });
 
 testCase('gallery routes and navigation are registered in the frontend', () => {
-  assert.match(app, /path="media" element={<AdminBusinessMedia \\/>}/);
+  assert.ok(app.includes('path="media" element={<AdminBusinessMedia />}'));
   assert.match(app, /'photos'/);
-  assert.match(navigation, /\\/business\\/photos/);
-  assert.match(navigation, /\\/admin\\/media/);
+  assert.ok(navigation.includes("/business/photos"));
+  assert.ok(navigation.includes("/admin/media"));
 });
 
 testCase('public business cards can render the approved photo gallery', () => {
