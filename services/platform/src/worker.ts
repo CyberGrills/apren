@@ -206,8 +206,16 @@ export async function processOutbox(pool: Pool): Promise<number> {
  * This function has no commercial side effects.
  */
 export async function processBookingRecoveryShadow(pool: Pool): Promise<number> {
-  const supportedEvents = ['SEARCH','ROOM_VIEW','BOOKING_START','CHECKOUT_VIEW','ABANDON','PAYMENT_FAILED','BOOKING_CONFIRMED'] as const;
+  const supportedEvents = [
+    'SEARCH', 'ROOM_VIEW', 'BOOKING_START', 'CHECKOUT_VIEW',
+    'ABANDON', 'PAYMENT_FAILED', 'BOOKING_CONFIRMED',
+  ] as const;
   return transaction(pool, async (db) => {
+    const schema = await one<{ ready: boolean }>(
+      db,
+      "SELECT to_regclass('seven.booking_recovery_shadow_decisions') IS NOT NULL AS ready",
+    );
+    if (!schema?.ready) return 0;
     const events = await rows(
       db,
       `SELECT e.recovery_event_id,e.event_id,e.event_code
@@ -220,7 +228,7 @@ export async function processBookingRecoveryShadow(pool: Pool): Promise<number> 
        ORDER BY e.received_at,e.recovery_event_id
        FOR UPDATE OF e SKIP LOCKED
        LIMIT 50`,
-      [supportedEvents],
+      [[...supportedEvents]],
     );
     for (const event of events) {
       const decision = buildRecoveryShadowDecision(event.event_code, new Date().toISOString());
@@ -230,7 +238,14 @@ export async function processBookingRecoveryShadow(pool: Pool): Promise<number> 
            may_contact_guest,policy_version,decision_payload
          ) VALUES($1,$2,$3,$4,false,$5,$6::jsonb)
          ON CONFLICT(recovery_event_id) DO NOTHING`,
-        [event.recovery_event_id,event.event_id,decision.action,decision.requiresHumanApproval,decision.policyVersion,JSON.stringify(decision)],
+        [
+          event.recovery_event_id,
+          event.event_id,
+          decision.action,
+          decision.requiresHumanApproval,
+          decision.policyVersion,
+          JSON.stringify(decision),
+        ],
       );
     }
     return events.length;
