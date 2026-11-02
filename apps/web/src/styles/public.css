@@ -2385,6 +2385,26 @@
   object-fit: cover;
   transition: transform 220ms ease;
 }
+.seven-business-directory-photo-placeholder {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--surface-subtle), var(--surface));
+}
+.seven-business-directory-warning {
+  margin: 0.65rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid var(--line-strong);
+  color: var(--ink);
+  background: var(--surface-subtle);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
 .seven-directory-image-link:hover img {
   transform: scale(1.025);
 }

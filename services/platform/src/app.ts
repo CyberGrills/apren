@@ -529,7 +529,28 @@ export function createApp(options: AppOptions = {}) {
       AND ($1='ALL' OR kind=$1)
       AND ($2='' OR state_name=$2)
       AND ($3='' OR lower(concat_ws(' ',display_name,state_name,city,area,address_text)) LIKE '%' || lower($3) || '%')`;
-    const [states, totalRow, listings] = await Promise.all([
+    const businessCte = `WITH approved_businesses AS (
+      SELECT b.business_id, b.slug, b.business_name, b.city, b.details,
+             venue.venue_name, venue.address_line
+      FROM seven.businesses b
+      JOIN seven.workflow_states ws USING (workflow_state_id)
+      LEFT JOIN LATERAL (
+        SELECT v.venue_name, v.address_line
+        FROM seven.venues v
+        WHERE v.business_id = b.business_id AND v.is_active = true
+        ORDER BY v.created_at DESC, v.venue_id
+        LIMIT 1
+      ) venue ON true
+      WHERE ws.workflow_state_code = 'APPROVED'
+        AND b.details->>'isSample' IS DISTINCT FROM 'true'
+        AND upper(COALESCE(b.details->>'sector', '')) IN ('STAY', 'DINING', 'EXPERIENCE')
+        AND venue.venue_name IS NOT NULL
+    )`;
+    const businessWhere = `upper(details->>'sector') IN ('STAY', 'DINING', 'EXPERIENCE')
+      AND ($1='ALL' OR upper(details->>'sector')=$1)
+      AND ($2='' OR details->>'state'=$2)
+      AND ($3='' OR lower(concat_ws(' ',business_name,city,details->>'state',venue_name,address_line)) LIKE '%' || lower($3) || '%')`;
+    const [states, totalRow, listings, businessTotalRow, businesses] = await Promise.all([
       rows<{ stateName: string; capital: string; region: string; hotelDirectoryUrl: string }>(
         pool,
         `SELECT state_name AS "stateName", capital, region,
@@ -554,8 +575,49 @@ export function createApp(options: AppOptions = {}) {
          LIMIT $4 OFFSET $5`,
         [kind, state, searchText, pageSize, (page - 1) * pageSize],
       ),
+      one<{ total: number }>(
+        pool,
+        `${businessCte}
+         SELECT count(*)::int AS total
+         FROM approved_businesses
+         WHERE ${businessWhere}`,
+        [kind, state, searchText],
+      ),
+      rows(
+        pool,
+        `${businessCte}
+         SELECT business_id::text AS id, slug, business_name AS name,
+                upper(details->>'sector') AS kind,
+                NULLIF(details->>'state', '') AS state,
+                city, venue_name AS "venueName",
+                NULLIF(address_line, '') AS address,
+                NULL::text AS description,
+                NULL::text AS "imageUrl",
+                CASE WHEN upper(details->>'sector')='STAY'
+                  THEN 'REVIEW_REQUIRED' ELSE 'NOT_APPLICABLE' END AS "verificationStatus",
+                'APPROVED'::text AS "businessStatus",
+                'DIRECTORY_ONLY'::text AS "listingStatus",
+                false AS bookable,
+                EXISTS (
+                  SELECT 1 FROM seven.offerings o
+                  WHERE o.business_id=approved_businesses.business_id AND o.is_published=true
+                ) AS "hasPublishedOffering"
+         FROM approved_businesses
+         WHERE ${businessWhere}
+         ORDER BY details->>'state' COLLATE "C", city COLLATE "C", business_name COLLATE "C"
+         LIMIT $4 OFFSET $5`,
+        [kind, state, searchText, pageSize, (page - 1) * pageSize],
+      ),
     ]);
-    return { states, listings, total: totalRow?.total ?? 0, page, pageSize };
+    return {
+      states,
+      listings,
+      businesses,
+      businessesTotal: businessTotalRow?.total ?? 0,
+      total: totalRow?.total ?? 0,
+      page,
+      pageSize,
+    };
   });
   route('get', '/locations', async (req) => {
     const query = z.string().trim().max(160).parse(req.query.q ?? '');

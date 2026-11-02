@@ -80,8 +80,27 @@ test('hamburger navigation closes predictably and stays within the mobile viewpo
   assert.match(publicStyles, /max-height: min\(70vh, 32rem\)/);
 });
 
+test('public directory renders canonical business profiles separately from booking inventory', () => {
+  assert.match(app, /path="\/directory" element={<DirectoryPage \/>}/);
+  assert.doesNotMatch(landing, /Browse demo properties|demo-catalog-entry|\/demo\/hotels/);
+  assert.match(landing, /to=\{kind === 'ALL' \? '\/directory' : `\/directory\?kind=\$\{kind\}`\}/);
+  const directoryPage = source('../../apps/web/src/pages/public/DirectoryPage.tsx');
+  const businessCard = source('../../apps/web/src/pages/public/BusinessDirectoryCard.tsx');
+  const platform = source('../../services/platform/src/app.ts');
+  const routeStart = platform.indexOf("route('get', '/directory'");
+  const routeEnd = platform.indexOf("route('get', '/locations'", routeStart);
+  const directoryRoute = platform.slice(routeStart, routeEnd);
+  assert.match(directoryRoute, /ws\.workflow_state_code = 'APPROVED'/);
+  assert.match(directoryRoute, /b\.details->>'isSample' IS DISTINCT FROM 'true'/);
+  assert.match(directoryRoute, /businessesTotal/);
+  assert.match(directoryRoute, /false AS bookable/);
+  assert.match(directoryRoute, /REVIEW_REQUIRED/);
+  assert.match(directoryPage, /listing\.kind !== 'STAY'/);
+  assert.match(businessCard, /No published offering is attached to this business yet\. Booking is disabled\./);
+  assert.match(businessCard, /Property evidence requires review/);
+});
+
 test('external directory and legacy rewards routes do not act as booking destinations', () => {
-  assert.match(app, /path="\/directory" element={<Navigate to="\/explore\?kind=STAY" replace \/>}/);
   assert.match(app, /path="\/app\/points" element={<Navigate to="\/app\/bookings" replace \/>}/);
   assert.match(app, /path="\/app\/benefits" element={<Navigate to="\/app\/bookings" replace \/>}/);
   assert.match(app, /path="\/app\/exchange" element={<Navigate to="\/app\/bookings" replace \/>}/);
@@ -278,4 +297,12 @@ test('failed Google Maps script is cleaned up so a later mount can retry', () =>
   assert.match(mapScene, /timeoutId = window\.setTimeout\([\s\S]*?Google Maps took too long to load/);
   assert.match(mapScene, /script\.removeEventListener\('load', finish\)/);
   assert.match(mapScene, /script\.removeEventListener\('error', handleError\)/);
+});
+
+test('migration ledger RLS remains restricted to the two existing server roles', () => {
+  const migration = source('../../database/migrations/030_enable_rls_for_migrations_table.sql');
+  assert.match(migration, /ALTER TABLE seven\.migrations ENABLE ROW LEVEL SECURITY/);
+  assert.match(migration, /FOR ALL TO seven_app/);
+  assert.match(migration, /FOR SELECT TO seven_readonly/);
+  assert.doesNotMatch(migration, /TO anon|TO authenticated/);
 });

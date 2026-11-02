@@ -1,5 +1,5 @@
 import type { NigeriaLocation, Offering, Sector } from '@7even/contracts';
-import { ArrowRight, BedDouble, Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
+import { BedDouble, Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../../components/DatePicker.tsx';
@@ -186,18 +186,6 @@ export function LandingPage() {
           </form>
         </section>
 
-        {!import.meta.env.PROD && (
-          <section className="public-container demo-catalog-entry">
-            <div>
-              <span className="public-eyebrow">Product demonstration</span>
-              <p>Explore 100 fictional hotels and apartments across Nigeria. Demo content only; no live availability or booking.</p>
-            </div>
-            <Link className="btn btn-secondary" to="/demo/hotels">
-              Browse demo properties <ArrowRight size={16} />
-            </Link>
-          </section>
-        )}
-
         <section
           className="public-container seven-marketplace-results"
           aria-labelledby="seven-results-title"
@@ -209,7 +197,7 @@ export function LandingPage() {
               <p className="seven-results-description">{heading.description}</p>
             </div>
             <Link
-              to={kind === 'ALL' ? '/explore' : `/explore?kind=${kind}`}
+              to={kind === 'ALL' ? '/directory' : `/directory?kind=${kind}`}
               className="seven-all-results"
             >
               View all <span aria-hidden="true">→</span>
