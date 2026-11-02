@@ -7,6 +7,7 @@ import { applyReceipt, reconcile } from './payments.ts';
 import { expireHolds } from './reservations.ts';
 import { expireTrades } from './benefits.ts';
 import { observation, notify, paymentProjection } from './store.ts';
+import { buildRecoveryShadowDecision } from './recoveryShadow.ts';
 
 /** Reconstruct only observed local outcomes. Never relaunch an uncertain external effect. */
 export async function recoverClaims(pool: Pool): Promise<number> {
@@ -199,6 +200,43 @@ export async function processOutbox(pool: Pool): Promise<number> {
   });
 }
 
+/**
+ * Consume persisted booking-funnel telemetry into an append-only decision audit.
+ * Row locking and inserts share one transaction, preventing duplicate evaluation.
+ * This function has no commercial side effects.
+ */
+export async function processBookingRecoveryShadow(pool: Pool): Promise<number> {
+  const supportedEvents = ['SEARCH','ROOM_VIEW','BOOKING_START','CHECKOUT_VIEW','ABANDON','PAYMENT_FAILED','BOOKING_CONFIRMED'] as const;
+  return transaction(pool, async (db) => {
+    const events = await rows(
+      db,
+      `SELECT e.recovery_event_id,e.event_id,e.event_code
+       FROM seven.booking_recovery_events e
+       WHERE e.event_code = ANY($1::varchar[])
+         AND NOT EXISTS (
+           SELECT 1 FROM seven.booking_recovery_shadow_decisions d
+           WHERE d.recovery_event_id=e.recovery_event_id
+         )
+       ORDER BY e.received_at,e.recovery_event_id
+       FOR UPDATE OF e SKIP LOCKED
+       LIMIT 50`,
+      [supportedEvents],
+    );
+    for (const event of events) {
+      const decision = buildRecoveryShadowDecision(event.event_code, new Date().toISOString());
+      await db.query(
+        `INSERT INTO seven.booking_recovery_shadow_decisions(
+           recovery_event_id,event_id,action_code,requires_human_approval,
+           may_contact_guest,policy_version,decision_payload
+         ) VALUES($1,$2,$3,$4,false,$5,$6::jsonb)
+         ON CONFLICT(recovery_event_id) DO NOTHING`,
+        [event.recovery_event_id,event.event_id,decision.action,decision.requiresHumanApproval,decision.policyVersion,JSON.stringify(decision)],
+      );
+    }
+    return events.length;
+  });
+}
+
 export async function runRecovery(pool: Pool, provider: ProviderSource): Promise<void> {
   await recoverClaims(pool);
   await transaction(pool, async (db) => {
@@ -208,4 +246,5 @@ export async function runRecovery(pool: Pool, provider: ProviderSource): Promise
   await processInbox(pool, provider);
   await reconcile(pool, provider);
   await processOutbox(pool);
+  await processBookingRecoveryShadow(pool);
 }
