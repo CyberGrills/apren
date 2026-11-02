@@ -3,31 +3,12 @@ import { ArrowDown, ArrowUp, ImagePlus, LoaderCircle, RefreshCw, Star, Trash2, U
 import { useFeedback } from '../../components/Feedback.tsx';
 import { ErrorNotice, Loading } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
-import { api } from '../../lib/api.ts';
+import { businessMediaApi, businessMediaRoutes, type BusinessMediaItem, type BusinessMediaStatus, type BusinessMediaUploadIntent } from '../../lib/businessMediaApi.ts';
 
-type MediaStatus = 'PENDING_UPLOAD' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'REMOVED';
-interface BusinessMedia {
-  mediaId: string;
-  originalFilename: string;
-  mimeType: string;
-  byteSize: number;
-  caption: string;
-  altText: string;
-  status: MediaStatus;
-  rejectionReason: string | null;
-  sortOrder: number;
-  isCover: boolean;
-  imageUrl: string | null;
-  createdAt: string;
-}
+type MediaStatus = BusinessMediaStatus;
+type BusinessMedia = BusinessMediaItem;
 interface MediaResponse { items: BusinessMedia[]; }
-interface UploadIntent {
-  mediaId: string;
-  uploadUrl: string;
-  token: string;
-  expiresIn: number;
-  requiredHeaders: Record<string, string>;
-}
+type UploadIntent = BusinessMediaUploadIntent;
 interface QueuedPhoto { id: string; file: File; preview: string; caption: string; altText: string; progress: number; replacesMediaId?: string; }
 const accepted = 'image/jpeg,image/png,image/webp,image/avif';
 const maxBytes = 10 * 1024 * 1024;
@@ -63,7 +44,7 @@ function uploadBinary(intent: UploadIntent, file: File, onProgress: (value: numb
 }
 
 export function BusinessPhotoGallery() {
-  const { data, loading, error, reload } = useApi<MediaResponse>('/business/media');
+  const { data, loading, error, reload } = useApi<MediaResponse>(businessMediaRoutes.ownerList);
   const [queued, setQueued] = useState<QueuedPhoto[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
@@ -107,12 +88,9 @@ export function BusinessPhotoGallery() {
     for (const photo of queued) {
       setBusy(photo.id);
       try {
-        const intent = await api<UploadIntent>('/business/media/upload-intents', {
-          method: 'POST',
-          body: { filename: photo.file.name, mimeType: photo.file.type, byteSize: photo.file.size, caption: photo.caption, altText: photo.altText, ...(photo.replacesMediaId ? { replacesMediaId: photo.replacesMediaId } : {}) },
-        });
+        const intent = await businessMediaApi.createUploadIntent({ filename: photo.file.name, mimeType: photo.file.type, byteSize: photo.file.size, caption: photo.caption, altText: photo.altText, ...(photo.replacesMediaId ? { replacesMediaId: photo.replacesMediaId } : {}) });
         await uploadBinary(intent, photo.file, (progress) => updateQueued(photo.id, { progress }));
-        await api<{ mediaId: string; status: MediaStatus }>('/business/media/' + intent.mediaId + '/complete', { method: 'POST', body: {} });
+        await businessMediaApi.completeUpload(intent.mediaId);
         removeQueued(photo.id);
       } catch (cause) {
         setActionError(cause instanceof Error ? cause.message : 'Could not upload this photo.');
@@ -125,11 +103,11 @@ export function BusinessPhotoGallery() {
     reload();
     if (allUploaded) showSuccess('Your photos have been submitted for review.');
   }
-  async function mutate(path: string, method: 'PATCH' | 'DELETE', body?: unknown) {
+  async function mutate(action: () => Promise<unknown>) {
     setBusy(path);
     setActionError('');
     try {
-      await api(path, { method, body });
+      await action();
       reload();
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'That gallery change could not be saved.');
@@ -139,10 +117,10 @@ export function BusinessPhotoGallery() {
   }
   async function updateDetails(item: BusinessMedia, form: HTMLFormElement) {
     const values = new FormData(form);
-    await mutate('/business/media/' + item.mediaId, 'PATCH', {
+    await mutate(() => businessMediaApi.updateDetails(item.mediaId, {
       caption: String(values.get('caption') ?? ''),
       altText: String(values.get('altText') ?? ''),
-    });
+    }));
   }
   async function reorder(item: BusinessMedia, direction: -1 | 1) {
     const ordered = [...approved].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -154,7 +132,7 @@ export function BusinessPhotoGallery() {
     if (!current || !next) return;
     ordered[index] = next;
     ordered[target] = current;
-    await mutate('/business/media/order', 'PATCH', { mediaIds: ordered.map((photo) => photo.mediaId) });
+    await mutate(() => businessMediaApi.reorder(ordered.map((photo) => photo.mediaId)));
   }
 
   return (
@@ -200,11 +178,11 @@ export function BusinessPhotoGallery() {
                 <button type="submit" className="text-button" disabled={!!busy}>Save details</button>
               </form>
               <div className="business-photo-card-actions">
-                {!item.isCover && <button type="button" className="text-button" onClick={() => void mutate('/business/media/' + item.mediaId + '/cover', 'PATCH', {})} disabled={!!busy}><Star size={14} /> Set cover</button>}
+                {!item.isCover && <button type="button" className="text-button" onClick={() => void mutate(() => businessMediaApi.setCover(item.mediaId))} disabled={!!busy}><Star size={14} /> Set cover</button>}
                 <label className="text-button business-photo-replace">Replace<input type="file" accept={accepted} onChange={(event) => { chooseFiles(event.currentTarget.files, item.mediaId); event.currentTarget.value = ''; }} /></label>
                 <button type="button" className="icon-button" aria-label="Move photo earlier" disabled={!!busy || index === 0} onClick={() => void reorder(item, -1)}><ArrowUp size={16} /></button>
                 <button type="button" className="icon-button" aria-label="Move photo later" disabled={!!busy || index === approved.length - 1} onClick={() => void reorder(item, 1)}><ArrowDown size={16} /></button>
-                <button type="button" className="text-button" onClick={() => { if (window.confirm('Remove this photo from your listing?')) void mutate('/business/media/' + item.mediaId, 'DELETE'); }} disabled={!!busy}><Trash2 size={14} /> Remove</button>
+                <button type="button" className="text-button" onClick={() => { if (window.confirm('Remove this photo from your listing?')) void mutate(() => businessMediaApi.remove(item.mediaId)); }} disabled={!!busy}><Trash2 size={14} /> Remove</button>
               </div>
             </div>
           </article>)}
