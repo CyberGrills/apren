@@ -11,6 +11,7 @@ export interface BusinessDirectoryProfile {
   address: string | null;
   description: string | null;
   imageUrl: string | null;
+  photos?: { imageUrl: string; altText: string; caption: string; isCover: boolean }[];
   verificationStatus: 'REVIEW_REQUIRED' | 'NOT_APPLICABLE';
   businessStatus: 'APPROVED';
   listingStatus: 'DIRECTORY_ONLY';
@@ -27,7 +28,25 @@ const categoryLabel: Record<DirectoryKind, string> = {
 export function BusinessDirectoryCard({ profile }: { profile: BusinessDirectoryProfile }) {
   return (
     <article className="seven-directory-card seven-business-directory-card">
-      {profile.imageUrl ? (
+      {profile.photos?.length ? (
+        <div className="seven-business-photo-gallery" aria-label={`${profile.name} photo gallery`}>
+          <div className="seven-directory-image-link">
+            <img
+              src={profile.photos[0]?.imageUrl}
+              alt={profile.photos[0]?.altText || `${profile.name} in ${profile.city}, ${profile.state ?? 'Nigeria'}`}
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+            />
+            {profile.photos[0]?.caption && <span className="seven-business-photo-caption">{profile.photos[0].caption}</span>}
+          </div>
+          {profile.photos.length > 1 && <div className="seven-business-photo-thumbnails">
+            {profile.photos.slice(1, 5).map((photo, index) => (
+              <img key={photo.imageUrl} src={photo.imageUrl} alt={photo.altText} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+            ))}
+          </div>}
+        </div>
+      ) : profile.imageUrl ? (
         <div className="seven-directory-image-link">
           <img
             src={profile.imageUrl}
