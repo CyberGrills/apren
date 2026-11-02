@@ -34,7 +34,14 @@ CREATE POLICY seven_readonly_approved_media ON seven.business_media FOR SELECT T
 CREATE INDEX business_media_business_status_order_idx ON seven.business_media(business_id,status,sort_order,created_at);
 CREATE INDEX business_media_review_queue_idx ON seven.business_media(status,created_at) WHERE status = 'PENDING_REVIEW';
 CREATE UNIQUE INDEX business_media_one_approved_cover_per_business_idx ON seven.business_media(business_id) WHERE is_cover AND status = 'APPROVED';
-INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
-VALUES ('business-property-photos','business-property-photos',false,10485760,ARRAY['image/jpeg','image/png','image/webp','image/avif']::text[])
-ON CONFLICT (id) DO NOTHING;
+DO $business_media_storage$
+BEGIN
+  -- Supabase provides storage.buckets; plain PostgreSQL migration tests do not.
+  IF to_regclass('storage.buckets') IS NOT NULL THEN
+    INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
+    VALUES ('business-property-photos','business-property-photos',false,10485760,ARRAY['image/jpeg','image/png','image/webp','image/avif']::text[])
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
+END;
+$business_media_storage$;
 COMMENT ON TABLE seven.business_media IS 'Business-owned property photos; public listing projections may expose approved media only.';
