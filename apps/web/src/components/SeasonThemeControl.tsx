@@ -1,4 +1,4 @@
-import { useSetSeasonPreference, useSeasonPreference, type Season, type SeasonPreference } from '../context/SeasonContext.tsx';
+import { useSetSeasonPreference, useSeasonPreference, type SeasonPreference } from '../context/SeasonContext.tsx';
 
 const options: { value: SeasonPreference; label: string }[] = [
   { value: 'auto', label: 'Automatic' },
