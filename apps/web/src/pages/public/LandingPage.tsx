@@ -209,7 +209,7 @@ export function LandingPage() {
               <p className="seven-results-description">{heading.description}</p>
             </div>
             <Link
-              to={kind === 'ALL' ? '/explore' : `/explore?kind=${kind}`}
+              to={kind === 'ALL' ? '/directory' : `/directory?kind=${kind}`}
               className="seven-all-results"
             >
               View all <span aria-hidden="true">→</span>
