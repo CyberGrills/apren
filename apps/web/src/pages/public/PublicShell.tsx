@@ -152,7 +152,7 @@ export function PublicFooter() {
           <div className="public-footer-brand-lockup">
             <Link to="/" aria-label="7even home"><Brand /></Link>
             <div className="apren-signature" aria-label="Powered by āprən">
-              <img src="/media/apren-mark.webp" alt="āprən" width="58" height="51" />
+              <strong className="apren-wordmark">āprən</strong>
               <span>Powered by āprən</span>
             </div>
           </div>
