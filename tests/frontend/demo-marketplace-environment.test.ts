@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Express, Response } from 'express';
@@ -56,4 +57,17 @@ test('demo marketplace API routes remain mounted in local development', () => {
 
   assert.equal(registrations.length, 5);
   assert.ok(registrations.some((route) => route.path === '/api/demo/catalog'));
+});
+
+
+test('production homepage does not advertise the fictional demo catalogue', async () => {
+  const landingPage = await readFile(
+    new URL('../../apps/web/src/pages/public/LandingPage.tsx', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(
+    landingPage,
+    /\{!import\.meta\.env\.PROD\s*&&\s*\(\s*<section className="public-container demo-catalog-entry"/s,
+  );
 });
