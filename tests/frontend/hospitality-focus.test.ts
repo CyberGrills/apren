@@ -82,6 +82,7 @@ test('hamburger navigation closes predictably and stays within the mobile viewpo
 
 test('public directory renders canonical business profiles separately from booking inventory', () => {
   assert.match(app, /path="\/directory" element={<DirectoryPage \/>}/);
+  assert.doesNotMatch(landing, /Browse demo properties|demo-catalog-entry|\/demo\/hotels/);
   assert.match(landing, /to=\{kind === 'ALL' \? '\/directory' : `\/directory\?kind=\$\{kind\}`\}/);
   const directoryPage = source('../../apps/web/src/pages/public/DirectoryPage.tsx');
   const businessCard = source('../../apps/web/src/pages/public/BusinessDirectoryCard.tsx');
