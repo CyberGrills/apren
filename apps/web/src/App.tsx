@@ -264,7 +264,7 @@ export function App() {
                   <Route index element={<BusinessPage />} />
                   <Route path="venues" element={<VenuesPage />} />
                   {(
-                    ['reservations', 'offerings', 'demand', 'rewards', 'team', 'settings'] as const
+                    ['reservations', 'offerings', 'photos', 'demand', 'rewards', 'team', 'settings'] as const
                   ).map((tab) => (
                     <Route path={tab} element={<BusinessPage tab={tab} />} key={tab} />
                   ))}
