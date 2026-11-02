@@ -61,10 +61,12 @@ test('booking recovery shadow consumer is idempotent and non-executable', {
     assert.equal(payment?.requires_human_approval, true);
     assert.equal(payment?.may_contact_guest, false);
     assert.equal(payment?.execution_mode, 'SHADOW');
+    assert.equal(payment?.decision_payload.evidenceTrust, 'UNVERIFIED_CLIENT_TELEMETRY');
 
     const abandon = decisions.rows.find((row) => row.event_code === 'ABANDON');
     assert.equal(abandon?.action_code, 'REQUEST_PMS_REFRESH');
     assert.equal(abandon?.may_contact_guest, false);
+    assert.equal(abandon?.decision_payload.evidenceTrust, 'UNVERIFIED_CLIENT_TELEMETRY');
     assert.equal(abandon?.decision_payload.evidence.inventorySource, 'UNKNOWN');
   } finally {
     if (recoveryIds.length) {
