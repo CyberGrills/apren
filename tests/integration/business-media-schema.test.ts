@@ -16,7 +16,7 @@ describe('business media gallery contract', () => {
 
   it('keeps photos hidden until moderation approves them', () => {
     assert.match(migration, /status = 'APPROVED'/);
-    assert.match(migration, /seven_readonly_approved_media/);
+    assert.match(migration, /seven_readonly_select_access/);
     assert.match(routes, /status='PENDING_REVIEW'/);
     assert.match(routes, /admin\.role !== 'ADMIN'/);
     assert.match(routes, /decision: z\.enum\(\['APPROVED','REJECTED'\]\)/);
@@ -34,12 +34,12 @@ describe('business media gallery contract', () => {
     assert.match(routes, /INSERT INTO seven\.audit_events/);
     assert.match(routes, /business_media\.reordered/);
     assert.match(routes, /business_media\.cover_selected/);
-    assert.match(routes, /business_media\.approved/);
-    assert.match(routes, /business_media\.rejected/);
+    assert.match(routes, /'business_media\.' \+ input\.decision\.toLowerCase\(\)/);
+    assert.match(routes, /'business_media\.' \+ input\.decision\.toLowerCase\(\)/);
   });
 
   it('registers the feature in the existing platform service', () => {
-    assert.match(app, /import \{ mountBusinessMedia \} from '\.\/businessMedia\.ts'/);
+    assert.match(app, /import \{ businessMediaGallery, mountBusinessMedia \} from '\.\/businessMedia\.ts'/);
     assert.match(app, /mountBusinessMedia\(app, \{ pool, actor: actorFor \}\)/);
   });
 });
