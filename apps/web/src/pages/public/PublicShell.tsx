@@ -21,6 +21,8 @@ export function PublicHeader() {
   const { user } = useSession();
   const location = useLocation();
   const headerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileNavRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [language, setLanguage] = useState<SevenLanguage>(readSevenLanguage);
   useEffect(() => {
@@ -38,8 +40,12 @@ export function PublicHeader() {
   }, [open]);
   useEffect(() => {
     if (!open) return;
+    mobileNavRef.current?.querySelector<HTMLElement>('a, button, select')?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        menuButtonRef.current?.focus();
+      }
     };
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
@@ -106,6 +112,7 @@ export function PublicHeader() {
           )}
           <button
             type="button"
+            ref={menuButtonRef}
             className="public-menu-button"
             aria-label={open ? 'Close navigation' : 'Open navigation'}
             aria-expanded={open}
@@ -117,7 +124,7 @@ export function PublicHeader() {
         </div>
       </div>
       {open && (
-        <nav id="public-mobile-nav" className="public-mobile-nav" aria-label="Mobile navigation">
+        <nav id="public-mobile-nav" ref={mobileNavRef} className="public-mobile-nav" aria-label="Mobile navigation">
           <SeasonThemeControl />
           <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}
@@ -126,6 +133,9 @@ export function PublicHeader() {
             {language === 'pcm' ? 'Food' : 'Dining'}
           </Link>
           <Link to="/install" onClick={() => setOpen(false)}>Install app</Link>
+          <Link to={user ? '/app/bookings' : '/login'} onClick={() => setOpen(false)}>
+            {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
+          </Link>
           <Link to="/explore?kind=EXPERIENCE" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Things to do' : 'Things to do'}
           </Link>
