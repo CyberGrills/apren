@@ -103,6 +103,7 @@ export function BusinessPhotoGallery() {
         return;
       }
     }
+    let allUploaded = true;
     for (const photo of queued) {
       setBusy(photo.id);
       try {
@@ -115,6 +116,7 @@ export function BusinessPhotoGallery() {
         removeQueued(photo.id);
       } catch (cause) {
         setActionError(cause instanceof Error ? cause.message : 'Could not upload this photo.');
+        allUploaded = false;
         break;
       } finally {
         setBusy(null);
@@ -147,7 +149,11 @@ export function BusinessPhotoGallery() {
     const index = ordered.findIndex((photo) => photo.mediaId === item.mediaId);
     const target = index + direction;
     if (target < 0 || target >= ordered.length) return;
-    [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+    const current = ordered[index];
+    const next = ordered[target];
+    if (!current || !next) return;
+    ordered[index] = next;
+    ordered[target] = current;
     await mutate('/business/media/order', 'PATCH', { mediaIds: ordered.map((photo) => photo.mediaId) });
   }
 
