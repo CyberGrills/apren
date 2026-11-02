@@ -30,7 +30,7 @@ GRANT SELECT, INSERT, UPDATE ON seven.business_media TO seven_app;
 GRANT SELECT ON seven.business_media TO seven_readonly;
 ALTER TABLE seven.business_media ENABLE ROW LEVEL SECURITY;
 CREATE POLICY seven_app_server_access ON seven.business_media FOR ALL TO seven_app USING (true) WITH CHECK (true);
-CREATE POLICY seven_readonly_approved_media ON seven.business_media FOR SELECT TO seven_readonly USING (status = 'APPROVED');
+CREATE POLICY seven_readonly_select_access ON seven.business_media FOR SELECT TO seven_readonly USING (status = 'APPROVED');
 CREATE INDEX business_media_business_status_order_idx ON seven.business_media(business_id,status,sort_order,created_at);
 CREATE INDEX business_media_review_queue_idx ON seven.business_media(status,created_at) WHERE status = 'PENDING_REVIEW';
 CREATE UNIQUE INDEX business_media_one_approved_cover_per_business_idx ON seven.business_media(business_id) WHERE is_cover AND status = 'APPROVED';
