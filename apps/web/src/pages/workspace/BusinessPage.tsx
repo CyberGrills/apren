@@ -28,6 +28,7 @@ import { api } from '../../lib/api.ts';
 import { upcomingInventory } from '../../lib/businessWorkspace.ts';
 import { AdminRecords } from './AdminRecords.tsx';
 import { BusinessPayments } from './BusinessPayments.tsx';
+import { BusinessPhotoGallery } from './BusinessPhotoGallery.tsx';
 import { ListingUpdateReceipt } from './ListingUpdateReceipt.tsx';
 import { BusinessWorkspaceOverview } from './BusinessWorkspaceOverview.tsx';
 import { ListingBadge } from './ListingReadiness.tsx';
@@ -39,7 +40,7 @@ import {
   ReservationTable,
 } from './shared.tsx';
 
-type Tab = 'overview' | 'reservations' | 'offerings' | 'demand' | 'rewards' | 'team' | 'settings';
+type Tab = 'overview' | 'reservations' | 'offerings' | 'photos' | 'demand' | 'rewards' | 'team' | 'settings';
 type Editor =
   | { kind: 'offering'; offering?: Offering }
   | { kind: 'availability'; offering: Offering }
@@ -50,6 +51,7 @@ const titles: Record<Tab, string> = {
   overview: 'A good day starts here.',
   reservations: 'Reservations',
   offerings: 'Places & availability',
+  photos: 'Photos & gallery',
   demand: 'Demand',
   rewards: 'Rewards',
   team: 'Your team',
@@ -70,10 +72,12 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
           description={
             tab === 'demand'
               ? 'Measured activity from 7even, with the period and evidence beside every suggestion.'
-              : undefined
+              : tab === 'photos'
+                ? 'Manage original property photos and the gallery guests see after approval.'
+                : undefined
           }
           actions={
-            owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
+            tab === 'photos' ? undefined : owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
               <button
                 type="button"
                 className="btn btn-primary"
@@ -228,6 +232,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                 description="Add a room type, dining offer or experience, then publish its availability."
               />
             ))}
+          {tab === 'photos' && <BusinessPhotoGallery />}
           {tab === 'demand' && (
             <>
               {data.demand.length === 0 && (

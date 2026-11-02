@@ -71,15 +71,30 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
       [businessId]);
     const items = await Promise.all(media.map(async item => {
       let imageUrl: string | null = null;
-      if (item.status === 'APPROVED') {
+      if (item.status === 'APPROVED' || item.status === 'PENDING_REVIEW' || item.status === 'REJECTED') {
         const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(item.storage_path)), 'POST', { expiresIn: 900 });
         if (typeof signed.signedURL === 'string') {
           const base = storageConfig().baseUrl;
           imageUrl = signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL;
         }
       }
-      const { storage_path: _path, ...publicItem } = item;
-      return { ...publicItem, imageUrl };
+      return {
+        mediaId: item.media_id,
+        originalFilename: item.original_filename,
+        mimeType: item.mime_type,
+        byteSize: Number(item.byte_size),
+        caption: item.caption,
+        altText: item.alt_text,
+        status: item.status,
+        rejectionReason: item.rejection_reason,
+        sortOrder: item.sort_order,
+        isCover: item.is_cover,
+        replacedMediaId: item.replaced_media_id,
+        reviewedAt: item.reviewed_at,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+        imageUrl,
+      };
     }));
     res.json({ data: { items } });
   });
@@ -190,8 +205,15 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
   app.get('/api/admin/business-media', async (_req, res) => {
     const admin = actor(res);
     if (admin.role !== 'ADMIN') return fail(403, 'FORBIDDEN', 'Platform administration access is required.');
-    const items = await rows(pool, "SELECT m.media_id,m.business_id,b.business_name,m.original_filename,m.mime_type,m.byte_size,m.caption,m.alt_text,m.created_at,m.replaced_media_id FROM seven.business_media m JOIN seven.businesses b USING(business_id) WHERE m.status='PENDING_REVIEW' ORDER BY m.created_at LIMIT 100");
-    res.json({ data: { items } });
+    const items = await rows(pool, "SELECT m.media_id,m.business_id,b.business_name,m.original_filename,m.mime_type,m.byte_size,m.caption,m.alt_text,m.created_at,m.replaced_media_id,m.storage_path FROM seven.business_media m JOIN seven.businesses b USING(business_id) WHERE m.status='PENDING_REVIEW' ORDER BY m.created_at LIMIT 100");
+    const withPreviews = await Promise.all(items.map(async item => {
+      const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(item.storage_path)), 'POST', { expiresIn: 900 });
+      const base = storageConfig().baseUrl;
+      const imageUrl = typeof signed.signedURL === 'string' ? (signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL) : null;
+      const { storage_path: _path, ...metadata } = item;
+      return { mediaId: metadata.media_id, businessId: metadata.business_id, businessName: metadata.business_name, originalFilename: metadata.original_filename, mimeType: metadata.mime_type, byteSize: Number(metadata.byte_size), caption: metadata.caption, altText: metadata.alt_text, createdAt: metadata.created_at, replacedMediaId: metadata.replaced_media_id, imageUrl };
+    }));
+    res.json({ data: { items: withPreviews } });
   });
 
   app.patch('/api/admin/business-media/:id/review', async (req, res) => {
