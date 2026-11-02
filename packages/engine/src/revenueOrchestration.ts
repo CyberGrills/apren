@@ -4,6 +4,7 @@ export type RevenueAction =
   | 'PROMOTE_AVAILABLE_INVENTORY'
   | 'OFFER_LOWER_COST_ROOM'
   | 'ALERT_HUMAN_SALES'
+  | 'REVIEW_PAYMENT_ISSUE'
   | 'OFFER_ANCILLARY';
 
 export interface RevenueEconomics {
@@ -23,7 +24,7 @@ export interface RevenueDecisionInput {
   availableUnits: number;
   expectedDemandUnits: number;
   guestHasMarketingConsent: boolean;
-  event: 'SEARCH' | 'ROOM_VIEW' | 'BOOKING_START' | 'CHECKOUT_VIEW' | 'ABANDON' | 'BOOKING_CONFIRMED';
+  event: 'SEARCH' | 'ROOM_VIEW' | 'BOOKING_START' | 'CHECKOUT_VIEW' | 'ABANDON' | 'PAYMENT_FAILED' | 'BOOKING_CONFIRMED';
   totalPriceMinor?: number;
   initialRoomPriceMinor?: number;
   nights?: number;
@@ -48,7 +49,7 @@ export interface RevenueDecision {
 }
 
 function utcTime(value: string): number {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(value)) {
+  if (!/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$/.test(value)) {
     throw new RangeError('Revenue timestamps must be ISO UTC timestamps.');
   }
   const parsed = Date.parse(value);
@@ -95,7 +96,11 @@ export function decideRevenueAction(input: RevenueDecisionInput): RevenueDecisio
   let mayContactGuest = false;
   let reason = 'No measured signal justifies a change; keep the current offer.';
 
-  if (!fresh) {
+  if (input.event === 'PAYMENT_FAILED') {
+    action = 'REVIEW_PAYMENT_ISSUE';
+    requiresHumanApproval = true;
+    reason = 'Payment failed. Reconcile the payment-provider and booking states before any retry, charge, cancellation or guest contact.';
+  } else if (!fresh) {
     action = 'REQUEST_PMS_REFRESH';
     reason = 'Inventory is missing, stale or from an unknown source. Refresh the authoritative inventory before quoting or campaigning.';
   } else if (input.availableUnits === 0) {
