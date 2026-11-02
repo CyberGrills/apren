@@ -39,7 +39,7 @@ import { processInbox, processOutbox } from './worker.ts';
 import { findLocations, retainedLocationState } from './locations.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
-import { businessMediaImageUrl, mountBusinessMedia } from './businessMedia.ts';
+import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
 import { mountSocialAuth, socialAuthAvailability } from './socialAuth.ts';
 import type { SocialProvider, SocialProviderId } from './socialAuth.ts';
 import { mountPasskeyRoutes, passkeysEnabled } from './passkeys.ts';
@@ -610,10 +610,10 @@ export function createApp(options: AppOptions = {}) {
         [kind, state, searchText, pageSize, (page - 1) * pageSize],
       ),
     ]);
-    const businessesWithPhotos = await Promise.all(businesses.map(async (business) => ({
-      ...business,
-      imageUrl: await businessMediaImageUrl(pool, business.id),
-    })));
+    const businessesWithPhotos = await Promise.all(businesses.map(async (business) => {
+      const photos = await businessMediaGallery(pool, business.id);
+      return { ...business, imageUrl: photos[0]?.imageUrl ?? null, photos };
+    }));
     return {
       states,
       listings,
