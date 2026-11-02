@@ -28,7 +28,7 @@ interface UploadIntent {
   expiresIn: number;
   requiredHeaders: Record<string, string>;
 }
-interface QueuedPhoto { id: string; file: File; preview: string; caption: string; altText: string; progress: number; }
+interface QueuedPhoto { id: string; file: File; preview: string; caption: string; altText: string; progress: number; replacesMediaId?: string; }
 const accepted = 'image/jpeg,image/png,image/webp,image/avif';
 const maxBytes = 10 * 1024 * 1024;
 
@@ -72,7 +72,7 @@ export function BusinessPhotoGallery() {
   const pending = items.filter((item) => item.status === 'PENDING_REVIEW');
   const rejected = items.filter((item) => item.status === 'REJECTED');
 
-  function chooseFiles(files: FileList | null) {
+  function chooseFiles(files: FileList | null, replacesMediaId?: string) {
     if (!files) return;
     const next: QueuedPhoto[] = [];
     for (const file of Array.from(files)) {
@@ -80,7 +80,7 @@ export function BusinessPhotoGallery() {
         setActionError(file.name + ' is not a supported image or exceeds 10 MB.');
         continue;
       }
-      next.push({ id: crypto.randomUUID(), file, preview: URL.createObjectURL(file), caption: '', altText: '', progress: 0 });
+      next.push({ id: crypto.randomUUID(), file, preview: URL.createObjectURL(file), caption: '', altText: '', progress: 0, replacesMediaId });
     }
     setQueued((current) => [...current, ...next]);
   }
@@ -107,7 +107,7 @@ export function BusinessPhotoGallery() {
       try {
         const intent = await api<UploadIntent>('/business/media/upload-intents', {
           method: 'POST',
-          body: { filename: photo.file.name, mimeType: photo.file.type, byteSize: photo.file.size, caption: photo.caption, altText: photo.altText },
+          body: { filename: photo.file.name, mimeType: photo.file.type, byteSize: photo.file.size, caption: photo.caption, altText: photo.altText, ...(photo.replacesMediaId ? { replacesMediaId: photo.replacesMediaId } : {}) },
         });
         await uploadBinary(intent, photo.file, (progress) => updateQueued(photo.id, { progress }));
         await api<{ mediaId: string; status: MediaStatus }>('/business/media/' + intent.mediaId + '/complete', { method: 'POST', body: {} });
@@ -120,7 +120,7 @@ export function BusinessPhotoGallery() {
       }
     }
     reload();
-    showSuccess('Your photos have been submitted for review.');
+    if (allUploaded) showSuccess('Your photos have been submitted for review.');
   }
   async function mutate(path: string, method: 'PATCH' | 'DELETE', body?: unknown) {
     setBusy(path);
@@ -195,6 +195,7 @@ export function BusinessPhotoGallery() {
               </form>
               <div className="business-photo-card-actions">
                 {!item.isCover && <button type="button" className="text-button" onClick={() => void mutate('/business/media/' + item.mediaId + '/cover', 'PATCH', {})} disabled={!!busy}><Star size={14} /> Set cover</button>}
+                <label className="text-button business-photo-replace">Replace<input type="file" accept={accepted} onChange={(event) => { chooseFiles(event.currentTarget.files, item.mediaId); event.currentTarget.value = ''; }} /></label>
                 <button type="button" className="icon-button" aria-label="Move photo earlier" disabled={!!busy || index === 0} onClick={() => void reorder(item, -1)}><ArrowUp size={16} /></button>
                 <button type="button" className="icon-button" aria-label="Move photo later" disabled={!!busy || index === approved.length - 1} onClick={() => void reorder(item, 1)}><ArrowDown size={16} /></button>
                 <button type="button" className="text-button" onClick={() => { if (window.confirm('Remove this photo from your listing?')) void mutate('/business/media/' + item.mediaId, 'DELETE'); }} disabled={!!busy}><Trash2 size={14} /> Remove</button>
