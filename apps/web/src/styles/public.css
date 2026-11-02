@@ -3424,3 +3424,11 @@
 .seven-install-status, .seven-install-feedback { margin-top: 1.25rem; color: var(--accent); }
 .seven-install-footnote { margin-top: 2rem; font-size: .8rem; }
 @media (max-width: 600px) { .seven-install-main { min-height: 55vh; padding-inline: 1rem; } .seven-install-card { border-radius: 1rem; } .public-install-link { display: none; } }
+
+
+.seven-business-photo-gallery { display:grid; gap:.35rem; }
+.seven-business-photo-gallery .seven-directory-image-link { position:relative; }
+.seven-business-photo-gallery .seven-directory-image-link img { display:block; width:100%; aspect-ratio:16/10; object-fit:cover; }
+.seven-business-photo-caption { position:absolute; inset:auto 0 0; padding:.55rem .7rem; color:#fff; background:linear-gradient(transparent,rgba(0,0,0,.65)); font-size:.68rem; }
+.seven-business-photo-thumbnails { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.35rem; }
+.seven-business-photo-thumbnails img { width:100%; aspect-ratio:4/3; object-fit:cover; }
