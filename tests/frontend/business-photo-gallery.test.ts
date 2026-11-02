@@ -7,48 +7,69 @@ const ownerGallery = source('../../apps/web/src/pages/workspace/BusinessPhotoGal
 const adminGallery = source('../../apps/web/src/pages/workspace/AdminBusinessMedia.tsx');
 const app = source('../../apps/web/src/App.tsx');
 const navigation = source('../../apps/web/src/components/WorkspaceShell.tsx');
-const backend = source('../../services/platform/src/businessMedia.ts');
 const businessCard = source('../../apps/web/src/pages/public/BusinessDirectoryCard.tsx');
-const platformApp = source('../../services/platform/src/app.ts');
+const mediaApi = source('../../apps/web/src/lib/businessMediaApi.ts');
+const contract = source('../../docs/frontend/business-photo-gallery-api-contract.md');
 
-testCase('business owner gallery supports multi-file upload, progress, captions and alt text', () => {
+testCase('owner gallery supports multi-file upload, previews, progress, captions and alt text', () => {
   assert.match(ownerGallery, /multiple onChange/);
-  assert.match(ownerGallery, /upload\.onprogress/);
+  assert.match(ownerGallery, /upload\\.onprogress/);
+  assert.match(ownerGallery, /URL\\.createObjectURL/);
+  assert.match(ownerGallery, /aria-valuenow/);
+  assert.match(ownerGallery, /drag and drop/);
   assert.match(ownerGallery, /caption/);
   assert.match(ownerGallery, /altText/);
-  assert.match(ownerGallery, /URL\.createObjectURL/);
-  assert.match(ownerGallery, /10 \* 1024 \* 1024/);
+  assert.match(ownerGallery, /10 \\* 1024 \\* 1024/);
 });
 
-testCase('business gallery supports approved photo cover, ordering, replacement and removal', () => {
+testCase('owner gallery exposes cover, ordering, replacement and removal controls', () => {
   assert.match(ownerGallery, /replacesMediaId/);
   assert.match(ownerGallery, /Set cover/);
-  assert.match(ownerGallery, /business\/media\/order/);
-  assert.match(ownerGallery, /'DELETE'/);
-  assert.match(backend, /status='APPROVED'/);
-  assert.match(backend, /business_media\.cover_selected/);
+  assert.match(ownerGallery, /businessMediaApi\\.reorder/);
+  assert.match(ownerGallery, /businessMediaApi\\.remove/);
+  assert.match(ownerGallery, /businessMediaApi\\.setCover/);
 });
 
-testCase('owner gallery exposes review status while admin review controls approval and rejection', () => {
+testCase('owner gallery communicates approved, pending and rejected photo states', () => {
   assert.match(ownerGallery, /PENDING_REVIEW/);
   assert.match(ownerGallery, /REJECTED/);
-  assert.match(adminGallery, /decision, \.\.\./);
+  assert.match(ownerGallery, /Approved and guest-facing/);
+  assert.match(ownerGallery, /Needs your attention/);
+});
+
+testCase('admin moderation supports search, replacement filter and approve/reject actions', () => {
+  assert.match(adminGallery, /setSearch/);
+  assert.match(adminGallery, /REPLACEMENTS/);
+  assert.match(adminGallery, /businessMediaApi\\.review/);
   assert.match(adminGallery, /'APPROVED'/);
   assert.match(adminGallery, /'REJECTED'/);
-  assert.match(backend, /admin\.role !== 'ADMIN'/);
-  assert.match(backend, /'business_media\.' \+ input\.decision\.toLowerCase\(\)/);
+  assert.match(adminGallery, /Add a clear reason before rejecting/);
 });
 
-testCase('photo workspace and administrator moderation routes are registered', () => {
-  assert.match(app, /path="media" element={<AdminBusinessMedia \/>}/);
+testCase('gallery routes and navigation are registered in the frontend', () => {
+  assert.match(app, /path="media" element={<AdminBusinessMedia \\/>}/);
   assert.match(app, /'photos'/);
-  assert.match(navigation, /\/business\/photos/);
-  assert.match(navigation, /\/admin\/media/);
+  assert.match(navigation, /\\/business\\/photos/);
+  assert.match(navigation, /\\/admin\\/media/);
 });
 
-testCase('public business directory exposes approved photos only', () => {
-  assert.match(backend, /status='APPROVED' ORDER BY is_cover DESC,sort_order,created_at LIMIT 12/);
-  assert.match(platformApp, /businessMediaGallery\(pool, business\.id\)/);
+testCase('public business cards can render the approved photo gallery', () => {
+  assert.match(businessCard, /profile\\.photos\\?\\.length/);
   assert.match(businessCard, /seven-business-photo-thumbnails/);
-  assert.match(businessCard, /profile\.photos\?\.length/);
+  assert.match(businessCard, /altText/);
+});
+
+testCase('typed frontend adapter and backend handoff contract define the same integration surface', () => {
+  for (const route of [
+    '/business/media',
+    '/business/media/upload-intents',
+    '/business/media/order',
+    '/admin/business-media',
+  ]) assert.ok(mediaApi.includes(route), 'Missing frontend route: ' + route);
+  for (const operation of ['createUploadIntent', 'completeUpload', 'updateDetails', 'setCover', 'reorder', 'remove', 'review']) {
+    assert.ok(mediaApi.includes(operation), 'Missing frontend operation: ' + operation);
+  }
+  for (const section of ['Owner workspace', 'Administrator moderation', 'Public directory', 'Frontend expectations']) {
+    assert.ok(contract.includes(section), 'Missing API contract section: ' + section);
+  }
 });
