@@ -2,13 +2,6 @@ import { Link } from 'react-router-dom';
 import { useSeason } from '../context/SeasonContext.tsx';
 import { seasonalCampaigns } from '../lib/seasonalCampaigns.ts';
 
-const seasonPositions = {
-  spring: '0% 0%',
-  summer: '100% 0%',
-  autumn: '0% 100%',
-  winter: '100% 100%',
-} as const;
-
 export function SeasonalCampaignBanner() {
   const season = useSeason();
   const campaign = seasonalCampaigns[season];
@@ -21,12 +14,13 @@ export function SeasonalCampaignBanner() {
         <p>{campaign.message}</p>
         <Link className="btn btn-primary" to="/explore?kind=STAY">Find a stay</Link>
       </div>
-      <div
-        className={`seven-seasonal-flyer season-${season}`}
-        role="img"
-        aria-label={`${season} 7EVEN campaign flyer. Plan every arrival before it happens. Find a stay in Uyo, Akwa Ibom.`}
-        style={{ backgroundPosition: seasonPositions[season] }}
-      />
+      <figure className="seven-seasonal-flyer">
+        <img src={campaign.image.src} alt={campaign.image.alt} loading="lazy" />
+        <figcaption>
+          <span>{campaign.image.caption}</span>
+          <span>{campaign.image.credit}</span>
+        </figcaption>
+      </figure>
     </section>
   );
 }
