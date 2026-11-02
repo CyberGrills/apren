@@ -16,6 +16,7 @@ import './styles/customer.css';
 import './styles/workspace.css';
 import './styles/workbench.css';
 import './styles/brand-intro.css';
+import './styles/seasonal-brand-assets.css';
 import './styles/authentication.css';
 
 document.documentElement.dataset.season = seasonAt(new Date());
