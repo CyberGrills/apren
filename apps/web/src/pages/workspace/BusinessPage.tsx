@@ -77,7 +77,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                 : undefined
           }
           actions={
-            owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
+            tab === 'photos' ? undefined : owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
               <button
                 type="button"
                 className="btn btn-primary"
