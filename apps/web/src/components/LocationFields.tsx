@@ -208,7 +208,10 @@ export function DestinationInput({
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={open}
-          aria-controls={`${id}-options`}
+          aria-controls={open ? `${id}-options` : undefined}
+          aria-describedby={open ? `${id}-status` : undefined}
+          aria-haspopup="listbox"
+          aria-busy={loading}
           aria-activedescendant={open && active >= 0 ? `${id}-${active}` : undefined}
           autoComplete="off"
           maxLength={160}
@@ -262,13 +265,6 @@ export function DestinationInput({
                 key={item.id}
                 id={`${id}-${index}`}
                 role="option"
-                tabIndex={-1}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    select(item);
-                  }
-                }}
                 aria-selected={active === index}
                 className={active === index ? 'active' : ''}
                 onPointerDown={(event) => event.preventDefault()}
@@ -288,7 +284,7 @@ export function DestinationInput({
               </div>
             ))}
           </div>
-          <p className="destination-status" role="status">
+          <p className="destination-status" id={`${id}-status`} role="status" aria-live="polite" aria-atomic="true">
             {loading
               ? 'Finding destinations…'
               : error

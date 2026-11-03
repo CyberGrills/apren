@@ -60,8 +60,9 @@ dialog.date-picker__dialog {
   box-sizing: border-box;
   width: min(25rem, calc(100% - 1rem));
   max-width: calc(100% - 1rem);
-  max-height: calc(100dvh - 1rem);
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem);
   margin: auto;
+  overscroll-behavior: contain;
   padding: 1.15rem;
   overflow-y: auto;
   border: 1px solid var(--date-picker-sand);
