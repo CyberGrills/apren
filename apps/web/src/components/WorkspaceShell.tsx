@@ -135,6 +135,7 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
       <aside
         ref={sidebar}
         {...sidebarSemantics}
+        id="workspace-mobile-navigation"
         className={`workspace-sidebar ${open ? 'is-open' : ''}`}
         aria-label="Workspace navigation"
       >
@@ -211,6 +212,7 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
               onClick={() => setOpen(!open)}
               aria-label={open ? 'Close navigation' : 'Open navigation'}
               aria-expanded={open}
+              aria-controls="workspace-mobile-navigation"
             >
               {open ? <X size={19} /> : <Menu size={19} />}
             </button>
