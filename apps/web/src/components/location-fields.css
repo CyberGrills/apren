@@ -27,6 +27,9 @@
   color: var(--ink);
   box-shadow: 0 18px 48px rgb(36 31 24 / 14%);
   padding: 0.6rem;
+  max-height: min(70dvh, 32rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .destination-caption {
   margin: 0;
@@ -38,8 +41,9 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 320px;
+  max-height: min(48dvh, 20rem);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .destination-popover [role="option"] {
   display: flex;
@@ -98,8 +102,8 @@
 }
 @media (max-width: 600px) {
   .destination-popover {
-    left: -0.8rem;
-    width: calc(100vw - 4.5rem);
+    left: 0;
+    width: min(390px, calc(100vw - 2rem));
   }
   .explore-filters .location-field {
     min-width: 0;
