@@ -27,7 +27,6 @@ for (const [token, expected] of Object.entries(brand))
 for (const [alias, token] of Object.entries({
   '--paper': '--brand-secondary',
   '--surface': '--brand-secondary',
-  '--accent': '--brand-primary',
   '--line': '--brand-tertiary',
   '--ink': '--brand-text',
   '--muted': '--brand-text-muted',
@@ -40,7 +39,11 @@ const seasonalColors = {
   autumn: '#b77943',
   winter: '#466c78',
 } as const;
-test('the default seasonal accent falls back to the permanent 7EVEN primary brand colour', () => {
+test('the interactive accent blends the seasonal campaign colour with the permanent 7EVEN primary brand', () => {
+  assert.equal(
+    root['--accent'],
+    'color-mix(in oklch, var(--season-accent) 68%, var(--brand-primary))',
+  );
   assert.equal(root['--season-accent'], 'var(--brand-primary)');
 });
 for (const [season, color] of Object.entries(seasonalColors)) {
