@@ -42,8 +42,7 @@ export function PublicHeader() {
     mobileNavRef.current?.querySelector<HTMLElement>('a, button, select')?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
-        menuButtonRef.current?.focus();
+        closeMobileMenu();
       }
     };
     window.addEventListener('keydown', closeOnEscape);
