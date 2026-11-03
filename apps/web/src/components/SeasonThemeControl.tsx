@@ -32,7 +32,7 @@ export function SeasonThemeControl() {
               aria-pressed={selected}
               onClick={() => setPreference(option.value)}
             >
-              <span className="appearance-season-swatch" style={{ '--swatch': option.swatch } as React.CSSProperties} aria-hidden="true" />
+              <span className="appearance-season-swatch" style={{ background: option.swatch }} aria-hidden="true" />
               <span className="appearance-season-copy">
                 <strong>{option.label}</strong>
                 <small>{option.description}</small>
