@@ -19,14 +19,30 @@ export async function runProductionSmoke({
     } catch (error) {
       throw new Error(`request failed: ${error instanceof Error ? error.name : 'unknown error'}`);
     }
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
     const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.includes('application/json')) throw new Error('unexpected content type');
+    let body;
+    let parsed = false;
     try {
-      return await response.json();
+      body = await response.json();
+      parsed = true;
     } catch {
-      throw new Error('invalid JSON response');
+      // Never include an upstream response body in the smoke report.
     }
+
+    if (!response.ok) {
+      const error =
+        body && typeof body === 'object' && !Array.isArray(body) ? body.error : null;
+      const code =
+        error && typeof error === 'object' && !Array.isArray(error) ? error.code : null;
+      const safeCode =
+        typeof code === 'string' && /^[A-Z0-9_]{1,64}$/.test(code) ? ` (${code})` : '';
+      throw new Error(`HTTP ${response.status}${safeCode}`);
+    }
+
+    if (!contentType.includes('application/json')) throw new Error('unexpected content type');
+    if (!parsed) throw new Error('invalid JSON response');
+    return body;
   }
 
   function record(name, path, validate, { launchGate = false } = {}) {
