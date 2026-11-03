@@ -42,8 +42,7 @@ export function PublicHeader() {
     mobileNavRef.current?.querySelector<HTMLElement>('a, button, select')?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
-        menuButtonRef.current?.focus();
+        closeMobileMenu();
       }
     };
     window.addEventListener('keydown', closeOnEscape);
@@ -65,6 +64,10 @@ export function PublicHeader() {
       window.dispatchEvent(new CustomEvent('7even-language-change', { detail: saved }));
     }
   }, [user?.profileDetails?.preferredLanguage]);
+  function closeMobileMenu() {
+    setOpen(false);
+    menuButtonRef.current?.focus();
+  }
   function changeLanguage(next: SevenLanguage) {
     setLanguage(next);
     try {
@@ -143,23 +146,23 @@ export function PublicHeader() {
             }
           }}
         >
-          <Link to="/appearance" onClick={() => setOpen(false)}>Appearance</Link>
-          <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
+          <Link to="/appearance" onClick={closeMobileMenu}>Appearance</Link>
+          <Link to="/explore?kind=STAY" onClick={closeMobileMenu}>
             {language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}
           </Link>
-          <Link to="/explore?kind=DINING" onClick={() => setOpen(false)}>
+          <Link to="/explore?kind=DINING" onClick={closeMobileMenu}>
             {language === 'pcm' ? 'Food' : 'Dining'}
           </Link>
-          <Link to="/install" onClick={() => setOpen(false)}>Install app</Link>
-          <Link to={user ? '/app/bookings' : '/login'} onClick={() => setOpen(false)}>
+          <Link to="/install" onClick={closeMobileMenu}>Install app</Link>
+          <Link to={user ? '/app/bookings' : '/login'} onClick={closeMobileMenu}>
             {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
           </Link>
-          <Link to="/explore?kind=EXPERIENCE" onClick={() => setOpen(false)}>
+          <Link to="/explore?kind=EXPERIENCE" onClick={closeMobileMenu}>
             {language === 'pcm' ? 'Things to do' : 'Things to do'}
           </Link>
-          {user && <Link to="/app/profile" onClick={() => setOpen(false)}>{language === 'pcm' ? 'Your profile' : 'Profile'}</Link>}
+          {user && <Link to="/app/profile" onClick={closeMobileMenu}>{language === 'pcm' ? 'Your profile' : 'Profile'}</Link>}
           {workspace && (
-            <Link to={workspace.href} onClick={() => setOpen(false)}>
+            <Link to={workspace.href} onClick={closeMobileMenu}>
               {workspace.label}
             </Link>
           )}
