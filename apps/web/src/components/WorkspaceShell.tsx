@@ -21,7 +21,6 @@ import { useSession } from '../context/SessionContext.tsx';
 import { clearQueues } from '../lib/receptionQueue.ts';
 import { ErrorNotice } from './ui.tsx';
 import { Brand } from './Brand.tsx';
-import { SeasonThemeControl } from './SeasonThemeControl.tsx';
 
 export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'admin' }) {
   const { user, session, logout } = useSession();
@@ -182,6 +181,10 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
               <Store size={17} />
               Explore 7even
             </Link>
+            <Link to="/appearance">
+              <Settings2 size={17} />
+              Appearance
+            </Link>
           </nav>
           <div className="workspace-user">
             <strong>{user?.displayName}</strong>
@@ -216,7 +219,6 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
             </span>
           </div>
           <div className="workspace-topbar-actions">
-            <SeasonThemeControl compact />
             {session?.paymentMode === 'mock' && <span className="tag">Test payments</span>}
             <span className={`connection-indicator ${online ? '' : 'offline'}`}>
               {online ? 'Online' : 'Offline'}

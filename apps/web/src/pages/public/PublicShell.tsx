@@ -2,7 +2,6 @@ import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
-import { SeasonThemeControl } from '../../components/SeasonThemeControl.tsx';
 import { SeasonalCampaignBanner } from '../../components/SeasonalCampaignBanner.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
@@ -96,7 +95,6 @@ export function PublicHeader() {
           <Link to="/explore?kind=EXPERIENCE">{language === 'pcm' ? 'Things to do' : 'Things to do'}</Link>
         </nav>
         <div className="public-nav-actions">
-          <SeasonThemeControl compact />
           <div className="seven-language-switch" role="group" aria-label="Website language">
             <button type="button" className={language === 'en' ? 'active' : ''} aria-pressed={language === 'en'} onClick={() => changeLanguage('en')}>English</button>
             <button type="button" className={language === 'pcm' ? 'active' : ''} aria-pressed={language === 'pcm'} onClick={() => changeLanguage('pcm')}>Naija Pidgin</button>
@@ -145,7 +143,7 @@ export function PublicHeader() {
             }
           }}
         >
-          <SeasonThemeControl />
+          <Link to="/appearance" onClick={() => setOpen(false)}>Appearance</Link>
           <Link to="/explore?kind=STAY" onClick={() => setOpen(false)}>
             {language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}
           </Link>
@@ -194,6 +192,7 @@ export function PublicFooter() {
             <Link to="/business/apply">{language === 'pcm' ? 'List your business' : 'Bring your business'}</Link>
             <Link to="/app/bookings">Your bookings</Link>
             <Link to="/install">Install 7even</Link>
+            <Link to="/appearance">Appearance</Link>
             <Link to="/help">Help</Link>
             <Link to="/booking-rules">Booking rules</Link>
           </nav>

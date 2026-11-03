@@ -16,6 +16,7 @@ import { WorkspaceShell } from './components/WorkspaceShell.tsx';
 import { SessionProvider, useSession } from './context/SessionContext.tsx';
 import { loginPathForWorkspace } from './lib/workspaceNavigation.ts';
 const HelpPage = lazy(() => import('./pages/account/HelpPage.tsx').then((module) => ({ default: module.HelpPage })));
+const AppearancePage = lazy(() => import('./pages/account/AppearancePage.tsx').then((module) => ({ default: module.AppearancePage })));
 const PasswordPage = lazy(() => import('./pages/account/RecoveryPages.tsx').then((module) => ({ default: module.PasswordPage })));
 const RecoveryPage = lazy(() => import('./pages/account/RecoveryPages.tsx').then((module) => ({ default: module.RecoveryPage })));
 const AccountPage = lazy(() => import('./pages/customer/AccountPage.tsx').then((module) => ({ default: module.AccountPage })));
@@ -241,6 +242,7 @@ export function App() {
               <Route path="/admin/login" element={<AuthPage mode="login" workspace="admin" />} />
               <Route path="/register" element={<AuthPage mode="register" />} />
               <Route path="/help" element={<HelpPage />} />
+              <Route path="/appearance" element={<AppearancePage />} />
               <Route path="/booking-rules" element={<HelpPage rules />} />
               <Route path="/forgot-password" element={<RecoveryPage />} />
               <Route path="/reset-password" element={<RecoveryPage reset />} />

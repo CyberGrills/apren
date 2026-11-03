@@ -1,26 +1,97 @@
-.season-theme-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
+.appearance-page {
+  width: min(100% - 2rem, 960px);
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 5rem) 0;
+}
+.appearance-page h1 {
+  margin: 0.5rem 0 0.8rem;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  line-height: 1;
+}
+.appearance-intro {
+  max-width: 620px;
   color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+  line-height: 1.75;
 }
-.season-theme-control select {
-  min-height: 40px;
-  padding: 0.45rem 1.8rem 0.45rem 0.65rem;
-  border: 1px solid var(--control-border);
-  border-radius: 3px;
+.appearance-panel {
+  margin-top: 2rem;
+  padding: clamp(1.1rem, 3vw, 2rem);
+  border: 1px solid var(--line);
   background: var(--surface);
-  color: var(--ink);
-  font-size: 0.76rem;
-  letter-spacing: 0;
 }
-.season-theme-control.is-compact select {
-  min-height: 38px;
-  max-width: 116px;
+.appearance-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.6rem;
+}
+.appearance-panel > p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.appearance-season-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1.4rem;
+}
+.appearance-season-option {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 78px;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+  transition: border-color var(--duration), background var(--duration);
+}
+.appearance-season-option[aria-pressed="true"] {
+  border: 2px solid var(--accent);
+  background: var(--surface-active);
+  padding: calc(0.85rem - 1px);
+}
+.appearance-season-swatch {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 1px solid color-mix(in oklch, var(--ink) 18%, transparent);
+}
+.appearance-season-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+.appearance-season-copy strong {
+  font-size: 0.92rem;
+}
+.appearance-season-copy small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+.appearance-season-check {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.appearance-current {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1.2rem;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--season-accent);
+  background: var(--season-surface);
+  color: var(--ink);
+  font-size: 0.82rem;
+}
+.appearance-current-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--season-accent);
+  flex: 0 0 auto;
 }
 .seven-seasonal-promo {
   display: grid;
@@ -125,9 +196,11 @@
     padding-inline: 0.8rem;
     font-size: 0.75rem;
   }
-  .season-theme-control:not(.is-compact) {
-    justify-content: space-between;
-    padding: 0.55rem 0.75rem;
+  .appearance-season-grid {
+    grid-template-columns: 1fr;
+  }
+  .appearance-season-option {
+    min-height: 72px;
   }
 }
 @media (max-width: 420px) {
@@ -141,11 +214,14 @@
   .seven-seasonal-flyer figcaption {
     font-size: 0.58rem;
   }
-  .season-theme-control.is-compact span {
-    display: none;
+  .appearance-season-option {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    padding: 0.75rem;
   }
-  .season-theme-control.is-compact select {
-    max-width: 94px;
+  .appearance-season-swatch {
+    width: 36px;
+    height: 36px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

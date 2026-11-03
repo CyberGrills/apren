@@ -6,13 +6,14 @@
   --brand-text-muted: #7a7161;
   --paper: var(--brand-secondary);
   --ink: var(--brand-text);
-  --accent: var(--brand-primary);
   --line: var(--brand-tertiary);
   --muted: var(--brand-text-muted);
   --surface: var(--brand-secondary);
-  --surface-subtle: color-mix(in oklch, var(--brand-tertiary) 8%, var(--brand-secondary));
-  --surface-active: color-mix(in oklch, var(--brand-primary) 8%, var(--brand-secondary));
-  --accent-hover: color-mix(in oklch, var(--brand-primary) 85%, var(--brand-text));
+  --surface-subtle: color-mix(in oklch, var(--season-accent) 7%, var(--brand-secondary));
+  --surface-active: color-mix(in oklch, var(--season-accent) 14%, var(--brand-secondary));
+  /* Seasonal accents are blended with the core green to retain readable controls. */
+  --accent: color-mix(in oklch, var(--season-accent) 68%, var(--brand-primary));
+  --accent-hover: color-mix(in oklch, var(--accent) 82%, var(--brand-text));
   /* Sand remains decorative. Interactive boundaries need stronger contrast. */
   --control-border: var(--brand-text-muted);
   --positive: #28543a;
@@ -29,7 +30,7 @@
   --season-autumn: #b77943;
   --season-winter: #466c78;
   --season-accent: var(--brand-primary);
-  --season-surface: color-mix(in oklch, var(--season-accent) 4%, var(--surface));
+  --season-surface: color-mix(in oklch, var(--season-accent) 11%, var(--surface));
   --font-display: "Newsreader", Georgia, serif;
   --font-body: "Manrope", Arial, sans-serif;
   --space-1: 0.25rem;
