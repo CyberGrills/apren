@@ -9,7 +9,13 @@ function response(body, status = 200) {
   });
 }
 
-function makeFetch({ inventory = [], authStatus = 200, livePaymentsReady = false } = {}) {
+function makeFetch({
+  inventory = [],
+  authStatus = 200,
+  livePaymentsReady = false,
+  readinessStatus = 200,
+  readinessError = null,
+} = {}) {
   const readyBody = {
     data: {
       status: 'ready',
@@ -31,7 +37,9 @@ function makeFetch({ inventory = [], authStatus = 200, livePaymentsReady = false
       case '/api/health/live':
         return response({ data: { status: 'ok' } });
       case '/api/health/ready':
-        return response(readyBody);
+        return readinessStatus === 200
+          ? response(readyBody)
+          : response(readinessError ?? readyBody, readinessStatus);
       case '/api/auth/session':
         return response({ data: { user: null } }, authStatus);
       case '/api/offerings?kind=STAY&pageSize=3':
@@ -91,4 +99,24 @@ test('operational API failures remain failures even when launch readiness is opt
   assert.equal(report.failureCount, 1);
   assert.equal(report.warningCount, 2);
   assert.equal(report.results.find((result) => result.name === 'auth session')?.status, 'FAIL');
+});
+
+test('API error codes are reported without echoing upstream error messages', async () => {
+  const report = await runProductionSmoke({
+    baseUrl: 'https://example.test',
+    fetchImpl: makeFetch({
+      readinessStatus: 503,
+      readinessError: {
+        error: {
+          code: 'SCHEMA_NOT_READY',
+          message: 'password=must-not-appear-in-smoke-output',
+        },
+      },
+    }),
+  });
+
+  const readiness = report.results.find((result) => result.name === 'database readiness');
+  assert.equal(readiness?.status, 'FAIL');
+  assert.equal(readiness?.detail, 'HTTP 503 (SCHEMA_NOT_READY)');
+  assert.doesNotMatch(JSON.stringify(report), /must-not-appear-in-smoke-output/);
 });
