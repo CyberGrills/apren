@@ -1,5 +1,5 @@
 import type { Role } from '@7even/contracts';
-import { Component, type ReactNode, useEffect, useRef, useState } from 'react';
+import { Component, lazy, Suspense, type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   BrowserRouter,
   Link,
@@ -15,32 +15,29 @@ import { ErrorNotice, Loading, PageHeader } from './components/ui.tsx';
 import { WorkspaceShell } from './components/WorkspaceShell.tsx';
 import { SessionProvider, useSession } from './context/SessionContext.tsx';
 import { loginPathForWorkspace } from './lib/workspaceNavigation.ts';
-import { HelpPage } from './pages/account/HelpPage.tsx';
-import { PasswordPage, RecoveryPage } from './pages/account/RecoveryPages.tsx';
-import {
-  AccountPage,
-  CryptoCheckoutPage,
-  PaymentReturnPage,
-  TestCheckoutPage,
-} from './pages/customer/index.ts';
-import {
-  AuthPage,
-  BusinessApplicationPage,
-  DirectoryPage,
-  ExplorePage,
-  LandingPage,
-  OfferingPage,
-} from './pages/public/index.ts';
-import { AdminInventoryPage } from './pages/workspace/AdminInventoryPage.tsx';
-import { AdminBusinessMedia } from './pages/workspace/AdminBusinessMedia.tsx';
-import { DemoHotelsPage } from './pages/public/DemoHotelsPage.tsx';
-import { DemoMarketplacePage } from './pages/public/DemoMarketplacePage.tsx';
-import { DemoCheckoutPage } from './pages/public/DemoCheckoutPage.tsx';
-import { AdminPage } from './pages/workspace/AdminPage.tsx';
-import { BusinessPage } from './pages/workspace/BusinessPage.tsx';
-import { OperationsPage } from './pages/workspace/OperationsPage.tsx';
-import { ReceptionPage } from './pages/workspace/ReceptionPage.tsx';
-import { VenuesPage } from './pages/workspace/VenuesPage.tsx';
+const HelpPage = lazy(() => import('./pages/account/HelpPage.tsx').then((module) => ({ default: module.HelpPage })));
+const PasswordPage = lazy(() => import('./pages/account/RecoveryPages.tsx').then((module) => ({ default: module.PasswordPage })));
+const RecoveryPage = lazy(() => import('./pages/account/RecoveryPages.tsx').then((module) => ({ default: module.RecoveryPage })));
+const AccountPage = lazy(() => import('./pages/customer/AccountPage.tsx').then((module) => ({ default: module.AccountPage })));
+const CryptoCheckoutPage = lazy(() => import('./pages/customer/CryptoCheckoutPage.tsx').then((module) => ({ default: module.CryptoCheckoutPage })));
+const PaymentReturnPage = lazy(() => import('./pages/customer/PaymentPages.tsx').then((module) => ({ default: module.PaymentReturnPage })));
+const TestCheckoutPage = lazy(() => import('./pages/customer/PaymentPages.tsx').then((module) => ({ default: module.TestCheckoutPage })));
+const AuthPage = lazy(() => import('./pages/public/AuthPage.tsx').then((module) => ({ default: module.AuthPage })));
+const BusinessApplicationPage = lazy(() => import('./pages/public/BusinessApplicationPage.tsx').then((module) => ({ default: module.BusinessApplicationPage })));
+const DirectoryPage = lazy(() => import('./pages/public/DirectoryPage.tsx').then((module) => ({ default: module.DirectoryPage })));
+const ExplorePage = lazy(() => import('./pages/public/ExplorePage.tsx').then((module) => ({ default: module.ExplorePage })));
+const LandingPage = lazy(() => import('./pages/public/LandingPage.tsx').then((module) => ({ default: module.LandingPage })));
+const OfferingPage = lazy(() => import('./pages/public/OfferingPage.tsx').then((module) => ({ default: module.OfferingPage })));
+const AdminInventoryPage = lazy(() => import('./pages/workspace/AdminInventoryPage.tsx').then((module) => ({ default: module.AdminInventoryPage })));
+const AdminBusinessMedia = lazy(() => import('./pages/workspace/AdminBusinessMedia.tsx').then((module) => ({ default: module.AdminBusinessMedia })));
+const DemoHotelsPage = lazy(() => import('./pages/public/DemoHotelsPage.tsx').then((module) => ({ default: module.DemoHotelsPage })));
+const DemoMarketplacePage = lazy(() => import('./pages/public/DemoMarketplacePage.tsx').then((module) => ({ default: module.DemoMarketplacePage })));
+const DemoCheckoutPage = lazy(() => import('./pages/public/DemoCheckoutPage.tsx').then((module) => ({ default: module.DemoCheckoutPage })));
+const AdminPage = lazy(() => import('./pages/workspace/AdminPage.tsx').then((module) => ({ default: module.AdminPage })));
+const BusinessPage = lazy(() => import('./pages/workspace/BusinessPage.tsx').then((module) => ({ default: module.BusinessPage })));
+const OperationsPage = lazy(() => import('./pages/workspace/OperationsPage.tsx').then((module) => ({ default: module.OperationsPage })));
+const ReceptionPage = lazy(() => import('./pages/workspace/ReceptionPage.tsx').then((module) => ({ default: module.ReceptionPage })));
+const VenuesPage = lazy(() => import('./pages/workspace/VenuesPage.tsx').then((module) => ({ default: module.VenuesPage })));
 
 function Protected({ roles }: { roles?: Role[] }) {
   const { user, loading, error, refresh } = useSession();
@@ -220,7 +217,8 @@ export function App() {
                 <span key={index}>āprən × 7even</span>
               ))}
             </div>
-            <Routes>
+            <Suspense fallback={<main className="permission-screen" id="main-content"><Loading /></main>}>
+              <Routes>
               <Route path="/" element={<LandingPage />} />
               {import.meta.env.PROD ? (
                 <>
@@ -300,7 +298,8 @@ export function App() {
                   </main>
                 }
               />
-            </Routes>
+              </Routes>
+              </Suspense>
           </SessionProvider>
         </FeedbackProvider>
       </BrowserRouter>
