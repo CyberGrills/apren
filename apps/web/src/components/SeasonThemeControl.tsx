@@ -46,7 +46,7 @@ export function SeasonThemeControl() {
         <span className="appearance-current-swatch" aria-hidden="true" />
         {preference === 'auto'
           ? `Automatic is on. The current Lagos campaign is ${season}.`
-          : `${preference[0].toUpperCase()}${preference.slice(1)} appearance is selected.`}
+          : `${preference.replace(/^\\w/, (letter) => letter.toUpperCase())} appearance is selected.`}
       </div>
     </div>
   );
