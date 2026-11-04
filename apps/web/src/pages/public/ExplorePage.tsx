@@ -292,13 +292,14 @@ export function ExplorePage() {
         )}
         {isStaySearch && <GoogleMapsScene />}
         {isStaySearch && <ScrollPilotScene />}
-        <div
+        <section
           id="explore-results-region"
-          className="explore-results-heading"
+          className="explore-results-region"
           tabIndex={-1}
           role="region"
           aria-label="Search results"
         >
+          <div className="explore-results-heading">
           <p aria-live="polite">
             {loading
               ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
@@ -428,6 +429,7 @@ export function ExplorePage() {
             }
           />
         )}
+        </section>
       </main>
       <PublicFooter />
     </div>
