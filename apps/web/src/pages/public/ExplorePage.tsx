@@ -283,9 +283,22 @@ export function ExplorePage() {
             <Search size={17} aria-hidden="true" /> {language === 'pcm' ? 'Find places' : 'Find places'}
           </button>
         </form>
+        {isStaySearch && (
+          <a className="explore-skip-results" href="#explore-results-region">
+            {language === 'pcm'
+              ? 'Skip map and pilot; make I see places to stay'
+              : 'Skip map and pilot; go straight to stay results'}
+          </a>
+        )}
         {isStaySearch && <GoogleMapsScene />}
         {isStaySearch && <ScrollPilotScene />}
-        <div className="explore-results-heading">
+        <div
+          id="explore-results-region"
+          className="explore-results-heading"
+          tabIndex={-1}
+          role="region"
+          aria-label="Search results"
+        >
           <p aria-live="polite">
             {loading
               ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
