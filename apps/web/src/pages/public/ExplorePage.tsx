@@ -283,20 +283,34 @@ export function ExplorePage() {
             <Search size={17} aria-hidden="true" /> {language === 'pcm' ? 'Find places' : 'Find places'}
           </button>
         </form>
+        {isStaySearch && (
+          <a className="explore-skip-results" href="#explore-results-region">
+            {language === 'pcm'
+              ? 'Skip map and pilot; make I see places to stay'
+              : 'Skip map and pilot; go straight to stay results'}
+          </a>
+        )}
         {isStaySearch && <GoogleMapsScene />}
         {isStaySearch && <ScrollPilotScene />}
-        <div className="explore-results-heading">
-          <p aria-live="polite">
-            {loading
-              ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
-              : data
-                ? `${data.length} ${data.length === 1 ? 'place' : 'places'} on this page`
-                : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
-          </p>
-          <span>
-            {language === 'pcm' ? 'These listings come from 7even. Confirm room availability, final price and capacity before you book.' : 'Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.'}
-          </span>
-        </div>
+        <section
+          id="explore-results-region"
+          className="explore-results-region"
+          tabIndex={-1}
+          role="region"
+          aria-label="Search results"
+        >
+          <div className="explore-results-heading">
+            <p aria-live="polite">
+              {loading
+                ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
+                : data
+                  ? `${data.length} ${data.length === 1 ? 'place' : 'places'} on this page`
+                  : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
+            </p>
+            <span>
+              {language === 'pcm' ? 'These listings come from 7even. Confirm room availability, final price and capacity before you book.' : 'Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.'}
+            </span>
+          </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
         {directoryError && (
@@ -415,6 +429,7 @@ export function ExplorePage() {
             }
           />
         )}
+        </section>
       </main>
       <PublicFooter />
     </div>
