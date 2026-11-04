@@ -22,7 +22,8 @@ test('stay discovery lets keyboard users bypass the map and pilot before results
   assert.ok(pilotScene > mapScene, 'the pilot should follow the map');
   assert.ok(resultsTarget > pilotScene, 'the results target should follow both interstitials');
   assert.match(explore, /href="#explore-results-region"/);
-  assert.match(explore, /tabIndex=\{-1\}[\s\S]*?role="region"/);
+  assert.match(explore, /<section[\s\S]*?id="explore-results-region"[\s\S]*?tabIndex=\{-1\}[\s\S]*?role="region"/);
+  assert.match(explore, /id="explore-results-region"[\s\S]*?<\/section>\s*<\/main>/);
 });
 
 test('the skip link is visible on keyboard focus and respects reduced motion', () => {
