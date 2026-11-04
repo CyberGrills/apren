@@ -300,17 +300,17 @@ export function ExplorePage() {
           aria-label="Search results"
         >
           <div className="explore-results-heading">
-          <p aria-live="polite">
-            {loading
-              ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
-              : data
-                ? `${data.length} ${data.length === 1 ? 'place' : 'places'} on this page`
-                : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
-          </p>
-          <span>
-            {language === 'pcm' ? 'These listings come from 7even. Confirm room availability, final price and capacity before you book.' : 'Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.'}
-          </span>
-        </div>
+            <p aria-live="polite">
+              {loading
+                ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
+                : data
+                  ? `${data.length} ${data.length === 1 ? 'place' : 'places'} on this page`
+                  : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
+            </p>
+            <span>
+              {language === 'pcm' ? 'These listings come from 7even. Confirm room availability, final price and capacity before you book.' : 'Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.'}
+            </span>
+          </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
         {directoryError && (
