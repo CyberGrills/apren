@@ -139,7 +139,7 @@ export function BusinessPhotoGallery() {
   return (
     <section className="business-photo-gallery">
       {error && <ErrorNotice message={error} retry={reload} />}
-      {actionError && <ErrorNotice message={actionError} retry={() => setActionError('')} />}
+      {actionError && <ErrorNotice message={actionError} />}
       <div className="business-photo-stats" aria-label="Photo gallery status">
         <div><strong>{approved.length}</strong><span>Approved and guest-facing</span></div>
         <div><strong>{pending.length}</strong><span>Awaiting review</span></div>
