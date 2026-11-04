@@ -3432,3 +3432,36 @@
 .seven-business-photo-caption { position:absolute; inset:auto 0 0; padding:.55rem .7rem; color:#fff; background:linear-gradient(transparent,rgba(0,0,0,.65)); font-size:.68rem; }
 .seven-business-photo-thumbnails { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.35rem; }
 .seven-business-photo-thumbnails img { width:100%; aspect-ratio:4/3; object-fit:cover; }
+
+
+/* Let keyboard users bypass the decorative map and pilot interstitial. */
+.explore-skip-results {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10000;
+  max-width: calc(100vw - 2rem);
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1rem));
+  transition: transform 160ms ease;
+}
+.explore-skip-results:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+#explore-results-region {
+  scroll-margin-top: 1rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .explore-skip-results {
+    transition: none;
+  }
+}
