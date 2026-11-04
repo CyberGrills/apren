@@ -59,3 +59,18 @@ testCase('typed frontend adapter and backend handoff contract define the same in
     assert.ok(contract.includes(section), 'Missing API contract section: ' + section);
   }
 });
+
+testCase('gallery action failures do not show a retry button that only dismisses the error', () => {
+  assert.ok(
+    ownerGallery.includes('{actionError && <ErrorNotice message={actionError} />}'),
+    'Action errors should be dismissible without advertising a retry that does not repeat the failed action.',
+  );
+  assert.ok(
+    ownerGallery.includes('{error && <ErrorNotice message={error} retry={reload} />}'),
+    'The gallery read error should retain its real reload action.',
+  );
+  assert.ok(
+    !ownerGallery.includes("retry={() => setActionError('')}"),
+    'Clearing the error is not a retry and must not be labelled as one.',
+  );
+});
