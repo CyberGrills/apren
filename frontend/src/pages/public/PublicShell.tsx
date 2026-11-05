@@ -97,6 +97,7 @@ export function PublicHeader() {
           <Link to="/explore?kind=DINING">{language === 'pcm' ? 'Food' : 'Dining'}</Link>
           <Link to="/explore?kind=EXPERIENCE">{language === 'pcm' ? 'Things to do' : 'Things to do'}</Link>
           <Link to="/campus-connect/art-culture">Art & Culture</Link>
+          <Link to="/campus-connect/creator-studio">For creators</Link>
         </nav>
         <div className="public-nav-actions">
           <div className="seven-language-switch" role="group" aria-label="Website language">
@@ -155,6 +156,7 @@ export function PublicHeader() {
             {language === 'pcm' ? 'Food' : 'Dining'}
           </Link>
           <Link to="/campus-connect/art-culture" onClick={closeMobileMenu}>Art & Culture</Link>
+          <Link to="/campus-connect/creator-studio" onClick={closeMobileMenu}>For creators</Link>
           <Link to="/install" onClick={closeMobileMenu}>Install app</Link>
           <Link to={user ? '/app/bookings' : '/login'} onClick={closeMobileMenu}>
             {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
@@ -199,6 +201,7 @@ export function PublicFooter() {
             <Link to="/install">Install 7even</Link>
             <Link to="/appearance">Appearance</Link>
             <Link to="/campus-connect/art-culture">Art & Culture</Link>
+            <Link to="/campus-connect/creator-studio">Creator Studio</Link>
             <Link to="/help">Help</Link>
             <Link to="/booking-rules">Booking rules</Link>
           </nav>
