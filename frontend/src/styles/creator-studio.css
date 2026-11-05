@@ -1,0 +1,50 @@
+.creator-space-page,.creator-profile-page { color:#1d2924; }
+.creator-space-hero { display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,.85fr); align-items:center; gap:clamp(2rem,6vw,6rem); padding-block:clamp(3rem,8vw,7rem); }
+.creator-back-link { display:inline-flex; align-items:center; gap:.5rem; margin-bottom:2rem; color:#66736b; font-size:.8rem; text-decoration:none; }
+.creator-space-hero h1 { max-width:11ch; margin:.8rem 0 1.2rem; font-family:var(--font-display); font-size:clamp(3.1rem,7vw,6.3rem); font-weight:400; letter-spacing:-.06em; line-height:.98; }
+.creator-space-hero h1 em { color:#a35f38; font-weight:400; }
+.creator-space-lead { max-width:54ch; color:#66736b; line-height:1.85; }
+.creator-status { display:inline-flex; align-items:center; gap:.55rem; margin-top:1.4rem; padding:.7rem .9rem; border:1px solid #dedfd7; border-radius:99px; color:#7d5938; font-size:.75rem; }
+.creator-space-art { position:relative; display:grid; min-height:420px; place-items:center; overflow:hidden; background:linear-gradient(145deg,#173c33,#285d4d 60%,#a45f3c); isolation:isolate; }
+.creator-space-art:before { position:absolute; inset:9%; border:1px solid rgb(255 255 255 / 32%); content:""; transform:rotate(-8deg); }
+.creator-space-ring { position:absolute; width:70%; aspect-ratio:1; border:1px solid rgb(255 255 255 / 45%); border-radius:50%; transform:scaleY(.65) rotate(-25deg); }
+.creator-space-tile { position:absolute; display:grid; width:112px; height:126px; place-items:center; border:1px solid rgb(255 255 255 / 45%); background:#f0dfb9; color:#285344; box-shadow:0 18px 40px rgb(0 0 0 / 18%); }
+.creator-tile-one { top:18%; left:18%; transform:rotate(-12deg); }
+.creator-tile-two { top:29%; right:17%; background:#c47a4f; color:#fff4df; transform:rotate(10deg); }
+.creator-tile-three { bottom:13%; left:39%; background:#e4e1d1; transform:rotate(-4deg); }
+.creator-palette-mark { font-size:3.5rem; }
+.creator-space-art > span { position:absolute; bottom:1.4rem; left:1.4rem; color:#fff; font-size:.65rem; letter-spacing:.2em; }
+.creator-process { padding-block:clamp(3.5rem,7vw,6rem); border-top:1px solid #dedfd7; }
+.creator-section-heading { max-width:700px; margin-bottom:2.5rem; }
+.creator-section-heading h2,.creator-rights h2,.creator-studio-notice h2 { margin:.7rem 0; font-family:var(--font-display); font-size:clamp(2.2rem,4.5vw,3.8rem); font-weight:400; letter-spacing:-.045em; line-height:1.05; }
+.creator-section-heading > p:last-child { max-width:58ch; color:#66736b; line-height:1.8; }
+.creator-step-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid #dedfd7; border-bottom:1px solid #dedfd7; }
+.creator-step { display:flex; min-height:230px; flex-direction:column; align-items:flex-start; gap:.9rem; padding:1.4rem; border-right:1px solid #dedfd7; }
+.creator-step:last-child { border-right:0; }
+.creator-step-number { color:#a35f38; font-size:.7rem; letter-spacing:.12em; }
+.creator-step h3 { margin:.2rem 0 0; font-family:var(--font-display); font-size:1.35rem; font-weight:500; }
+.creator-step p { margin:0; color:#66736b; font-size:.8rem; line-height:1.75; }
+.creator-rights { background:#193d34; color:#f7f3e8; }
+.creator-rights-inner { display:grid; grid-template-columns:1fr 1fr; gap:4rem; padding-block:clamp(3rem,7vw,6rem); }
+.creator-rights .public-eyebrow { color:#d5b27b; }
+.creator-rights h2 { max-width:12ch; }
+.creator-rights-inner > div > p:last-child { max-width:52ch; color:#d3d9d2; line-height:1.8; }
+.creator-rights ul { display:grid; gap:1.2rem; align-content:center; margin:0; padding:0; list-style:none; }
+.creator-rights li { display:flex; gap:.9rem; padding-bottom:1.1rem; border-bottom:1px solid rgb(255 255 255 / 20%); }
+.creator-rights li svg { flex:0 0 auto; color:#d5b27b; }
+.creator-rights li span { display:grid; gap:.35rem; }
+.creator-rights li strong { font-family:var(--font-display); font-size:1.2rem; font-weight:500; }
+.creator-rights li small { color:#d3d9d2; font-size:.78rem; line-height:1.7; }
+.creator-studio-notice { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:1.5rem; padding-block:4rem; }
+.creator-notice-icon { display:grid; width:54px; height:54px; place-items:center; border-radius:50%; background:#eee8d8; color:#8a5635; }
+.creator-studio-notice h2 { font-size:clamp(1.8rem,3vw,2.5rem); }
+.creator-studio-notice p:not(.public-eyebrow) { max-width:70ch; color:#66736b; font-size:.82rem; line-height:1.8; }
+.creator-studio-notice .btn,.creator-profile-empty .btn { display:inline-flex; align-items:center; gap:.55rem; }
+.creator-profile-main { min-height:62vh; padding-block:3rem 5rem; }
+.creator-profile-empty { display:flex; min-height:470px; max-width:760px; flex-direction:column; align-items:flex-start; justify-content:center; margin:auto; }
+.creator-profile-mark { display:grid; width:68px; height:68px; place-items:center; margin-bottom:1.5rem; border-radius:50%; background:#eee8d8; color:#8a5635; }
+.creator-profile-empty h1 { max-width:16ch; margin:.6rem 0; font-family:var(--font-display); font-size:clamp(2.7rem,6vw,4.8rem); font-weight:400; letter-spacing:-.05em; line-height:1.02; }
+.creator-profile-empty > p:not(.public-eyebrow) { max-width:58ch; margin-bottom:1.5rem; color:#66736b; line-height:1.8; }
+@media(max-width:850px) { .creator-space-hero { grid-template-columns:1fr 1fr; gap:2rem; } .creator-space-art { min-height:350px; } .creator-step-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .creator-step:nth-child(2) { border-right:0; } .creator-step:nth-child(-n+2) { border-bottom:1px solid #dedfd7; } }
+@media(max-width:620px) { .creator-space-hero,.creator-rights-inner { grid-template-columns:1fr; gap:1.5rem; } .creator-space-art { min-height:310px; } .creator-step-grid { grid-template-columns:1fr; } .creator-step { min-height:0; border-right:0; border-bottom:1px solid #dedfd7; } .creator-step:last-child { border-bottom:0; } .creator-studio-notice { grid-template-columns:auto 1fr; } .creator-studio-notice .btn { grid-column:1 / -1; justify-self:start; } }
+@media(prefers-reduced-motion:reduce) { .creator-space-page *,.creator-profile-page * { scroll-behavior:auto !important; animation:none !important; transition:none !important; } }
