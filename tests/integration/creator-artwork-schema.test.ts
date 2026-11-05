@@ -47,6 +47,8 @@ describe('7EVEN creator artwork backend foundation', () => {
     assert.match(routes, /public_active=true/);
     assert.match(routes, /confirmPublicVisibility/);
     assert.match(routes, /SELF_APPROVAL_FORBIDDEN/);
+    assert.match(routes, /PUBLIC_VISIBILITY_CONFIRMATION_REQUIRED/);
+    assert.match(routes, /CREATOR_ACCOUNT_RESTRICTED/);
   });
 
   it('keeps public discovery restricted to active approved works and verified creators', () => {
