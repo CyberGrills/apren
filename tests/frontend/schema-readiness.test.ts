@@ -36,7 +36,7 @@ function fakePool(row?: ReadinessRow): Pick<Pool, 'query'> {
   } as unknown as Pick<Pool, 'query'>;
 }
 
-test('schema readiness requires the migration, recovery table, quote column and scoped RLS policy contract', async () => {
+test('schema readiness requires the recovery contract and only requires demo schema outside production', async () => {
   const complete = {
     migration_applied: true,
     demo_marketplace_schema_present: true,
@@ -44,13 +44,16 @@ test('schema readiness requires the migration, recovery table, quote column and 
     quote_recovery_session_column_present: true,
     recovery_policy_contract_present: true,
   };
-  assert.equal(await schemaIsReady(fakePool(complete)), true);
-  assert.equal(await schemaIsReady(fakePool({ ...complete, migration_applied: false })), false);
+  assert.equal(REQUIRED_SCHEMA_MIGRATION, '026_quote_recovery_session_attribution.sql');
+  assert.equal(await schemaIsReady(fakePool(complete), 'production'), true);
+  assert.equal(await schemaIsReady(fakePool(complete), 'preview'), true);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, demo_marketplace_schema_present: false }), 'production'), true);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, demo_marketplace_schema_present: false }), 'preview'), false);
+  assert.equal(await schemaIsReady(fakePool({ ...complete, migration_applied: false }), 'production'), false);
   assert.equal(await schemaIsReady(fakePool({ ...complete, booking_recovery_events_present: false })), false);
   assert.equal(await schemaIsReady(fakePool({ ...complete, quote_recovery_session_column_present: false })), false);
   assert.equal(await schemaIsReady(fakePool({ ...complete, recovery_policy_contract_present: false })), false);
-  assert.equal(await schemaIsReady(fakePool({ ...complete, demo_marketplace_schema_present: false })), false);
-  assert.equal(await schemaIsReady(fakePool()), false);
+  assert.equal(await schemaIsReady(fakePool(), 'production'), false);
 });
 
 test('readiness marker references an existing numbered migration', async () => {
