@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, CloudOff, Download, MapPin, RefreshCw, Trash2 } from 'lucide-react';
 import { useConnectionStatus } from '../../components/OfflineExperience.tsx';
@@ -35,7 +35,7 @@ export function OfflinePage() {
       const [savedListings, savedDrafts] = await Promise.all([getOfflineListings(), getTripDrafts()]);
       setListings(savedListings.sort((a, b) => b.savedAt.localeCompare(a.savedAt)));
       setDrafts(savedDrafts.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
-      setSelectedListing((current) => current || savedListings[0]?.id || '');
+      setSelectedListing((current) => savedListings.some((listing) => listing.id === current) ? current : savedListings[0]?.id || '');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not read this device’s offline space.');
     } finally {
@@ -61,7 +61,7 @@ export function OfflinePage() {
     setFeedback('Trip plan removed.');
   }
 
-  async function createDraft(event: React.FormEvent<HTMLFormElement>) {
+  async function createDraft(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
     if (checkOut <= checkIn) {
