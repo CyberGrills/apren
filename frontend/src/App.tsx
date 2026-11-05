@@ -218,7 +218,7 @@ export function App() {
             <OfflineStatusBar />
             <div className="apren-watermark" aria-hidden="true">
               {Array.from({ length: 24 }, (_, index) => (
-                <span key={index}>āprən × 7even</span>
+                <span key={index}>7EVEN · powered by āprən</span>
               ))}
             </div>
             <Suspense fallback={<main className="permission-screen" id="main-content"><Loading /></main>}>
