@@ -54,6 +54,18 @@ describe('7EVEN creator artwork backend foundation', () => {
     assert.match(routes, /status='READY_FOR_REVIEW'/);
   });
 
+
+  it('uses stable opaque keyset cursors for creator, moderation and public discovery lists', () => {
+    assert.match(routes, /function decodePageCursor/);
+    assert.match(routes, /function encodePageCursor/);
+    assert.match(routes, /Buffer\.from\(JSON\.stringify\(\{ timestamp, id \}\), 'utf8'\)\.toString\('base64url'\)/);
+    assert.match(routes, /updated_at,artwork_id\)<\(\$3::timestamptz,\$4::uuid\)/);
+    assert.match(routes, /submitted_at,artwork_id\)<\(\$2::timestamptz,\$3::uuid\)/);
+    assert.match(routes, /a\.published_at,a\.artwork_id\)<\(\$3::timestamptz,\$4::uuid\)/);
+    assert.match(routes, /nextCursor:page\.nextCursor/);
+    assert.match(routes, /INVALID_CURSOR/);
+  });
+
   it('supports creator media management and public takedown', () => {
     assert.match(routes, /media\/reorder/);
     assert.match(routes, /cover_selected/);
