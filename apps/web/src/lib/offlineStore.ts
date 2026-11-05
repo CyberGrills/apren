@@ -92,7 +92,7 @@ export async function saveOfflineListing(listing: DirectoryListing): Promise<Sav
     lastUpdatedAt: now,
   };
   await transact<IDBValidKey>(LISTINGS_STORE, 'readwrite', (store) => store.put(saved));
-  window.dispatchEvent(new Event('seven:offline-data-changed'));
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('seven:offline-data-changed'));
   return saved;
 }
 
@@ -106,7 +106,7 @@ export function getOfflineListings(): Promise<SavedOfflineListing[]> {
 
 export async function removeOfflineListing(id: string): Promise<void> {
   await transact<undefined>(LISTINGS_STORE, 'readwrite', (store) => store.delete(id));
-  window.dispatchEvent(new Event('seven:offline-data-changed'));
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('seven:offline-data-changed'));
 }
 
 export async function saveTripDraft(
@@ -121,7 +121,7 @@ export async function saveTripDraft(
     updatedAt: now,
   };
   await transact<IDBValidKey>(DRAFTS_STORE, 'readwrite', (store) => store.put(draft));
-  window.dispatchEvent(new Event('seven:offline-data-changed'));
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('seven:offline-data-changed'));
   return draft;
 }
 
@@ -131,7 +131,7 @@ export function getTripDrafts(): Promise<OfflineTripDraft[]> {
 
 export async function removeTripDraft(id: string): Promise<void> {
   await transact<undefined>(DRAFTS_STORE, 'readwrite', (store) => store.delete(id));
-  window.dispatchEvent(new Event('seven:offline-data-changed'));
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('seven:offline-data-changed'));
 }
 
 export function formatOfflineDate(value: string): string {
