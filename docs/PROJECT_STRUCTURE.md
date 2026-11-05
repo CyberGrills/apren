@@ -7,8 +7,9 @@ The repository root is **apren**. Keep the customer-facing 7EVEN application and
 ```text
 apren/
 ├── frontend/                 # 7EVEN customer, business and admin interfaces
-├── api/                      # Thin Vercel-only entry point shim\n├── backend/
-│   ├── api/                  # Thin Vercel HTTP entry point(s)
+├── api/                      # Thin Vercel-only entry point shim
+├── backend/
+│   ├── api/                  # Backend-owned HTTP handler implementation
 │   └── platform/             # Server runtime, domain services and adapters
 ├── packages/
 │   ├── contracts/            # Shared API contracts and validation
@@ -30,7 +31,8 @@ apren/
 | Area | Owner | Responsibility |
 |---|---|---|
 | `frontend/` | Frontend developer | React routes, components, styles, public assets, PWA and offline-first customer experience |
-| `backend/api/` | Backend developer | Thin HTTP/Vercel entry points only; no business logic duplicated here |
+| `api/` | Deployment boundary | Thin Vercel entry-point shim; no business logic |
+| `backend/api/` | Backend developer | Backend-owned HTTP handlers delegated to by the root shim |
 | `backend/platform/` | Backend developer | API application, authentication, inventory, booking, payments, persistence and service runtime |
 | `packages/contracts/` | Shared; coordinate changes | Types, schemas and request/response contracts consumed across frontend and backend |
 | `packages/engine/` | Shared; coordinate changes | Deterministic domain and booking rules |
@@ -55,7 +57,8 @@ Static assets remain in `frontend/public/`. Keep imported source and styles in `
 
 ## Backend layout
 
-- Root `api/` contains the thin Vercel entry-point shim required by Vercel's root-only function discovery. Keep it free of business logic.\n- `backend/api/` contains the backend-owned HTTP handler implementation. The root shim delegates to it.
+- Root `api/` contains the thin Vercel entry-point shim required by Vercel's root-only function discovery. Keep it free of business logic.
+- `backend/api/` contains the backend-owned HTTP handler implementation. The root shim delegates to it.
 - `backend/platform/src/` contains server-side application composition, domain services, persistence and provider adapters.
 - `database/migrations/` contains ordered, reviewed SQL migrations.
 - `database/operations/` contains controlled operational SQL and runbooks. Never store credentials or database dumps here.
