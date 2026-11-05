@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/backend/api/[...path]?__route=:path*"
+      "destination": "/api/[...path]?__route=:path*"
     },
     {
       "source": "/((?!api/|api$).*)",
@@ -14,9 +14,9 @@
     }
   ],
   "functions": {
-    "backend/api/[...path].ts": {
+    "api/[...path].ts": {
       "maxDuration": 30,
-      "includeFiles": "{packages/**,frontend/public/data/nigeria/**}"
+      "includeFiles": "{packages/**,frontend/public/data/nigeria/**,backend/platform/**,backend/api/**}"
     }
   }
 }
