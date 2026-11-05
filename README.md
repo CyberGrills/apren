@@ -6,6 +6,10 @@ The optimizer is deterministic and explainable, not a trained demand model. It n
 
 The active runtime consists of the 7even web app, platform API, shared contracts and hotel-booking engine. The engine is part of the workspace; no separate engine service is required.
 
+## Repository structure
+
+See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for the repository map, frontend folder boundaries and file-placement rules.
+
 ## Run locally
 
 Tested with Node.js 24.21 and PostgreSQL 18. Install from the root workspace:
