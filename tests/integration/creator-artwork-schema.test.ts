@@ -1,10 +1,42 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
+import { decodePageCursor, encodePageCursor, pageResult } from '../../backend/platform/src/creatorArtworks.ts';
 
 const migration = readFileSync(new URL('../../database/migrations/033_creator_artwork_foundation.sql', import.meta.url), 'utf8');
 const routes = readFileSync(new URL('../../backend/platform/src/creatorArtworks.ts', import.meta.url), 'utf8');
 const app = readFileSync(new URL('../../backend/platform/src/app.ts', import.meta.url), 'utf8');
+
+describe('creator artwork pagination helpers', () => {
+  it('round-trips opaque cursor timestamps and UUID tie-breakers', () => {
+    const row = { cursor_timestamp: new Date('2026-11-05T23:00:00.000Z'), cursor_id: '7a1fdf1d-87d7-4cb0-93cb-5b52a6f25f2a' };
+    const cursor = encodePageCursor(row);
+    assert.deepEqual(decodePageCursor(cursor), {
+      timestamp: '2026-11-05T23:00:00.000Z',
+      id: row.cursor_id,
+    });
+  });
+
+  it('rejects malformed and oversized cursors', () => {
+    assert.throws(() => decodePageCursor('not-a-cursor'));
+    assert.throws(() => decodePageCursor('x'.repeat(513)));
+  });
+
+  it('returns only the requested page and a cursor for the last visible row', () => {
+    const items = [
+      { value: 1, cursor_timestamp: '2026-11-05T23:00:00.000Z', cursor_id: '7a1fdf1d-87d7-4cb0-93cb-5b52a6f25f2a' },
+      { value: 2, cursor_timestamp: '2026-11-04T23:00:00.000Z', cursor_id: '7a1fdf1d-87d7-4cb0-93cb-5b52a6f25f2b' },
+      { value: 3, cursor_timestamp: '2026-11-03T23:00:00.000Z', cursor_id: '7a1fdf1d-87d7-4cb0-93cb-5b52a6f25f2c' },
+    ];
+    const result = pageResult(items, 2);
+    assert.deepEqual(result.items.map(item => item.value), [1, 2]);
+    assert.deepEqual(decodePageCursor(result.nextCursor), {
+      timestamp: '2026-11-04T23:00:00.000Z',
+      id: items[1]!.cursor_id,
+    });
+    assert.equal(pageResult(items.slice(0, 2), 2).nextCursor, null);
+  });
+});
 
 describe('7EVEN creator artwork backend foundation', () => {
   it('creates creator, artwork and media records with bounded image formats and private storage', () => {
