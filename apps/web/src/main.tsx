@@ -18,6 +18,7 @@ import './styles/workbench.css';
 import './styles/brand-intro.css';
 import './styles/seasonal-brand-assets.css';
 import './styles/authentication.css';
+import './styles/offline.css';
 
 document.documentElement.dataset.season = seasonAt(new Date());
 createRoot(document.getElementById('root')!).render(
