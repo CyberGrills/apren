@@ -183,15 +183,15 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
   app.put('/api/creator/profile', async (req, res) => {
     const user = actor(res); const input = profileInput.parse(req.body);
     const result = await mutate(pool, req, user, async (db, a) => {
-      const old = await one(db, 'SELECT creator_id,profile_status FROM seven.creator_profiles WHERE user_id=$1', [a.id]);
+      const old = await one(db, 'SELECT creator_id,profile_status,slug FROM seven.creator_profiles WHERE user_id=$1', [a.id]);
       if (old && !['DRAFT','CHANGES_REQUESTED','VERIFIED'].includes(String(old.profile_status)))
         return fail(409, 'PROFILE_LOCKED', 'This profile is currently under review.');
       const creatorId = old?.creator_id ?? randomUUID();
-      const profileSlug = old ? undefined : makeSlug(input.displayName, creatorId);
+      const profileSlug = old?.slug ?? makeSlug(input.displayName, creatorId);
       const status = old?.profile_status === 'VERIFIED' ? 'PENDING_REVIEW' : old?.profile_status ?? 'DRAFT';
       const p = await one(db,
         "INSERT INTO seven.creator_profiles(creator_id,user_id,slug,display_name,city,region,country_code,disciplines,biography,portfolio_urls,profile_status,submitted_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,CASE WHEN $11='PENDING_REVIEW' THEN now() ELSE NULL END) ON CONFLICT(user_id) DO UPDATE SET display_name=EXCLUDED.display_name,city=EXCLUDED.city,region=EXCLUDED.region,country_code=EXCLUDED.country_code,disciplines=EXCLUDED.disciplines,biography=EXCLUDED.biography,portfolio_urls=EXCLUDED.portfolio_urls,profile_status=EXCLUDED.profile_status,submitted_at=EXCLUDED.submitted_at,updated_at=now() RETURNING creator_id,slug,display_name,city,region,country_code,disciplines,biography,portfolio_urls,profile_status,updated_at",
-        [creatorId,a.id,profileSlug ?? null,input.displayName,input.location.city,input.location.region ?? null,input.location.countryCode,input.disciplines,input.biography,input.portfolioUrls,status],
+        [creatorId,a.id,profileSlug,input.displayName,input.location.city,input.location.region ?? null,input.location.countryCode,input.disciplines,input.biography,input.portfolioUrls,status],
       );
       await audit(db,a,'creator_profile.saved',creatorId,{status});
       return { creatorId:p!.creator_id, slug:p!.slug, displayName:p!.display_name,
@@ -251,6 +251,7 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
       const art=await ownedArtwork(db,a,id,true); const count=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_media WHERE artwork_id=$1 AND status <> 'REMOVED'",[id]);
       if(Number(count?.total??0)>=10) return fail(429,'MEDIA_LIMIT_REACHED','An artwork can contain up to 10 images.');
       const mediaId=randomUUID(); const ext=input.filename.toLowerCase().split('.').pop()||'img';
+      if(input.isCover) await db.query('UPDATE seven.creator_artwork_media SET is_cover=false WHERE artwork_id=$1',[id]);
       const path=String(art.creator_id)+'/'+id+'/'+mediaId+'.'+(/^[a-z0-9]{2,5}$/.test(ext)?ext:'img');
       await db.query("INSERT INTO seven.creator_artwork_media(media_id,artwork_id,uploaded_by,storage_path,original_filename,mime_type,byte_size,caption,accessibility_text,upload_expires_at,is_cover) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,now()+interval '15 minutes',$10)",[mediaId,id,a.id,path,input.filename,input.mimeType,input.byteSize,input.caption,input.accessibilityText,input.isCover]);
       const signed=await storageRequest('/object/upload/sign/'+BUCKET+'/'+encodedPath(path),'POST',{upsert:false});
@@ -329,6 +330,7 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
       }
       const art=await one(db,'SELECT a.*,c.profile_status,c.user_id AS creator_user_id FROM seven.creator_artworks a JOIN seven.creator_profiles c USING(creator_id) WHERE a.artwork_id=$1 FOR UPDATE',[id]); if(!art||art.status!=='PENDING_REVIEW') return fail(409,'SUBMISSION_NOT_PENDING','Artwork is no longer awaiting review.');
       if(art.creator_user_id===a.id) return fail(403,'SELF_APPROVAL_FORBIDDEN','Creators cannot approve their own submissions.');
+      if(!['APPROVED','CHANGES_REQUESTED','REJECTED'].includes(input.decision)) return fail(422,'INVALID_REVIEW_DECISION','Use APPROVED, CHANGES_REQUESTED or REJECTED for artwork.');
       if(input.decision==='APPROVED'){
         if(art.profile_status!=='VERIFIED') return fail(409,'CREATOR_NOT_VERIFIED','Creator profile must be verified before publication.');
         const rights=art.rights as Record<string,unknown>; if(rights.communityPermission==='PENDING'||rights.communityPermission==='NOT_SURE') return fail(409,'PERMISSION_REVIEW_REQUIRED','Community permissions must be resolved before publication.');
