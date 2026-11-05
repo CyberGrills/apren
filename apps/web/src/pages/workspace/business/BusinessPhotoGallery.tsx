@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ImagePlus, LoaderCircle, RefreshCw, Star, Trash2, Upload } from 'lucide-react';
-import { useFeedback } from '../../components/Feedback.tsx';
-import { ErrorNotice, Loading } from '../../components/ui.tsx';
-import { useApi } from '../../hooks/useApi.ts';
-import { businessMediaApi, businessMediaRoutes, type BusinessMediaItem, type BusinessMediaStatus, type BusinessMediaUploadIntent } from '../../lib/businessMediaApi.ts';
+import { useFeedback } from '../../../components/Feedback.tsx';
+import { ErrorNotice, Loading } from '../../../components/ui.tsx';
+import { useApi } from '../../../hooks/useApi.ts';
+import { businessMediaApi, businessMediaRoutes, type BusinessMediaItem, type BusinessMediaStatus, type BusinessMediaUploadIntent } from '../../../lib/businessMediaApi.ts';
 
 type MediaStatus = BusinessMediaStatus;
 type BusinessMedia = BusinessMediaItem;

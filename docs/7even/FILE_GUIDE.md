@@ -57,7 +57,7 @@ This table began as a 152-file snapshot of active source, configuration, tests, 
 | `apps/web/src/pages/workspace/AdminPage.tsx` | Platform overview, business approval/suspension, subaccount mapping, payment review, policy versions and audit. |
 | `apps/web/src/pages/workspace/BusinessPage.tsx` | Business overview and reservations, offering terms/availability, demand, rewards, team and settings workflows. |
 | `apps/web/src/pages/workspace/OperationsPage.tsx` | Admin operational queue counts, reception source status and merchant reward moderation. |
-| `apps/web/src/pages/workspace/PaymentNotesDialog.tsx` | Reads or records staff external-payment notes, explicitly separate from provider-confirmed payment and points eligibility. |
+| `apps/web/src/pages/workspace/reception/PaymentNotesDialog.tsx` | Reads or records staff external-payment notes, explicitly separate from provider-confirmed payment and points eligibility. |
 | `apps/web/src/pages/workspace/ReceptionPage.tsx` | Reception arrivals, walk-ins, operational actions, queued sync/conflict review, payment notes and authorized benefit consumption. |
 | `apps/web/src/pages/workspace/VenuesPage.tsx` | Business venue creation, revision-aware updates and archive controls. |
 | `apps/web/src/pages/workspace/shared.tsx` | Shared workspace reservation table/action dialogs, metrics and current-state presentation. |
@@ -189,7 +189,7 @@ The older `final-*` and `seasonal-*` evidence rows above describe their recorded
 | `apps/web/src/lib/paymentWallet.ts` | Exact USDC display, Base/account checks, message signing and gas review before wallet-controlled transfers; no transport retry for uncertain sends. |
 | `apps/web/src/lib/paymentWallet.test.ts` | Exact token formatting, network/payer boundaries and structured wallet rejection classification. |
 | `apps/web/src/pages/customer/CryptoCheckoutPage.tsx` | Frozen quote, business destination, indicative valuation, ETH-fee review, wallet proof, finality refresh and original-hash recovery. |
-| `apps/web/src/pages/workspace/BusinessPayments.tsx` | Provider-account status, business-wallet ownership submission and crypto commission owed. |
+| `apps/web/src/pages/workspace/business/BusinessPayments.tsx` | Provider-account status, business-wallet ownership submission and crypto commission owed. |
 | `apps/web/src/pages/workspace/CryptoRefundDialog.tsx` | Merchant-controlled token return, fee review, original-payer destination, hash/finality checks and explicit mock completion. |
 | `database/migrations/009_multi_provider_payments.sql` | Provider/method/mode lookups, historical route/journal backfill, provider-scoped uniqueness, account revisions and immutable crypto financial evidence. |
 | `docs/7even/MULTI_PROVIDER_PAYMENTS.md` | Agreed routing, direct-wallet commission model, invariants, interfaces, external sources and release limits. |
