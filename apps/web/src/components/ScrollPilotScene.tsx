@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSevenLanguage } from '../lib/sevenLanguage.ts';
-import './scroll-pilot-scene.css';
+import '../styles/scroll-pilot-scene.css';
 
 const PILOT_VOICE_TRACKS = {
   en: '/audio/virtual-pilot/primary-en-ng.mp3',

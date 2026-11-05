@@ -11,7 +11,7 @@ import { MapPin } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../lib/api.ts';
 import { ErrorNotice } from './ui.tsx';
-import './location-fields.css';
+import '../styles/location-fields.css';
 
 const stateCache = new Map<string, NigeriaLocation[]>();
 

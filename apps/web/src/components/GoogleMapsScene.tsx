@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import './google-maps-scene.css';
+import '../styles/google-maps-scene.css';
 
 type GoogleMapsApi = {
   maps: {
