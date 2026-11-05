@@ -14,6 +14,7 @@ import { PublicFooter, PublicHeader } from './pages/public/PublicShell.tsx';
 import { ErrorNotice, Loading, PageHeader } from './components/ui.tsx';
 import { WorkspaceShell } from './components/WorkspaceShell.tsx';
 import { OfflineStatusBar } from './components/OfflineExperience.tsx';
+import { OfflinePage } from './pages/public/OfflinePage.tsx';
 import { SessionProvider, useSession } from './context/SessionContext.tsx';
 import { loginPathForWorkspace } from './lib/workspaceNavigation.ts';
 const HelpPage = lazy(() => import('./pages/account/HelpPage.tsx').then((module) => ({ default: module.HelpPage })));
@@ -28,7 +29,6 @@ const AuthPage = lazy(() => import('./pages/public/AuthPage.tsx').then((module) 
 const BusinessApplicationPage = lazy(() => import('./pages/public/BusinessApplicationPage.tsx').then((module) => ({ default: module.BusinessApplicationPage })));
 const DirectoryPage = lazy(() => import('./pages/public/DirectoryPage.tsx').then((module) => ({ default: module.DirectoryPage })));
 const ExplorePage = lazy(() => import('./pages/public/ExplorePage.tsx').then((module) => ({ default: module.ExplorePage })));
-const OfflinePage = lazy(() => import('./pages/public/OfflinePage.tsx').then((module) => ({ default: module.OfflinePage })));
 const LandingPage = lazy(() => import('./pages/public/LandingPage.tsx').then((module) => ({ default: module.LandingPage })));
 const OfferingPage = lazy(() => import('./pages/public/OfferingPage.tsx').then((module) => ({ default: module.OfferingPage })));
 const AdminInventoryPage = lazy(() => import('./pages/workspace/AdminInventoryPage.tsx').then((module) => ({ default: module.AdminInventoryPage })));
