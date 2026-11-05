@@ -141,6 +141,8 @@ async function mutate<T>(pool: Pool, req: Request, actor: SessionUser, work: Wor
 async function creatorFor(db: PoolClient, actor: SessionUser, editable = false) {
   const creator = await one(db, 'SELECT * FROM seven.creator_profiles WHERE user_id=$1', [actor.id]);
   if (!creator) return fail(404, 'CREATOR_PROFILE_NOT_FOUND', 'Create your creator profile first.');
+  if (['REJECTED', 'SUSPENDED'].includes(String(creator.profile_status)))
+    return fail(403, 'CREATOR_ACCOUNT_RESTRICTED', 'This creator profile cannot submit or edit artwork.');
   if (editable && !['DRAFT', 'CHANGES_REQUESTED'].includes(String(creator.profile_status)))
     return fail(409, 'CREATOR_PROFILE_LOCKED', 'This creator profile is under review or verified.');
   return creator;
@@ -201,7 +203,7 @@ async function detail(db: PoolClient, artworkId: string, privateView = true) {
   const projectedMedia = await Promise.all(media.map(async m => {
     let url: string | undefined;
     if (!privateView && m.status === 'READY_FOR_REVIEW') {
-      const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(m.storage_path)), 'POST', { expiresIn: 3600 });
+      const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(m.storage_path)), 'POST', { expiresIn: 300 });
       const config = storageConfig();
       const signedUrl = typeof signed.signedURL === 'string' ? signed.signedURL : undefined;
       if (signedUrl) url = signedUrl.startsWith('http') ? signedUrl : config.baseUrl + '/storage/v1' + signedUrl;
@@ -400,7 +402,7 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
       if(art.creator_user_id===a.id) return fail(403,'SELF_APPROVAL_FORBIDDEN','Creators cannot approve their own submissions.');
       if(!['APPROVED','CHANGES_REQUESTED','REJECTED'].includes(input.decision)) return fail(422,'INVALID_REVIEW_DECISION','Use APPROVED, CHANGES_REQUESTED or REJECTED for artwork.');
       if(input.decision==='APPROVED'){
-        if(art.profile_status!=='VERIFIED') return fail(409,'CREATOR_NOT_VERIFIED','Creator profile must be verified before publication.');
+        if(art.profile_status!=='VERIFIED') return fail(409,'CREATOR_NOT_VERIFIED','Creator profile must be verified before publication.'); if(art.confirm_public_visibility!==true) return fail(409,'PUBLIC_VISIBILITY_CONFIRMATION_REQUIRED','The creator must explicitly confirm that approval will make this artwork public.');
         const rights=art.rights as Record<string,unknown>; if(rights.basis!=='ORIGINAL') return fail(409,'RIGHTS_EVIDENCE_REQUIRED','Licensed or representative works cannot be published until secure rights evidence review is implemented.'); if(rights.communityPermission!=='NOT_REQUIRED') return fail(409,'PERMISSION_EVIDENCE_REQUIRED','Community-owned or community-permission works require a documented evidence review before publication.'); const notice=art.content_notice as Record<string,unknown>; if(notice.containsSensitiveCulturalMaterial===true||(Array.isArray(notice.publicDisplayRestrictions)&&notice.publicDisplayRestrictions.length>0)) return fail(409,'CULTURAL_REVIEW_REQUIRED','Sensitive or restricted cultural material requires a dedicated authorization review before publication.');
         const media=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_media WHERE artwork_id=$1 AND status='READY_FOR_REVIEW'",[id]); if(!Number(media?.total)) return fail(409,'ARTWORK_MEDIA_REQUIRED','Completed artwork media is required for publication.');
         const now=new Date().toISOString(); const version=Number(art.review_version)+1;
