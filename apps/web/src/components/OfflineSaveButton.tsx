@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookmarkCheck, Download } from 'lucide-react';
-import { getOfflineListing, saveOfflineListing } from '../../lib/offlineStore.ts';
-import type { DirectoryListing } from '../../lib/nigeriaDirectory.ts';
+import { getOfflineListing, saveOfflineListing } from '../lib/offlineStore.ts';
+import type { DirectoryListing } from '../lib/nigeriaDirectory.ts';
 
 export function OfflineSaveButton({ listing }: { listing: DirectoryListing }) {
   const [saved, setSaved] = useState(false);
@@ -30,7 +30,7 @@ export function OfflineSaveButton({ listing }: { listing: DirectoryListing }) {
     setMessage('');
     try {
       if (saved) {
-        const { removeOfflineListing } = await import('../../lib/offlineStore.ts');
+        const { removeOfflineListing } = await import('../lib/offlineStore.ts');
         await removeOfflineListing(listing.id);
         setSaved(false);
       } else {
