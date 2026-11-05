@@ -67,3 +67,17 @@ test('customer-facing homepage never advertises the fictional demo catalogue', a
 
   assert.doesNotMatch(landingPage, /Browse demo properties|demo-catalog-entry|\/demo\/hotels/);
 });
+
+
+test('production routes and workspaces keep the demo catalogue out of customer and operator journeys', async () => {
+  const [app, adminPage, businessPage] = await Promise.all([
+    readFile(new URL('../../apps/web/src/App.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../apps/web/src/pages/workspace/AdminPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../apps/web/src/pages/workspace/BusinessPage.tsx', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(app, /import\\.meta\\.env\\.PROD/);
+  assert.match(app, /Navigate to="\\/explore\\?kind=STAY"/);
+  assert.match(adminPage, /!import\\.meta\\.env\\.PROD && \\(/);
+  assert.match(businessPage, /!import\\.meta\\.env\\.PROD && \\(/);
+});
