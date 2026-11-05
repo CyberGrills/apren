@@ -22,7 +22,7 @@ import {
 import { useApi } from '../../hooks/useApi.ts';
 import { ApiError, api } from '../../lib/api.ts';
 import { CryptoRefundDialog } from './CryptoRefundDialog.tsx';
-import { AdminWorkspaceOverview } from './AdminWorkspaceOverview.tsx';
+import { AdminWorkspaceOverview } from './admin/AdminWorkspaceOverview.tsx';
 import { AdminRecords, AdminReservationsTable } from './AdminRecords.tsx';
 import {
   ActivityList,

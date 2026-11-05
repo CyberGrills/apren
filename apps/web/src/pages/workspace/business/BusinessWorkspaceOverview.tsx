@@ -1,17 +1,17 @@
 import type { BusinessOverview } from '@7even/contracts';
 import { ArrowUpRight, Check, ChevronRight, ClipboardList, Clock3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useApi } from '../../hooks/useApi.ts';
-import { Metric, PageHeader } from '../../components/ui.tsx';
-import { nextBusinessTask } from '../../lib/listingReadiness.ts';
-import { bookingRecoveryMetrics, type BookingRecoveryCounts } from '../../lib/bookingRecoveryMetrics.ts';
-import { ListingChecks, ReadinessRefresh } from './ListingReadiness.tsx';
+import { useApi } from '../../../hooks/useApi.ts';
+import { Metric, PageHeader } from '../../../components/ui.tsx';
+import { nextBusinessTask } from '../../../lib/listingReadiness.ts';
+import { bookingRecoveryMetrics, type BookingRecoveryCounts } from '../../../lib/bookingRecoveryMetrics.ts';
+import { ListingChecks, ReadinessRefresh } from '../ListingReadiness.tsx';
 import {
   ActivityList,
   MetricsStrip,
   type ReservationCommand,
   ReservationTable,
-} from './shared.tsx';
+} from '../shared.tsx';
 
 function BookingRecoveryPanel() {
   const { data, loading, error, reload } = useApi<BookingRecoveryCounts & {

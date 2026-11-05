@@ -1,8 +1,8 @@
 import type { AdminOverview, Business } from '@7even/contracts';
 import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { AdminInventorySummary } from './ListingReadiness.tsx';
-import { ActivityList, dateLabel, MetricsStrip } from './shared.tsx';
+import { AdminInventorySummary } from '../ListingReadiness.tsx';
+import { ActivityList, dateLabel, MetricsStrip } from '../shared.tsx';
 
 export function AdminWorkspaceOverview({
   data,

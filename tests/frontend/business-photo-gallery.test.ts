@@ -3,7 +3,7 @@ import testCase from 'node:test';
 import { readFileSync } from 'node:fs';
 
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
-const ownerGallery = source('../../apps/web/src/pages/workspace/BusinessPhotoGallery.tsx');
+const ownerGallery = source('../../apps/web/src/pages/workspace/business/BusinessPhotoGallery.tsx');
 const adminGallery = source('../../apps/web/src/pages/workspace/AdminBusinessMedia.tsx');
 const app = source('../../apps/web/src/App.tsx');
 const navigation = source('../../apps/web/src/components/WorkspaceShell.tsx');

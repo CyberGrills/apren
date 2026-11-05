@@ -1,10 +1,10 @@
 import type { BusinessPaymentAccount } from '@7even/contracts';
 import { Wallet } from 'lucide-react';
 import { useState } from 'react';
-import { ErrorNotice, Loading, Money, StatusBadge, useFeedback } from '../../components/ui.tsx';
-import { useApi } from '../../hooks/useApi.ts';
-import { api } from '../../lib/api.ts';
-import { connectPaymentWallet, signWalletMessage } from '../../lib/paymentWallet.ts';
+import { ErrorNotice, Loading, Money, StatusBadge, useFeedback } from '../../../components/ui.tsx';
+import { useApi } from '../../../hooks/useApi.ts';
+import { api } from '../../../lib/api.ts';
+import { connectPaymentWallet, signWalletMessage } from '../../../lib/paymentWallet.ts';
 
 export function BusinessPayments() {
   const { data, loading, error, reload } = useApi<{
