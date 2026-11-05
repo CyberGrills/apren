@@ -77,7 +77,7 @@ type PublicArtworkListRow = Record<string, unknown> & {
   creator_slug: string; display_name: string; city: string; region: string | null; country_code: string;
 };
 type PageCursor = { timestamp: string; id: string };
-function decodePageCursor(value: unknown): PageCursor | null {
+export function decodePageCursor(value: unknown): PageCursor | null {
   if (value === undefined) return null;
   if (typeof value !== 'string' || value.length > 512)
     return fail(422, 'INVALID_CURSOR', 'Pagination cursor is invalid.');
@@ -89,13 +89,13 @@ function decodePageCursor(value: unknown): PageCursor | null {
     return fail(422, 'INVALID_CURSOR', 'Pagination cursor is invalid or expired.');
   }
 }
-function encodePageCursor(row: { cursor_timestamp: Date | string; cursor_id: string }): string {
+export function encodePageCursor(row: { cursor_timestamp: Date | string; cursor_id: string }): string {
   const timestamp = row.cursor_timestamp instanceof Date
     ? row.cursor_timestamp.toISOString()
     : new Date(row.cursor_timestamp).toISOString();
   return Buffer.from(JSON.stringify({ timestamp, id: row.cursor_id }), 'utf8').toString('base64url');
 }
-function pageResult<T extends { cursor_timestamp: Date | string; cursor_id: string }>(items: T[], limit: number) {
+export function pageResult<T extends { cursor_timestamp: Date | string; cursor_id: string }>(items: T[], limit: number) {
   const hasMore = items.length > limit;
   const page = items.slice(0, limit);
   return {
