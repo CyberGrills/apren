@@ -61,7 +61,7 @@ export default async function handler(req: HandlerRequest, res: HandlerResponse)
     let pool: ReturnType<typeof createPool> | undefined;
     try {
       pool = createPool();
-      if (!(await schemaIsReady(pool))) {
+      if (!(await schemaIsReady(pool, environment))) {
         return res.status(503).json({
           error: { code: "SCHEMA_NOT_READY", message: "Database schema migrations are incomplete." },
         });
