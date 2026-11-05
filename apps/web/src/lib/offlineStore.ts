@@ -65,11 +65,24 @@ function transact<T>(
   return openDatabase().then((database) => new Promise<T>((resolve, reject) => {
     const transaction = database.transaction(storeName, mode);
     const request = action(transaction.objectStore(storeName));
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('Offline storage request failed.'));
-    transaction.onabort = () => reject(transaction.error ?? new Error('Offline storage transaction was interrupted.'));
-    transaction.oncomplete = () => database.close();
-    transaction.onerror = () => reject(transaction.error ?? new Error('Offline storage transaction failed.'));
+    let result: T;
+    request.onsuccess = () => { result = request.result; };
+    request.onerror = () => {
+      database.close();
+      reject(request.error ?? new Error('Offline storage request failed.'));
+    };
+    transaction.oncomplete = () => {
+      database.close();
+      resolve(result);
+    };
+    transaction.onabort = () => {
+      database.close();
+      reject(transaction.error ?? new Error('Offline storage transaction was interrupted.'));
+    };
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error ?? new Error('Offline storage transaction failed.'));
+    };
   }));
 }
 
