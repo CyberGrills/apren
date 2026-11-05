@@ -55,6 +55,11 @@ describe('7EVEN creator artwork backend foundation', () => {
   });
 
 
+  it('prevents unreviewed edits from demoting or silently changing verified creator profiles', () => {
+    assert.match(routes, /Verified profiles are locked against direct edits/);
+    assert.match(routes, /!\['DRAFT','CHANGES_REQUESTED'\]\.includes\(String\(old\.profile_status\)\)/);
+  });
+
   it('uses stable opaque keyset cursors for creator, moderation and public discovery lists', () => {
     assert.match(routes, /function decodePageCursor/);
     assert.match(routes, /function encodePageCursor/);
