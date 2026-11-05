@@ -76,8 +76,8 @@ test('production routes and workspaces keep the demo catalogue out of customer a
     readFile(new URL('../../apps/web/src/pages/workspace/BusinessPage.tsx', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(app, /import\\.meta\\.env\\.PROD/);
-  assert.match(app, /Navigate to="\\/explore\\?kind=STAY"/);
-  assert.match(adminPage, /!import\\.meta\\.env\\.PROD && \\(/);
-  assert.match(businessPage, /!import\\.meta\\.env\\.PROD && \\(/);
+  assert.match(app, /import\.meta\.env\.PROD/);
+  assert.match(app, /Navigate to="\/explore\?kind=STAY"/);
+  assert.match(adminPage, /!import\.meta\.env\.PROD && \(/);
+  assert.match(businessPage, /!import\.meta\.env\.PROD && \(/);
 });
