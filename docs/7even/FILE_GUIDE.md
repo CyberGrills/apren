@@ -229,3 +229,15 @@ The current tracked source tree is the 7even rebuild. Retired prototype source f
 ## How to read the code
 
 Start with [architecture](ARCHITECTURE.md), the hotel-booking engine guide and API contract, then read shared contracts and the pure engine. Follow a request from `apps/web/src/lib/api.ts` through `app.ts`, its domain module, PostgreSQL transaction/journal helpers and worker. Read the matching test and its stated limits. This shows where presentation ends, server authority begins and durable effects commit.
+
+
+## Current organization updates
+
+| Area | Current location | Purpose |
+|---|---|---|
+| Shared frontend styles | `apps/web/src/styles/` | Global and feature-scoped CSS, including Google Maps, location fields and scroll pilot stylesheets. |
+| Admin workspace support | `apps/web/src/pages/workspace/admin/` | Admin-only workspace overview components. |
+| Business workspace support | `apps/web/src/pages/workspace/business/` | Business payments, photo gallery, business overview and listing receipt components. |
+| Reception workspace support | `apps/web/src/pages/workspace/reception/` | Reception-specific payment notes UI. |
+| Developer/release utilities | `scripts/` | Runnable developer, build, source-manifest and production smoke utilities. |
+| Tooling tests | `tests/tooling/` | Tests that verify developer/release tooling, separate from executable scripts. |

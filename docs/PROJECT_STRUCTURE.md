@@ -12,7 +12,7 @@ This repository is a workspace monorepo. Keep the existing runtime boundaries st
 | `packages/engine/` | Booking and decision logic | Deterministic, reusable domain rules and engine tests |
 | `database/migrations/` | Database evolution | Ordered, reviewed SQL migrations |
 | `database/operations/` | Controlled database operations | Explicit operational SQL and runbooks; never credentials or dumps |
-| `tests/` | Cross-workspace verification | Frontend, integration and fixture tests |
+| `tests/` | Cross-workspace verification | Frontend, integration, tooling and fixture tests |
 | `scripts/` | Developer and release tooling | Build, start, smoke-test and maintenance scripts |
 | `docs/` | Product and engineering documentation | Architecture, API contracts, operations, security, onboarding and project guides |
 | `design/` | Design source and review evidence | Explorations, prototypes, screenshots and visual QA |
@@ -40,7 +40,7 @@ A component used by only one page should normally stay near that page. Promote i
 ## File placement rules
 
 1. Keep each file with the workspace that owns and executes it. Do not place frontend code in `services/` or server code in `apps/web/`.
-2. Keep tests beside the module when they are module-specific; use `tests/frontend/` or `tests/integration/` for cross-module behaviour.
+2. Keep tests beside the module when they are module-specific; use `tests/frontend/`, `tests/integration/` or `tests/tooling/` for cross-module or developer-tooling behaviour.
 3. Put user-facing product specifications and current engineering guidance in `docs/`. Put dated research notes in `learn/`.
 4. Put prototypes, design references and visual verification captures in `design/`; do not import these files into production bundles.
 5. Keep static browser assets in `apps/web/public/`; keep source code and imported styles in `apps/web/src/`.
