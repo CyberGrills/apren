@@ -204,7 +204,9 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
         <>
           {tab === 'overview' && (
             <>
-              <section className="panel demo-dashboard-promo"><div><span className="public-eyebrow">Demo catalogue oversight</span><h2>100 fictional hotel and apartment profiles</h2><p>Inspect the guest-facing demonstration catalogue separately from verified businesses and live inventory.</p></div><Link className="btn btn-secondary" to="/demo/hotels">Open demo catalogue</Link></section>
+              {!import.meta.env.PROD && (
+                <section className="panel demo-dashboard-promo"><div><span className="public-eyebrow">Demo catalogue oversight</span><h2>100 fictional hotel and apartment profiles</h2><p>Inspect the guest-facing demonstration catalogue separately from verified businesses and live inventory.</p></div><Link className="btn btn-secondary" to="/demo/hotels">Open demo catalogue</Link></section>
+              )}
               <AdminWorkspaceOverview
               data={data}
               onReview={(business) => setEditor({ kind: 'status', business, status: 'APPROVED' })}
