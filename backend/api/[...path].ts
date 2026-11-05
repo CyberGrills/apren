@@ -1,7 +1,7 @@
-import { createApp } from "../services/platform/src/app.ts";
-import { createPool } from "../services/platform/src/db.ts";
-import { paymentReadiness } from "../services/platform/src/providerRegistry.ts";
-import { schemaIsReady } from "../services/platform/src/schemaReadiness.ts";
+import { createApp } from "../platform/src/app.ts";
+import { createPool } from "../platform/src/db.ts";
+import { paymentReadiness } from "../platform/src/providerRegistry.ts";
+import { schemaIsReady } from "../platform/src/schemaReadiness.ts";
 
 const vercelEnvironment = process.env.VERCEL_ENV;
 const environment =
