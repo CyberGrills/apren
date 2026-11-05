@@ -149,19 +149,33 @@ async function detail(db: PoolClient, artworkId: string, privateView = true) {
     "SELECT media_id,original_filename,mime_type,byte_size,caption,accessibility_text,is_cover,status,sort_order,storage_path FROM seven.creator_artwork_media WHERE artwork_id=$1 AND status <> 'REMOVED' ORDER BY sort_order,created_at",
     [artworkId],
   );
-  return {
-    artworkId: art.artwork_id, creatorId: art.creator_id, title: art.title, slug: art.slug,
-    discipline: art.discipline, description: art.description, creationYear: art.creation_year,
-    origin: art.origin, culturalContext: art.cultural_context, tags: art.tags,
-    accessibilityText: art.accessibility_text, rights: art.rights, contentNotice: art.content_notice,
-    media: media.map(m => ({
+  const rights = art.rights as Record<string, unknown>;
+  const notice = art.content_notice as Record<string, unknown>;
+  const projectedMedia = await Promise.all(media.map(async m => {
+    let url: string | undefined;
+    if (!privateView && m.status === 'READY_FOR_REVIEW') {
+      const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(m.storage_path)), 'POST', { expiresIn: 3600 });
+      const config = storageConfig();
+      const signedUrl = typeof signed.signedURL === 'string' ? signed.signedURL : undefined;
+      if (signedUrl) url = signedUrl.startsWith('http') ? signedUrl : config.baseUrl + '/storage/v1' + signedUrl;
+    }
+    return {
       mediaId: m.media_id, filename: m.original_filename, mimeType: m.mime_type,
       byteSize: Number(m.byte_size), caption: m.caption, accessibilityText: m.accessibility_text,
       isCover: m.is_cover, status: m.status, sortOrder: m.sort_order,
-      ...(privateView ? { storagePath: m.storage_path } : {}),
-    })),
-    status: art.status, ...(privateView ? { reviewFeedback: art.review_feedback } : {}),
-    submittedAt: art.submitted_at, reviewedAt: art.reviewed_at, publishedAt: art.published_at,
+      ...(privateView ? { storagePath: m.storage_path } : { url }),
+    };
+  }));
+  return {
+    artworkId: art.artwork_id, creatorId: privateView ? art.creator_id : undefined, title: art.title, slug: art.slug,
+    discipline: art.discipline, description: art.description, creationYear: art.creation_year,
+    origin: art.origin, culturalContext: art.cultural_context, tags: art.tags,
+    accessibilityText: art.accessibility_text,
+    rights: privateView ? art.rights : { attributionText: rights.attributionText, displayLicense: rights.displayLicense },
+    contentNotice: privateView ? art.content_notice : { containsSensitiveCulturalMaterial: Boolean(notice.containsSensitiveCulturalMaterial) },
+    media: projectedMedia,
+    status: privateView ? art.status : undefined, ...(privateView ? { reviewFeedback: art.review_feedback } : {}),
+    submittedAt: privateView ? art.submitted_at : undefined, reviewedAt: privateView ? art.reviewed_at : undefined, publishedAt: art.published_at,
     creator: { slug: art.creator_slug, displayName: art.creator_name,
       location: { city: art.city, region: art.region, countryCode: art.country_code } },
   };
@@ -272,7 +286,7 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
       if(!media||!media.upload_expires_at||new Date(media.upload_expires_at).getTime()<Date.now()) return fail(409,'UPLOAD_EXPIRED','This upload has expired. Start a new upload.');
       const cfg=storageConfig(); const path=encodedPath(String(media.storage_path));
       const head=await fetch(cfg.baseUrl+'/storage/v1/object/'+BUCKET+'/'+path,{method:'HEAD',headers:{apikey:cfg.secret,Authorization:'Bearer '+cfg.secret}});
-      const size=Number(head.headers.get('content-length')); const type=(head.headers.get('content-type')||'').split(';')[0];
+      const size=Number(head.headers.get('content-length')); const type=(head.headers.get('content-type')||'').split(';')[0] ?? '';
       if(!head.ok||!Number.isSafeInteger(size)||size!==Number(media.byte_size)||type!==media.mime_type) return fail(422,'IMAGE_METADATA_MISMATCH','Uploaded image metadata did not match the declared file.');
       const sample=await fetch(cfg.baseUrl+'/storage/v1/object/'+BUCKET+'/'+path,{headers:{apikey:cfg.secret,Authorization:'Bearer '+cfg.secret,Range:'bytes=0-31'}});
       if(!sample.ok||!validSignature(type,new Uint8Array(await sample.arrayBuffer()))) return fail(422,'INVALID_IMAGE_CONTENT','Uploaded file content is not a valid accepted image.');
