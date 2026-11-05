@@ -1,0 +1,32 @@
+name: 7even scheduled recovery worker
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: seven-recovery-worker
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    name: Run bounded production recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Invoke protected production worker
+        env:
+          SEVEN_CRON_SECRET: ${{ secrets.SEVEN_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SEVEN_CRON_SECRET" ]; then
+            echo "SEVEN_CRON_SECRET is not configured in GitHub Actions secrets." >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --max-time 280 \
+            -H "Authorization: Bearer ${SEVEN_CRON_SECRET}" \
+            -H "Accept: application/json" \
+            https://apren.vercel.app/api/cron/recovery
