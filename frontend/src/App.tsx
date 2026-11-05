@@ -29,6 +29,7 @@ const AuthPage = lazy(() => import('./pages/public/AuthPage.tsx').then((module) 
 const BusinessApplicationPage = lazy(() => import('./pages/public/BusinessApplicationPage.tsx').then((module) => ({ default: module.BusinessApplicationPage })));
 const DirectoryPage = lazy(() => import('./pages/public/DirectoryPage.tsx').then((module) => ({ default: module.DirectoryPage })));
 const ExplorePage = lazy(() => import('./pages/public/ExplorePage.tsx').then((module) => ({ default: module.ExplorePage })));
+const ArtCulturePage = lazy(() => import('./pages/public/ArtCulturePage.tsx').then((module) => ({ default: module.ArtCulturePage })));
 const LandingPage = lazy(() => import('./pages/public/LandingPage.tsx').then((module) => ({ default: module.LandingPage })));
 const OfferingPage = lazy(() => import('./pages/public/OfferingPage.tsx').then((module) => ({ default: module.OfferingPage })));
 const AdminInventoryPage = lazy(() => import('./pages/workspace/AdminInventoryPage.tsx').then((module) => ({ default: module.AdminInventoryPage })));
@@ -240,6 +241,7 @@ export function App() {
               <Route path="/install" element={<InstallAppPage />} />
               <Route path="/offline" element={<OfflinePage />} />
               <Route path="/explore" element={<ExplorePage />} />
+              <Route path="/campus-connect/art-culture" element={<ArtCulturePage />} />
               <Route path="/directory" element={<DirectoryPage />} />
               <Route path="/places/:id" element={<OfferingPage />} />
               <Route path="/login" element={<AuthPage mode="login" />} />
