@@ -1,7 +1,7 @@
 import type { Pool, QueryResultRow } from 'pg';
 
-/** Latest migration required by the current API contract. Covered by the migration-order test. */
-export const REQUIRED_SCHEMA_MIGRATION = '028_demo_wallet_ledger_type.sql';
+/** Latest migration required by the core recovery API contract. Demo schema is environment-specific. */
+export const REQUIRED_SCHEMA_MIGRATION = '026_quote_recovery_session_attribution.sql';
 
 interface SchemaReadinessRow extends QueryResultRow {
   migration_applied: boolean;
@@ -12,10 +12,10 @@ interface SchemaReadinessRow extends QueryResultRow {
 }
 
 /**
- * Readiness must reflect the schema used by the revenue-recovery path, not just
- * the existence of an old migration-ledger row. This query is read-only.
+ * Readiness verifies the durable recovery telemetry contract and its scoped RLS policies.
+ * The isolated demo marketplace is required only outside production, where its routes are mounted.
  */
-export async function schemaIsReady(db: Pick<Pool, 'query'>): Promise<boolean> {
+export async function schemaIsReady(db: Pick<Pool, 'query'>, environment = 'development'): Promise<boolean> {
   const result = await db.query<SchemaReadinessRow>(
     `SELECT
        EXISTS (
@@ -60,6 +60,6 @@ export async function schemaIsReady(db: Pick<Pool, 'query'>): Promise<boolean> {
     row?.booking_recovery_events_present === true &&
     row?.quote_recovery_session_column_present === true &&
     row?.recovery_policy_contract_present === true &&
-    row?.demo_marketplace_schema_present === true
+    (environment === 'production' || row?.demo_marketplace_schema_present === true)
   );
 }
