@@ -40,6 +40,7 @@ import { findLocations, retainedLocationState } from './locations.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
 import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
+import { mountCreatorArtworks } from './creatorArtworks.ts';
 import { mountSocialAuth, socialAuthAvailability } from './socialAuth.ts';
 import type { SocialProvider, SocialProviderId } from './socialAuth.ts';
 import { mountPasskeyRoutes, passkeysEnabled } from './passkeys.ts';
@@ -2228,6 +2229,7 @@ export function createApp(options: AppOptions = {}) {
   mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
+  mountCreatorArtworks(app, { pool, actor: actorFor });
   const sendRecovery = options.sendRecovery ?? configuredRecoveryMailer();
   mountAccountRoutes(app, {
     pool,
