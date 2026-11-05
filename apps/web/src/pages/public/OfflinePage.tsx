@@ -162,6 +162,7 @@ export function OfflinePage() {
               </div>
               <label>Notes (optional)
                 <textarea value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={500} rows={3} placeholder="Anything you want to remember about this trip…" />
+                <small>Do not enter passwords, payment details or sensitive personal information here.</small>
               </label>
               <button type="submit" className="btn btn-primary"><CalendarDays size={17} aria-hidden="true" /> Save trip plan on this device</button>
             </form>
