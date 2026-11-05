@@ -116,7 +116,9 @@ export function OfflinePage() {
                   <div className="seven-offline-place-copy">
                     <span className="seven-offline-kind">{listing.kind === 'STAY' ? 'Stay · Directory reference' : listing.kind === 'DINING' ? 'Dining · Directory reference' : 'Experience · Directory reference'}</span>
                     <h3>{listing.name}</h3>
-                    <p><MapPin size={14} aria-hidden="true" /> {listing.city}, {listing.state}</p>
+                    <p><MapPin size={14} aria-hidden="true" /> {listing.city}, {listing.state}{listing.area ? " · " + listing.area : ""}</p>
+                    {listing.address && <small>{listing.address}</small>}
+                    <p className="seven-offline-description">{listing.description}</p>
                     <small>Saved {formatOfflineDate(listing.savedAt)} · Details refreshed {formatOfflineDate(listing.lastUpdatedAt)}</small>
                     <a href={listing.sourceUrl} target="_blank" rel="noreferrer noopener">Source: {listing.sourceName}</a>
                   </div>
