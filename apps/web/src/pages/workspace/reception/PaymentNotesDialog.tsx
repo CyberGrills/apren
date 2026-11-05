@@ -1,9 +1,9 @@
-import { useFeedback } from '../../components/Feedback.tsx';
+import { useFeedback } from '../../../components/Feedback.tsx';
 import type { PaymentNote, Reservation } from '@7even/contracts';
 import { useState } from 'react';
-import { ErrorNotice, Field, Loading, Modal, Money } from '../../components/ui.tsx';
-import { useApi } from '../../hooks/useApi.ts';
-import { api } from '../../lib/api.ts';
+import { ErrorNotice, Field, Loading, Modal, Money } from '../../../components/ui.tsx';
+import { useApi } from '../../../hooks/useApi.ts';
+import { api } from '../../../lib/api.ts';
 import { majorToMinor } from '@7even/engine';
 export function PaymentNotesDialog({
   reservation,

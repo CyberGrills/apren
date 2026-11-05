@@ -27,10 +27,10 @@ import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
 import { upcomingInventory } from '../../lib/businessWorkspace.ts';
 import { AdminRecords } from './AdminRecords.tsx';
-import { BusinessPayments } from './BusinessPayments.tsx';
-import { BusinessPhotoGallery } from './BusinessPhotoGallery.tsx';
-import { ListingUpdateReceipt } from './ListingUpdateReceipt.tsx';
-import { BusinessWorkspaceOverview } from './BusinessWorkspaceOverview.tsx';
+import { BusinessPayments } from './business/BusinessPayments.tsx';
+import { BusinessPhotoGallery } from './business/BusinessPhotoGallery.tsx';
+import { ListingUpdateReceipt } from './business/ListingUpdateReceipt.tsx';
+import { BusinessWorkspaceOverview } from './business/BusinessWorkspaceOverview.tsx';
 import { ListingBadge } from './ListingReadiness.tsx';
 import { listingReasons } from '../../lib/listingReadiness.ts';
 import {

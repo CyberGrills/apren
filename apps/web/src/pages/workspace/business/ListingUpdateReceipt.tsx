@@ -1,8 +1,8 @@
 import type { BusinessOverview, Offering, OfferingListingReadiness } from '@7even/contracts';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { listingReasons, nextBusinessTask } from '../../lib/listingReadiness.ts';
-import { ListingBadge } from './ListingReadiness.tsx';
+import { listingReasons, nextBusinessTask } from '../../../lib/listingReadiness.ts';
+import { ListingBadge } from '../ListingReadiness.tsx';
 
 export function ListingUpdateReceipt({
   offering,

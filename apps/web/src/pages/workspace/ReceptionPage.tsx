@@ -23,7 +23,7 @@ import {
   appendQueue,
   type StoredAction,
 } from '../../lib/receptionQueue.ts';
-import { PaymentNotesDialog } from './PaymentNotesDialog.tsx';
+import { PaymentNotesDialog } from './reception/PaymentNotesDialog.tsx';
 import { localDateNow } from '../public/PublicShell.tsx';
 import {
   MetricsStrip,
