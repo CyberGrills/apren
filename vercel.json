@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci --include=dev",
   "buildCommand": "npm run build",
-  "outputDirectory": "apps/web/dist",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/api/:path*",
@@ -14,9 +14,9 @@
     }
   ],
   "functions": {
-    "api/[...path].ts": {
+    "backend/api/[...path].ts": {
       "maxDuration": 30,
-      "includeFiles": "{packages/**,apps/web/public/data/nigeria/**}"
+      "includeFiles": "{packages/**,frontend/public/data/nigeria/**}"
     }
   }
 }

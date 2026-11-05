@@ -80,10 +80,10 @@ The optional SMTP adapter uses installed Nodemailer 10.1.2. Its earlier package-
 
 ## Project map and review
 
-- `apps/web`: responsive React interfaces and popup feedback.
+- `frontend`: responsive React interfaces and popup feedback.
 - `packages/engine`: 7even hotel availability filtering, explainable booking-match ranking, exact pricing, stay dates and lifecycle rules.
 - `packages/contracts`: shared request validation and response types.
-- `services/platform`: 7even authentication, catalog, inventory, payments, rewards, sync and recovery.
+- `backend/platform`: 7even authentication, catalog, inventory, payments, rewards, sync and recovery.
 - `database/migrations`: ordered, checksummed PostgreSQL schema changes.
 - `tests`: unit, integration, concurrency and fault checks.
 - `design/explorations`: three visual directions, sources and browser evidence.
@@ -91,4 +91,4 @@ The optional SMTP adapter uses installed Nodemailer 10.1.2. Its earlier package-
 
 Qualified human review of money, authorization, tenancy and migrations is required before real-money release. External provider testing, security scan evidence, backup/restore drills, alerting and Nigerian payment/privacy obligations remain release requirements. Passing local tests does not establish production readiness.
 
-Sources: [Flutterwave Standard](https://developer.flutterwave.com/docs/flutterwave-standard-1), [split payments](https://developer.flutterwave.com/docs/split-payments), [v3 webhooks](https://developer.flutterwave.com/docs/webhooks), [Paystack transactions](https://paystack.com/docs/api/transaction/), [Paystack splits](https://paystack.com/docs/payments/split-payments/), [Paystack webhooks](https://paystack.com/docs/payments/webhooks/), [native USDC contracts](https://developers.circle.com/stablecoins/usdc-contract-addresses), [Base finality](https://docs.base.org/base-chain/specs/protocol/consensus/derivation), [Nodemailer SMTP](https://nodemailer.com/smtp). Design and photography credits are in `apps/web/public/media/SOURCES.txt`.
+Sources: [Flutterwave Standard](https://developer.flutterwave.com/docs/flutterwave-standard-1), [split payments](https://developer.flutterwave.com/docs/split-payments), [v3 webhooks](https://developer.flutterwave.com/docs/webhooks), [Paystack transactions](https://paystack.com/docs/api/transaction/), [Paystack splits](https://paystack.com/docs/payments/split-payments/), [Paystack webhooks](https://paystack.com/docs/payments/webhooks/), [native USDC contracts](https://developers.circle.com/stablecoins/usdc-contract-addresses), [Base finality](https://docs.base.org/base-chain/specs/protocol/consensus/derivation), [Nodemailer SMTP](https://nodemailer.com/smtp). Design and photography credits are in `frontend/public/media/SOURCES.txt`.

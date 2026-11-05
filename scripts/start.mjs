@@ -4,7 +4,7 @@ const runtimeEnv = {
   ...process.env,
 };
 const services = [
-  spawn(process.execPath, ['services/platform/src/server.ts'], { stdio: 'inherit', env: runtimeEnv }),
+  spawn(process.execPath, ['backend/platform/src/server.ts'], { stdio: 'inherit', env: runtimeEnv }),
 ];
 let closing = false;
 function shutdown(code = 0) {

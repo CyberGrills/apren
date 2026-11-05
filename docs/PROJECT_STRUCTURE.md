@@ -1,78 +1,78 @@
-# 7EVEN repository structure
+# 7EVEN / āprən repository structure
 
-This repository is a workspace monorepo. Keep the existing runtime boundaries stable: move files only when their ownership is clear and every import, script, CI path, deployment setting and documentation link has been updated.
+The repository root is **apren**. Keep the customer-facing 7EVEN application and the supporting āprən intelligence/platform services in clearly separated top-level folders.
 
 ## Top-level layout
 
-| Path | Responsibility | What belongs here |
+```text
+apren/
+├── frontend/                 # 7EVEN customer, business and admin interfaces
+├── backend/
+│   ├── api/                  # Thin Vercel HTTP entry point(s)
+│   └── platform/             # Server runtime, domain services and adapters
+├── packages/
+│   ├── contracts/            # Shared API contracts and validation
+│   └── engine/               # Deterministic hospitality/booking logic
+├── database/                 # Migrations and controlled operations
+├── tests/                    # Frontend, integration and tooling tests
+├── docs/                     # Product and engineering documentation
+├── design/                   # Design explorations and visual QA evidence
+├── learn/                    # Dated historical engineering notes
+├── scripts/                  # Developer and release tooling
+├── .github/                  # CI workflows
+├── package.json              # Root workspace and commands
+├── package-lock.json         # Authoritative dependency lockfile
+└── vercel.json               # Production deployment configuration
+```
+
+## Ownership boundaries
+
+| Area | Owner | Responsibility |
 |---|---|---|
-| `apps/web/` | Customer and workspace frontend | Browser app, public assets, PWA files and frontend source |
-| `services/platform/` | Platform/API runtime | HTTP routes, domain services, persistence adapters and server-side workflows |
-| `packages/contracts/` | Shared interfaces | API contracts, schemas and types shared across workspaces |
-| `packages/engine/` | Booking and decision logic | Deterministic, reusable domain rules and engine tests |
-| `database/migrations/` | Database evolution | Ordered, reviewed SQL migrations |
-| `database/operations/` | Controlled database operations | Explicit operational SQL and runbooks; never credentials or dumps |
-| `tests/` | Cross-workspace verification | Frontend, integration, tooling and fixture tests |
-| `scripts/` | Developer and release tooling | Build, start, smoke-test and maintenance scripts |
-| `docs/` | Product and engineering documentation | Architecture, API contracts, operations, security, onboarding and project guides |
-| `design/` | Design source and review evidence | Explorations, prototypes, screenshots and visual QA |
-| `learn/` | Historical engineering notes | Dated investigations and decisions; link current guidance from the relevant docs |
-| `.github/workflows/` | CI automation | GitHub Actions workflows |
-| `api/` | Deployment entry points | Thin platform/deployment adapters only |
+| `frontend/` | Frontend developer | React routes, components, styles, public assets, PWA and offline-first customer experience |
+| `backend/api/` | Backend developer | Thin HTTP/Vercel entry points only; no business logic duplicated here |
+| `backend/platform/` | Backend developer | API application, authentication, inventory, booking, payments, persistence and service runtime |
+| `packages/contracts/` | Shared; coordinate changes | Types, schemas and request/response contracts consumed across frontend and backend |
+| `packages/engine/` | Shared; coordinate changes | Deterministic domain and booking rules |
+| `database/` | Backend developer | Reviewed migrations and controlled database operations |
+| `tests/` | Shared | Frontend, integration, contract and tooling verification |
+| `docs/` | Shared | Current implementation guides, onboarding, product decisions and operations |
 
 ## Frontend layout
 
-Within `apps/web/src/`, keep the current feature boundaries:
+Within `frontend/src/`, retain the existing feature boundaries:
 
-- `components/`: reusable UI components shared by multiple routes.
-- `context/`: application-wide React providers and state contexts.
+- `components/`: reusable UI components.
+- `context/`: application-wide providers and state.
 - `hooks/`: reusable React hooks.
-- `lib/`: framework-light utilities, typed client logic and local persistence helpers.
-- `pages/public/`: public discovery, directory and marketing routes.
-- `pages/customer/`: signed-in customer account and booking experience.
-- `pages/workspace/`: authenticated workspace route entry points and role-owned supporting components. Keep route-level pages such as `AdminPage.tsx`, `BusinessPage.tsx` and `ReceptionPage.tsx` in this root while their supporting components are grouped under `admin/`, `business/` and `reception/`.
-- `pages/workspace/shared.tsx` and other root-level workspace modules: components intentionally reused across roles; keep them at the workspace root until their ownership is unambiguous.
-- `styles/`: global and feature-scoped stylesheets.
-- `public/`: static files served as-is; keep brand, media, data and audio in their existing asset subfolders.
+- `lib/`: typed client logic, utilities and local persistence.
+- `pages/public/`: public discovery and marketing routes.
+- `pages/customer/`: customer account and booking routes.
+- `pages/workspace/`: business, reception and admin workspace routes.
+- `styles/`: global and feature stylesheets.
 
-A component used by only one page should normally stay near that page. Promote it to `components/` only when it is genuinely shared. Keep route composition in `App.tsx` and application mounting in `main.tsx`.
+Static assets remain in `frontend/public/`. Keep imported source and styles in `frontend/src/`.
 
-## File placement rules
+## Backend layout
 
-1. Keep each file with the workspace that owns and executes it. Do not place frontend code in `services/` or server code in `apps/web/`.
-2. Keep tests beside the module when they are module-specific; use `tests/frontend/`, `tests/integration/` or `tests/tooling/` for cross-module or developer-tooling behaviour.
-3. Put user-facing product specifications and current engineering guidance in `docs/`. Put dated research notes in `learn/`.
-4. Put prototypes, design references and visual verification captures in `design/`; do not import these files into production bundles.
-5. Keep static browser assets in `apps/web/public/`; keep source code and imported styles in `apps/web/src/`.
-6. Do not commit `.env`, credentials, customer exports, database dumps, build output, dependency folders, caches or temporary files.
-7. Avoid generic dumping-ground folders such as `misc/`, `old/` or `temp/`. Archive material only when its retention purpose and owner are documented.
-8. Before moving or renaming a file, search for imports, dynamic imports, test globs, npm scripts, CI workflows, Vercel configuration and documentation links that reference its old path.
-9. Do not change workspace names, package boundaries, API contracts, database structure or deployment behaviour as part of a file-organization change.
-10. Prefer small, reviewable moves grouped by one domain. Run typecheck, lint, unit tests, integration tests where configured, and production build after each group.
+- `backend/api/` contains thin deployment adapters. Route handlers should delegate to the platform application.
+- `backend/platform/src/` contains server-side application composition, domain services, persistence and provider adapters.
+- `database/migrations/` contains ordered, reviewed SQL migrations.
+- `database/operations/` contains controlled operational SQL and runbooks. Never store credentials or database dumps here.
 
-## Offline-first frontend files
+## Working rules
 
-Offline experience code belongs in the existing frontend boundaries:
+1. The repository itself is named `apren`; do not create a second nested `apren/apren` folder.
+2. Frontend work belongs in `frontend/`; backend work belongs in `backend/`.
+3. Shared contracts and engine rules remain in `packages/`; coordinate changes across both teams.
+4. Do not create nested lockfiles or duplicate package manifests. The root package manager configuration remains authoritative.
+5. Do not move API contracts, database schema, production data or payment behaviour as part of folder organization.
+6. Before changing a path, update imports, scripts, tests, CI, Docker, Vercel configuration and documentation references.
+7. Never commit `.env`, credentials, customer exports, database dumps, build output, dependency folders, caches or temporary files.
+8. Preserve existing product behaviour and brand conventions: 7EVEN is the customer-facing hospitality brand; āprən is its supporting intelligence engine.
 
-- `apps/web/src/components/OfflineExperience.tsx`: shared connectivity status UI.
-- `apps/web/src/components/OfflineSaveButton.tsx`: reusable save-to-device control.
-- `apps/web/src/lib/offlineStore.ts`: IndexedDB persistence and types.
-- `apps/web/src/pages/public/OfflinePage.tsx`: customer-facing Offline space route.
-- `apps/web/src/styles/offline.css`: offline feature styles.
-- `apps/web/public/sw.js`: service-worker caching strategy.
-- `apps/web/src/lib/offlineStore.test.ts`: persistence tests.
+## Developer handoff
 
-These files remain frontend-only. Backend sync, live availability, booking lifecycle, authentication, payment verification and secure account-record storage must be implemented and reviewed by the backend owner under separate contracts.
-
-## Workspace and change boundaries
-
-The root `package.json` defines the npm workspaces: `apps/web`, `services/platform`, `packages/contracts` and `packages/engine`. The root `package-lock.json` is authoritative for dependency resolution. Do not create nested lockfiles or duplicate package manifests to reorganize folders.
-
-For a file-organization pull request:
-- preserve `main` and the active feature branches;
-- do not merge or deploy as part of the organization change;
-- show a before/after path list;
-- explain any compatibility path or import updates;
-- confirm that no runtime behaviour, API, database or production data changed.
-
-This guide describes the current repository layout and the rules for future cleanup. It is not a request to move stable files simply to make the tree look different.
+- Frontend developer: work in `frontend/`; use root commands such as `npm run dev`, `npm run typecheck`, `npm test` and `npm run build`.
+- Backend developer: work in `backend/api/`, `backend/platform/` and `database/`; coordinate shared contract changes before merging.
+- Both developers: open focused pull requests against `main`. Do not commit directly to production or introduce a second preview/production repository.

@@ -4,7 +4,7 @@ const runtimeEnv = {
   ...process.env,
 };
 const services = [
-  spawn(process.execPath, ['--watch', 'services/platform/src/server.ts'], { stdio: 'inherit', env: runtimeEnv }),
+  spawn(process.execPath, ['--watch', 'backend/platform/src/server.ts'], { stdio: 'inherit', env: runtimeEnv }),
   spawn('npm', ['--workspace', '@7even/web', 'run', 'dev', '--', '--host', '127.0.0.1', '--port', '5177', '--strictPort'], { stdio: 'inherit', env: runtimeEnv }),
 ];
 let closing = false;
