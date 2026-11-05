@@ -7,7 +7,7 @@ const locationFields = readFileSync(
   'utf8',
 );
 const locationStyles = readFileSync(
-  new URL('../../apps/web/src/components/location-fields.css', import.meta.url),
+  new URL('../../apps/web/src/styles/location-fields.css', import.meta.url),
   'utf8',
 );
 const datePickerStyles = readFileSync(
