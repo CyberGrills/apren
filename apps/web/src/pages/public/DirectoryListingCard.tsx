@@ -1,4 +1,5 @@
 import type { DirectoryListing } from '../../lib/nigeriaDirectory.ts';
+import { OfflineSaveButton } from '../../components/OfflineSaveButton.tsx';
 
 const categoryLabel = {
   STAY: 'Stay',
@@ -38,6 +39,7 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         </p>
         {listing.area && <p className="seven-directory-area">{listing.area}</p>}
         <p className="seven-directory-description">{listing.description}</p>
+        <OfflineSaveButton listing={listing} />
         <a
           className="seven-directory-source-link"
           href={listing.sourceUrl}

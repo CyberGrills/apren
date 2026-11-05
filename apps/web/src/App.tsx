@@ -13,6 +13,8 @@ import { FeedbackProvider } from './components/Feedback.tsx';
 import { PublicFooter, PublicHeader } from './pages/public/PublicShell.tsx';
 import { ErrorNotice, Loading, PageHeader } from './components/ui.tsx';
 import { WorkspaceShell } from './components/WorkspaceShell.tsx';
+import { OfflineStatusBar } from './components/OfflineExperience.tsx';
+import { OfflinePage } from './pages/public/OfflinePage.tsx';
 import { SessionProvider, useSession } from './context/SessionContext.tsx';
 import { loginPathForWorkspace } from './lib/workspaceNavigation.ts';
 const HelpPage = lazy(() => import('./pages/account/HelpPage.tsx').then((module) => ({ default: module.HelpPage })));
@@ -213,6 +215,7 @@ export function App() {
         <FeedbackProvider>
           <SessionProvider>
             <ScrollPosition />
+            <OfflineStatusBar />
             <div className="apren-watermark" aria-hidden="true">
               {Array.from({ length: 24 }, (_, index) => (
                 <span key={index}>āprən × 7even</span>
@@ -235,6 +238,7 @@ export function App() {
                 </>
               )}
               <Route path="/install" element={<InstallAppPage />} />
+              <Route path="/offline" element={<OfflinePage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/directory" element={<DirectoryPage />} />
               <Route path="/places/:id" element={<OfferingPage />} />

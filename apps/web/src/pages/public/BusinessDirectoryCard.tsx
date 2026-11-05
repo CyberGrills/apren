@@ -1,4 +1,5 @@
-import type { DirectoryKind } from '../../lib/nigeriaDirectory.ts';
+import type { DirectoryKind, DirectoryListing } from '../../lib/nigeriaDirectory.ts';
+import { OfflineSaveButton } from '../../components/OfflineSaveButton.tsx';
 
 export interface BusinessDirectoryProfile {
   id: string;
@@ -26,6 +27,23 @@ const categoryLabel: Record<DirectoryKind, string> = {
 };
 
 export function BusinessDirectoryCard({ profile }: { profile: BusinessDirectoryProfile }) {
+  const offlineListing: DirectoryListing = {
+    id: `business-${profile.id}`,
+    kind: profile.kind,
+    name: profile.name,
+    state: profile.state ?? 'Nigeria',
+    city: profile.city,
+    area: profile.venueName ?? '',
+    address: profile.address ?? '',
+    description: profile.description ?? 'Business profile saved from the 7even directory.',
+    imageUrl: profile.photos?.[0]?.imageUrl ?? profile.imageUrl ?? '',
+    imageSourceName: '7even business profile',
+    imageSourceUrl: '',
+    sourceName: '7even business directory',
+    sourceUrl: '/directory',
+    status: 'DIRECTORY_ONLY',
+    bookable: false,
+  };
   return (
     <article className="seven-directory-card seven-business-directory-card">
       {profile.photos?.length ? (
@@ -71,6 +89,7 @@ export function BusinessDirectoryCard({ profile }: { profile: BusinessDirectoryP
           <span>Directory only</span>
         </div>
         <h3>{profile.name}</h3>
+        <OfflineSaveButton listing={offlineListing} />
         <p className="seven-directory-location">
           {profile.city}{profile.state ? `, ${profile.state}` : ''}
         </p>
