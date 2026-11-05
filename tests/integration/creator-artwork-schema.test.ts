@@ -97,7 +97,7 @@ describe('7EVEN creator artwork backend foundation', () => {
   it('uses stable opaque keyset cursors for creator, moderation and public discovery lists', () => {
     assert.match(routes, /function decodePageCursor/);
     assert.match(routes, /function encodePageCursor/);
-    assert.match(routes, /Buffer\\.from\\(JSON\\.stringify\\(/);
+    assert.ok(routes.includes('Buffer.from(JSON.stringify('));
     assert.match(routes, /base64url/);
     assert.match(routes, /updated_at,artwork_id\)<\(\$3::timestamptz,\$4::uuid\)/);
     assert.match(routes, /submitted_at,artwork_id\)<\(\$2::timestamptz,\$3::uuid\)/);
