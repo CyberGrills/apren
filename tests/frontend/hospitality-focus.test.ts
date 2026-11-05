@@ -158,7 +158,7 @@ test('Google Maps proof of concept is lazy, key-gated, and does not fabricate pr
 
 test('virtual pilot scroll scene is stay-only, pinned, and respects reduced motion', () => {
   const pilot = source('../../apps/web/src/components/ScrollPilotScene.tsx');
-  const styles = source('../../apps/web/src/components/scroll-pilot-scene.css');
+  const styles = source('../../apps/web/src/styles/scroll-pilot-scene.css');
   assert.match(explore, /isStaySearch && <ScrollPilotScene \/>/);
   assert.match(styles, /position: sticky/);
   assert.match(styles, /prefers-reduced-motion: reduce/);
