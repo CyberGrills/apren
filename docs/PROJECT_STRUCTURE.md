@@ -30,9 +30,8 @@ Within `apps/web/src/`, keep the current feature boundaries:
 - `lib/`: framework-light utilities, typed client logic and local persistence helpers.
 - `pages/public/`: public discovery, directory and marketing routes.
 - `pages/customer/`: signed-in customer account and booking experience.
-- `pages/business/`: business-owner workspace routes.
-- `pages/reception/`: reception workspace routes.
-- `pages/admin/`: administration routes.
+- `pages/workspace/`: authenticated workspace route entry points and role-owned supporting components. Keep route-level pages such as `AdminPage.tsx`, `BusinessPage.tsx` and `ReceptionPage.tsx` in this root while their supporting components are grouped under `admin/`, `business/` and `reception/`.
+- `pages/workspace/shared.tsx` and other root-level workspace modules: components intentionally reused across roles; keep them at the workspace root until their ownership is unambiguous.
 - `styles/`: global and feature-scoped stylesheets.
 - `public/`: static files served as-is; keep brand, media, data and audio in their existing asset subfolders.
 
