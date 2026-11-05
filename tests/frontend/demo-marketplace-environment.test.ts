@@ -61,7 +61,7 @@ test('demo marketplace API routes remain mounted in local development', () => {
 
 test('customer-facing homepage never advertises the fictional demo catalogue', async () => {
   const landingPage = await readFile(
-    new URL('../../apps/web/src/pages/public/LandingPage.tsx', import.meta.url),
+    new URL('../../frontend/src/pages/public/LandingPage.tsx', import.meta.url),
     'utf8',
   );
 
@@ -71,9 +71,9 @@ test('customer-facing homepage never advertises the fictional demo catalogue', a
 
 test('production routes and workspaces keep the demo catalogue out of customer and operator journeys', async () => {
   const [app, adminPage, businessPage] = await Promise.all([
-    readFile(new URL('../../apps/web/src/App.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../../apps/web/src/pages/workspace/AdminPage.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../../apps/web/src/pages/workspace/BusinessPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../frontend/src/App.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../frontend/src/pages/workspace/AdminPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../frontend/src/pages/workspace/BusinessPage.tsx', import.meta.url), 'utf8'),
   ]);
 
   assert.match(app, /import\.meta\.env\.PROD/);
