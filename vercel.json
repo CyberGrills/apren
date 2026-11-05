@@ -17,6 +17,10 @@
     "api/[...path].ts": {
       "maxDuration": 30,
       "includeFiles": "{packages/**,frontend/public/data/nigeria/**,backend/platform/**,backend/api/**}"
+    },
+    "api/cron/recovery.ts": {
+      "maxDuration": 300,
+      "includeFiles": "{packages/**,backend/platform/**,backend/api/**}"
     }
   }
 }
