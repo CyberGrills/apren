@@ -88,7 +88,7 @@ test('public directory renders canonical business profiles separately from booki
   assert.match(landing, /to=\{kind === 'ALL' \? '\/directory' : `\/directory\?kind=\$\{kind\}`\}/);
   const directoryPage = source('../../apps/web/src/pages/public/DirectoryPage.tsx');
   const businessCard = source('../../apps/web/src/pages/public/BusinessDirectoryCard.tsx');
-  const platform = source('../../services/platform/src/app.ts');
+  const platform = source('../../backend/platform/src/app.ts');
   const routeStart = platform.indexOf("route('get', '/directory'");
   const routeEnd = platform.indexOf("route('get', '/locations'", routeStart);
   const directoryRoute = platform.slice(routeStart, routeEnd);

@@ -1,10 +1,10 @@
 import type { Pool, PoolClient, QueryResult } from 'pg';
-import { createPool, one } from '../../services/platform/src/db.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
-import type { PaymentProvider, ProviderReceipt } from '../../services/platform/src/provider.ts';
-import { processInbox } from '../../services/platform/src/worker.ts';
-import { checkout, reconcile } from '../../services/platform/src/payments.ts';
-import { userProjection } from '../../services/platform/src/store.ts';
+import { createPool, one } from '../../backend/platform/src/db.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
+import type { PaymentProvider, ProviderReceipt } from '../../backend/platform/src/provider.ts';
+import { processInbox } from '../../backend/platform/src/worker.ts';
+import { checkout, reconcile } from '../../backend/platform/src/payments.ts';
+import { userProjection } from '../../backend/platform/src/store.ts';
 
 export type CrashConfiguration =
   | {mode:'pause-before-commit'|'database-error-before-commit'|'run-inbox';receipt:ProviderReceipt}

@@ -8,7 +8,7 @@ import {
   PmsAdapterError,
   validatePmsSnapshot,
   type PmsReadSnapshot,
-} from '../../services/platform/src/pmsAdapter.ts';
+} from '../../backend/platform/src/pmsAdapter.ts';
 
 const ready = {
   provider: 'cloudbeds' as const,

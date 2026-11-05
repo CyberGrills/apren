@@ -4,28 +4,28 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import type { AdminOverview } from '@7even/contracts';
-import { createApp } from '../../services/platform/src/app.ts';
-import { createPool, one, rows, transaction } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
+import { createApp } from '../../backend/platform/src/app.ts';
+import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
 import {
   checkout,
   reconcile,
   requestRefund,
   verifyPayment,
-} from '../../services/platform/src/payments.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
-import type { ProviderRefund } from '../../services/platform/src/provider.ts';
+} from '../../backend/platform/src/payments.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
+import type { ProviderRefund } from '../../backend/platform/src/provider.ts';
 import {
   actOnReservation,
   createQuote,
   createReservation,
-} from '../../services/platform/src/reservations.ts';
-import { seed } from '../../services/platform/src/seed.ts';
+} from '../../backend/platform/src/reservations.ts';
+import { seed } from '../../backend/platform/src/seed.ts';
 import {
   paymentProjection,
   reservationProjection,
   userProjection,
-} from '../../services/platform/src/store.ts';
+} from '../../backend/platform/src/store.ts';
 
 function deferred<T>() {
   let resolve: (value: T) => void = () => {

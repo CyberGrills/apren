@@ -4,14 +4,14 @@ import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { privateKeyToAccount } from 'viem/accounts';
 import type { SessionUser } from '@7even/contracts';
-import { mountPaymentAccounts } from '../../services/platform/src/paymentAccounts.ts';
+import { mountPaymentAccounts } from '../../backend/platform/src/paymentAccounts.ts';
 import {
   buildBusinessWalletMessage,
   MockCryptoGateway,
-} from '../../services/platform/src/cryptoProvider.ts';
-import { ProviderRegistry } from '../../services/platform/src/providerRegistry.ts';
-import { ApiError, fail } from '../../services/platform/src/db.ts';
-import type { Connection } from '../../services/platform/src/db.ts';
+} from '../../backend/platform/src/cryptoProvider.ts';
+import { ProviderRegistry } from '../../backend/platform/src/providerRegistry.ts';
+import { ApiError, fail } from '../../backend/platform/src/db.ts';
+import type { Connection } from '../../backend/platform/src/db.ts';
 
 const businessId = '11111111-1111-4111-8111-111111111111';
 const otherBusinessId = '22222222-2222-4222-8222-222222222222';

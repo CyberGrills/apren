@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { nigeriaStateInput, offeringInput } from '@7even/contracts';
-import { retainedLocationState } from '../../services/platform/src/locations.ts';
+import { retainedLocationState } from '../../backend/platform/src/locations.ts';
 
 test('an omitted state survives a city label normalization but clears when the city changes', () => {
   const previous = { city: 'Uyo', state: 'Akwa Ibom' };

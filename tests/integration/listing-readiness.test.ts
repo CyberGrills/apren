@@ -4,11 +4,11 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import type * as C from '@7even/contracts';
-import { createApp } from '../../services/platform/src/app.ts';
-import { createPool, one } from '../../services/platform/src/db.ts';
-import { listingReadiness } from '../../services/platform/src/listingReadiness.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
+import { createApp } from '../../backend/platform/src/app.ts';
+import { createPool, one } from '../../backend/platform/src/db.ts';
+import { listingReadiness } from '../../backend/platform/src/listingReadiness.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
 
 const origin = 'http://127.0.0.1:5177';
 const password = 'Listing-Readiness-Test-Passphrase-42!';

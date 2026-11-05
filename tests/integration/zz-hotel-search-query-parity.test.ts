@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { optimizeHotelBookings } from '@7even/engine';
-import { createPool, one, rows, transaction } from '../../services/platform/src/db.ts';
-import * as S from '../../services/platform/src/store.ts';
+import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
+import * as S from '../../backend/platform/src/store.ts';
 
 const batchSize = 200;
 const rooms = 2;

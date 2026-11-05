@@ -4,10 +4,10 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import type { Business, NigeriaLocation, Offering, SessionData, Venue } from '@7even/contracts';
-import { createApp } from '../../services/platform/src/app.ts';
-import { createPool, one } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
+import { createApp } from '../../backend/platform/src/app.ts';
+import { createPool, one } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
 
 test('state-scoped public search separates same-name cities and location edits retain only valid metadata', {
   skip: !process.env.TEST_DATABASE_URL || !process.env.TEST_RUNTIME_DATABASE_URL,

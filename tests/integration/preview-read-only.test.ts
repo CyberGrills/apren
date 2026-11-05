@@ -3,8 +3,8 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import type { Pool } from 'pg';
-import { createApp } from '../../services/platform/src/app.ts';
-import type { PaymentProvider } from '../../services/platform/src/provider.ts';
+import { createApp } from '../../backend/platform/src/app.ts';
+import type { PaymentProvider } from '../../backend/platform/src/provider.ts';
 
 const origin = 'https://preview-guard.seven.test';
 

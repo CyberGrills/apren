@@ -6,7 +6,7 @@ import {
   validWebhookSecret,
   FlutterwaveProvider,
   parseProviderJson,
-} from '../../services/platform/src/provider.ts';
+} from '../../backend/platform/src/provider.ts';
 
 test('provider amounts convert exact decimal values and reject non-kobo precision', () => {
   assert.equal(decimalToMinor('123.45'), 12345);

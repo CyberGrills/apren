@@ -4,7 +4,7 @@ import test from 'node:test';
 import type { Express, Response } from 'express';
 import type { Pool } from 'pg';
 import type * as C from '@7even/contracts';
-import { mountDemoMarketplace } from '../../services/platform/src/demoMarketplace.ts';
+import { mountDemoMarketplace } from '../../backend/platform/src/demoMarketplace.ts';
 
 type Registration = { method: 'get' | 'post'; path: string };
 

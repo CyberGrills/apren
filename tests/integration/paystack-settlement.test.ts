@@ -1,16 +1,16 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { MockCryptoGateway } from '../../services/platform/src/cryptoProvider.ts';
-import { createPool, one, rows, transaction } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
-import { checkout, verifyPayment } from '../../services/platform/src/payments.ts';
-import { reconcilePaystackSettlements } from '../../services/platform/src/paystackSettlement.ts';
-import type { PaymentProvider } from '../../services/platform/src/provider.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
-import { ProviderRegistry } from '../../services/platform/src/providerRegistry.ts';
-import { createQuote, createReservation } from '../../services/platform/src/reservations.ts';
-import { seed } from '../../services/platform/src/seed.ts';
-import { paymentProjection, userProjection } from '../../services/platform/src/store.ts';
+import { MockCryptoGateway } from '../../backend/platform/src/cryptoProvider.ts';
+import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
+import { checkout, verifyPayment } from '../../backend/platform/src/payments.ts';
+import { reconcilePaystackSettlements } from '../../backend/platform/src/paystackSettlement.ts';
+import type { PaymentProvider } from '../../backend/platform/src/provider.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
+import { ProviderRegistry } from '../../backend/platform/src/providerRegistry.ts';
+import { createQuote, createReservation } from '../../backend/platform/src/reservations.ts';
+import { seed } from '../../backend/platform/src/seed.ts';
+import { paymentProjection, userProjection } from '../../backend/platform/src/store.ts';
 
 test('Paystack settlement reports remain observations until bank delivery is independently established', {
   skip: !process.env.TEST_DATABASE_URL,

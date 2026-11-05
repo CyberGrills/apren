@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { paymentReadiness } from '../../services/platform/src/providerRegistry.ts';
+import { paymentReadiness } from '../../backend/platform/src/providerRegistry.ts';
 
 test('production payment readiness does not confuse live mode with configured providers', () => {
   const readiness = paymentReadiness('production', { VERCEL_ENV: 'production' } as NodeJS.ProcessEnv);

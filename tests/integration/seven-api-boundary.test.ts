@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createPool } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
+import { createPool } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
 
 function assertDisposableDatabaseUrl(value: string): URL {
   const parsed = new URL(value);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   configuredRecoveryMailer,
   recoveryDelivery,
-} from '../../services/platform/src/recoveryMailer.ts';
+} from '../../backend/platform/src/recoveryMailer.ts';
 test('recovery SMTP remains disabled with no configuration and rejects partial or insecure settings', () => {
   assert.equal(configuredRecoveryMailer({}), undefined);
   assert.throws(() => configuredRecoveryMailer({ SMTP_HOST: 'smtp.example.test' }));

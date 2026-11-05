@@ -4,8 +4,8 @@ import test from 'node:test';
 import {
   PaystackProvider,
   validPaystackWebhook,
-} from '../../services/platform/src/paystackProvider.ts';
-import type { ProviderCheckout } from '../../services/platform/src/provider.ts';
+} from '../../backend/platform/src/paystackProvider.ts';
+import type { ProviderCheckout } from '../../backend/platform/src/provider.ts';
 
 const checkoutInput = (): ProviderCheckout => ({
   reference: 'seven-0259c894-6eaa-4291-a920-cdb122f0e278',
