@@ -1,5 +1,3 @@
-import handler from "../backend/api/[...path].ts";
-
-// Vercel requires function entry points in the root api/ directory.
-// The implementation remains owned by backend/api/.
-export default handler;
+// Vercel only discovers Serverless Functions under the project-root api/ directory.
+// Keep this file as a thin deployment adapter; application logic lives in backend/.
+export { default } from "../backend/api/[...path].ts";

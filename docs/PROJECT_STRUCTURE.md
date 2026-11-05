@@ -7,7 +7,7 @@ The repository root is **apren**. Keep the customer-facing 7EVEN application and
 ```text
 apren/
 ├── frontend/                 # 7EVEN customer, business and admin interfaces
-├── backend/
+├── api/                      # Thin Vercel-only entry point shim\n├── backend/
 │   ├── api/                  # Thin Vercel HTTP entry point(s)
 │   └── platform/             # Server runtime, domain services and adapters
 ├── packages/
@@ -55,7 +55,7 @@ Static assets remain in `frontend/public/`. Keep imported source and styles in `
 
 ## Backend layout
 
-- `backend/api/` contains thin deployment adapters. Route handlers should delegate to the platform application.
+- Root `api/` contains the thin Vercel entry-point shim required by Vercel's root-only function discovery. Keep it free of business logic.\n- `backend/api/` contains the backend-owned HTTP handler implementation. The root shim delegates to it.
 - `backend/platform/src/` contains server-side application composition, domain services, persistence and provider adapters.
 - `database/migrations/` contains ordered, reviewed SQL migrations.
 - `database/operations/` contains controlled operational SQL and runbooks. Never store credentials or database dumps here.
