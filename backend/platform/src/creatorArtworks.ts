@@ -225,11 +225,11 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
     const user = actor(res); const input = profileInput.parse(req.body);
     const result = await mutate(pool, req, user, async (db, a) => {
       const old = await one(db, 'SELECT creator_id,profile_status,slug FROM seven.creator_profiles WHERE user_id=$1', [a.id]);
-      if (old && !['DRAFT','CHANGES_REQUESTED','VERIFIED'].includes(String(old.profile_status)))
-        return fail(409, 'PROFILE_LOCKED', 'This profile is currently under review.');
+      if (old && !['DRAFT','CHANGES_REQUESTED'].includes(String(old.profile_status)))
+        return fail(409, 'PROFILE_LOCKED', 'Verified profiles are locked against direct edits. Request a reviewed profile-change workflow instead.');
       const creatorId = old?.creator_id ?? randomUUID();
       const profileSlug = old?.slug ?? makeSlug(input.displayName, creatorId);
-      const status = old?.profile_status === 'VERIFIED' ? 'PENDING_REVIEW' : old?.profile_status ?? 'DRAFT';
+      const status = old?.profile_status ?? 'DRAFT';
       const p = await one(db,
         "INSERT INTO seven.creator_profiles(creator_id,user_id,slug,display_name,city,region,country_code,disciplines,biography,portfolio_urls,profile_status,submitted_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,CASE WHEN $11='PENDING_REVIEW' THEN now() ELSE NULL END) ON CONFLICT(user_id) DO UPDATE SET display_name=EXCLUDED.display_name,city=EXCLUDED.city,region=EXCLUDED.region,country_code=EXCLUDED.country_code,disciplines=EXCLUDED.disciplines,biography=EXCLUDED.biography,portfolio_urls=EXCLUDED.portfolio_urls,profile_status=EXCLUDED.profile_status,submitted_at=EXCLUDED.submitted_at,updated_at=now() RETURNING creator_id,slug,display_name,city,region,country_code,disciplines,biography,portfolio_urls,profile_status,updated_at",
         [creatorId,a.id,profileSlug,input.displayName,input.location.city,input.location.region ?? null,input.location.countryCode,input.disciplines,input.biography,input.portfolioUrls,status],
