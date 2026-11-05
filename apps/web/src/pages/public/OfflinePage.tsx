@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, CloudOff, Download, MapPin, RefreshCw, Trash2 } from 'lucide-react';
-import { OfflineStatusBar, useConnectionStatus } from '../../components/OfflineExperience.tsx';
+import { useConnectionStatus } from '../../components/OfflineExperience.tsx';
 import {
   formatOfflineDate,
   getOfflineListings,
@@ -88,7 +88,6 @@ export function OfflinePage() {
   return (
     <div className="public-page seven-offline-page">
       <PublicHeader />
-      <OfflineStatusBar />
       <main id="main-content" className="public-container seven-offline-main">
         <Link to="/explore?kind=STAY" className="seven-offline-back">← Explore 7even</Link>
         <header className="seven-offline-heading">
