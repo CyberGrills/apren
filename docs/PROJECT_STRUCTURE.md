@@ -17,7 +17,7 @@ This repository is a workspace monorepo. Keep the existing runtime boundaries st
 | `docs/` | Product and engineering documentation | Architecture, API contracts, operations, security, onboarding and project guides |
 | `design/` | Design source and review evidence | Explorations, prototypes, screenshots and visual QA |
 | `learn/` | Historical engineering notes | Dated investigations and decisions; link current guidance from the relevant docs |
-| ` .github/workflows/` | CI automation | GitHub Actions workflows |
+| `.github/workflows/` | CI automation | GitHub Actions workflows |
 | `api/` | Deployment entry points | Thin platform/deployment adapters only |
 
 ## Frontend layout
