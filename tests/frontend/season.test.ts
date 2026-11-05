@@ -6,7 +6,7 @@ import {
   watchSeason,
   type Season,
   type SeasonClock,
-} from '../../apps/web/src/lib/season.ts';
+} from '../../frontend/src/lib/season.ts';
 
 const monthly: Season[] = [
   'winter',

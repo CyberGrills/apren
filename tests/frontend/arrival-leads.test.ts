@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { arrivalDiscoveryLeads } from '../../apps/web/src/lib/arrivalLeads.ts';
+import { arrivalDiscoveryLeads } from '../../frontend/src/lib/arrivalLeads.ts';
 
 const normalize = (name: string): string => name.toLocaleLowerCase().normalize('NFKD')
   .replace(/[\u0300-\u036f]/g, '')

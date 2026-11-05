@@ -3,15 +3,15 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 
 const locationFields = readFileSync(
-  new URL('../../apps/web/src/components/LocationFields.tsx', import.meta.url),
+  new URL('../../frontend/src/components/LocationFields.tsx', import.meta.url),
   'utf8',
 );
 const locationStyles = readFileSync(
-  new URL('../../apps/web/src/styles/location-fields.css', import.meta.url),
+  new URL('../../frontend/src/styles/location-fields.css', import.meta.url),
   'utf8',
 );
 const datePickerStyles = readFileSync(
-  new URL('../../apps/web/src/styles/date-picker.css', import.meta.url),
+  new URL('../../frontend/src/styles/date-picker.css', import.meta.url),
   'utf8',
 );
 

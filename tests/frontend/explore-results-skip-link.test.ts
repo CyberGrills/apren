@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const explore = readFileSync(
-  new URL('../../apps/web/src/pages/public/ExplorePage.tsx', import.meta.url),
+  new URL('../../frontend/src/pages/public/ExplorePage.tsx', import.meta.url),
   'utf8',
 );
 const styles = readFileSync(
-  new URL('../../apps/web/src/styles/public.css', import.meta.url),
+  new URL('../../frontend/src/styles/public.css', import.meta.url),
   'utf8',
 );
 
