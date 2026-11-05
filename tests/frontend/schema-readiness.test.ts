@@ -66,8 +66,8 @@ test('readiness marker references an existing numbered migration', async () => {
 test('both API entry points use schema-aware readiness rather than an old ledger row', async () => {
   const api = await readFile(new URL('../../api/[...path].ts', import.meta.url), 'utf8');
   const app = await readFile(new URL('../../services/platform/src/app.ts', import.meta.url), 'utf8');
-  assert.match(api, /schemaIsReady\(pool\)/);
-  assert.match(app, /schemaIsReady\(pool\)/);
+  assert.match(api, /schemaIsReady\(pool,\s*environment\)/);
+  assert.match(app, /schemaIsReady\(pool,\s*environment\)/);
   assert.doesNotMatch(api, /SELECT 1 FROM seven\.migrations LIMIT 1/);
   assert.doesNotMatch(app, /SELECT 1 FROM seven\.migrations LIMIT 1/);
 });
