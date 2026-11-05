@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { runProductionSmoke } from './production-smoke-lib.mjs';
+import { runProductionSmoke } from '../../scripts/production-smoke-lib.mjs';
 
 function response(body, status = 200) {
   return new Response(JSON.stringify(body), {
