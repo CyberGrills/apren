@@ -6,11 +6,11 @@ import { resolve } from 'node:path';
 const root = process.cwd();
 const manifestPath = 'docs/7even/evidence/payments-source-manifest.json';
 const activePrefixes = [
-  'apps/web/',
+  'frontend/',
   'database/',
   'packages/',
   'scripts/',
-  'services/platform/',
+  'backend/platform/',
   'tests/',
   '.github/workflows/',
 ];
