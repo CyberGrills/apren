@@ -56,6 +56,33 @@ const canonical = (value: unknown): string => JSON.stringify(value, (_key, item)
     ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b)))
     : item,
 );
+type PageCursor = { timestamp: string; id: string };
+function decodePageCursor(value: unknown): PageCursor | null {
+  if (value === undefined) return null;
+  if (typeof value !== 'string' || value.length > 512)
+    return fail(422, 'INVALID_CURSOR', 'Pagination cursor is invalid.');
+  try {
+    const decoded = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'));
+    const parsed = z.strictObject({ timestamp: z.string().datetime(), id: z.uuid() }).parse(decoded);
+    return parsed;
+  } catch {
+    return fail(422, 'INVALID_CURSOR', 'Pagination cursor is invalid or expired.');
+  }
+}
+function encodePageCursor(row: { cursor_timestamp: Date | string; cursor_id: string }): string {
+  const timestamp = row.cursor_timestamp instanceof Date
+    ? row.cursor_timestamp.toISOString()
+    : new Date(row.cursor_timestamp).toISOString();
+  return Buffer.from(JSON.stringify({ timestamp, id: row.cursor_id }), 'utf8').toString('base64url');
+}
+function pageResult<T extends { cursor_timestamp: Date | string; cursor_id: string }>(items: T[], limit: number) {
+  const hasMore = items.length > limit;
+  const page = items.slice(0, limit);
+  return {
+    items: page,
+    nextCursor: hasMore && page.length ? encodePageCursor(page[page.length - 1]!) : null,
+  };
+}
 const makeSlug = (value: string, id: string) =>
   value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 90) + '-' + id.slice(0, 8);
@@ -229,9 +256,11 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
     const user=actor(res); const p=await one(pool,'SELECT creator_id FROM seven.creator_profiles WHERE user_id=$1',[user.id]);
     if(!p) return res.json({data:{items:[],nextCursor:null}});
     const status=typeof req.query.status==='string'?req.query.status:null;
+    const cursor=decodePageCursor(req.query.cursor);
     const limit=Math.min(Math.max(Number(req.query.limit)||20,1),50);
-    const items=await rows(pool,"SELECT artwork_id,title,discipline,status,updated_at FROM seven.creator_artworks WHERE creator_id=$1 AND ($2::text IS NULL OR status=$2) ORDER BY updated_at DESC,artwork_id DESC LIMIT $3",[p.creator_id,status,limit+1]);
-    res.json({data:{items:items.slice(0,limit).map(x=>({artworkId:x.artwork_id,title:x.title,discipline:x.discipline,status:x.status,updatedAt:x.updated_at})),nextCursor:null}});
+    const items=await rows(pool,"SELECT artwork_id,title,discipline,status,updated_at,updated_at AS cursor_timestamp,artwork_id AS cursor_id FROM seven.creator_artworks WHERE creator_id=$1 AND ($2::text IS NULL OR status=$2) AND ($3::timestamptz IS NULL OR (updated_at,artwork_id)<($3::timestamptz,$4::uuid)) ORDER BY updated_at DESC,artwork_id DESC LIMIT $5",[p.creator_id,status,cursor?.timestamp??null,cursor?.id??null,limit+1]);
+    const page=pageResult(items,limit);
+    res.json({data:{items:page.items.map(x=>({artworkId:x.artwork_id,title:x.title,discipline:x.discipline,status:x.status,updatedAt:x.updated_at})),nextCursor:page.nextCursor}});
   });
   app.post('/api/creator/artworks', async (req,res) => {
     const user=actor(res); const input=artworkInput.parse(req.body);
@@ -324,10 +353,15 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
     res.status(202).json({data:result});
   });
   app.get('/api/admin/creator-submissions', async (req,res) => {
-    const user=actor(res); admin(user); const type=typeof req.query.type==='string'?req.query.type:'ARTWORK'; const status=typeof req.query.status==='string'?req.query.status:'PENDING_REVIEW'; const limit=Math.min(Math.max(Number(req.query.limit)||20,1),50);
-    if(type==='CREATOR_PROFILE'){const items=await rows(pool,'SELECT creator_id AS submission_id,display_name,profile_status AS status,submitted_at FROM seven.creator_profiles WHERE profile_status=$1 ORDER BY submitted_at DESC NULLS LAST,creator_id DESC LIMIT $2',[status,limit+1]); return res.json({data:{items:items.slice(0,limit).map(x=>({submissionType:'CREATOR_PROFILE',submissionId:x.submission_id,displayName:x.display_name,status:x.status,submittedAt:x.submitted_at})),nextCursor:null}});}
-    const items=await rows(pool,'SELECT a.artwork_id AS submission_id,a.creator_id,c.display_name,a.title,a.discipline,a.status,a.submitted_at FROM seven.creator_artworks a JOIN seven.creator_profiles c USING(creator_id) WHERE a.status=$1 ORDER BY a.submitted_at DESC NULLS LAST,a.artwork_id DESC LIMIT $2',[status,limit+1]);
-    res.json({data:{items:items.slice(0,limit).map(x=>({submissionType:'ARTWORK',submissionId:x.submission_id,creatorId:x.creator_id,creatorDisplayName:x.display_name,title:x.title,discipline:x.discipline,status:x.status,submittedAt:x.submitted_at})),nextCursor:null}});
+    const user=actor(res); admin(user); const type=typeof req.query.type==='string'?req.query.type:'ARTWORK'; const status=typeof req.query.status==='string'?req.query.status:'PENDING_REVIEW'; const cursor=decodePageCursor(req.query.cursor); const limit=Math.min(Math.max(Number(req.query.limit)||20,1),50);
+    if(type==='CREATOR_PROFILE'){
+      const items=await rows(pool,'SELECT creator_id AS submission_id,display_name,profile_status AS status,submitted_at,submitted_at AS cursor_timestamp,creator_id AS cursor_id FROM seven.creator_profiles WHERE profile_status=$1 AND submitted_at IS NOT NULL AND ($2::timestamptz IS NULL OR (submitted_at,creator_id)<($2::timestamptz,$3::uuid)) ORDER BY submitted_at DESC,creator_id DESC LIMIT $4',[status,cursor?.timestamp??null,cursor?.id??null,limit+1]);
+      const page=pageResult(items,limit);
+      return res.json({data:{items:page.items.map(x=>({submissionType:'CREATOR_PROFILE',submissionId:x.submission_id,displayName:x.display_name,status:x.status,submittedAt:x.submitted_at})),nextCursor:page.nextCursor}});
+    }
+    const items=await rows(pool,'SELECT a.artwork_id AS submission_id,a.creator_id,c.display_name,a.title,a.discipline,a.status,a.submitted_at,a.submitted_at AS cursor_timestamp,a.artwork_id AS cursor_id FROM seven.creator_artworks a JOIN seven.creator_profiles c USING(creator_id) WHERE a.status=$1 AND a.submitted_at IS NOT NULL AND ($2::timestamptz IS NULL OR (a.submitted_at,a.artwork_id)<($2::timestamptz,$3::uuid)) ORDER BY a.submitted_at DESC,a.artwork_id DESC LIMIT $4',[status,cursor?.timestamp??null,cursor?.id??null,limit+1]);
+    const page=pageResult(items,limit);
+    res.json({data:{items:page.items.map(x=>({submissionType:'ARTWORK',submissionId:x.submission_id,creatorId:x.creator_id,creatorDisplayName:x.display_name,title:x.title,discipline:x.discipline,status:x.status,submittedAt:x.submitted_at})),nextCursor:page.nextCursor}});
   });
   app.get('/api/admin/creator-submissions/:submissionId', async (req,res) => {
     const user=actor(res); admin(user); const id=z.uuid().parse(req.params.submissionId); const type=req.query.type==='CREATOR_PROFILE'?'CREATOR_PROFILE':'ARTWORK';
@@ -372,14 +406,15 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
     res.json({data:result});
   });
   app.get('/api/art-culture/artworks', async (req,res) => {
-    const discipline=typeof req.query.discipline==='string'?req.query.discipline:null; const country=typeof req.query.countryCode==='string'?req.query.countryCode:null; const limit=Math.min(Math.max(Number(req.query.limit)||20,1),50);
-    const items=await rows(pool,"SELECT a.artwork_id,a.slug,a.title,a.discipline,a.description,a.creation_year,a.origin,a.cultural_context,a.tags,a.accessibility_text,a.rights,a.published_at,c.slug AS creator_slug,c.display_name,c.city,c.region,c.country_code FROM seven.creator_artworks a JOIN seven.creator_profiles c USING(creator_id) WHERE a.public_active AND a.status='APPROVED' AND c.profile_status='VERIFIED' AND ($1::text IS NULL OR a.discipline=$1) AND ($2::text IS NULL OR c.country_code=$2) ORDER BY a.published_at DESC,a.artwork_id DESC LIMIT $3",[discipline,country,limit]);
-    const output=await Promise.all(items.map(async x=>{
+    const discipline=typeof req.query.discipline==='string'?req.query.discipline:null; const country=typeof req.query.countryCode==='string'?req.query.countryCode:null; const cursor=decodePageCursor(req.query.cursor); const limit=Math.min(Math.max(Number(req.query.limit)||20,1),50);
+    const items=await rows(pool,"SELECT a.artwork_id,a.slug,a.title,a.discipline,a.description,a.creation_year,a.origin,a.cultural_context,a.tags,a.accessibility_text,a.rights,a.published_at,a.published_at AS cursor_timestamp,a.artwork_id AS cursor_id,c.slug AS creator_slug,c.display_name,c.city,c.region,c.country_code FROM seven.creator_artworks a JOIN seven.creator_profiles c USING(creator_id) WHERE a.public_active AND a.status='APPROVED' AND c.profile_status='VERIFIED' AND ($1::text IS NULL OR a.discipline=$1) AND ($2::text IS NULL OR c.country_code=$2) AND ($3::timestamptz IS NULL OR (a.published_at,a.artwork_id)<($3::timestamptz,$4::uuid)) ORDER BY a.published_at DESC,a.artwork_id DESC LIMIT $5",[discipline,country,cursor?.timestamp??null,cursor?.id??null,limit+1]);
+    const page=pageResult(items,limit);
+    const output=await Promise.all(page.items.map(async x=>{
       const media=await rows(pool,"SELECT storage_path,caption,accessibility_text,is_cover FROM seven.creator_artwork_media WHERE artwork_id=$1 AND status='READY_FOR_REVIEW' ORDER BY is_cover DESC,sort_order",[x.artwork_id]);
       const images=await Promise.all(media.map(async m=>{const signed=await storageRequest('/object/sign/'+BUCKET+'/'+encodedPath(String(m.storage_path)),'POST',{expiresIn:3600});const cfg=storageConfig();const url=typeof signed.signedURL==='string'?signed.signedURL:null;return url?{url:url.startsWith('http')?url:cfg.baseUrl+'/storage/v1'+url,caption:m.caption,accessibilityText:m.accessibility_text,isCover:m.is_cover}:null;}));
       return {artworkId:x.artwork_id,slug:x.slug,title:x.title,discipline:x.discipline,description:x.description,creationYear:x.creation_year,origin:x.origin,culturalContext:x.cultural_context,tags:x.tags,accessibilityText:x.accessibility_text,attribution:x.rights?.attributionText,displayLicense:x.rights?.displayLicense,media:images.filter(Boolean),publishedAt:x.published_at,creator:{slug:x.creator_slug,displayName:x.display_name,location:{city:x.city,region:x.region,countryCode:x.country_code}}};
     }));
-    res.json({data:{items:output,nextCursor:null}});
+    res.json({data:{items:output,nextCursor:page.nextCursor}});
   });
   app.get('/api/art-culture/creators/:slug', async (req,res) => {
     const profile=await one(pool,"SELECT creator_id,slug,display_name,city,region,country_code,disciplines,biography FROM seven.creator_profiles WHERE slug=$1 AND profile_status='VERIFIED'",[z.string().min(1).max(120).parse(req.params.slug)]);
