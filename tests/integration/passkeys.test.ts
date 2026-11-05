@@ -7,12 +7,12 @@ import type { AddressInfo } from 'node:net';
 import type { AuthenticationResponseJSON, RegistrationResponseJSON, PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/server';
 import { isoCBOR } from '@simplewebauthn/server/helpers';
 import type { SessionData } from '@7even/contracts';
-import { createPool, one, rows } from '../../services/platform/src/db.ts';
-import { createApp } from '../../services/platform/src/app.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
-import { hashPassword, digestToken } from '../../services/platform/src/auth.ts';
-import { passkeysEnabled } from '../../services/platform/src/passkeys.ts';
+import { createPool, one, rows } from '../../backend/platform/src/db.ts';
+import { createApp } from '../../backend/platform/src/app.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
+import { hashPassword, digestToken } from '../../backend/platform/src/auth.ts';
+import { passkeysEnabled } from '../../backend/platform/src/passkeys.ts';
 
 const origin = 'http://localhost:5177';
 const password = 'Passkey-synthetic-account-42!';

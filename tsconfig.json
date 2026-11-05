@@ -17,6 +17,6 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["api/**/*.ts", "apps/web/src/**/*.ts", "apps/web/src/**/*.tsx", "apps/web/vite.config.ts", "packages/**/*.ts", "services/platform/**/*.ts", "tests/**/*.ts"],
+  "include": ["backend/api/**/*.ts", "frontend/src/**/*.ts", "frontend/src/**/*.tsx", "frontend/vite.config.ts", "packages/**/*.ts", "backend/platform/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "**/dist"]
 }

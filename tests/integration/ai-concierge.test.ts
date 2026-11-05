@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Pool } from 'pg';
-import { rateLimitAiSearch } from '../../services/platform/src/accounts.ts';
-import { ApiError } from '../../services/platform/src/db.ts';
+import { rateLimitAiSearch } from '../../backend/platform/src/accounts.ts';
+import { ApiError } from '../../backend/platform/src/db.ts';
 import {
   hotelSearchIntentSchema,
   interpretHotelSearch,
   isOpenAIConfigured,
   toHotelSearchParams,
-} from '../../services/platform/src/aiConcierge.ts';
+} from '../../backend/platform/src/aiConcierge.ts';
 
 test('hotel search intent schema rejects extra fields and invalid room counts', () => {
   assert.equal(

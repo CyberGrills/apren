@@ -12,11 +12,11 @@ import type {
   Reservation,
   SessionData,
 } from '@7even/contracts';
-import { createApp } from '../../services/platform/src/app.ts';
-import { createPool, one } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
-import { sid } from '../../services/platform/src/store.ts';
+import { createApp } from '../../backend/platform/src/app.ts';
+import { createPool, one } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
+import { sid } from '../../backend/platform/src/store.ts';
 
 interface Result<T> {
   status: number;

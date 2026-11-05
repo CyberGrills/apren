@@ -10,7 +10,7 @@ import {
   verifyEoaSignature,
   type CryptoQuoteData,
   type CryptoTransferIntent,
-} from '../../services/platform/src/cryptoProvider.ts';
+} from '../../backend/platform/src/cryptoProvider.ts';
 
 const clock = () => new Date('2026-10-18T10:00:00.000Z');
 const payer = privateKeyToAccount(`0x${'01'.padStart(64, '0')}`);

@@ -4,26 +4,26 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import type * as C from '@7even/contracts';
-import { createApp } from '../../services/platform/src/app.ts';
-import { createPool, one, rows, transaction } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
+import { createApp } from '../../backend/platform/src/app.ts';
+import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
 import {
   applyReceipt,
   checkout as createCheckout,
   reconcileSettlements,
   requestRefund,
   verifyPayment,
-} from '../../services/platform/src/payments.ts';
-import type { PaymentProvider } from '../../services/platform/src/provider.ts';
-import { MockProvider, minorToDecimal } from '../../services/platform/src/provider.ts';
-import { providerIds } from '../../services/platform/src/providerRegistry.ts';
-import { seed } from '../../services/platform/src/seed.ts';
+} from '../../backend/platform/src/payments.ts';
+import type { PaymentProvider } from '../../backend/platform/src/provider.ts';
+import { MockProvider, minorToDecimal } from '../../backend/platform/src/provider.ts';
+import { providerIds } from '../../backend/platform/src/providerRegistry.ts';
+import { seed } from '../../backend/platform/src/seed.ts';
 import {
   pointsProjection,
   reservationProjection,
   safePoints,
-} from '../../services/platform/src/store.ts';
-import { processInbox, processOutbox, recoverClaims } from '../../services/platform/src/worker.ts';
+} from '../../backend/platform/src/store.ts';
+import { processInbox, processOutbox, recoverClaims } from '../../backend/platform/src/worker.ts';
 
 const origin = 'http://localhost:5177';
 const password = 'Integration-only-passphrase-42!';

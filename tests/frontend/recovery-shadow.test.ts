@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { buildRecoveryShadowDecision } from '../../services/platform/src/recoveryShadow.ts';
+import { buildRecoveryShadowDecision } from '../../backend/platform/src/recoveryShadow.ts';
 
 describe('booking recovery shadow decisions', () => {
   const asOf = '2026-11-02T05:00:00.000Z';

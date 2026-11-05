@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 const migration = readFileSync(new URL('../../database/migrations/032_business_media_gallery.sql', import.meta.url), 'utf8');
-const routes = readFileSync(new URL('../../services/platform/src/businessMedia.ts', import.meta.url), 'utf8');
-const app = readFileSync(new URL('../../services/platform/src/app.ts', import.meta.url), 'utf8');
+const routes = readFileSync(new URL('../../backend/platform/src/businessMedia.ts', import.meta.url), 'utf8');
+const app = readFileSync(new URL('../../backend/platform/src/app.ts', import.meta.url), 'utf8');
 
 describe('business media gallery contract', () => {
   it('stores private photos with bounded image types and size', () => {

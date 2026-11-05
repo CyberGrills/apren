@@ -4,15 +4,15 @@ import { randomUUID } from 'node:crypto';
 import { fork } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { createPool, one, rows, transaction } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
-import { seed } from '../../services/platform/src/seed.ts';
-import { createQuote, createReservation } from '../../services/platform/src/reservations.ts';
-import { checkout } from '../../services/platform/src/payments.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
-import { providerIds } from '../../services/platform/src/providerRegistry.ts';
-import { userProjection, reservationProjection, paymentProjection } from '../../services/platform/src/store.ts';
-import type { ProviderReceipt } from '../../services/platform/src/provider.ts';
+import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
+import { seed } from '../../backend/platform/src/seed.ts';
+import { createQuote, createReservation } from '../../backend/platform/src/reservations.ts';
+import { checkout } from '../../backend/platform/src/payments.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
+import { providerIds } from '../../backend/platform/src/providerRegistry.ts';
+import { userProjection, reservationProjection, paymentProjection } from '../../backend/platform/src/store.ts';
+import type { ProviderReceipt } from '../../backend/platform/src/provider.ts';
 import type { CrashConfiguration } from '../fixtures/recovery-child.ts';
 
 interface Message { type: string; backendPid?: number; postingCount?: number; result?: { processed?: number; checkoutCalls: number; verifyCalls: number; databaseFaults?: number; errorCode?: string; receipt?: ProviderReceipt }; message?: string }

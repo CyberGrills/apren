@@ -3,12 +3,12 @@ import testCase from 'node:test';
 import { readFileSync } from 'node:fs';
 
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
-const ownerGallery = source('../../apps/web/src/pages/workspace/business/BusinessPhotoGallery.tsx');
-const adminGallery = source('../../apps/web/src/pages/workspace/AdminBusinessMedia.tsx');
-const app = source('../../apps/web/src/App.tsx');
-const navigation = source('../../apps/web/src/components/WorkspaceShell.tsx');
-const businessCard = source('../../apps/web/src/pages/public/BusinessDirectoryCard.tsx');
-const mediaApi = source('../../apps/web/src/lib/businessMediaApi.ts');
+const ownerGallery = source('../../frontend/src/pages/workspace/business/BusinessPhotoGallery.tsx');
+const adminGallery = source('../../frontend/src/pages/workspace/AdminBusinessMedia.tsx');
+const app = source('../../frontend/src/App.tsx');
+const navigation = source('../../frontend/src/components/WorkspaceShell.tsx');
+const businessCard = source('../../frontend/src/pages/public/BusinessDirectoryCard.tsx');
+const mediaApi = source('../../frontend/src/lib/businessMediaApi.ts');
 const contract = source('../../docs/frontend/business-photo-gallery-api-contract.md');
 
 testCase('owner gallery supports multi-file upload, previews, progress, captions and alt text', () => {

@@ -3,11 +3,11 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 
 const shell = readFileSync(
-  new URL('../../apps/web/src/pages/public/PublicShell.tsx', import.meta.url),
+  new URL('../../frontend/src/pages/public/PublicShell.tsx', import.meta.url),
   'utf8',
 );
 const styles = readFileSync(
-  new URL('../../apps/web/src/styles/public.css', import.meta.url),
+  new URL('../../frontend/src/styles/public.css', import.meta.url),
   'utf8',
 );
 

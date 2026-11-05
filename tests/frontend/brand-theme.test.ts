@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { seasonalCampaigns } from '../../apps/web/src/lib/seasonalCampaigns.ts';
-import { editorialImages } from '../../apps/web/src/lib/editorialImages.ts';
-import type { Season } from '../../apps/web/src/lib/season.ts';
+import { seasonalCampaigns } from '../../frontend/src/lib/seasonalCampaigns.ts';
+import { editorialImages } from '../../frontend/src/lib/editorialImages.ts';
+import type { Season } from '../../frontend/src/lib/season.ts';
 
 const sheet = readFileSync(
-  new URL('../../apps/web/src/styles/global.css', import.meta.url),
+  new URL('../../frontend/src/styles/global.css', import.meta.url),
   'utf8',
 );
 const declarations = (body: string) =>
@@ -115,10 +115,10 @@ test('the four campaigns actually change message and photograph', () => {
 });
 test('installed-app metadata uses the fixed ivory brand background', () => {
   const manifest = JSON.parse(
-    readFileSync(new URL('../../apps/web/public/manifest.webmanifest', import.meta.url), 'utf8'),
+    readFileSync(new URL('../../frontend/public/manifest.webmanifest', import.meta.url), 'utf8'),
   );
   assert.equal(manifest.theme_color.toLowerCase(), brand['--brand-secondary']);
   assert.equal(manifest.background_color.toLowerCase(), brand['--brand-secondary']);
-  const html = readFileSync(new URL('../../apps/web/index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../../frontend/index.html', import.meta.url), 'utf8');
   assert.match(html, /name="theme-color" content="#fffdf8"/i);
 });

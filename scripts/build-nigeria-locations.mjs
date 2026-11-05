@@ -12,7 +12,7 @@ import {
 
 // Run with Node 24+ and unzip. Pass a saved NG.zip to reproduce a captured source snapshot.
 const sourceUrl = 'https://download.geonames.org/export/dump/NG.zip';
-const output = fileURLToPath(new URL('../apps/web/public/data/nigeria/', import.meta.url));
+const output = fileURLToPath(new URL('../frontend/public/data/nigeria/', import.meta.url));
 const source = process.argv[2];
 const downloadedAt = new Date().toISOString();
 const temporary = await mkdtemp(join(tmpdir(), '7even-nigeria-'));

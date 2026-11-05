@@ -7,8 +7,8 @@
     "node": "24.x"
   },
   "workspaces": [
-    "apps/web",
-    "services/platform",
+    "frontend",
+    "backend/platform",
     "packages/contracts",
     "packages/engine"
   ],
@@ -17,12 +17,12 @@
     "build": "npm run typecheck && npm --workspace @7even/web run build",
     "start": "node --env-file-if-exists=.env scripts/start.mjs",
     "typecheck": "tsc --noEmit",
-    "lint": "biome lint apps/web/src services/platform/src packages tests",
-    "format": "biome format --write apps/web/src services/platform/src packages tests",
-    "test": "node --test --test-isolation=none packages/engine/test/*.test.ts packages/contracts/test/*.test.ts tests/frontend/*.test.ts apps/web/src/lib/*.test.ts apps/web/src/pages/customer/checkout.test.ts tests/tooling/*.test.mjs",
+    "lint": "biome lint frontend/src backend/platform/src packages tests",
+    "format": "biome format --write frontend/src backend/platform/src packages tests",
+    "test": "node --test --test-isolation=none packages/engine/test/*.test.ts packages/contracts/test/*.test.ts tests/frontend/*.test.ts frontend/src/lib/*.test.ts frontend/src/pages/customer/checkout.test.ts tests/tooling/*.test.mjs",
     "test:integration": "node --env-file-if-exists=.env --test --test-isolation=none --test-concurrency=1 tests/integration/*.test.ts",
-    "db:migrate": "node --env-file-if-exists=.env services/platform/src/migrate.ts",
-    "db:seed": "node --env-file-if-exists=.env services/platform/src/seed.ts"
+    "db:migrate": "node --env-file-if-exists=.env backend/platform/src/migrate.ts",
+    "db:seed": "node --env-file-if-exists=.env backend/platform/src/seed.ts"
   },
   "devDependencies": {
     "typescript": "7.0.2",

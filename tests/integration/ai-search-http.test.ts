@@ -3,11 +3,11 @@ import { randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
-import { createApp } from '../../services/platform/src/app.ts';
-import { digestToken } from '../../services/platform/src/auth.ts';
-import { createPool, one } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
-import { MockProvider } from '../../services/platform/src/provider.ts';
+import { createApp } from '../../backend/platform/src/app.ts';
+import { digestToken } from '../../backend/platform/src/auth.ts';
+import { createPool, one } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
+import { MockProvider } from '../../backend/platform/src/provider.ts';
 
 test('AI search HTTP boundary validates requests and shares its PostgreSQL limit across apps', {
   skip: !process.env.TEST_DATABASE_URL || !process.env.TEST_RUNTIME_DATABASE_URL,

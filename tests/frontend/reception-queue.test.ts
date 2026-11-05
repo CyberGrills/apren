@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applySyncResults, type StoredAction } from '../../apps/web/src/lib/receptionQueue.ts';
+import { applySyncResults, type StoredAction } from '../../frontend/src/lib/receptionQueue.ts';
 const pending = (id: string): StoredAction => ({
   event: {
     eventId: id,
@@ -46,7 +46,7 @@ test('an incomplete response preserves unacknowledged reception actions', () => 
 const { indexedDB: fakeIndexedDB } = await import('fake-indexeddb');
 Object.defineProperty(globalThis, 'indexedDB', { value: fakeIndexedDB, configurable: true });
 const { appendQueue, mutateQueue, readQueue, clearQueues, restrictQueueOwner } = await import(
-  '../../apps/web/src/lib/receptionQueue.ts'
+  '../../frontend/src/lib/receptionQueue.ts'
 );
 test('twenty simultaneous reception writes retain every distinct action', async () => {
   await clearQueues();

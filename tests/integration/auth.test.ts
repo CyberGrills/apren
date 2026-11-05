@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hashPassword, verifyPassword, digestToken } from '../../services/platform/src/auth.ts';
+import { hashPassword, verifyPassword, digestToken } from '../../backend/platform/src/auth.ts';
 
 test('password hashing uses unique salts and rejects another password', async () => {
   const password = 'Seven-test-only!42';

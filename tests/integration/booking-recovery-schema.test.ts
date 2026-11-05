@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Pool } from 'pg';
-import { rateLimitBookingRecoveryEvent } from '../../services/platform/src/accounts.ts';
-import { ApiError } from '../../services/platform/src/db.ts';
-import { bookingRecoveryEventSchema } from '../../services/platform/src/bookingRecovery.ts';
+import { rateLimitBookingRecoveryEvent } from '../../backend/platform/src/accounts.ts';
+import { ApiError } from '../../backend/platform/src/db.ts';
+import { bookingRecoveryEventSchema } from '../../backend/platform/src/bookingRecovery.ts';
 
 const valid = {
   eventId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',

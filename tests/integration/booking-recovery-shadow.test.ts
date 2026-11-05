@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
-import { createPool, one } from '../../services/platform/src/db.ts';
-import { migrate } from '../../services/platform/src/migrate.ts';
-import { seed } from '../../services/platform/src/seed.ts';
-import { processBookingRecoveryShadow } from '../../services/platform/src/worker.ts';
+import { createPool, one } from '../../backend/platform/src/db.ts';
+import { migrate } from '../../backend/platform/src/migrate.ts';
+import { seed } from '../../backend/platform/src/seed.ts';
+import { processBookingRecoveryShadow } from '../../backend/platform/src/worker.ts';
 
 test('booking recovery shadow consumer is idempotent and non-executable', {
   skip: !process.env.TEST_DATABASE_URL,

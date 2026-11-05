@@ -5,15 +5,15 @@ import { readFileSync } from 'node:fs';
 const source = (path: string) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
-const publicShell = source('../../apps/web/src/pages/public/PublicShell.tsx');
-const landing = source('../../apps/web/src/pages/public/LandingPage.tsx');
-const explore = source('../../apps/web/src/pages/public/ExplorePage.tsx');
-const publicStyles = source('../../apps/web/src/styles/public.css');
-const account = source('../../apps/web/src/pages/customer/AccountPage.tsx');
-const app = source('../../apps/web/src/App.tsx');
+const publicShell = source('../../frontend/src/pages/public/PublicShell.tsx');
+const landing = source('../../frontend/src/pages/public/LandingPage.tsx');
+const explore = source('../../frontend/src/pages/public/ExplorePage.tsx');
+const publicStyles = source('../../frontend/src/styles/public.css');
+const account = source('../../frontend/src/pages/customer/AccountPage.tsx');
+const app = source('../../frontend/src/App.tsx');
 
 test('sample offerings disable the booking and payment flow', () => {
-  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
+  const bookingPanel = source('../../frontend/src/pages/public/BookingPanel.tsx');
   assert.match(bookingPanel, /if \(offering\.isSample\)/);
   assert.match(bookingPanel, /Booking unavailable/);
   assert.match(bookingPanel, /not verified live inventory/);
@@ -47,7 +47,7 @@ test('empty later explore pages offer a way back without discarding active filte
 
 
 test('destination input label uses its generated unique input id', () => {
-  const locations = source('../../apps/web/src/components/LocationFields.tsx');
+  const locations = source('../../frontend/src/components/LocationFields.tsx');
   assert.match(locations, /const inputId = `\$\{id\}-input`/);
   assert.match(locations, /<label htmlFor=\{inputId\}>Where<\/label>/);
   assert.match(locations, /<input\s+id=\{inputId\}/);
@@ -86,9 +86,9 @@ test('public directory renders canonical business profiles separately from booki
   assert.match(app, /path="\/directory" element={<DirectoryPage \/>}/);
   assert.doesNotMatch(landing, /Browse demo properties|demo-catalog-entry|\/demo\/hotels/);
   assert.match(landing, /to=\{kind === 'ALL' \? '\/directory' : `\/directory\?kind=\$\{kind\}`\}/);
-  const directoryPage = source('../../apps/web/src/pages/public/DirectoryPage.tsx');
-  const businessCard = source('../../apps/web/src/pages/public/BusinessDirectoryCard.tsx');
-  const platform = source('../../services/platform/src/app.ts');
+  const directoryPage = source('../../frontend/src/pages/public/DirectoryPage.tsx');
+  const businessCard = source('../../frontend/src/pages/public/BusinessDirectoryCard.tsx');
+  const platform = source('../../backend/platform/src/app.ts');
   const routeStart = platform.indexOf("route('get', '/directory'");
   const routeEnd = platform.indexOf("route('get', '/locations'", routeStart);
   const directoryRoute = platform.slice(routeStart, routeEnd);
@@ -116,14 +116,14 @@ test('guest account navigation stays focused on profile, bookings and updates', 
 });
 
 test('checkout shows service fees separately when the quote includes one', () => {
-  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
+  const bookingPanel = source('../../frontend/src/pages/public/BookingPanel.tsx');
   assert.match(bookingPanel, /quote\.price\.serviceMinor !== '0'/);
   assert.match(bookingPanel, /<dt>\{pcm \? 'Service charge' : 'Service fee'\}<\/dt>[\s\S]*?<Money minor={quote\.price\.serviceMinor} \/>/);
   assert.match(bookingPanel, /<dt>\{pcm \? 'Total' : 'Total'\}<\/dt>[\s\S]*?<Money minor={quote\.price\.totalMinor} \/>/);
 });
 
 test('sample offerings never present illustrative prices as bookable rates', () => {
-  const ui = source('../../apps/web/src/components/ui.tsx');
+  const ui = source('../../frontend/src/components/ui.tsx');
   assert.match(ui, /offering\.isSample \? \([\s\S]*?Illustrative listing only\. This place is not available to book through 7even\./);
   assert.match(ui, /: \([\s\S]*?<Money minor={offering\.priceMinor} \/>/);
 });
@@ -133,20 +133,20 @@ test('āprən × 7even watermark is global, decorative and does not intercept pa
   assert.match(app, /className="apren-watermark" aria-hidden="true"/);
   assert.match(app, /āprən × 7even/);
   assert.match(app, /Array\.from\(\{ length: 24 \}/);
-  assert.match(source('../../apps/web/src/styles/global.css'), /\.apren-watermark\s*\{[\s\S]*?position:\s*fixed/);
-  assert.match(source('../../apps/web/src/styles/global.css'), /pointer-events:\s*none/);
+  assert.match(source('../../frontend/src/styles/global.css'), /\.apren-watermark\s*\{[\s\S]*?position:\s*fixed/);
+  assert.match(source('../../frontend/src/styles/global.css'), /pointer-events:\s*none/);
 });
 
 
 test('failed city loading exposes one retry control instead of duplicate retry actions', () => {
-  const locations = source('../../apps/web/src/components/LocationFields.tsx');
+  const locations = source('../../frontend/src/components/LocationFields.tsx');
   assert.match(locations, /<ErrorNotice[\s\S]*?retry=\{\(\) => setAttempt\(\(value\) => value \+ 1\)\}/);
   assert.doesNotMatch(locations, /className="location-retry"|Reload cities/);
 });
 
 
 test('Google Maps proof of concept is lazy, key-gated, and does not fabricate property markers', () => {
-  const mapScene = source('../../apps/web/src/components/GoogleMapsScene.tsx');
+  const mapScene = source('../../frontend/src/components/GoogleMapsScene.tsx');
   assert.match(mapScene, /VITE_GOOGLE_MAPS_API_KEY/);
   assert.match(mapScene, /IntersectionObserver/);
   assert.match(mapScene, /Property pins will appear only when 7even has verified coordinates/);
@@ -157,8 +157,8 @@ test('Google Maps proof of concept is lazy, key-gated, and does not fabricate pr
 
 
 test('virtual pilot scroll scene is stay-only, pinned, and respects reduced motion', () => {
-  const pilot = source('../../apps/web/src/components/ScrollPilotScene.tsx');
-  const styles = source('../../apps/web/src/styles/scroll-pilot-scene.css');
+  const pilot = source('../../frontend/src/components/ScrollPilotScene.tsx');
+  const styles = source('../../frontend/src/styles/scroll-pilot-scene.css');
   assert.match(explore, /isStaySearch && <ScrollPilotScene \/>/);
   assert.match(styles, /position: sticky/);
   assert.match(styles, /prefers-reduced-motion: reduce/);
@@ -177,8 +177,8 @@ test('virtual pilot scroll scene is stay-only, pinned, and respects reduced moti
 
 
 test('Naija Pidgin preference is shared across public pages and respects account preference', () => {
-  const language = source('../../apps/web/src/lib/sevenLanguage.ts');
-  const profile = source('../../apps/web/src/pages/customer/ProfileView.tsx');
+  const language = source('../../frontend/src/lib/sevenLanguage.ts');
+  const profile = source('../../frontend/src/pages/customer/ProfileView.tsx');
   assert.match(language, /7even-language-style/);
   assert.match(language, /7even-language-change/);
   assert.match(publicShell, /useSevenLanguage/);
@@ -198,12 +198,12 @@ test('Naija Pidgin keeps verified availability and payment wording explicit', ()
 
 test('Naija Pidgin reaches hotel detail, booking, sign-in, profile and customer updates', () => {
   const languageHook = /useSevenLanguage/;
-  const offering = source('../../apps/web/src/pages/public/OfferingPage.tsx');
-  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
-  const auth = source('../../apps/web/src/pages/public/AuthPage.tsx');
-  const profile = source('../../apps/web/src/pages/customer/ProfileView.tsx');
-  const updates = source('../../apps/web/src/pages/customer/ActivityView.tsx');
-  const bookings = source('../../apps/web/src/pages/customer/BookingList.tsx');
+  const offering = source('../../frontend/src/pages/public/OfferingPage.tsx');
+  const bookingPanel = source('../../frontend/src/pages/public/BookingPanel.tsx');
+  const auth = source('../../frontend/src/pages/public/AuthPage.tsx');
+  const profile = source('../../frontend/src/pages/customer/ProfileView.tsx');
+  const updates = source('../../frontend/src/pages/customer/ActivityView.tsx');
+  const bookings = source('../../frontend/src/pages/customer/BookingList.tsx');
   for (const page of [offering, bookingPanel, auth, profile, updates, bookings]) {
     assert.match(page, languageHook);
     assert.match(page, /const pcm =/);
@@ -216,7 +216,7 @@ test('Naija Pidgin reaches hotel detail, booking, sign-in, profile and customer 
 
 
 test('Pidgin booking panel uses distinct customer-facing copy and preserves payment verification', () => {
-  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
+  const bookingPanel = source('../../frontend/src/pages/public/BookingPanel.tsx');
   assert.match(bookingPanel, /How many rooms\?/);
   assert.match(bookingPanel, /How many people\?/);
   assert.match(bookingPanel, /Wetin you go pay/);
@@ -229,7 +229,7 @@ test('Pidgin booking panel uses distinct customer-facing copy and preserves paym
 });
 
 test('Pidgin hotel details explain cancellation, payment verification and eligible points', () => {
-  const offering = source('../../apps/web/src/pages/public/OfferingPage.tsx');
+  const offering = source('../../frontend/src/pages/public/OfferingPage.tsx');
   assert.match(offering, /Wetin you suppose know before booking/);
   assert.match(offering, /payment provider don verify the payment/);
   assert.match(offering, /business own policy/);
@@ -237,7 +237,7 @@ test('Pidgin hotel details explain cancellation, payment verification and eligib
 });
 
 test('language preference synchronizes across browser tabs through the storage event', () => {
-  const language = source('../../apps/web/src/lib/sevenLanguage.ts');
+  const language = source('../../frontend/src/lib/sevenLanguage.ts');
   assert.match(language, /addEventListener\('storage', syncFromStorage\)/);
   assert.match(language, /event\.key !== '7even-language-style'/);
   assert.match(language, /event\.newValue === 'pcm' \? 'pcm' : 'en'/);
@@ -246,9 +246,9 @@ test('language preference synchronizes across browser tabs through the storage e
 
 
 test('Pidgin booking and payment dialog localize customer actions without changing payment routing', () => {
-  const bookingPanel = source('../../apps/web/src/pages/public/BookingPanel.tsx');
-  const paymentDialog = source('../../apps/web/src/components/PaymentMethodDialog.tsx');
-  const offering = source('../../apps/web/src/pages/public/OfferingPage.tsx');
+  const bookingPanel = source('../../frontend/src/pages/public/BookingPanel.tsx');
+  const paymentDialog = source('../../frontend/src/components/PaymentMethodDialog.tsx');
+  const offering = source('../../frontend/src/pages/public/OfferingPage.tsx');
   assert.match(bookingPanel, /Sign in make you see the full price/);
   assert.match(bookingPanel, /We dey check am/);
   assert.match(paymentDialog, /useSevenLanguage/);
@@ -264,7 +264,7 @@ test('Pidgin booking and payment dialog localize customer actions without changi
 
 
 test('virtual pilot audio is user-initiated, captioned, language-aware and stoppable', () => {
-  const pilot = source('../../apps/web/src/components/ScrollPilotScene.tsx');
+  const pilot = source('../../frontend/src/components/ScrollPilotScene.tsx');
   assert.match(pilot, /useSevenLanguage/);
   assert.match(pilot, /PILOT_VOICE_TRACKS/);
   assert.match(pilot, /primary-en-ng\.mp3/);
@@ -284,8 +284,8 @@ test('virtual pilot audio is user-initiated, captioned, language-aware and stopp
 });
 
 test('7even install page explains PWA installation without claiming app-store availability', () => {
-  const appSource = source('../../apps/web/src/App.tsx');
-  const shellSource = source('../../apps/web/src/pages/public/PublicShell.tsx');
+  const appSource = source('../../frontend/src/App.tsx');
+  const shellSource = source('../../frontend/src/pages/public/PublicShell.tsx');
   assert.match(appSource, /path="\/install"/);
   assert.match(appSource, /beforeinstallprompt/);
   assert.match(appSource, /Add to Home Screen/);
@@ -294,7 +294,7 @@ test('7even install page explains PWA installation without claiming app-store av
 });
 
 test('failed Google Maps script is cleaned up so a later mount can retry', () => {
-  const mapScene = source('../../apps/web/src/components/GoogleMapsScene.tsx');
+  const mapScene = source('../../frontend/src/components/GoogleMapsScene.tsx');
   assert.match(mapScene, /function fail\(error: Error\)[\s\S]*?script\.remove\(\)/);
   assert.match(mapScene, /timeoutId = window\.setTimeout\([\s\S]*?Google Maps took too long to load/);
   assert.match(mapScene, /script\.removeEventListener\('load', finish\)/);
@@ -317,8 +317,8 @@ test('Explore surfaces approved directory profiles and source-backed dining and 
   assert.match(explore, /BusinessDirectoryCard key=\{profile\.id\}/);
   assert.match(explore, /DirectoryListingCard key=\{listing\.id\}/);
   assert.match(explore, /directoryProfiles\.length === 0 && directoryListings\.length === 0/);
-  const businessCard = source('../../apps/web/src/pages/public/BusinessDirectoryCard.tsx');
-  const listingCard = source('../../apps/web/src/pages/public/DirectoryListingCard.tsx');
+  const businessCard = source('../../frontend/src/pages/public/BusinessDirectoryCard.tsx');
+  const listingCard = source('../../frontend/src/pages/public/DirectoryListingCard.tsx');
   assert.match(businessCard, /Directory only/);
   assert.match(businessCard, /Property evidence requires review/);
   assert.match(businessCard, /Booking is disabled/);

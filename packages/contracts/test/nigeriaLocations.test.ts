@@ -63,7 +63,7 @@ test('the shipped catalog covers settlements and neighborhood areas in every sta
   let count = 0;
   for (const state of nigeriaStates) {
     const url = new URL(
-      `../../../apps/web/public${nigeriaStateDataPath(state.code)}`,
+      `../../../frontend/public${nigeriaStateDataPath(state.code)}`,
       import.meta.url,
     );
     const data = JSON.parse(await readFile(url, 'utf8')) as NigeriaStateLocationData;
@@ -93,7 +93,7 @@ test('the shipped catalog covers settlements and neighborhood areas in every sta
   assert.ok(searchNigeriaLocations(all, 'Abakpa').length > 1, 'Names across states were merged');
   const provenance = JSON.parse(
     await readFile(
-      new URL('../../../apps/web/public/data/nigeria/provenance.json', import.meta.url),
+      new URL('../../../frontend/public/data/nigeria/provenance.json', import.meta.url),
       'utf8',
     ),
   );

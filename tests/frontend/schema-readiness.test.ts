@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import test from 'node:test';
 import type { Pool } from 'pg';
-import { REQUIRED_SCHEMA_MIGRATION, schemaIsReady } from '../../services/platform/src/schemaReadiness.ts';
+import { REQUIRED_SCHEMA_MIGRATION, schemaIsReady } from '../../backend/platform/src/schemaReadiness.ts';
 
 interface ReadinessRow {
   migration_applied: boolean;
@@ -64,8 +64,8 @@ test('readiness marker references an existing numbered migration', async () => {
 });
 
 test('both API entry points use schema-aware readiness rather than an old ledger row', async () => {
-  const api = await readFile(new URL('../../api/[...path].ts', import.meta.url), 'utf8');
-  const app = await readFile(new URL('../../services/platform/src/app.ts', import.meta.url), 'utf8');
+  const api = await readFile(new URL('../../backend/api/[...path].ts', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../../backend/platform/src/app.ts', import.meta.url), 'utf8');
   assert.match(api, /schemaIsReady\(pool,\s*environment\)/);
   assert.match(app, /schemaIsReady\(pool,\s*environment\)/);
   assert.doesNotMatch(api, /SELECT 1 FROM seven\.migrations LIMIT 1/);
