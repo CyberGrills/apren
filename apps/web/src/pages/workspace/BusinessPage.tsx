@@ -117,7 +117,9 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
           )}
           {tab === 'overview' && (
             <>
-            <section className="panel demo-dashboard-promo"><div><span className="public-eyebrow">Listing presentation preview</span><h2>Explore the 7EVEN demo catalogue</h2><p>Compare the guest-facing property cards and illustrative photo galleries before preparing your own verified listing.</p></div><Link className="btn btn-secondary" to="/demo/hotels">Preview catalogue</Link></section>
+            {!import.meta.env.PROD && (
+              <section className="panel demo-dashboard-promo"><div><span className="public-eyebrow">Listing presentation preview</span><h2>Explore the 7EVEN demo catalogue</h2><p>Compare the guest-facing property cards and illustrative photo galleries before preparing your own verified listing.</p></div><Link className="btn btn-secondary" to="/demo/hotels">Preview catalogue</Link></section>
+            )}
             <BusinessWorkspaceOverview
               data={data}
               onAdd={() => setEditor({ kind: 'offering' })}

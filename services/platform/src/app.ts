@@ -398,7 +398,7 @@ export function createApp(options: AppOptions = {}) {
   route('get', '/health/ready', async () => {
     let ready = false;
     try {
-      ready = await schemaIsReady(pool);
+      ready = await schemaIsReady(pool, environment);
     } catch {
       return fail(503, 'DATABASE_NOT_READY', 'Database connection or schema is not ready.');
     }
