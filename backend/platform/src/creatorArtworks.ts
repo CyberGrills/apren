@@ -117,7 +117,8 @@ async function audit(db: PoolClient, actor: SessionUser, action: string, resourc
 }
 async function mutate<T>(pool: Pool, req: Request, actor: SessionUser, work: Work<T>): Promise<T> {
   const key = string(req.get('Idempotency-Key'), 'Idempotency key', 8, 200);
-  const operation = req.method + ':' + req.path;
+  // Persist the route template, not UUID-expanded req.path, in the bounded operation_name column.
+  const operation = req.method + ':' + (req.route?.path ?? req.path);
   const hash = digestToken(canonical(req.body ?? {}));
   return transaction(pool, async db => {
     await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [actor.id + ':' + key]);
