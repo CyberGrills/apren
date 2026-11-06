@@ -100,7 +100,8 @@ describe('7EVEN creator artwork backend foundation', () => {
     assert.ok(routes.includes('Buffer.from(JSON.stringify('));
     assert.match(routes, /base64url/);
     assert.match(routes, /updated_at,artwork_id\)<\(\$3::timestamptz,\$4::uuid\)/);
-    assert.match(routes, /submitted_at,artwork_id\)<\(\$2::timestamptz,\$3::uuid\)/);
+    assert.match(routes, /submitted_at,creator_id\)<\(\$2::timestamptz,\$3::uuid\)/);
+    assert.match(routes, /a\.submitted_at,a\.artwork_id\)<\(\$2::timestamptz,\$3::uuid\)/);
     assert.match(routes, /a\.published_at,a\.artwork_id\)<\(\$3::timestamptz,\$4::uuid\)/);
     assert.match(routes, /nextCursor:page\.nextCursor/);
     assert.match(routes, /INVALID_CURSOR/);
