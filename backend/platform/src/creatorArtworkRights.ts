@@ -119,6 +119,8 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
       if(!row) return fail(404,'RIGHTS_RECORD_NOT_FOUND','Rights review record was not found.');
       if(row.status!=='PENDING_REVIEW') return fail(409,'RIGHTS_REVIEW_ALREADY_COMPLETED','This rights record already has a decision.');
       const accepted=input.decision==='APPROVED'||input.decision==='VERIFIED';
+      if(kind==='community-permission'&&input.decision==='VERIFIED') return fail(422,'INVALID_RIGHTS_DECISION','Community permission decisions must be APPROVED or REJECTED.');
+      if(kind!=='community-permission'&&input.decision==='APPROVED') return fail(422,'INVALID_RIGHTS_DECISION','Evidence and attribution decisions must be VERIFIED or REJECTED.');
       if(accepted&&kind==='evidence'){
         const docs=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_rights_documents WHERE evidence_id=$1 AND status='AVAILABLE'",[recordId]);
         if(!Number(docs?.total)) return fail(409,'RIGHTS_DOCUMENT_REQUIRED','At least one completed private supporting document is required before evidence can be verified.');
@@ -127,8 +129,6 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
         const docs=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_rights_documents WHERE permission_id=$1 AND status='AVAILABLE'",[recordId]);
         if(!Number(docs?.total)) return fail(409,'RIGHTS_DOCUMENT_REQUIRED','At least one completed private permission document is required before community permission can be approved.');
       }
-      if(kind==='community-permission'&&input.decision==='VERIFIED') return fail(422,'INVALID_RIGHTS_DECISION','Community permission decisions must be APPROVED or REJECTED.');
-      if(kind!=='community-permission'&&input.decision==='APPROVED') return fail(422,'INVALID_RIGHTS_DECISION','Evidence and attribution decisions must be VERIFIED or REJECTED.');
       const status=kind==='community-permission'?(accepted?'APPROVED':'REJECTED'):(accepted?'VERIFIED':'REJECTED');
       await db.query(`UPDATE seven.${table} SET status=$2,reviewed_by=$3,reviewed_at=now(),review_reason=$4 WHERE ${idColumn}=$1`,[recordId,status,a.id,input.reason]);
       const decision=kind==='evidence'?(accepted?'EVIDENCE_VERIFIED':'EVIDENCE_REJECTED'):kind==='community-permission'?(accepted?'COMMUNITY_PERMISSION_APPROVED':'COMMUNITY_PERMISSION_REJECTED'):(accepted?'ATTRIBUTION_VERIFIED':'ATTRIBUTION_REJECTED');
