@@ -151,7 +151,7 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
       if(art.profile_status!=='VERIFIED') return fail(409,'CREATOR_NOT_VERIFIED','Creator profile must be verified before restoration.');
       const rights=art.rights as Record<string,unknown>;
       if(rights.basis==='LICENSED'||rights.basis==='AUTHORIZED_REPRESENTATIVE'){
-        const evidence=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_rights_evidence WHERE artwork_id=$1 AND status='VERIFIED'",[id]);
+        const evidence=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_rights_evidence WHERE artwork_id=$1 AND evidence_type=$2 AND status='VERIFIED'",[id,rights.basis==='LICENSED'?'LICENSE':'AUTHORIZED_REPRESENTATIVE']);
         if(!Number(evidence?.total)) return fail(409,'RIGHTS_EVIDENCE_REQUIRED','Verified rights evidence is required before restoration.');
       }
       if(rights.communityPermission!=='NOT_REQUIRED'){
@@ -160,7 +160,7 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
       }
       const notice=art.content_notice as Record<string,unknown>; if(notice.containsSensitiveCulturalMaterial===true||(Array.isArray(notice.publicDisplayRestrictions)&&notice.publicDisplayRestrictions.length>0)) return fail(409,'CULTURAL_REVIEW_REQUIRED','Cultural display restrictions still prevent restoration.');
       const media=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_media WHERE artwork_id=$1 AND status='READY_FOR_REVIEW'",[id]); if(!Number(media?.total)) return fail(409,'ARTWORK_MEDIA_REQUIRED','Completed artwork media is required before restoration.');
-      const attribution=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_attribution_reviews WHERE artwork_id=$1 AND status='VERIFIED'",[id]);
+      const attribution=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_attribution_reviews WHERE artwork_id=$1 AND attribution_text=$2 AND status='VERIFIED'",[id,rights.attributionText]);
       if(!Number(attribution?.total)) return fail(409,'ATTRIBUTION_VERIFICATION_REQUIRED','Verified attribution is required before restoration.');
       await db.query("UPDATE seven.creator_artworks SET status='APPROVED',public_active=true,published_at=COALESCE(published_at,now()),reviewed_at=now(),updated_at=now() WHERE artwork_id=$1",[id]);
       await auditDecision(db,a,id,'RESTORED',input.reason,null,{publishedAt:art.published_at??null});
