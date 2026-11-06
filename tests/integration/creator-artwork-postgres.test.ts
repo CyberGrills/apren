@@ -207,11 +207,11 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
         tags: ['integration-test'],
         accessibilityText: 'Abstract geometric pattern in a test artwork.',
         rights: {
-          basis: 'ORIGINAL',
+          basis: 'LICENSED',
           rightsConfirmed: true,
           attributionText: 'Integration test fixture',
           thirdPartyPermissions: '',
-          communityPermission: 'NOT_REQUIRED',
+          communityPermission: 'OBTAINED',
           displayLicense: 'ALL_RIGHTS_RESERVED',
         },
         contentNotice: { containsSensitiveCulturalMaterial: false, publicDisplayRestrictions: [] },
@@ -291,6 +291,60 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       );
       assert.equal(completed.status, 200, JSON.stringify(completed));
       assert.equal((completed.data as { status: string }).status, 'READY_FOR_REVIEW');
+
+      const evidence = await creator.request<{ evidenceId: string }>(`/creator/artworks/${artworkId}/rights/evidence`, 'POST', {
+        evidenceType: 'LICENSE',
+        issuerName: 'Integration fixture creator',
+        evidenceReference: 'fixture:ownership-proof-001',
+        description: 'Synthetic ownership evidence reference for integration verification.',
+      });
+      assert.equal(evidence.status, 202, JSON.stringify(evidence));
+      const evidenceReview = await admin.request(`/admin/creator-rights/evidence/${evidence.data.evidenceId}/review`, 'POST', {
+        decision: 'VERIFIED',
+        reason: 'Synthetic ownership evidence verified in integration test.',
+      });
+      assert.equal(evidenceReview.status, 200, JSON.stringify(evidenceReview));
+
+      const permission = await creator.request<{ permissionId: string }>(`/creator/artworks/${artworkId}/rights/community-permissions`, 'POST', {
+        communityName: 'Integration fixture community',
+        authorityName: 'Integration fixture authority',
+        permissionScope: 'Synthetic test-only permission scope for controlled integration validation.',
+        evidenceReference: 'fixture:community-permission-001',
+        culturalContext: 'Synthetic integration fixture; no real community or cultural claim is represented.',
+      });
+      assert.equal(permission.status, 202, JSON.stringify(permission));
+      const permissionReview = await admin.request(`/admin/creator-rights/community-permission/${permission.data.permissionId}/review`, 'POST', {
+        decision: 'APPROVED',
+        reason: 'Synthetic community permission record approved in integration test.',
+      });
+      assert.equal(permissionReview.status, 200, JSON.stringify(permissionReview));
+
+      const attribution = await creator.request<{ attributionReviewId: string }>(`/creator/artworks/${artworkId}/rights/attribution`, 'POST', {
+        attributionText: 'Integration test fixture',
+        sourceDescription: 'Original synthetic integration fixture created for this test.',
+      });
+      assert.equal(attribution.status, 202, JSON.stringify(attribution));
+      const attributionReview = await admin.request(`/admin/creator-rights/attribution/${attribution.data.attributionReviewId}/review`, 'POST', {
+        decision: 'VERIFIED',
+        reason: 'Synthetic attribution verified in integration test.',
+      });
+      assert.equal(attributionReview.status, 200, JSON.stringify(attributionReview));
+
+      // Verify the API review persisted the exact record that publication reads.
+      const persistedAttribution = await one<{
+        artwork_id: string;
+        attribution_text: string;
+        attribution_status: string;
+        declared_attribution_text: string | null;
+      }>(runtimePool, `SELECT r.artwork_id,r.attribution_text,r.status AS attribution_status,a.rights->>'attributionText' AS declared_attribution_text
+        FROM seven.creator_artwork_attribution_reviews r
+        JOIN seven.creator_artworks a ON a.artwork_id=r.artwork_id
+        WHERE r.attribution_review_id=$1`, [attribution.data.attributionReviewId]);
+      assert.ok(persistedAttribution, 'Reviewed attribution must be persisted and queryable.');
+      assert.equal(persistedAttribution.artwork_id, artworkId, 'Attribution must belong to the submitted artwork.');
+      assert.equal(persistedAttribution.attribution_status, 'VERIFIED', 'Moderator review must persist VERIFIED status.');
+      assert.equal(persistedAttribution.attribution_text, persistedAttribution.declared_attribution_text,
+        'Verified attribution must exactly match creatorArtwork.rights.attributionText.');
 
       const submitted = await creator.request(`/creator/artworks/${artworkId}/submit`, 'POST', {
         confirmRightsAndPermissions: true,
@@ -397,10 +451,13 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       const withdrawn = await creator.request(`/creator/artworks/${withdrawnId}/withdraw`, 'POST', {});
       assert.equal(withdrawn.status, 200, JSON.stringify(withdrawn));
       assert.deepEqual(withdrawn.data, { artworkId: withdrawnId, status: 'ARCHIVED', public: false });
-      const auditCount = await one<{ total: number }>(pool,
-        "SELECT count(*)::int AS total FROM seven.audit_events WHERE action_code IN ('creator_artwork.approved_published','creator_artwork.taken_down','creator_artwork.withdrawn')",
+      // Assert this artwork's own withdrawal event; do not depend on publication/takedown
+      // side effects from a different nested test.
+      const withdrawalAudit = await one<{ total: number }>(runtimePool,
+        "SELECT count(*)::int AS total FROM seven.audit_events WHERE action_code='creator_artwork.withdrawn' AND resource_id=$1",
+        [withdrawnId],
       );
-      assert.ok(Number(auditCount?.total) >= 3, 'Publish, takedown and withdrawal must each write an audit event.');
+      assert.equal(Number(withdrawalAudit?.total), 1, 'Withdrawal must write exactly one audit event for this artwork.');
     });
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
