@@ -117,7 +117,7 @@ export function mountCreatorArtworkRightsDocuments(app: Express, { pool, actor }
       if (parent.status !== 'PENDING_REVIEW') return fail(409, 'RIGHTS_RECORD_LOCKED', 'Documents can only be attached while the rights record is pending review.');
       const parentColumn = input.evidenceId ? 'evidence_id' : 'permission_id';
       const parentId = input.evidenceId ?? input.permissionId!;
-      const count = await one(db, "SELECT count(*)::int AS total FROM seven.creator_artwork_rights_documents WHERE " + parentColumn + "=$1 AND status <> 'REMOVED'", [parentId]);
+      const count = await one(db, "SELECT count(*)::int AS total FROM seven.creator_artwork_rights_documents WHERE " + parentColumn + "=$1 AND status <> 'REMOVED' AND (status <> 'PENDING_UPLOAD' OR upload_expires_at IS NULL OR upload_expires_at > now())", [parentId]);
       if (Number(count?.total ?? 0) >= 5) return fail(429, 'DOCUMENT_LIMIT_REACHED', 'A rights record can have up to five supporting documents.');
       const documentId = randomUUID();
       const path = String(parent.artwork_id) + '/' + documentId + '.' + extension(input.mimeType);
