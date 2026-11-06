@@ -30,6 +30,8 @@ const BusinessApplicationPage = lazy(() => import('./pages/public/BusinessApplic
 const DirectoryPage = lazy(() => import('./pages/public/DirectoryPage.tsx').then((module) => ({ default: module.DirectoryPage })));
 const ExplorePage = lazy(() => import('./pages/public/ExplorePage.tsx').then((module) => ({ default: module.ExplorePage })));
 const ArtCulturePage = lazy(() => import('./pages/public/ArtCulturePage.tsx').then((module) => ({ default: module.ArtCulturePage })));
+const CreatorStudioPage = lazy(() => import('./pages/public/CreatorStudioPage.tsx').then((module) => ({ default: module.CreatorStudioPage })));
+const CreatorPublicPage = lazy(() => import('./pages/public/CreatorPublicPage.tsx').then((module) => ({ default: module.CreatorPublicPage })));
 const LandingPage = lazy(() => import('./pages/public/LandingPage.tsx').then((module) => ({ default: module.LandingPage })));
 const OfferingPage = lazy(() => import('./pages/public/OfferingPage.tsx').then((module) => ({ default: module.OfferingPage })));
 const AdminInventoryPage = lazy(() => import('./pages/workspace/AdminInventoryPage.tsx').then((module) => ({ default: module.AdminInventoryPage })));
@@ -85,6 +87,8 @@ function Protected({ roles }: { roles?: Role[] }) {
     );
   return <Outlet />;
 }
+const watermarkItems = Array.from({ length: 24 }, (_, index) => `brand-watermark-${index + 1}`);
+
 function WorkspaceHome() {
   const { user } = useSession();
   const path =
@@ -218,8 +222,8 @@ export function App() {
             <ScrollPosition />
             <OfflineStatusBar />
             <div className="apren-watermark" aria-hidden="true">
-              {Array.from({ length: 24 }, (_, index) => (
-                <span key={index}>7EVEN · powered by āprən</span>
+              {watermarkItems.map((item) => (
+                <span key={item}>7EVEN · powered by āprən</span>
               ))}
             </div>
             <Suspense fallback={<main className="permission-screen" id="main-content"><Loading /></main>}>
@@ -242,6 +246,7 @@ export function App() {
               <Route path="/offline" element={<OfflinePage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/campus-connect/art-culture" element={<ArtCulturePage />} />
+              <Route path="/creators/:slug" element={<CreatorPublicPage />} />
               <Route path="/directory" element={<DirectoryPage />} />
               <Route path="/places/:id" element={<OfferingPage />} />
               <Route path="/login" element={<AuthPage mode="login" />} />
@@ -254,6 +259,7 @@ export function App() {
               <Route path="/reset-password" element={<RecoveryPage reset />} />
               <Route element={<Protected />}>
                 <Route path="/workspace" element={<WorkspaceHome />} />
+                <Route path="/creator" element={<CreatorStudioPage />} />
                 <Route path="/app/security" element={<PasswordPage />} />
                 <Route path="/business/apply" element={<BusinessApplicationPage />} />
                 <Route path="/app/bookings" element={<AccountPage tab="bookings" />} />

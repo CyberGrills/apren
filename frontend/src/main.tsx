@@ -12,6 +12,7 @@ import { seasonAt } from './lib/season.ts';
 import './styles/global.css';
 import './styles/public.css';
 import './styles/art-culture.css';
+import './styles/creator-studio.css';
 import './styles/demo-catalog.css';
 import './styles/customer.css';
 import './styles/workspace.css';
@@ -22,7 +23,9 @@ import './styles/authentication.css';
 import './styles/offline.css';
 
 document.documentElement.dataset.season = seasonAt(new Date());
-createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root');
+if (!root) throw new Error('The 7even application root is missing.');
+createRoot(root).render(
   <StrictMode>
     <SeasonProvider>
       <App />
