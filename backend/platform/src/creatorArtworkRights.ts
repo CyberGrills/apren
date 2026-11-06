@@ -146,7 +146,7 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
     const input=z.strictObject({reason:z.string().trim().min(8).max(1000)}).parse(req.body);
     const result=await mutate(pool,req,user,async(db,a)=>{
       const art=await one(db,'SELECT a.*,c.profile_status FROM seven.creator_artworks a JOIN seven.creator_profiles c USING(creator_id) WHERE a.artwork_id=$1 FOR UPDATE',[id]);
-      if(!art||art.status!=='SUSPENDED') return fail(409,'RESTORE_NOT_ALLOWED','Only a suspended artwork can be restored.');
+      if(!art||art.status!=='SUSPENDED'||!art.published_at) return fail(409,'RESTORE_NOT_ALLOWED','Only a previously published artwork suspended for review can be restored.');
       if(art.profile_status!=='VERIFIED') return fail(409,'CREATOR_NOT_VERIFIED','Creator profile must be verified before restoration.');
       const rights=art.rights as Record<string,unknown>;
       if(rights.basis==='LICENSED'||rights.basis==='AUTHORIZED_REPRESENTATIVE'){
