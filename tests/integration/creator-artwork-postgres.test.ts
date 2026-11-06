@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import type { Server } from 'node:http';
+import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import type * as C from '@7even/contracts';
@@ -88,6 +88,68 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
     const bucket = await one<{ is_private: boolean }>(pool, "SELECT NOT public AS is_private FROM storage.buckets WHERE id='creator-artwork-media'");
     assert.equal(bucket?.is_private, true, 'Creator artwork storage bucket must remain private.');
   }
+
+  const previousStorageUrl = process.env.SUPABASE_URL;
+  const previousStorageSecret = process.env.SUPABASE_SECRET_KEY;
+  const storedObjects = new Map<string, { bytes: Buffer; contentType: string }>();
+  const storageServer = createServer(async (req, res) => {
+    const url = new URL(req.url ?? '/', 'http://localhost');
+    const uploadPrefix = '/storage/v1/object/upload/sign/';
+    const objectPrefix = '/storage/v1/object/';
+    if (req.method === 'POST' && url.pathname.startsWith(uploadPrefix)) {
+      const objectPath = url.pathname.slice(uploadPrefix.length);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        signedURL: `${storageBase}/storage/v1/object/upload/sign/${objectPath}?token=integration-token`,
+        token: 'integration-token',
+      }));
+      return;
+    }
+    if (req.method === 'PUT' && url.pathname.startsWith(uploadPrefix)) {
+      const objectPath = url.pathname.slice(uploadPrefix.length);
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(Buffer.from(chunk));
+      storedObjects.set(objectPath, {
+        bytes: Buffer.concat(chunks),
+        contentType: String(req.headers['content-type'] ?? ''),
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ Key: objectPath }));
+      return;
+    }
+    if ((req.method === 'HEAD' || req.method === 'GET') && url.pathname.startsWith(objectPrefix)) {
+      const objectPath = url.pathname.slice(objectPrefix.length);
+      const stored = storedObjects.get(objectPath);
+      if (!stored) {
+        res.writeHead(404);
+        res.end();
+        return;
+      }
+      res.setHeader('Content-Type', stored.contentType);
+      res.setHeader('Content-Length', String(stored.bytes.length));
+      if (req.method === 'HEAD') {
+        res.writeHead(200);
+        res.end();
+      } else {
+        res.writeHead(200);
+        res.end(stored.bytes);
+      }
+      return;
+    }
+    if (req.method === 'POST' && url.pathname.startsWith('/storage/v1/object/sign/')) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ signedURL: '/storage/v1/object/sign/test-public-image' }));
+      return;
+    }
+    res.writeHead(404);
+    res.end();
+  });
+  const storageAddress = await new Promise<AddressInfo>((resolve) => {
+    storageServer.listen(0, '127.0.0.1', () => resolve(storageServer.address() as AddressInfo));
+  });
+  const storageBase = `http://127.0.0.1:${storageAddress.port}`;
+  process.env.SUPABASE_URL = storageBase;
+  process.env.SUPABASE_SECRET_KEY = 'integration-only-storage-secret';
 
   const runtimePool = process.env.TEST_RUNTIME_DATABASE_URL
     ? createPool(process.env.TEST_RUNTIME_DATABASE_URL)
@@ -190,10 +252,164 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       const queue = await admin.request<{ items: Array<{ submissionId: string; submissionType: string }> }>('/admin/creator-submissions?type=CREATOR_PROFILE');
       assert.equal(queue.status, 200, JSON.stringify(queue));
       assert.ok(queue.data.items.some((item) => item.submissionId === submitted.data.creatorId));
+      const verified = await admin.request('/admin/creator-submissions/' + submitted.data.creatorId + '/review', 'POST', {
+        type: 'CREATOR_PROFILE',
+        decision: 'VERIFIED',
+        reason: 'Integration fixture passed creator profile review.',
+        feedback: [],
+      });
+      assert.equal(verified.status, 200, JSON.stringify(verified));
+      assert.equal((verified.data as { status: string }).status, 'VERIFIED');
+    });
+
+    await t.test('completed media can be submitted, approved, discovered, and taken down', async () => {
+      const imageBytes = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0]);
+      const intent = await creator.request<{ mediaId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
+        `/creator/artworks/${artworkId}/media/upload-intents`,
+        'POST',
+        {
+          filename: 'uyo-pattern.png',
+          mimeType: 'image/png',
+          byteSize: imageBytes.length,
+          caption: 'Test cover image',
+          accessibilityText: 'A test PNG image for the Uyo pattern artwork.',
+          isCover: true,
+        },
+      );
+      assert.equal(intent.status, 201, JSON.stringify(intent));
+      const uploaded = await fetch(intent.data.uploadUrl, {
+        method: 'PUT',
+        headers: intent.data.requiredHeaders,
+        body: imageBytes,
+      });
+      assert.equal(uploaded.status, 200, 'Signed upload must accept the image bytes.');
+
+      const completed = await creator.request(
+        `/creator/artworks/${artworkId}/media/${intent.data.mediaId}/complete`,
+        'POST',
+        {},
+      );
+      assert.equal(completed.status, 200, JSON.stringify(completed));
+      assert.equal((completed.data as { status: string }).status, 'READY_FOR_REVIEW');
+
+      const submitted = await creator.request(`/creator/artworks/${artworkId}/submit`, 'POST', {
+        confirmRightsAndPermissions: true,
+        confirmAccurateAttribution: true,
+        confirmCulturalCare: true,
+        confirmPublicVisibility: true,
+      });
+      assert.equal(submitted.status, 202, JSON.stringify(submitted));
+
+      const queue = await admin.request<{ items: Array<{ submissionId: string }> }>('/admin/creator-submissions?type=ARTWORK');
+      assert.equal(queue.status, 200, JSON.stringify(queue));
+      assert.ok(queue.data.items.some(item => item.submissionId === artworkId));
+
+      const approved = await admin.request(`/admin/creator-submissions/${artworkId}/review`, 'POST', {
+        type: 'ARTWORK',
+        decision: 'APPROVED',
+        reason: 'Original artwork passed the integration moderation checks.',
+        feedback: [],
+      });
+      assert.equal(approved.status, 200, JSON.stringify(approved));
+      assert.equal((approved.data as { status: string }).status, 'APPROVED');
+
+      const publicList = await creator.request<{ items: Array<{ artworkId: string; media: Array<{ url?: string }> }> }>('/art-culture/artworks?countryCode=NG');
+      assert.equal(publicList.status, 200, JSON.stringify(publicList));
+      const published = publicList.data.items.find(item => item.artworkId === artworkId);
+      assert.ok(published, 'Approved artwork must appear in public discovery.');
+      assert.equal(published.media.length, 1);
+      assert.ok(published.media[0]?.url);
+      assert.equal(JSON.stringify(published).includes('storagePath'), false);
+
+      const takenDown = await admin.request(`/admin/creator-submissions/${artworkId}/takedown`, 'POST', {
+        reasonCode: 'TEST_MODERATION',
+        reason: 'Integration test verifies that moderator takedown removes public visibility.',
+        creatorMessage: 'This is a synthetic integration-test action.',
+      });
+      assert.equal(takenDown.status, 200, JSON.stringify(takenDown));
+      assert.equal((takenDown.data as { status: string; public: boolean }).status, 'SUSPENDED');
+      assert.equal((takenDown.data as { public: boolean }).public, false);
+
+      const afterTakedown = await creator.request<{ items: Array<{ artworkId: string }> }>('/art-culture/artworks?countryCode=NG');
+      assert.equal(afterTakedown.status, 200, JSON.stringify(afterTakedown));
+      assert.equal(afterTakedown.data.items.some(item => item.artworkId === artworkId), false);
+    });
+
+    await t.test('creator can withdraw a pending artwork and the mutation is audited', async () => {
+      const created = await creator.request<{ artwork: { artworkId: string } }>('/creator/artworks', 'POST', {
+        title: 'Uyo Withdrawal Test Study',
+        discipline: 'DIGITAL_ART',
+        description: 'A second synthetic artwork used to verify creator withdrawal from moderation.',
+        creationYear: 2026,
+        origin: { city: 'Uyo', countryCode: 'NG' },
+        culturalContext: 'Synthetic integration-test content only.',
+        tags: ['integration-test', 'withdrawal'],
+        accessibilityText: 'A synthetic artwork used for withdrawal verification.',
+        rights: {
+          basis: 'ORIGINAL',
+          rightsConfirmed: true,
+          attributionText: 'Integration test fixture',
+          thirdPartyPermissions: '',
+          communityPermission: 'NOT_REQUIRED',
+          displayLicense: 'ALL_RIGHTS_RESERVED',
+        },
+        contentNotice: { containsSensitiveCulturalMaterial: false, publicDisplayRestrictions: [] },
+      });
+      assert.equal(created.status, 201, JSON.stringify(created));
+      const withdrawnId = created.data.artwork.artworkId;
+
+      // Withdrawal is allowed for a pending submission, not an untouched DRAFT.
+      const withdrawalImage = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0]);
+      const uploadIntent = await creator.request<{ mediaId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
+        `/creator/artworks/${withdrawnId}/media/upload-intents`,
+        'POST',
+        {
+          filename: 'withdrawal-test.png',
+          mimeType: 'image/png',
+          byteSize: withdrawalImage.length,
+          caption: 'Withdrawal test image',
+          accessibilityText: 'A synthetic image for the withdrawal lifecycle test.',
+          isCover: true,
+        },
+      );
+      assert.equal(uploadIntent.status, 201, JSON.stringify(uploadIntent));
+      const uploadResponse = await fetch(uploadIntent.data.uploadUrl, {
+        method: 'PUT',
+        headers: uploadIntent.data.requiredHeaders,
+        body: withdrawalImage,
+      });
+      assert.equal(uploadResponse.status, 200);
+      const mediaCompleted = await creator.request(
+        `/creator/artworks/${withdrawnId}/media/${uploadIntent.data.mediaId}/complete`,
+        'POST',
+        {},
+      );
+      assert.equal(mediaCompleted.status, 200, JSON.stringify(mediaCompleted));
+      const submitted = await creator.request(`/creator/artworks/${withdrawnId}/submit`, 'POST', {
+        confirmRightsAndPermissions: true,
+        confirmAccurateAttribution: true,
+        confirmCulturalCare: true,
+        confirmPublicVisibility: true,
+      });
+      assert.equal(submitted.status, 202, JSON.stringify(submitted));
+      assert.equal((submitted.data as { status: string }).status, 'PENDING_REVIEW');
+
+      const withdrawn = await creator.request(`/creator/artworks/${withdrawnId}/withdraw`, 'POST', {});
+      assert.equal(withdrawn.status, 200, JSON.stringify(withdrawn));
+      assert.deepEqual(withdrawn.data, { artworkId: withdrawnId, status: 'ARCHIVED', public: false });
+      const auditCount = await one<{ total: number }>(pool,
+        "SELECT count(*)::int AS total FROM seven.audit_events WHERE action_code IN ('creator_artwork.approved_published','creator_artwork.taken_down','creator_artwork.withdrawn')",
+      );
+      assert.ok(Number(auditCount?.total) >= 3, 'Publish, takedown and withdrawal must each write an audit event.');
     });
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     if (runtimePool !== pool) await runtimePool.end();
+    await new Promise<void>((resolve, reject) => storageServer.close((error) => error ? reject(error) : resolve()));
+    if (previousStorageUrl === undefined) delete process.env.SUPABASE_URL;
+    else process.env.SUPABASE_URL = previousStorageUrl;
+    if (previousStorageSecret === undefined) delete process.env.SUPABASE_SECRET_KEY;
+    else process.env.SUPABASE_SECRET_KEY = previousStorageSecret;
     await pool.end();
   }
 });

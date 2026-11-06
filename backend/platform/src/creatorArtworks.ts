@@ -117,7 +117,8 @@ async function audit(db: PoolClient, actor: SessionUser, action: string, resourc
 }
 async function mutate<T>(pool: Pool, req: Request, actor: SessionUser, work: Work<T>): Promise<T> {
   const key = string(req.get('Idempotency-Key'), 'Idempotency key', 8, 200);
-  const operation = req.method + ':' + req.path;
+  // Persist the route template, not UUID-expanded req.path, in the bounded operation_name column.
+  const operation = req.method + ':' + (req.route?.path ?? req.path);
   const hash = digestToken(canonical(req.body ?? {}));
   return transaction(pool, async db => {
     await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [actor.id + ':' + key]);
@@ -253,7 +254,7 @@ export function mountCreatorArtworks(app: Express, { pool, actor }: Context): vo
       const profileSlug = old?.slug ?? makeSlug(input.displayName, creatorId);
       const status = old?.profile_status ?? 'DRAFT';
       const p = await one(db,
-        "INSERT INTO seven.creator_profiles(creator_id,user_id,slug,display_name,city,region,country_code,disciplines,biography,portfolio_urls,profile_status,submitted_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,CASE WHEN $11='PENDING_REVIEW' THEN now() ELSE NULL END) ON CONFLICT(user_id) DO UPDATE SET display_name=EXCLUDED.display_name,city=EXCLUDED.city,region=EXCLUDED.region,country_code=EXCLUDED.country_code,disciplines=EXCLUDED.disciplines,biography=EXCLUDED.biography,portfolio_urls=EXCLUDED.portfolio_urls,profile_status=EXCLUDED.profile_status,submitted_at=EXCLUDED.submitted_at,updated_at=now() RETURNING creator_id,slug,display_name,city,region,country_code,disciplines,biography,portfolio_urls,profile_status,updated_at",
+        "INSERT INTO seven.creator_profiles(creator_id,user_id,slug,display_name,city,region,country_code,disciplines,biography,portfolio_urls,profile_status,submitted_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::varchar,CASE WHEN $11::varchar='PENDING_REVIEW' THEN now() ELSE NULL END) ON CONFLICT(user_id) DO UPDATE SET display_name=EXCLUDED.display_name,city=EXCLUDED.city,region=EXCLUDED.region,country_code=EXCLUDED.country_code,disciplines=EXCLUDED.disciplines,biography=EXCLUDED.biography,portfolio_urls=EXCLUDED.portfolio_urls,profile_status=EXCLUDED.profile_status,submitted_at=EXCLUDED.submitted_at,updated_at=now() RETURNING creator_id,slug,display_name,city,region,country_code,disciplines,biography,portfolio_urls,profile_status,updated_at",
         [creatorId,a.id,profileSlug,input.displayName,input.location.city,input.location.region ?? null,input.location.countryCode,input.disciplines,input.biography,input.portfolioUrls,status],
       );
       await audit(db,a,'creator_profile.saved',creatorId,{status});
