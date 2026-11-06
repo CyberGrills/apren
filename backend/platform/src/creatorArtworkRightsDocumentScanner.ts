@@ -94,6 +94,9 @@ export async function processCreatorArtworkRightsDocumentScans(
           "SELECT scan_job_id FROM seven.creator_artwork_rights_document_scan_jobs WHERE scan_job_id=$1 AND lease_id=$2 AND status='PROCESSING' FOR UPDATE",
           [job.scan_job_id, leaseId]);
         if (!owned) return;
+        const document = await one<{ artwork_id: string; uploaded_by: string }>(db,
+          'SELECT artwork_id,uploaded_by FROM seven.creator_artwork_rights_documents WHERE document_id=$1',
+          [job.document_id]);
         if (job.attempts >= MAX_SCAN_ATTEMPTS) {
           await db.query(`
             UPDATE seven.creator_artwork_rights_documents
@@ -108,6 +111,11 @@ export async function processCreatorArtworkRightsDocumentScans(
                    last_error_code='SCAN_FAILED',completed_at=now(),updated_at=now()
              WHERE scan_job_id=$1
           `, [job.scan_job_id]);
+          if (document) await db.query(`
+            INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details)
+            VALUES($1,$2,NULL,'creator_artwork_rights_document.scan_quarantined',$3,$4)
+          `, [randomUUID(),document.uploaded_by,job.document_id,
+            { artworkId: document.artwork_id, checksum: job.object_sha256, result: 'ERROR', attempt: job.attempts, errorCode: 'SCAN_FAILED' }]);
         } else {
           await db.query(`
             UPDATE seven.creator_artwork_rights_document_scan_jobs
@@ -116,6 +124,11 @@ export async function processCreatorArtworkRightsDocumentScans(
                    last_error_code='SCANNER_UNAVAILABLE',updated_at=now()
              WHERE scan_job_id=$1
           `, [job.scan_job_id]);
+          if (document) await db.query(`
+            INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details)
+            VALUES($1,$2,NULL,'creator_artwork_rights_document.scan_retry',$3,$4)
+          `, [randomUUID(),document.uploaded_by,job.document_id,
+            { artworkId: document.artwork_id, checksum: job.object_sha256, attempt: job.attempts, errorCode: 'SCANNER_UNAVAILABLE' }]);
         }
       });
     }
