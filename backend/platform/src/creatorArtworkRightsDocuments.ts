@@ -180,7 +180,7 @@ export function mountCreatorArtworkRightsDocuments(app: Express, { pool, actor }
     const user = actor(res); const artworkId = z.uuid().parse(req.params.artworkId);
     const art = await one(pool, "SELECT a.artwork_id FROM seven.creator_artworks a JOIN seven.creator_profiles c USING(creator_id) WHERE a.artwork_id=$1 AND c.user_id=$2", [artworkId, user.id]);
     if (!art) return fail(404, 'ARTWORK_NOT_FOUND', 'Artwork was not found.');
-    const documents = await rows(pool, "SELECT document_id,evidence_id,permission_id,original_filename,mime_type,byte_size,status,created_at FROM seven.creator_artwork_rights_documents WHERE artwork_id=$1 AND status <> 'REMOVED' ORDER BY created_at", [artworkId]);
+    const documents = await rows(pool, "SELECT document_id,evidence_id,permission_id,original_filename,mime_type,byte_size,status,created_at FROM seven.creator_artwork_rights_documents WHERE artwork_id=$1 AND status <> 'REMOVED' AND (status <> 'PENDING_UPLOAD' OR upload_expires_at IS NULL OR upload_expires_at > now()) ORDER BY created_at", [artworkId]);
     res.json({ data: { items: documents.map(d => ({ documentId: d.document_id, evidenceId: d.evidence_id, permissionId: d.permission_id, filename: d.original_filename, mimeType: d.mime_type, byteSize: Number(d.byte_size), status: d.status, createdAt: d.created_at })) } });
   });
 
@@ -188,7 +188,7 @@ export function mountCreatorArtworkRightsDocuments(app: Express, { pool, actor }
     const user = actor(res); requireAdmin(user); const artworkId = z.uuid().parse(req.params.submissionId);
     const exists = await one(pool, 'SELECT artwork_id FROM seven.creator_artworks WHERE artwork_id=$1', [artworkId]);
     if (!exists) return fail(404, 'ARTWORK_NOT_FOUND', 'Artwork was not found.');
-    const documents = await rows(pool, "SELECT document_id,evidence_id,permission_id,original_filename,mime_type,byte_size,status,created_at FROM seven.creator_artwork_rights_documents WHERE artwork_id=$1 AND status <> 'REMOVED' ORDER BY created_at", [artworkId]);
+    const documents = await rows(pool, "SELECT document_id,evidence_id,permission_id,original_filename,mime_type,byte_size,status,created_at FROM seven.creator_artwork_rights_documents WHERE artwork_id=$1 AND status <> 'REMOVED' AND (status <> 'PENDING_UPLOAD' OR upload_expires_at IS NULL OR upload_expires_at > now()) ORDER BY created_at", [artworkId]);
     res.json({ data: { items: documents.map(d => ({ documentId: d.document_id, evidenceId: d.evidence_id, permissionId: d.permission_id, filename: d.original_filename, mimeType: d.mime_type, byteSize: Number(d.byte_size), status: d.status, createdAt: d.created_at })) } });
   });
 
