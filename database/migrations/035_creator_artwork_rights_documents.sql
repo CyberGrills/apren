@@ -29,7 +29,7 @@ BEGIN
   IF to_regclass('storage.buckets') IS NOT NULL THEN
     INSERT INTO storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
     VALUES ('creator-artwork-rights-documents','creator-artwork-rights-documents',false,15728640,ARRAY['application/pdf','image/jpeg','image/png']::text[])
-    ON CONFLICT(id) DO NOTHING;
+    ON CONFLICT(id) DO UPDATE SET public=false,file_size_limit=15728640,allowed_mime_types=ARRAY['application/pdf','image/jpeg','image/png']::text[];
   END IF;
 END;
 $creator_rights_storage$;
