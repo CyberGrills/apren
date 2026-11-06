@@ -126,4 +126,4 @@ Restoration is a new audited moderator decision. It never edits or deletes the o
 
 ## Release boundary
 
-Migration `034_creator_artwork_rights_workflow.sql` is a repository change only. It has not been applied to production. No production deployment, NFT minting, wallet, blockchain or payment change is included.
+Migrations `034_creator_artwork_rights_workflow.sql` and `035_creator_artwork_rights_documents.sql` are repository changes only. Neither has been applied to production. No production deployment, NFT minting, wallet, blockchain or payment change is included.
