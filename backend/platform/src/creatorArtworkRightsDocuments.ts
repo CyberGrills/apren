@@ -107,7 +107,7 @@ export function mountCreatorArtworkRightsDocuments(app: Express, { pool, actor }
     const input = intentInput.parse(req.body);
     const result = await mutate(pool, req, user, async (db, current) => {
       await creatorArtwork(db, current, artworkId);
-      let parent: Record<string, unknown> | null = null;
+      let parent: Record<string, unknown> | undefined;
       if (input.evidenceId) {
         parent = await one(db, "SELECT evidence_id,artwork_id,status FROM seven.creator_artwork_rights_evidence WHERE evidence_id=$1 AND artwork_id=$2 AND submitted_by=$3 FOR UPDATE", [input.evidenceId, artworkId, current.id]);
       } else if (input.permissionId) {
