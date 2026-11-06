@@ -342,8 +342,10 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       const creatorDocuments = await creator.request<{ items: Array<{ documentId: string; status: string; storagePath?: string }> }>(
         `/creator/artworks/${artworkId}/rights/documents`);
       assert.equal(creatorDocuments.status, 200, JSON.stringify(creatorDocuments));
-      assert.equal(creatorDocuments.data.items[0]?.status, 'AVAILABLE');
-      assert.equal('storagePath' in (creatorDocuments.data.items[0] ?? {}), false, 'Private storage paths must not be returned.');
+      const scannedEvidenceDocument = creatorDocuments.data.items.find((item) => item.documentId === evidenceIntent.data.documentId);
+      assert.ok(scannedEvidenceDocument, 'The completed evidence upload must appear in the creator document list.');
+      assert.equal(scannedEvidenceDocument.status, 'AVAILABLE', 'Only the exact document that passed the clean scan may become available.');
+      assert.equal('storagePath' in scannedEvidenceDocument, false, 'Private storage paths must not be returned.');
       const foreignDownload = await otherUser.request(`/creator/artworks/${artworkId}/rights/documents/${evidenceIntent.data.documentId}/download`);
       assert.equal(foreignDownload.status, 404, 'A different account must not receive a signed private download URL.');
       const nonAdminList = await creator.request(`/admin/creator-submissions/${artworkId}/rights/documents`);
