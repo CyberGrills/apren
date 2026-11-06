@@ -1,5 +1,10 @@
 import { ArrowRight, ArrowUpRight, Palette, Camera, Shirt, BookOpen, ShieldCheck, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useApi } from '../../hooks/useApi.ts';
+import { ErrorNotice } from '../../components/ui.tsx';
+import { PublicArtworkCard } from './CreatorPublicPage.tsx';
+import type { PublicArtwork } from '../../lib/creatorApi.ts';
 import { PublicFooter, PublicHeader } from './PublicShell.tsx';
 
 const categories = [
@@ -11,7 +16,8 @@ const categories = [
 
 export function ArtCulturePage() {
   const [activeCategory, setActiveCategory] = useState('All');
-  const [creatorOpen, setCreatorOpen] = useState(false);
+  const { data: collectionData, loading: collectionLoading, error: collectionError, reload: reloadCollection } = useApi<{ items: PublicArtwork[]; nextCursor: string | null }>('/art-culture/artworks?limit=50');
+  const visibleArtworks = (collectionData?.items ?? []).filter((artwork) => activeCategory === 'All' || artwork.discipline === ({ 'Digital art': 'DIGITAL_ART', Photography: 'PHOTOGRAPHY', 'Fashion & design': 'FASHION_DESIGN', 'Heritage & stories': 'HERITAGE_STORY' } as Record<string, string>)[activeCategory] || (activeCategory === 'Heritage & stories' && artwork.discipline === 'CRAFT'));
   const filters = ['All', 'Digital art', 'Photography', 'Fashion & design', 'Heritage & stories'];
 
   return (
@@ -26,11 +32,11 @@ export function ArtCulturePage() {
             <p className="ac-lead">A space for African artists, photographers, designers and cultural storytellers to be discovered, credited and celebrated.</p>
             <div className="ac-hero-actions">
               <a className="btn btn-primary" href="#discover">Explore the collection <ArrowRight size={16} /></a>
-              <button className="btn btn-secondary" type="button" onClick={() => setCreatorOpen(true)}>For creators</button>
+              <Link className="btn btn-secondary" to="/creator">For creators</Link>
             </div>
             <p className="ac-note"><ShieldCheck size={15} /> Creator attribution, permission and cultural respect come first.</p>
           </div>
-          <div className="ac-hero-art" aria-label="Abstract artwork inspired by African forms and patterns">
+          <div className="ac-hero-art" role="img" aria-label="Abstract artwork inspired by African forms and patterns">
             <div className="ac-art-orbit ac-orbit-one" />
             <div className="ac-art-orbit ac-orbit-two" />
             <div className="ac-art-sun" />
@@ -58,16 +64,18 @@ export function ArtCulturePage() {
             <div><p className="public-eyebrow">DISCOVER</p><h2>Art, identity and imagination.</h2><p>Explore by creative discipline. New work will appear as creators are onboarded and submissions are reviewed.</p></div>
             <span className="ac-curation-label"><ShieldCheck size={15} /> Curated submissions</span>
           </div>
-          <div className="ac-filter-row" role="group" aria-label="Filter creative disciplines">
+          <fieldset className="ac-filter-row"><legend className="sr-only">Filter creative disciplines</legend>
             {filters.map((filter) => <button type="button" key={filter} className={activeCategory === filter ? 'is-active' : ''} onClick={() => setActiveCategory(filter)}>{filter}</button>)}
-          </div>
-          <div className="ac-empty-state">
+          </fieldset>
+          {collectionError && <ErrorNotice message={collectionError} retry={reloadCollection} />}
+          {collectionLoading && <p className="ac-loading" role="status">Loading approved artwork…</p>}
+          {visibleArtworks.length > 0 ? <div className="creator-public-grid ac-public-artwork-grid">{visibleArtworks.map((artwork) => <PublicArtworkCard artwork={artwork} key={artwork.artworkId} />)}</div> : !collectionLoading && !collectionError ? <div className="ac-empty-state">
             <div className="ac-empty-mark"><Sparkles size={26} strokeWidth={1.4} /></div>
-            <p className="public-eyebrow">THE FIRST COLLECTION IS TAKING SHAPE</p>
+            <p className="public-eyebrow">THE COLLECTION IS GROWING</p>
             <h3>{activeCategory === 'All' ? 'A place for African creativity to be seen.' : `A space for ${activeCategory.toLowerCase()}.`}</h3>
-            <p>We are preparing creator onboarding and a review process before publishing any artwork. No sample artists, unverified works or simulated ownership will be displayed.</p>
-            <button type="button" className="btn btn-primary" onClick={() => setCreatorOpen(true)}>Creator information <ArrowRight size={16} /></button>
-          </div>
+            <p>No approved artworks are published in this collection yet. Only verified creators and moderator-approved works appear here.</p>
+            <Link className="btn btn-primary" to="/creator">Open Creator Studio <ArrowRight size={16} /></Link>
+          </div> : null}
         </section>
 
         <section className="ac-principles">
@@ -87,17 +95,7 @@ export function ArtCulturePage() {
         </section>
       </main>
       <PublicFooter />
-      {creatorOpen && <div className="ac-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setCreatorOpen(false); }}>
-        <section className="ac-creator-modal" role="dialog" aria-modal="true" aria-labelledby="ac-modal-title">
-          <button className="ac-modal-close" type="button" onClick={() => setCreatorOpen(false)} aria-label="Close creator information">×</button>
-          <p className="public-eyebrow">FOR AFRICAN CREATORS</p>
-          <h2 id="ac-modal-title">Your work deserves the right context.</h2>
-          <p>We are preparing a creator onboarding process for artists, photographers, designers and cultural storytellers.</p>
-          <ul><li>Creator profiles and portfolios</li><li>Artwork attribution and permission checks</li><li>Curated collections and editorial discovery</li><li>Future NFT options, introduced separately</li></ul>
-          <p className="ac-modal-disclaimer">Creator submissions are not open yet. This preview does not collect or transmit personal information.</p>
-          <button className="btn btn-primary" type="button" onClick={() => setCreatorOpen(false)}>Got it</button>
-        </section>
-      </div>}
+
     </div>
   );
 }

@@ -32,11 +32,17 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --include=dev
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Run automated tests
         run: npm test
+
+      - name: Run browser route, responsive, and accessibility tests
+        run: npm run test:browser
 
       - name: Build production frontend
         run: npm run build

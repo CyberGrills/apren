@@ -1,5 +1,5 @@
 import { ArrowUpRight, Menu, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
 import { SeasonalCampaignBanner } from '../../components/SeasonalCampaignBanner.tsx';
@@ -24,6 +24,8 @@ export function PublicHeader() {
   const mobileNavRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [language, setLanguage] = useState<SevenLanguage>(readSevenLanguage);
+  // Route changes close the menu even though the effect only needs the stable setter.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this effect intentionally reacts to route changes.
   useEffect(() => {
     setOpen(false);
   }, [location.pathname, location.search]);
@@ -37,6 +39,10 @@ export function PublicHeader() {
     document.addEventListener('pointerdown', closeOnOutsideClick);
     return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
   }, [open]);
+  const closeMobileMenu = useCallback(() => {
+    setOpen(false);
+    menuButtonRef.current?.focus();
+  }, []);
   useEffect(() => {
     if (!open) return;
     mobileNavRef.current?.querySelector<HTMLElement>('a, button, select')?.focus();
@@ -47,7 +53,7 @@ export function PublicHeader() {
     };
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [open]);
+  }, [open, closeMobileMenu]);
   useEffect(() => {
     const syncLanguage = (event: Event) => {
       const next = (event as CustomEvent<SevenLanguage>).detail;
@@ -64,10 +70,6 @@ export function PublicHeader() {
       window.dispatchEvent(new CustomEvent('7even-language-change', { detail: saved }));
     }
   }, [user?.profileDetails?.preferredLanguage]);
-  function closeMobileMenu() {
-    setOpen(false);
-    menuButtonRef.current?.focus();
-  }
   function changeLanguage(next: SevenLanguage) {
     setLanguage(next);
     try {
@@ -89,7 +91,7 @@ export function PublicHeader() {
     <>
     <header className="public-header" ref={headerRef}>
       <div className="public-container public-nav">
-        <Link to="/" aria-label="7even home" className="public-brand">
+        <Link to="/" className="public-brand">
           <Brand />
         </Link>
         <nav className="public-nav-desktop" aria-label="Main navigation">
@@ -99,10 +101,10 @@ export function PublicHeader() {
           <Link to="/campus-connect/art-culture">Art & Culture</Link>
         </nav>
         <div className="public-nav-actions">
-          <div className="seven-language-switch" role="group" aria-label="Website language">
+          <fieldset className="seven-language-switch"><legend className="sr-only">Website language</legend>
             <button type="button" className={language === 'en' ? 'active' : ''} aria-pressed={language === 'en'} onClick={() => changeLanguage('en')}>English</button>
             <button type="button" className={language === 'pcm' ? 'active' : ''} aria-pressed={language === 'pcm'} onClick={() => changeLanguage('pcm')}>Naija Pidgin</button>
-          </div>
+          </fieldset>
           <Link to="/install" className="public-install-link">Install app</Link>
           <Link to={user ? '/app/bookings' : '/login'} className="public-account-link">
             {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
@@ -183,8 +185,8 @@ export function PublicFooter() {
       <div className="public-container">
         <div className="public-footer-top">
           <div className="public-footer-brand-lockup">
-            <Link to="/" aria-label="7even home"><Brand /></Link>
-            <div className="apren-signature" aria-label="Powered by āprən">
+            <Link to="/"><Brand /></Link>
+            <div className="apren-signature">
               <strong className="apren-wordmark">āprən</strong>
               <span>Powered by āprən</span>
             </div>
