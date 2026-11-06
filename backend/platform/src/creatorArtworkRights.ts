@@ -133,8 +133,9 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
     const user=actor(res); requireAdmin(user); const id=z.uuid().parse(req.params.submissionId);
     const input=z.strictObject({reason:z.string().trim().min(8).max(1000)}).parse(req.body);
     const result=await mutate(pool,req,user,async(db,a)=>{
-      const art=await one(db,'SELECT artwork_id,status FROM seven.creator_artworks WHERE artwork_id=$1 FOR UPDATE',[id]);
+      const art=await one(db,'SELECT artwork_id,status,public_active FROM seven.creator_artworks WHERE artwork_id=$1 FOR UPDATE',[id]);
       if(!art) return fail(404,'ARTWORK_NOT_FOUND','Artwork was not found.');
+      if(art.status!=='APPROVED'||art.public_active!==true) return fail(409,'RIGHTS_HOLD_NOT_ALLOWED','A rights hold can only be placed on a currently published artwork.');
       await db.query("UPDATE seven.creator_artworks SET status='SUSPENDED',public_active=false,updated_at=now() WHERE artwork_id=$1",[id]);
       await auditDecision(db,a,id,'RIGHTS_HOLD',input.reason,null,{previousStatus:art.status});
       return {artworkId:id,status:'SUSPENDED',public:false};
@@ -157,6 +158,8 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
         const permission=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_community_permissions WHERE artwork_id=$1 AND status='APPROVED'",[id]);
         if(!Number(permission?.total)) return fail(409,'PERMISSION_EVIDENCE_REQUIRED','Approved community permission is required before restoration.');
       }
+      const notice=art.content_notice as Record<string,unknown>; if(notice.containsSensitiveCulturalMaterial===true||(Array.isArray(notice.publicDisplayRestrictions)&&notice.publicDisplayRestrictions.length>0)) return fail(409,'CULTURAL_REVIEW_REQUIRED','Cultural display restrictions still prevent restoration.');
+      const media=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_media WHERE artwork_id=$1 AND status='READY_FOR_REVIEW'",[id]); if(!Number(media?.total)) return fail(409,'ARTWORK_MEDIA_REQUIRED','Completed artwork media is required before restoration.');
       const attribution=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_attribution_reviews WHERE artwork_id=$1 AND status='VERIFIED'",[id]);
       if(!Number(attribution?.total)) return fail(409,'ATTRIBUTION_VERIFICATION_REQUIRED','Verified attribution is required before restoration.');
       await db.query("UPDATE seven.creator_artworks SET status='APPROVED',public_active=true,published_at=COALESCE(published_at,now()),reviewed_at=now(),updated_at=now() WHERE artwork_id=$1",[id]);
