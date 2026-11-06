@@ -12,7 +12,7 @@ const styles = readFileSync(
 );
 
 test('public mobile menu returns focus to its trigger when dismissed by Escape or navigation', () => {
-  assert.match(shell, /function closeMobileMenu\(\)\s*\{\s*setOpen\(false\);\s*menuButtonRef\.current\?\.focus\(\);/);
+  assert.match(shell, /const closeMobileMenu = useCallback\(\(\) => \{\s*setOpen\(false\);\s*menuButtonRef\.current\?\.focus\(\);\s*\}, \[\]\);/);
   assert.match(shell, /if \(event\.key === 'Escape'\)\s*\{\s*closeMobileMenu\(\);/);
   assert.ok((shell.match(/onClick=\{closeMobileMenu\}/g) ?? []).length >= 6);
 });

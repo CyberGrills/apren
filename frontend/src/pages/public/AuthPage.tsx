@@ -118,7 +118,7 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
       {admin ? (
         <header className="public-header">
           <div className="public-container public-nav">
-            <Link to="/" aria-label="7even home" className="public-brand">
+            <Link to="/" className="public-brand">
               <Brand />
             </Link>
           </div>

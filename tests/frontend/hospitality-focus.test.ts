@@ -131,8 +131,8 @@ test('sample offerings never present illustrative prices as bookable rates', () 
 
 test('7EVEN powered-by-āprən watermark is global, decorative and does not intercept page interaction', () => {
   assert.match(app, /className="apren-watermark" aria-hidden="true"/);
-  assert.match(app, /7EVEN · powered by āprən/);
-  assert.match(app, /Array\.from\(\{ length: 24 \}/);
+  assert.doesNotMatch(app, /7EVEN · powered by āprən/);
+  assert.match(source('../../frontend/src/styles/global.css'), /data:image\/svg\+xml,[^\"]*7EVEN%20%C2%B7%20%C4%81pr%C9%99n/);
   assert.match(source('../../frontend/src/styles/global.css'), /\.apren-watermark\s*\{[\s\S]*?position:\s*fixed/);
   assert.match(source('../../frontend/src/styles/global.css'), /pointer-events:\s*none/);
 });

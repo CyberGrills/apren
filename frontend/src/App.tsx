@@ -87,8 +87,6 @@ function Protected({ roles }: { roles?: Role[] }) {
     );
   return <Outlet />;
 }
-const watermarkItems = Array.from({ length: 24 }, (_, index) => `brand-watermark-${index + 1}`);
-
 function WorkspaceHome() {
   const { user } = useSession();
   const path =
@@ -221,11 +219,7 @@ export function App() {
           <SessionProvider>
             <ScrollPosition />
             <OfflineStatusBar />
-            <div className="apren-watermark" aria-hidden="true">
-              {watermarkItems.map((item) => (
-                <span key={item}>7EVEN · powered by āprən</span>
-              ))}
-            </div>
+            <div className="apren-watermark" aria-hidden="true" />
             <Suspense fallback={<main className="permission-screen" id="main-content"><Loading /></main>}>
               <Routes>
               <Route path="/" element={<LandingPage />} />
