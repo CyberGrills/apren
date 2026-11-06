@@ -348,6 +348,12 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
         culturalContext: 'Synthetic integration fixture; no real community or cultural claim is represented.',
       });
       assert.equal(permission.status, 202, JSON.stringify(permission));
+      const blockedPermissionReview = await admin.request(`/admin/creator-rights/community-permission/${permission.data.permissionId}/review`, 'POST', {
+        decision: 'APPROVED',
+        reason: 'This decision must remain blocked until community permission evidence is attached.',
+      });
+      assert.equal(blockedPermissionReview.status, 409, JSON.stringify(blockedPermissionReview));
+      assert.equal(blockedPermissionReview.error?.code, 'RIGHTS_DOCUMENT_REQUIRED');
       const permissionBytes = Buffer.from('%PDF-1.7\\nSynthetic community permission evidence for integration testing.\\n');
       const permissionIntent = await creator.request<{ documentId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
         `/creator/artworks/${artworkId}/rights/documents/upload-intents`, 'POST', {
