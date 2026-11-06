@@ -311,6 +311,17 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       });
       assert.equal(blockedEvidenceReview.status, 409, JSON.stringify(blockedEvidenceReview));
       assert.equal(blockedEvidenceReview.error?.code, 'RIGHTS_DOCUMENT_REQUIRED');
+      const creatorUser = await one<{ user_id: string }>(runtimePool, 'SELECT user_id FROM seven.users WHERE email=$1', ['guest@seven.test']);
+      assert.ok(creatorUser, 'The seeded creator account must exist.');
+      for (let i = 0; i < 5; i += 1) {
+        await runtimePool.query(
+          `INSERT INTO seven.creator_artwork_rights_documents
+            (document_id,artwork_id,evidence_id,uploaded_by,storage_path,original_filename,mime_type,byte_size,status,upload_expires_at)
+           VALUES($1,$2,$3,$4,$5,'expired.pdf','application/pdf',64,'PENDING_UPLOAD',now()-interval '1 minute')`,
+          [randomUUID(), artworkId, evidence.data.evidenceId, creatorUser.user_id, `expired/${randomUUID()}.pdf`],
+        );
+      }
+      // Expired intents must not permanently consume the five-document limit.
       const evidenceBytes = Buffer.from('%PDF-1.7\\nSynthetic licence evidence for integration testing.\\n');
       const evidenceIntent = await creator.request<{ documentId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
         `/creator/artworks/${artworkId}/rights/documents/upload-intents`, 'POST', {
