@@ -357,6 +357,43 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       });
       assert.equal(created.status, 201, JSON.stringify(created));
       const withdrawnId = created.data.artwork.artworkId;
+
+      // Withdrawal is allowed for a pending submission, not an untouched DRAFT.
+      const withdrawalImage = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0]);
+      const uploadIntent = await creator.request<{ mediaId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
+        `/creator/artworks/${withdrawnId}/media/upload-intents`,
+        'POST',
+        {
+          filename: 'withdrawal-test.png',
+          mimeType: 'image/png',
+          byteSize: withdrawalImage.length,
+          caption: 'Withdrawal test image',
+          accessibilityText: 'A synthetic image for the withdrawal lifecycle test.',
+          isCover: true,
+        },
+      );
+      assert.equal(uploadIntent.status, 201, JSON.stringify(uploadIntent));
+      const uploadResponse = await fetch(uploadIntent.data.uploadUrl, {
+        method: 'PUT',
+        headers: uploadIntent.data.requiredHeaders,
+        body: withdrawalImage,
+      });
+      assert.equal(uploadResponse.status, 200);
+      const mediaCompleted = await creator.request(
+        `/creator/artworks/${withdrawnId}/media/${uploadIntent.data.mediaId}/complete`,
+        'POST',
+        {},
+      );
+      assert.equal(mediaCompleted.status, 200, JSON.stringify(mediaCompleted));
+      const submitted = await creator.request(`/creator/artworks/${withdrawnId}/submit`, 'POST', {
+        confirmRightsAndPermissions: true,
+        confirmAccurateAttribution: true,
+        confirmCulturalCare: true,
+        confirmPublicVisibility: true,
+      });
+      assert.equal(submitted.status, 202, JSON.stringify(submitted));
+      assert.equal((submitted.data as { status: string }).status, 'PENDING_REVIEW');
+
       const withdrawn = await creator.request(`/creator/artworks/${withdrawnId}/withdraw`, 'POST', {});
       assert.equal(withdrawn.status, 200, JSON.stringify(withdrawn));
       assert.deepEqual(withdrawn.data, { artworkId: withdrawnId, status: 'ARCHIVED', public: false });
