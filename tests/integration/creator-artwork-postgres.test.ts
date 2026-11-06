@@ -292,6 +292,44 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       assert.equal(completed.status, 200, JSON.stringify(completed));
       assert.equal((completed.data as { status: string }).status, 'READY_FOR_REVIEW');
 
+      const evidence = await creator.request<{ evidenceId: string }>(`/creator/artworks/${artworkId}/rights/evidence`, 'POST', {
+        evidenceType: 'OWNERSHIP',
+        issuerName: 'Integration fixture creator',
+        evidenceReference: 'fixture:ownership-proof-001',
+        description: 'Synthetic ownership evidence reference for integration verification.',
+      });
+      assert.equal(evidence.status, 202, JSON.stringify(evidence));
+      const evidenceReview = await admin.request(`/admin/creator-rights/evidence/${evidence.data.evidenceId}/review`, 'POST', {
+        decision: 'VERIFIED',
+        reason: 'Synthetic ownership evidence verified in integration test.',
+      });
+      assert.equal(evidenceReview.status, 200, JSON.stringify(evidenceReview));
+
+      const permission = await creator.request<{ permissionId: string }>(`/creator/artworks/${artworkId}/rights/community-permissions`, 'POST', {
+        communityName: 'Integration fixture community',
+        authorityName: 'Integration fixture authority',
+        permissionScope: 'Synthetic test-only permission scope for controlled integration validation.',
+        evidenceReference: 'fixture:community-permission-001',
+        culturalContext: 'Synthetic integration fixture; no real community or cultural claim is represented.',
+      });
+      assert.equal(permission.status, 202, JSON.stringify(permission));
+      const permissionReview = await admin.request(`/admin/creator-rights/community-permission/${permission.data.permissionId}/review`, 'POST', {
+        decision: 'APPROVED',
+        reason: 'Synthetic community permission record approved in integration test.',
+      });
+      assert.equal(permissionReview.status, 200, JSON.stringify(permissionReview));
+
+      const attribution = await creator.request<{ attributionReviewId: string }>(`/creator/artworks/${artworkId}/rights/attribution`, 'POST', {
+        attributionText: 'Integration fixture creator',
+        sourceDescription: 'Original synthetic integration fixture created for this test.',
+      });
+      assert.equal(attribution.status, 202, JSON.stringify(attribution));
+      const attributionReview = await admin.request(`/admin/creator-rights/attribution/${attribution.data.attributionReviewId}/review`, 'POST', {
+        decision: 'VERIFIED',
+        reason: 'Synthetic attribution verified in integration test.',
+      });
+      assert.equal(attributionReview.status, 200, JSON.stringify(attributionReview));
+
       const submitted = await creator.request(`/creator/artworks/${artworkId}/submit`, 'POST', {
         confirmRightsAndPermissions: true,
         confirmAccurateAttribution: true,
