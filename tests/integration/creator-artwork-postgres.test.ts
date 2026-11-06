@@ -207,11 +207,11 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
         tags: ['integration-test'],
         accessibilityText: 'Abstract geometric pattern in a test artwork.',
         rights: {
-          basis: 'ORIGINAL',
+          basis: 'LICENSED',
           rightsConfirmed: true,
           attributionText: 'Integration test fixture',
           thirdPartyPermissions: '',
-          communityPermission: 'NOT_REQUIRED',
+          communityPermission: 'OBTAINED',
           displayLicense: 'ALL_RIGHTS_RESERVED',
         },
         contentNotice: { containsSensitiveCulturalMaterial: false, publicDisplayRestrictions: [] },
@@ -293,7 +293,7 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       assert.equal((completed.data as { status: string }).status, 'READY_FOR_REVIEW');
 
       const evidence = await creator.request<{ evidenceId: string }>(`/creator/artworks/${artworkId}/rights/evidence`, 'POST', {
-        evidenceType: 'OWNERSHIP',
+        evidenceType: 'LICENSE',
         issuerName: 'Integration fixture creator',
         evidenceReference: 'fixture:ownership-proof-001',
         description: 'Synthetic ownership evidence reference for integration verification.',
