@@ -1,21 +1,19 @@
-import { ArrowUpRight, Menu, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Brand } from "../../components/Brand.tsx";
-import { SeasonalCampaignBanner } from "../../components/SeasonalCampaignBanner.tsx";
-import { useSession } from "../../context/SessionContext.tsx";
-import { useSevenLanguage } from "../../lib/sevenLanguage.ts";
+import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Brand } from '../../components/Brand.tsx';
+import { SeasonalCampaignBanner } from '../../components/SeasonalCampaignBanner.tsx';
+import { useSession } from '../../context/SessionContext.tsx';
+import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
-export { editorialImages } from "../../lib/editorialImages.ts";
+export { editorialImages } from '../../lib/editorialImages.ts';
 
-export type SevenLanguage = "en" | "pcm";
+export type SevenLanguage = 'en' | 'pcm';
 export function readSevenLanguage(): SevenLanguage {
   try {
-    return window.localStorage.getItem("7even-language-style") === "pcm"
-      ? "pcm"
-      : "en";
+    return window.localStorage.getItem('7even-language-style') === 'pcm' ? 'pcm' : 'en';
   } catch {
-    return "en";
+    return 'en';
   }
 }
 export function PublicHeader() {
@@ -32,51 +30,38 @@ export function PublicHeader() {
   useEffect(() => {
     if (!open) return;
     const closeOnOutsideClick = (event: PointerEvent) => {
-      if (
-        event.target instanceof Node &&
-        !headerRef.current?.contains(event.target)
-      ) {
+      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) {
         setOpen(false);
       }
     };
-    document.addEventListener("pointerdown", closeOnOutsideClick);
-    return () =>
-      document.removeEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
   }, [open]);
   useEffect(() => {
     if (!open) return;
-    mobileNavRef.current
-      ?.querySelector<HTMLElement>("a, button, select")
-      ?.focus();
+    mobileNavRef.current?.querySelector<HTMLElement>('a, button, select')?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         closeMobileMenu();
       }
     };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
   }, [open]);
   useEffect(() => {
     const syncLanguage = (event: Event) => {
       const next = (event as CustomEvent<SevenLanguage>).detail;
-      if (next === "en" || next === "pcm") setLanguage(next);
+      if (next === 'en' || next === 'pcm') setLanguage(next);
     };
-    window.addEventListener("7even-language-change", syncLanguage);
-    return () =>
-      window.removeEventListener("7even-language-change", syncLanguage);
+    window.addEventListener('7even-language-change', syncLanguage);
+    return () => window.removeEventListener('7even-language-change', syncLanguage);
   }, []);
   useEffect(() => {
     const saved = user?.profileDetails?.preferredLanguage;
-    if (saved === "en" || saved === "pcm") {
+    if (saved === 'en' || saved === 'pcm') {
       setLanguage(saved);
-      try {
-        window.localStorage.setItem("7even-language-style", saved);
-      } catch {
-        /* Account preference remains authoritative. */
-      }
-      window.dispatchEvent(
-        new CustomEvent("7even-language-change", { detail: saved }),
-      );
+      try { window.localStorage.setItem('7even-language-style', saved); } catch { /* Account preference remains authoritative. */ }
+      window.dispatchEvent(new CustomEvent('7even-language-change', { detail: saved }));
     }
   }, [user?.profileDetails?.preferredLanguage]);
   function closeMobileMenu() {
@@ -86,187 +71,112 @@ export function PublicHeader() {
   function changeLanguage(next: SevenLanguage) {
     setLanguage(next);
     try {
-      window.localStorage.setItem("7even-language-style", next);
+      window.localStorage.setItem('7even-language-style', next);
     } catch {
       // The current page still updates if browser storage is unavailable.
     }
-    window.dispatchEvent(
-      new CustomEvent("7even-language-change", { detail: next }),
-    );
+    window.dispatchEvent(new CustomEvent('7even-language-change', { detail: next }));
   }
   const workspace =
-    user?.role === "ADMIN"
+    user?.role === 'ADMIN'
       ? null
-      : user?.role === "BUSINESS_OWNER"
-        ? { label: "Your business", href: "/business" }
-        : user?.role === "RECEPTION"
-          ? { label: "Open reception", href: "/reception" }
-          : { label: "For business", href: "/business/apply" };
-  const exploreKind = new URLSearchParams(location.search).get("kind");
-  const onExplore = location.pathname === "/explore";
+      : user?.role === 'BUSINESS_OWNER'
+        ? { label: 'Your business', href: '/business' }
+        : user?.role === 'RECEPTION'
+          ? { label: 'Open reception', href: '/reception' }
+          : { label: 'For business', href: '/business/apply' };
+  const exploreKind = new URLSearchParams(location.search).get('kind');
+  const onExplore = location.pathname === '/explore';
   const navItems = [
-    { to: "/", label: "Home", current: location.pathname === "/" },
-    {
-      to: "/explore?kind=STAY",
-      label: language === "pcm" ? "Places to stay" : "Hotels & stays",
-      current: onExplore && exploreKind === "STAY",
-    },
-    {
-      to: "/explore?kind=DINING",
-      label: language === "pcm" ? "Food" : "Dining",
-      current: onExplore && exploreKind === "DINING",
-    },
-    {
-      to: "/explore?kind=EXPERIENCE",
-      label: "Things to do",
-      current: onExplore && exploreKind === "EXPERIENCE",
-    },
-    {
-      to: "/campus-connect/art-culture",
-      label: "Art & Culture",
-      current: location.pathname.startsWith("/campus-connect/art-culture"),
-    },
+    { to: '/', label: 'Home', current: location.pathname === '/' },
+    { to: '/explore?kind=STAY', label: language === 'pcm' ? 'Places to stay' : 'Hotels & stays', current: onExplore && exploreKind === 'STAY' },
+    { to: '/explore?kind=DINING', label: language === 'pcm' ? 'Food' : 'Dining', current: onExplore && exploreKind === 'DINING' },
+    { to: '/explore?kind=EXPERIENCE', label: 'Things to do', current: onExplore && exploreKind === 'EXPERIENCE' },
+    { to: '/campus-connect/art-culture', label: 'Art & Culture', current: location.pathname.startsWith('/campus-connect/art-culture') },
   ];
   return (
     <>
-      <header className="public-header" ref={headerRef}>
-        <div className="public-container public-nav">
-          <Link to="/" aria-label="7even home" className="public-brand">
-            <Brand />
-          </Link>
-          <nav className="public-nav-desktop" aria-label="Main navigation">
-            {navItems.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                aria-current={item.current ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="public-nav-actions">
-            <div
-              className="seven-language-switch"
-              role="group"
-              aria-label="Website language"
-            >
-              <button
-                type="button"
-                className={language === "en" ? "active" : ""}
-                aria-pressed={language === "en"}
-                onClick={() => changeLanguage("en")}
-              >
-                English
-              </button>
-              <button
-                type="button"
-                className={language === "pcm" ? "active" : ""}
-                aria-pressed={language === "pcm"}
-                onClick={() => changeLanguage("pcm")}
-              >
-                Naija Pidgin
-              </button>
-            </div>
-            <Link to="/install" className="public-install-link">
-              Install app
+    <header className="public-header" ref={headerRef}>
+      <div className="public-container public-nav">
+        <Link to="/" aria-label="7even home" className="public-brand">
+          <Brand />
+        </Link>
+        <nav className="public-nav-desktop" aria-label="Main navigation">
+          {navItems.map((item) => (
+            <Link key={item.to} to={item.to} aria-current={item.current ? 'page' : undefined}>
+              {item.label}
             </Link>
-            <Link
-              to={user ? "/app/bookings" : "/login"}
-              className="public-account-link"
-            >
-              {user
-                ? language === "pcm"
-                  ? "Your bookings"
-                  : "Your plans"
-                : language === "pcm"
-                  ? "Enter"
-                  : "Sign in"}
-            </Link>
-            {workspace && (
-              <Link to={workspace.href} className="public-business-link">
-                {workspace.label} <ArrowUpRight size={15} aria-hidden="true" />
-              </Link>
-            )}
-            <button
-              type="button"
-              ref={menuButtonRef}
-              className="public-menu-button"
-              aria-label={open ? "Close navigation" : "Open navigation"}
-              aria-expanded={open}
-              aria-controls="public-mobile-nav"
-              onClick={() => setOpen((current) => !current)}
-            >
-              {open ? <X size={22} /> : <Menu size={22} />}
-            </button>
+          ))}
+        </nav>
+        <div className="public-nav-actions">
+          <div className="seven-language-switch" role="group" aria-label="Website language">
+            <button type="button" className={language === 'en' ? 'active' : ''} aria-pressed={language === 'en'} onClick={() => changeLanguage('en')}>English</button>
+            <button type="button" className={language === 'pcm' ? 'active' : ''} aria-pressed={language === 'pcm'} onClick={() => changeLanguage('pcm')}>Naija Pidgin</button>
           </div>
-        </div>
-        {open && (
-          <nav
-            id="public-mobile-nav"
-            ref={mobileNavRef}
-            className="public-mobile-nav"
-            aria-label="Mobile navigation"
-            onKeyDown={(event) => {
-              if (event.key !== "Tab") return;
-              const items = mobileNavRef.current?.querySelectorAll<HTMLElement>(
-                "a[href], button:not([disabled]), select:not([disabled])",
-              );
-              if (!items?.length) return;
-              const first = items[0];
-              const last = items[items.length - 1];
-              if (!first || !last) return;
-              if (event.shiftKey && document.activeElement === first) {
-                event.preventDefault();
-                last.focus();
-              } else if (!event.shiftKey && document.activeElement === last) {
-                event.preventDefault();
-                first.focus();
-              }
-            }}
+          <Link to="/install" className="public-install-link">Install app</Link>
+          <Link to={user ? '/app/bookings' : '/login'} className="public-account-link">
+            {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
+          </Link>
+          {workspace && (
+            <Link to={workspace.href} className="public-business-link">
+              {workspace.label} <ArrowUpRight size={15} aria-hidden="true" />
+            </Link>
+          )}
+          <button
+            type="button"
+            ref={menuButtonRef}
+            className="public-menu-button"
+            aria-label={open ? 'Close navigation' : 'Open navigation'}
+            aria-expanded={open}
+            aria-controls="public-mobile-nav"
+            onClick={() => setOpen((current) => !current)}
           >
-            {navItems.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={closeMobileMenu}
-                aria-current={item.current ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <Link to="/install" onClick={closeMobileMenu}>
-              Install app
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+      </div>
+      {open && (
+        <nav
+          id="public-mobile-nav"
+          ref={mobileNavRef}
+          className="public-mobile-nav"
+          aria-label="Mobile navigation"
+          onKeyDown={(event) => {
+            if (event.key !== 'Tab') return;
+            const items = mobileNavRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), select:not([disabled])');
+            if (!items?.length) return;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (!first || !last) return;
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault();
+              last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first.focus();
+            }
+          }}
+        >
+          {navItems.map((item) => (
+            <Link key={item.to} to={item.to} onClick={closeMobileMenu} aria-current={item.current ? 'page' : undefined}>
+              {item.label}
             </Link>
-            <Link
-              to={user ? "/app/bookings" : "/login"}
-              onClick={closeMobileMenu}
-            >
-              {user
-                ? language === "pcm"
-                  ? "Your bookings"
-                  : "Your plans"
-                : language === "pcm"
-                  ? "Enter"
-                  : "Sign in"}
+          ))}
+          <Link to="/install" onClick={closeMobileMenu}>Install app</Link>
+          <Link to={user ? '/app/bookings' : '/login'} onClick={closeMobileMenu}>
+            {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
+          </Link>
+          {user && <Link to="/app/profile" onClick={closeMobileMenu}>{language === 'pcm' ? 'Your profile' : 'Profile'}</Link>}
+          {workspace && (
+            <Link to={workspace.href} onClick={closeMobileMenu}>
+              {workspace.label}
             </Link>
-            {user && (
-              <Link to="/app/profile" onClick={closeMobileMenu}>
-                {language === "pcm" ? "Your profile" : "Profile"}
-              </Link>
-            )}
-            {workspace && (
-              <Link to={workspace.href} onClick={closeMobileMenu}>
-                {workspace.label}
-              </Link>
-            )}
-            <Link to="/appearance" onClick={closeMobileMenu}>
-              Appearance
-            </Link>
-          </nav>
-        )}
-      </header>
-      {location.pathname === "/" && <SeasonalCampaignBanner />}
+          )}
+          <Link to="/appearance" onClick={closeMobileMenu}>Appearance</Link>
+        </nav>
+      )}
+    </header>
+    {location.pathname === '/' && <SeasonalCampaignBanner />}
     </>
   );
 }
@@ -278,38 +188,18 @@ export function PublicFooter() {
       <div className="public-container">
         <div className="public-footer-top">
           <div className="public-footer-brand-lockup">
-            <Link to="/" aria-label="7even home">
-              <Brand />
-            </Link>
+            <Link to="/" aria-label="7even home"><Brand /></Link>
             <div className="apren-signature" aria-label="Powered by āprən">
               <strong className="apren-wordmark">āprən</strong>
               <span>Powered by āprən</span>
             </div>
           </div>
           <p>
-            {language === "pcm" ? (
-              <>
-                Correct places.
-                <br />
-                Make your time count.
-              </>
-            ) : (
-              <>
-                Good places.
-                <br />
-                Worth your time.
-              </>
-            )}
+            {language === 'pcm' ? <>Correct places.<br />Make your time count.</> : <>Good places.<br />Worth your time.</>}
           </p>
           <nav aria-label="Footer">
-            <Link to="/explore?kind=STAY">
-              {language === "pcm" ? "Find place to stay" : "Find a stay"}
-            </Link>
-            <Link to="/business/apply">
-              {language === "pcm"
-                ? "List your business"
-                : "Bring your business"}
-            </Link>
+            <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Find place to stay' : 'Find a stay'}</Link>
+            <Link to="/business/apply">{language === 'pcm' ? 'List your business' : 'Bring your business'}</Link>
             <Link to="/app/bookings">Your bookings</Link>
             <Link to="/install">Install 7even</Link>
             <Link to="/appearance">Appearance</Link>
@@ -328,29 +218,29 @@ export function PublicFooter() {
 }
 
 export function localDateNow() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Africa/Lagos",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Lagos',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   }).formatToParts(new Date());
-  return ["year", "month", "day"]
+  return ['year', 'month', 'day']
     .map((name) => parts.find((part) => part.type === name)?.value)
-    .join("-");
+    .join('-');
 }
 
 export function addDays(date: string, days: number) {
   const value = new Date(`${date}T12:00:00Z`);
-  if (!Number.isFinite(value.getTime())) return "";
+  if (!Number.isFinite(value.getTime())) return '';
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
 }
 
 export function friendlyDate(date: string) {
-  return new Intl.DateTimeFormat("en-NG", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "Africa/Lagos",
+  return new Intl.DateTimeFormat('en-NG', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Africa/Lagos',
   }).format(new Date(date.length === 10 ? `${date}T12:00:00Z` : date));
 }

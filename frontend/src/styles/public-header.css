@@ -1,0 +1,59 @@
+/* Public header: single owner of header layout and breakpoints.
+   Loaded after public.css. Older header rules there are superseded
+   and can be removed in a later cleanup stage. */
+
+.public-header {
+  position: relative;
+  z-index: 40;
+}
+
+@media (min-width: 601px) {
+  .public-nav { gap: clamp(1rem, 2vw, 2rem); }
+  .public-nav-desktop { gap: clamp(1rem, 2.2vw, 2.8rem); }
+  .public-nav-actions { gap: clamp(0.9rem, 1.6vw, 1.8rem); }
+}
+
+/* Install app link now matches the other header links. */
+.public-install-link { font-size: 0.82rem; text-decoration: none; }
+.public-install-link:hover { text-decoration: underline; }
+
+/* Current page */
+.public-nav-desktop a[aria-current="page"] {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.55em;
+}
+.seven-marketplace .public-nav-desktop a[aria-current="page"] {
+  background: var(--public-panel);
+  color: var(--ink);
+  text-decoration: none;
+}
+.public-mobile-nav a[aria-current="page"] {
+  background: var(--public-panel);
+  font-weight: 600;
+}
+
+/* Wide screens: full link row on every page, including the marketplace home. */
+@media (min-width: 1281px) {
+  .public-header .public-nav-desktop { display: flex; }
+  .public-header .public-mobile-nav { display: none; }
+}
+
+/* 1280px and below: links live in the menu at every width. */
+@media (max-width: 1280px) {
+  .public-header .public-nav-desktop,
+  .public-header .public-business-link { display: none; }
+  .public-header .public-menu-button { display: inline-flex; }
+  .public-header .public-mobile-nav {
+    display: grid;
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: max(1rem, calc((100% - var(--public-page-width, 100%)) / 2));
+    left: auto;
+    width: min(28rem, calc(100% - 2rem));
+    max-height: min(70vh, 32rem);
+    overflow-y: auto;
+    margin: 0;
+  }
+}
