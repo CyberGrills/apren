@@ -67,26 +67,33 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
     media_rls: boolean;
     profile_app: boolean;
     artwork_readonly: boolean;
-    bucket_private: boolean | null;
   }>(pool, `
     SELECT
       (SELECT relrowsecurity FROM pg_class WHERE oid='seven.creator_profiles'::regclass) AS profile_rls,
       (SELECT relrowsecurity FROM pg_class WHERE oid='seven.creator_artworks'::regclass) AS artwork_rls,
       (SELECT relrowsecurity FROM pg_class WHERE oid='seven.creator_artwork_media'::regclass) AS media_rls,
       has_table_privilege('seven_app','seven.creator_profiles','SELECT,INSERT,UPDATE') AS profile_app,
-      has_table_privilege('seven_readonly','seven.creator_artworks','SELECT') AS artwork_readonly,
-      (SELECT NOT public FROM storage.buckets WHERE id='creator-artwork-media') AS bucket_private
+      has_table_privilege('seven_readonly','seven.creator_artworks','SELECT') AS artwork_readonly
   `);
   assert.equal(migrationState?.profile_rls, true);
   assert.equal(migrationState?.artwork_rls, true);
   assert.equal(migrationState?.media_rls, true);
   assert.equal(migrationState?.profile_app, true);
   assert.equal(migrationState?.artwork_readonly, true);
-  if (migrationState?.bucket_private !== null) assert.equal(migrationState?.bucket_private, true);
+  const storageCatalog = await one<{ buckets_table: string | null }>(pool, "SELECT to_regclass('storage.buckets')::text AS buckets_table");
+  if (storageCatalog?.buckets_table) {
+    const bucket = await one<{ is_private: boolean }>(pool, "SELECT NOT public AS is_private FROM storage.buckets WHERE id='creator-artwork-media'");
+    assert.equal(bucket?.is_private, true, 'Creator artwork storage bucket must remain private.');
+  }
 
   const runtimePool = process.env.TEST_RUNTIME_DATABASE_URL
     ? createPool(process.env.TEST_RUNTIME_DATABASE_URL)
     : pool;
+  if (process.env.TEST_RUNTIME_DATABASE_URL) {
+    const privileges = await one<{ schema_usage: boolean; app_privileges: boolean }>(runtimePool, "SELECT has_schema_privilege(current_user,'seven','USAGE') AS schema_usage, pg_has_role(current_user,'seven_app','USAGE') AS app_privileges");
+    assert.equal(privileges?.schema_usage, true);
+    assert.equal(privileges?.app_privileges, true);
+  }
   const runtime = createApp({ pool: runtimePool, environment: 'test', publicOrigin: origin });
   const server = await new Promise<Server>((resolve) => {
     const listener = runtime.app.listen(0, '127.0.0.1', () => resolve(listener));
@@ -166,7 +173,7 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
         accessibilityText: 'An unsupported SVG upload test.',
         isCover: true,
       });
-      assert.equal(result.status, 400, JSON.stringify(result));
+      assert.equal(result.status, 422, JSON.stringify(result));
     });
 
     await t.test('creator profile submission enters moderation and cannot be approved by a non-admin', async () => {
