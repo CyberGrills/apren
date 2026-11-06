@@ -305,6 +305,12 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
         description: 'Synthetic ownership evidence reference for integration verification.',
       });
       assert.equal(evidence.status, 202, JSON.stringify(evidence));
+      const blockedEvidenceReview = await admin.request(`/admin/creator-rights/evidence/${evidence.data.evidenceId}/review`, 'POST', {
+        decision: 'VERIFIED',
+        reason: 'This decision must remain blocked until a real document is attached.',
+      });
+      assert.equal(blockedEvidenceReview.status, 409, JSON.stringify(blockedEvidenceReview));
+      assert.equal(blockedEvidenceReview.error?.code, 'RIGHTS_DOCUMENT_REQUIRED');
       const evidenceBytes = Buffer.from('%PDF-1.7\\nSynthetic licence evidence for integration testing.\\n');
       const evidenceIntent = await creator.request<{ documentId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
         `/creator/artworks/${artworkId}/rights/documents/upload-intents`, 'POST', {
@@ -324,6 +330,10 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       assert.equal(creatorDocuments.status, 200, JSON.stringify(creatorDocuments));
       assert.equal(creatorDocuments.data.items[0]?.status, 'AVAILABLE');
       assert.equal('storagePath' in (creatorDocuments.data.items[0] ?? {}), false, 'Private storage paths must not be returned.');
+      const foreignDownload = await otherUser.request(`/creator/artworks/${artworkId}/rights/documents/${evidenceIntent.data.documentId}/download`);
+      assert.equal(foreignDownload.status, 404, 'A different account must not receive a signed private download URL.');
+      const nonAdminList = await creator.request(`/admin/creator-submissions/${artworkId}/rights/documents`);
+      assert.equal(nonAdminList.status, 403, 'Private moderator document listing must remain admin-only.');
       const evidenceReview = await admin.request(`/admin/creator-rights/evidence/${evidence.data.evidenceId}/review`, 'POST', {
         decision: 'VERIFIED',
         reason: 'Synthetic ownership evidence verified in integration test.',
