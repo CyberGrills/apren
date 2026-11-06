@@ -63,7 +63,7 @@ The response contains `documentId`, a short-lived signed `uploadUrl`, upload tok
 
 `POST /api/creator/artworks/:artworkId/rights/documents/:documentId/complete`
 
-The server verifies object existence, exact byte size, stored MIME type and file signature before marking a document `AVAILABLE`. Accepted types are PDF, JPEG and PNG; maximum size is 15 MiB per document. A rights record can have up to five documents. Incomplete uploads expire after 15 minutes.
+The server verifies object existence, exact byte size, stored MIME type and file signature, hashes the complete stored object and queues a durable malware scan. Completion returns `PENDING_SCAN`; the document remains inaccessible until an authenticated scanner returns a definitive clean verdict for the same SHA-256 checksum. Only then does the worker set `AVAILABLE`. Infected or unsupported files are quarantined. Scanner outages, timeouts, malformed responses and checksum mismatches retry at most five times, then remain quarantined. Accepted types are PDF, JPEG and PNG; maximum size is 15 MiB per document. A rights record can have up to five documents. Incomplete uploads expire after 15 minutes.
 
 - `GET /api/creator/artworks/:artworkId/rights/documents` — list the creator's private document metadata.
 - `GET /api/creator/artworks/:artworkId/rights/documents/:documentId/download` — issue a five-minute signed download URL to the artwork owner.
@@ -72,7 +72,7 @@ The server verifies object existence, exact byte size, stored MIME type and file
 
 Documents are stored in the private `creator-artwork-rights-documents` bucket. Storage paths and signed URLs are never included in public artwork DTOs. Download-link issuance is audited. Evidence cannot be verified and community permission cannot be approved until at least one attached document is fully uploaded. Publication and restoration independently require an available document for each applicable verified evidence / approved permission record.
 
-The upload flow performs type-signature checks; it is not an antivirus or malware-scanning service. Documents are served through short-lived download URLs rather than public or permanent links. Treat downloaded files as untrusted evidence.
+The scan adapter calls an isolated authenticated HTTPS scanner service using server-only `RIGHTS_DOCUMENT_SCANNER_URL` and `RIGHTS_DOCUMENT_SCANNER_TOKEN` configuration. The scheduled worker re-reads the private object, revalidates SHA-256, and records provider, engine version, result and audit transitions. Documents are served through short-lived download URLs rather than public or permanent links. Scanner errors never fail open.
 
 ### Submit attribution for verification
 

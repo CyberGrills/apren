@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from 'express';
 import type { Pool, PoolClient } from 'pg';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { SessionUser } from '@7even/contracts';
 import { fail, one, rows, transaction, string } from './db.ts';
@@ -153,26 +153,34 @@ export function mountCreatorArtworkRightsDocuments(app: Express, { pool, actor }
         await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
         return fail(422, 'DOCUMENT_METADATA_MISMATCH', 'Uploaded document metadata did not match the declared file.');
       }
-      const sample = await fetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
-        headers: { apikey: config.secret, Authorization: 'Bearer ' + config.secret, Range: 'bytes=0-15' },
+      const object = await fetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
+        headers: { apikey: config.secret, Authorization: 'Bearer ' + config.secret },
+        signal: AbortSignal.timeout(20_000),
       });
-      if (!sample.ok || !validSignature(actualType, new Uint8Array(await sample.arrayBuffer()))) {
+      if (!object.ok) return fail(502, 'DOCUMENT_READ_FAILED', 'The uploaded document could not be verified.');
+      const bytes = new Uint8Array(await object.arrayBuffer());
+      if (bytes.byteLength !== actualSize || !validSignature(actualType, bytes)) {
         await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
         return fail(422, 'INVALID_DOCUMENT_CONTENT', 'The file content does not match an accepted PDF, JPEG or PNG document.');
       }
-      const updated = await db.query("UPDATE seven.creator_artwork_rights_documents SET status='AVAILABLE',updated_at=now() WHERE document_id=$1 AND status='PENDING_UPLOAD' RETURNING document_id", [documentId]);
+      const checksum = createHash('sha256').update(bytes).digest('hex');
+      const updated = await db.query("UPDATE seven.creator_artwork_rights_documents SET status='PENDING_SCAN',scan_sha256=$2,updated_at=now() WHERE document_id=$1 AND status='PENDING_UPLOAD' RETURNING document_id", [documentId, checksum]);
       if (!updated.rowCount) return fail(409, 'UPLOAD_ALREADY_COMPLETED', 'This document upload has already been completed.');
-      await audit(db, current, artworkId, 'creator_artwork_rights_document.upload_completed', documentId, { mimeType: actualType, byteSize: actualSize });
-      return { documentId, status: 'AVAILABLE' };
+      await db.query(
+        "INSERT INTO seven.creator_artwork_rights_document_scan_jobs(scan_job_id,document_id,object_sha256) VALUES($1,$2,$3) ON CONFLICT(document_id,object_sha256) DO NOTHING",
+        [randomUUID(), documentId, checksum],
+      );
+      await audit(db, current, artworkId, 'creator_artwork_rights_document.upload_completed', documentId, { mimeType: actualType, byteSize: actualSize, scanStatus: 'PENDING_SCAN', sha256: checksum });
+      return { documentId, status: 'PENDING_SCAN' };
     });
-    res.json({ data: result });
+    res.status(202).json({ data: result });
   });
 
   app.get('/api/creator/artworks/:artworkId/rights/documents', async (req, res) => {
     const user = actor(res); const artworkId = z.uuid().parse(req.params.artworkId);
     const art = await one(pool, "SELECT a.artwork_id FROM seven.creator_artworks a JOIN seven.creator_profiles c USING(creator_id) WHERE a.artwork_id=$1 AND c.user_id=$2", [artworkId, user.id]);
     if (!art) return fail(404, 'ARTWORK_NOT_FOUND', 'Artwork was not found.');
-    const documents = await rows(pool, "SELECT document_id,evidence_id,permission_id,original_filename,mime_type,byte_size,status,created_at FROM seven.creator_artwork_rights_documents WHERE artwork_id=$1 AND status <> 'REMOVED' ORDER BY created_at", [artworkId]);
+    const documents = await rows(pool, "SELECT document_id,evidence_id,permission_id,original_filename,mime_type,byte_size,status,created_at FROM seven.creator_artwork_rights_documents WHERE artwork_id=$1 AND status <> 'REMOVED' AND (status <> 'PENDING_UPLOAD' OR upload_expires_at IS NULL OR upload_expires_at > now()) ORDER BY created_at", [artworkId]);
     res.json({ data: { items: documents.map(d => ({ documentId: d.document_id, evidenceId: d.evidence_id, permissionId: d.permission_id, filename: d.original_filename, mimeType: d.mime_type, byteSize: Number(d.byte_size), status: d.status, createdAt: d.created_at })) } });
   });
 
@@ -180,7 +188,7 @@ export function mountCreatorArtworkRightsDocuments(app: Express, { pool, actor }
     const user = actor(res); requireAdmin(user); const artworkId = z.uuid().parse(req.params.submissionId);
     const exists = await one(pool, 'SELECT artwork_id FROM seven.creator_artworks WHERE artwork_id=$1', [artworkId]);
     if (!exists) return fail(404, 'ARTWORK_NOT_FOUND', 'Artwork was not found.');
-    const documents = await rows(pool, "SELECT document_id,evidence_id,permission_id,original_filename,mime_type,byte_size,status,created_at FROM seven.creator_artwork_rights_documents WHERE artwork_id=$1 AND status <> 'REMOVED' ORDER BY created_at", [artworkId]);
+    const documents = await rows(pool, "SELECT document_id,evidence_id,permission_id,original_filename,mime_type,byte_size,status,created_at FROM seven.creator_artwork_rights_documents WHERE artwork_id=$1 AND status <> 'REMOVED' AND (status <> 'PENDING_UPLOAD' OR upload_expires_at IS NULL OR upload_expires_at > now()) ORDER BY created_at", [artworkId]);
     res.json({ data: { items: documents.map(d => ({ documentId: d.document_id, evidenceId: d.evidence_id, permissionId: d.permission_id, filename: d.original_filename, mimeType: d.mime_type, byteSize: Number(d.byte_size), status: d.status, createdAt: d.created_at })) } });
   });
 
