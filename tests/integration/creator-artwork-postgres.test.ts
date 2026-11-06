@@ -320,7 +320,7 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       assert.equal(permissionReview.status, 200, JSON.stringify(permissionReview));
 
       const attribution = await creator.request<{ attributionReviewId: string }>(`/creator/artworks/${artworkId}/rights/attribution`, 'POST', {
-        attributionText: 'Integration fixture creator',
+        attributionText: 'Integration test fixture',
         sourceDescription: 'Original synthetic integration fixture created for this test.',
       });
       assert.equal(attribution.status, 202, JSON.stringify(attribution));
