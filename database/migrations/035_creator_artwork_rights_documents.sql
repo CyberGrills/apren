@@ -15,7 +15,7 @@ CREATE TABLE seven.creator_artwork_rights_documents (
   upload_expires_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK ((evidence_id IS NOT NULL)::integer + (permission_id IS NOT NULL)::integer = 1)
+  CHECK ((evidence_id IS NOT NULL) <> (permission_id IS NOT NULL))
 );
 ALTER TABLE seven.creator_artwork_rights_documents OWNER TO seven_owner;
 GRANT SELECT, INSERT, UPDATE ON seven.creator_artwork_rights_documents TO seven_app;
