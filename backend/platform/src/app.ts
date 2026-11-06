@@ -42,6 +42,7 @@ import { mountAdminRecords } from './adminRecords.ts';
 import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
 import { mountCreatorArtworks } from './creatorArtworks.ts';
 import { mountCreatorArtworkRights } from './creatorArtworkRights.ts';
+import { mountCreatorArtworkRightsDocuments } from './creatorArtworkRightsDocuments.ts';
 import { mountSocialAuth, socialAuthAvailability } from './socialAuth.ts';
 import type { SocialProvider, SocialProviderId } from './socialAuth.ts';
 import { mountPasskeyRoutes, passkeysEnabled } from './passkeys.ts';
@@ -2232,6 +2233,7 @@ export function createApp(options: AppOptions = {}) {
   mountBusinessMedia(app, { pool, actor: actorFor });
   mountCreatorArtworks(app, { pool, actor: actorFor });
   mountCreatorArtworkRights(app, { pool, actor: actorFor });
+  mountCreatorArtworkRightsDocuments(app, { pool, actor: actorFor });
   const sendRecovery = options.sendRecovery ?? configuredRecoveryMailer();
   mountAccountRoutes(app, {
     pool,

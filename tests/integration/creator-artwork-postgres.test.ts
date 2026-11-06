@@ -68,6 +68,7 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
     profile_rls: boolean;
     artwork_rls: boolean;
     media_rls: boolean;
+    rights_documents_rls: boolean;
     profile_app: boolean;
     artwork_readonly: boolean;
   }>(pool, `
@@ -75,18 +76,23 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       (SELECT relrowsecurity FROM pg_class WHERE oid='seven.creator_profiles'::regclass) AS profile_rls,
       (SELECT relrowsecurity FROM pg_class WHERE oid='seven.creator_artworks'::regclass) AS artwork_rls,
       (SELECT relrowsecurity FROM pg_class WHERE oid='seven.creator_artwork_media'::regclass) AS media_rls,
+      (SELECT relrowsecurity FROM pg_class WHERE oid='seven.creator_artwork_rights_documents'::regclass) AS rights_documents_rls,
       has_table_privilege('seven_app','seven.creator_profiles','SELECT,INSERT,UPDATE') AS profile_app,
       has_table_privilege('seven_readonly','seven.creator_artworks','SELECT') AS artwork_readonly
   `);
   assert.equal(migrationState?.profile_rls, true);
   assert.equal(migrationState?.artwork_rls, true);
   assert.equal(migrationState?.media_rls, true);
+  assert.equal(migrationState?.rights_documents_rls, true);
   assert.equal(migrationState?.profile_app, true);
   assert.equal(migrationState?.artwork_readonly, true);
   const storageCatalog = await one<{ buckets_table: string | null }>(pool, "SELECT to_regclass('storage.buckets')::text AS buckets_table");
   if (storageCatalog?.buckets_table) {
     const bucket = await one<{ is_private: boolean }>(pool, "SELECT NOT public AS is_private FROM storage.buckets WHERE id='creator-artwork-media'");
     assert.equal(bucket?.is_private, true, 'Creator artwork storage bucket must remain private.');
+    const rightsBucket = await one<{ is_private: boolean; file_size_limit: number }>(pool, "SELECT NOT public AS is_private,file_size_limit FROM storage.buckets WHERE id='creator-artwork-rights-documents'");
+    assert.equal(rightsBucket?.is_private, true, 'Rights evidence documents must use a private bucket.');
+    assert.equal(Number(rightsBucket?.file_size_limit), 15728640, 'Rights evidence bucket must enforce the 15 MB limit.');
   }
 
   const previousStorageUrl = process.env.SUPABASE_URL;
@@ -299,6 +305,35 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
         description: 'Synthetic ownership evidence reference for integration verification.',
       });
       assert.equal(evidence.status, 202, JSON.stringify(evidence));
+      const blockedEvidenceReview = await admin.request(`/admin/creator-rights/evidence/${evidence.data.evidenceId}/review`, 'POST', {
+        decision: 'VERIFIED',
+        reason: 'This decision must remain blocked until a real document is attached.',
+      });
+      assert.equal(blockedEvidenceReview.status, 409, JSON.stringify(blockedEvidenceReview));
+      assert.equal(blockedEvidenceReview.error?.code, 'RIGHTS_DOCUMENT_REQUIRED');
+      const evidenceBytes = Buffer.from('%PDF-1.7\\nSynthetic licence evidence for integration testing.\\n');
+      const evidenceIntent = await creator.request<{ documentId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
+        `/creator/artworks/${artworkId}/rights/documents/upload-intents`, 'POST', {
+          evidenceId: evidence.data.evidenceId, filename: 'licence-evidence.pdf',
+          mimeType: 'application/pdf', byteSize: evidenceBytes.length,
+        });
+      assert.equal(evidenceIntent.status, 201, JSON.stringify(evidenceIntent));
+      const evidenceUpload = await fetch(evidenceIntent.data.uploadUrl, { method: 'PUT', headers: evidenceIntent.data.requiredHeaders, body: evidenceBytes });
+      assert.equal(evidenceUpload.status, 200);
+      const evidenceComplete = await creator.request(
+        `/creator/artworks/${artworkId}/rights/documents/${evidenceIntent.data.documentId}/complete`, 'POST', {});
+      assert.equal(evidenceComplete.status, 200, JSON.stringify(evidenceComplete));
+      const foreignDocuments = await otherUser.request(`/creator/artworks/${artworkId}/rights/documents`);
+      assert.equal(foreignDocuments.status, 404, 'A different account must not list private rights documents.');
+      const creatorDocuments = await creator.request<{ items: Array<{ documentId: string; status: string; storagePath?: string }> }>(
+        `/creator/artworks/${artworkId}/rights/documents`);
+      assert.equal(creatorDocuments.status, 200, JSON.stringify(creatorDocuments));
+      assert.equal(creatorDocuments.data.items[0]?.status, 'AVAILABLE');
+      assert.equal('storagePath' in (creatorDocuments.data.items[0] ?? {}), false, 'Private storage paths must not be returned.');
+      const foreignDownload = await otherUser.request(`/creator/artworks/${artworkId}/rights/documents/${evidenceIntent.data.documentId}/download`);
+      assert.equal(foreignDownload.status, 404, 'A different account must not receive a signed private download URL.');
+      const nonAdminList = await creator.request(`/admin/creator-submissions/${artworkId}/rights/documents`);
+      assert.equal(nonAdminList.status, 403, 'Private moderator document listing must remain admin-only.');
       const evidenceReview = await admin.request(`/admin/creator-rights/evidence/${evidence.data.evidenceId}/review`, 'POST', {
         decision: 'VERIFIED',
         reason: 'Synthetic ownership evidence verified in integration test.',
@@ -313,6 +348,32 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
         culturalContext: 'Synthetic integration fixture; no real community or cultural claim is represented.',
       });
       assert.equal(permission.status, 202, JSON.stringify(permission));
+      const blockedPermissionReview = await admin.request(`/admin/creator-rights/community-permission/${permission.data.permissionId}/review`, 'POST', {
+        decision: 'APPROVED',
+        reason: 'This decision must remain blocked until community permission evidence is attached.',
+      });
+      assert.equal(blockedPermissionReview.status, 409, JSON.stringify(blockedPermissionReview));
+      assert.equal(blockedPermissionReview.error?.code, 'RIGHTS_DOCUMENT_REQUIRED');
+      const permissionBytes = Buffer.from('%PDF-1.7\\nSynthetic community permission evidence for integration testing.\\n');
+      const permissionIntent = await creator.request<{ documentId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
+        `/creator/artworks/${artworkId}/rights/documents/upload-intents`, 'POST', {
+          permissionId: permission.data.permissionId, filename: 'community-permission.pdf',
+          mimeType: 'application/pdf', byteSize: permissionBytes.length,
+        });
+      assert.equal(permissionIntent.status, 201, JSON.stringify(permissionIntent));
+      const permissionUpload = await fetch(permissionIntent.data.uploadUrl, { method: 'PUT', headers: permissionIntent.data.requiredHeaders, body: permissionBytes });
+      assert.equal(permissionUpload.status, 200);
+      const permissionComplete = await creator.request(
+        `/creator/artworks/${artworkId}/rights/documents/${permissionIntent.data.documentId}/complete`, 'POST', {});
+      assert.equal(permissionComplete.status, 200, JSON.stringify(permissionComplete));
+      const adminDocuments = await admin.request<{ items: Array<{ documentId: string; status: string }> }>(
+        `/admin/creator-submissions/${artworkId}/rights/documents`);
+      assert.equal(adminDocuments.status, 200, JSON.stringify(adminDocuments));
+      assert.equal(adminDocuments.data.items.length, 2);
+      const adminDownload = await admin.request(
+        `/admin/creator-submissions/${artworkId}/rights/documents/${evidenceIntent.data.documentId}/download`);
+      assert.equal(adminDownload.status, 200, JSON.stringify(adminDownload));
+      assert.ok((adminDownload.data as { downloadUrl: string }).downloadUrl);
       const permissionReview = await admin.request(`/admin/creator-rights/community-permission/${permission.data.permissionId}/review`, 'POST', {
         decision: 'APPROVED',
         reason: 'Synthetic community permission record approved in integration test.',
