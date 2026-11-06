@@ -330,6 +330,22 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       });
       assert.equal(attributionReview.status, 200, JSON.stringify(attributionReview));
 
+      // Verify the API review persisted the exact record that publication reads.
+      const persistedAttribution = await one<{
+        artwork_id: string;
+        attribution_text: string;
+        attribution_status: string;
+        declared_attribution_text: string | null;
+      }>(runtimePool, `SELECT r.artwork_id,r.attribution_text,r.status AS attribution_status,a.rights->>'attributionText' AS declared_attribution_text
+        FROM seven.creator_artwork_attribution_reviews r
+        JOIN seven.creator_artworks a ON a.artwork_id=r.artwork_id
+        WHERE r.attribution_review_id=$1`, [attribution.data.attributionReviewId]);
+      assert.ok(persistedAttribution, 'Reviewed attribution must be persisted and queryable.');
+      assert.equal(persistedAttribution.artwork_id, artworkId, 'Attribution must belong to the submitted artwork.');
+      assert.equal(persistedAttribution.attribution_status, 'VERIFIED', 'Moderator review must persist VERIFIED status.');
+      assert.equal(persistedAttribution.attribution_text, persistedAttribution.declared_attribution_text,
+        'Verified attribution must exactly match creatorArtwork.rights.attributionText.');
+
       const submitted = await creator.request(`/creator/artworks/${artworkId}/submit`, 'POST', {
         confirmRightsAndPermissions: true,
         confirmAccurateAttribution: true,
@@ -435,10 +451,13 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       const withdrawn = await creator.request(`/creator/artworks/${withdrawnId}/withdraw`, 'POST', {});
       assert.equal(withdrawn.status, 200, JSON.stringify(withdrawn));
       assert.deepEqual(withdrawn.data, { artworkId: withdrawnId, status: 'ARCHIVED', public: false });
-      const auditCount = await one<{ total: number }>(pool,
-        "SELECT count(*)::int AS total FROM seven.audit_events WHERE action_code IN ('creator_artwork.approved_published','creator_artwork.taken_down','creator_artwork.withdrawn')",
+      // Assert this artwork's own withdrawal event; do not depend on publication/takedown
+      // side effects from a different nested test.
+      const withdrawalAudit = await one<{ total: number }>(runtimePool,
+        "SELECT count(*)::int AS total FROM seven.audit_events WHERE action_code='creator_artwork.withdrawn' AND resource_id=$1",
+        [withdrawnId],
       );
-      assert.ok(Number(auditCount?.total) >= 3, 'Publish, takedown and withdrawal must each write an audit event.');
+      assert.equal(Number(withdrawalAudit?.total), 1, 'Withdrawal must write exactly one audit event for this artwork.');
     });
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
