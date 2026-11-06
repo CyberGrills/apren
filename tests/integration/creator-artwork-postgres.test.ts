@@ -21,7 +21,10 @@ interface ApiResult<T> {
 class Client {
   cookie = '';
   csrf = '';
-  constructor(private readonly base: string) {}
+  private readonly base: string;
+  constructor(base: string) {
+    this.base = base;
+  }
 
   async request<T>(path: string, method = 'GET', body?: unknown, key = randomUUID()): Promise<ApiResult<T>> {
     const response = await fetch(this.base + '/api' + path, {
