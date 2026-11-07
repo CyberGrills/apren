@@ -541,6 +541,62 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
         'SELECT status,scan_result FROM seven.creator_artwork_rights_documents WHERE document_id=$1', [exhausted.documentId]);
       assert.deepEqual(quarantined, { status: 'QUARANTINED', scan_result: 'ERROR' },
         'Retry exhaustion must quarantine the file rather than fail open.');
+
+      const abandoned = await makeFixture('abandoned-exhausted');
+      await runtimePool.query(`
+        UPDATE seven.creator_artwork_rights_document_scan_jobs
+           SET status='PROCESSING',attempts=5,lease_id=$2,
+               lease_expires_at=now()-interval '1 minute'
+         WHERE document_id=$1
+      `, [abandoned.documentId, randomUUID()]);
+      let abandonedScanCalls = 0;
+      assert.equal(await processCreatorArtworkRightsDocumentScans(runtimePool, {
+        scan: async () => {
+          abandonedScanCalls++;
+          throw new Error('An exhausted job must not be scanned again.');
+        },
+      }), 0);
+      assert.equal(abandonedScanCalls, 0);
+      const abandonedState = await one<{
+        job_status: string; document_status: string; scan_result: string; last_error_code: string;
+      }>(runtimePool, `
+        SELECT j.status AS job_status,d.status AS document_status,d.scan_result,j.last_error_code
+          FROM seven.creator_artwork_rights_document_scan_jobs j
+          JOIN seven.creator_artwork_rights_documents d USING(document_id)
+         WHERE j.document_id=$1
+      `, [abandoned.documentId]);
+      assert.deepEqual(abandonedState, {
+        job_status: 'QUARANTINED',
+        document_status: 'QUARANTINED',
+        scan_result: 'ERROR',
+        last_error_code: 'SCAN_FAILED',
+      }, 'An expired fifth-attempt lease must be quarantined by the next worker pass.');
+
+      const leaseExpired = await makeFixture('lease-expired');
+      const lostLeaseCount = await processCreatorArtworkRightsDocumentScans(runtimePool, {
+        scan: async () => {
+          await runtimePool.query(
+            "UPDATE seven.creator_artwork_rights_document_scan_jobs SET lease_expires_at=now()-interval '1 second' WHERE document_id=$1",
+            [leaseExpired.documentId],
+          );
+          return { verdict: 'CLEAN' as const, provider: 'integration-fixture', engineVersion: 'test-1' };
+        },
+      });
+      assert.equal(lostLeaseCount, 0, 'A result received after lease expiry must not be counted as finalized.');
+      const lostLeaseState = await one<{ job_status: string; document_status: string }>(runtimePool, `
+        SELECT j.status AS job_status,d.status AS document_status
+          FROM seven.creator_artwork_rights_document_scan_jobs j
+          JOIN seven.creator_artwork_rights_documents d USING(document_id)
+         WHERE j.document_id=$1
+      `, [leaseExpired.documentId]);
+      assert.deepEqual(lostLeaseState, { job_status: 'PROCESSING', document_status: 'PENDING_SCAN' });
+
+      assert.equal(await processCreatorArtworkRightsDocumentScans(runtimePool, cleanScanner), 1,
+        'A non-exhausted expired lease must be reclaimed and processed.');
+      const recoveredLease = await one<{ status: string; scan_result: string }>(runtimePool,
+        'SELECT status,scan_result FROM seven.creator_artwork_rights_documents WHERE document_id=$1',
+        [leaseExpired.documentId]);
+      assert.deepEqual(recoveredLease, { status: 'AVAILABLE', scan_result: 'CLEAN' });
     });
 
     await t.test('creator can withdraw a pending artwork and the mutation is audited', async () => {

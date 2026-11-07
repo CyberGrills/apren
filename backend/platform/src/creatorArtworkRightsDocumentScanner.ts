@@ -27,15 +27,72 @@ async function readPrivateObject(path: string): Promise<Uint8Array> {
   return bytes;
 }
 
+
+type ExhaustedScanJob = {
+  scan_job_id: string;
+  document_id: string;
+  object_sha256: string;
+  artwork_id: string;
+  uploaded_by: string;
+};
+
+/**
+ * A worker can be terminated after its fifth claim but before its catch block
+ * records retry exhaustion. Reap those expired leases so documents cannot stay
+ * PENDING_SCAN forever.
+ */
+async function quarantineExpiredExhaustedJobs(pool: Pool): Promise<void> {
+  await transaction(pool, async db => {
+    const exhausted = await rows<ExhaustedScanJob>(db, `
+      SELECT j.scan_job_id,j.document_id,j.object_sha256,d.artwork_id,d.uploaded_by
+        FROM seven.creator_artwork_rights_document_scan_jobs j
+        JOIN seven.creator_artwork_rights_documents d USING(document_id)
+       WHERE j.status='PROCESSING' AND j.attempts >= $1
+         AND (j.lease_expires_at IS NULL OR j.lease_expires_at <= now())
+       ORDER BY j.created_at FOR UPDATE OF j SKIP LOCKED LIMIT 5
+    `, [MAX_SCAN_ATTEMPTS]);
+
+    for (const job of exhausted) {
+      const updated = await db.query(`
+        UPDATE seven.creator_artwork_rights_documents
+           SET status='QUARANTINED',scan_result='ERROR',scan_provider='unavailable',
+               scan_error_code='SCAN_FAILED',scan_started_at=COALESCE(scan_started_at,now()),
+               scan_completed_at=now(),updated_at=now()
+         WHERE document_id=$1 AND status='PENDING_SCAN' AND scan_sha256=$2
+      `, [job.document_id, job.object_sha256]);
+      await db.query(`
+        UPDATE seven.creator_artwork_rights_document_scan_jobs
+           SET status='QUARANTINED',lease_id=NULL,lease_expires_at=NULL,
+               last_error_code='SCAN_FAILED',completed_at=now(),updated_at=now()
+         WHERE scan_job_id=$1 AND status='PROCESSING' AND attempts >= $2
+           AND (lease_expires_at IS NULL OR lease_expires_at <= now())
+      `, [job.scan_job_id, MAX_SCAN_ATTEMPTS]);
+      if (updated.rowCount === 1) {
+        await db.query(`
+          INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details)
+          VALUES($1,$2,NULL,'creator_artwork_rights_document.scan_quarantined',$3,$4)
+        `, [randomUUID(), job.uploaded_by, job.document_id, {
+          artworkId: job.artwork_id,
+          checksum: job.object_sha256,
+          result: 'ERROR',
+          attempt: MAX_SCAN_ATTEMPTS,
+          errorCode: 'SCAN_FAILED',
+        }]);
+      }
+    }
+  });
+}
+
 /** Claim and process at most five durable jobs; only an exact clean scan releases a file. */
 export async function processCreatorArtworkRightsDocumentScans(
   pool: Pool,
   scanner: MalwareScanner = new HttpMalwareScanner(),
 ): Promise<number> {
+  await quarantineExpiredExhaustedJobs(pool);
   const leaseId = randomUUID();
   const jobs = await transaction(pool, db => rows<ScanJob>(db, `
     UPDATE seven.creator_artwork_rights_document_scan_jobs
-       SET status='PROCESSING',lease_id=$1,lease_expires_at=now()+interval '90 seconds',
+       SET status='PROCESSING',lease_id=$1,lease_expires_at=now()+interval '240 seconds',
            attempts=attempts+1,updated_at=now()
      WHERE scan_job_id IN (
        SELECT scan_job_id FROM seven.creator_artwork_rights_document_scan_jobs
@@ -59,11 +116,11 @@ export async function processCreatorArtworkRightsDocumentScans(
       const verdict = await scanner.scan({
         documentId: document.document_id, sha256: checksum, mimeType: document.mime_type, bytes,
       });
-      await transaction(pool, async db => {
+      const finalized = await transaction(pool, async db => {
         const owned = await one(db,
           "SELECT scan_job_id FROM seven.creator_artwork_rights_document_scan_jobs WHERE scan_job_id=$1 AND lease_id=$2 AND status='PROCESSING' AND lease_expires_at>now() FOR UPDATE",
           [job.scan_job_id, leaseId]);
-        if (!owned) return;
+        if (!owned) return false;
         const clean = verdict.verdict === 'CLEAN';
         const updated = await db.query(`
           UPDATE seven.creator_artwork_rights_documents
@@ -86,8 +143,9 @@ export async function processCreatorArtworkRightsDocumentScans(
           clean ? 'creator_artwork_rights_document.scan_clean' : 'creator_artwork_rights_document.scan_quarantined',
           document.document_id,{ artworkId: document.artwork_id, checksum, provider: verdict.provider,
             engineVersion: verdict.engineVersion, verdict: verdict.verdict }]);
+        return true;
       });
-      completed++;
+      if (finalized) completed++;
     } catch {
       await transaction(pool, async db => {
         const owned = await one(db,
