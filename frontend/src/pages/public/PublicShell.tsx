@@ -1,4 +1,4 @@
-import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
@@ -23,9 +23,12 @@ export function PublicHeader() {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNavRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
+  const [exploreOpen, setExploreOpen] = useState(false);
+  const exploreRef = useRef<HTMLDivElement>(null);
   const [language, setLanguage] = useState<SevenLanguage>(readSevenLanguage);
   useEffect(() => {
     setOpen(false);
+    setExploreOpen(false);
   }, [location.pathname, location.search]);
   useEffect(() => {
     if (!open) return;
@@ -64,6 +67,21 @@ export function PublicHeader() {
       window.dispatchEvent(new CustomEvent('7even-language-change', { detail: saved }));
     }
   }, [user?.profileDetails?.preferredLanguage]);
+  useEffect(() => {
+    if (!exploreOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Node && !exploreRef.current?.contains(event.target)) setExploreOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExploreOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [exploreOpen]);
   function closeMobileMenu() {
     setOpen(false);
     menuButtonRef.current?.focus();
@@ -102,11 +120,27 @@ export function PublicHeader() {
           <Brand />
         </Link>
         <nav className="public-nav-desktop" aria-label="Main navigation">
-          {navItems.map((item) => (
-            <Link key={item.to} to={item.to} aria-current={item.current ? 'page' : undefined}>
-              {item.label}
-            </Link>
-          ))}
+          <Link to="/" aria-current={location.pathname === '/' ? 'page' : undefined}>Home</Link>
+          <div className="public-explore" ref={exploreRef}>
+            <button
+              type="button"
+              className={navItems.slice(1).some((item) => item.current) ? 'public-explore-button is-current' : 'public-explore-button'}
+              aria-expanded={exploreOpen}
+              aria-controls="public-explore-menu"
+              onClick={() => setExploreOpen((current) => !current)}
+            >
+              Explore <ChevronDown size={15} aria-hidden="true" />
+            </button>
+            {exploreOpen && (
+              <div id="public-explore-menu" className="public-explore-menu">
+                {navItems.slice(1).map((item) => (
+                  <Link key={item.to} to={item.to} aria-current={item.current ? 'page' : undefined}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
         <div className="public-nav-actions">
           <div className="seven-language-switch" role="group" aria-label="Website language">

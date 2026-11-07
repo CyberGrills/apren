@@ -1,59 +1,89 @@
-/* Public header: single owner of header layout and breakpoints.
-   Loaded after public.css. Older header rules there are superseded
-   and can be removed in a later cleanup stage. */
+/* Public header: single owner of header layout. Loaded after public.css. */
 
-.public-header {
-  position: relative;
-  z-index: 40;
-}
+.public-header { position: relative; z-index: 40; }
+.public-home-link { display: none; }
 
 @media (min-width: 601px) {
   .public-nav { gap: clamp(1rem, 2vw, 2rem); }
-  .public-nav-desktop { gap: clamp(1rem, 2.2vw, 2.8rem); }
   .public-nav-actions { gap: clamp(0.9rem, 1.6vw, 1.8rem); }
 }
 
-/* Install app link now matches the other header links. */
 .public-install-link { font-size: 0.82rem; text-decoration: none; }
 .public-install-link:hover { text-decoration: underline; }
 
-/* Current page */
-.public-nav-desktop a[aria-current="page"] {
-  color: var(--ink);
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.55em;
+/* Language switch: present but quiet */
+.public-header .seven-language-switch {
+  gap: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
 }
-.seven-marketplace .public-nav-desktop a[aria-current="page"] {
-  background: var(--public-panel);
-  color: var(--ink);
-  text-decoration: none;
+.public-header .seven-language-switch button {
+  min-height: 32px; padding: 0.25rem 0.6rem; border-radius: 0;
+  background: transparent; color: var(--muted); font-size: 0.72rem;
 }
-.public-mobile-nav a[aria-current="page"] {
-  background: var(--public-panel);
-  font-weight: 600;
+.public-header .seven-language-switch button + button { border-left: 1px solid var(--line); }
+.public-header .seven-language-switch button:hover { color: var(--ink); }
+.public-header .seven-language-switch button.active {
+  background: transparent; color: var(--ink); font-weight: 700;
+}
+@media (max-width: 600px) {
+  .public-header .seven-language-switch button { min-height: 44px; }
 }
 
-/* Wide screens: full link row on every page, including the marketplace home. */
-@media (min-width: 1281px) {
-  .public-header .public-nav-desktop { display: flex; }
+/* Desktop links and Explore button */
+.public-header .public-nav-desktop > a,
+.public-explore-button {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0.5rem 0;
+  border-radius: 0; background: transparent; color: inherit;
+  font-size: 0.82rem; text-decoration: none;
+}
+.public-header .public-nav-desktop > a:hover,
+.public-explore-button:hover { background: transparent; color: inherit; text-decoration: underline; }
+.public-header .public-nav-desktop > a[aria-current="page"],
+.public-explore-button.is-current {
+  color: var(--ink); text-decoration: underline;
+  text-decoration-thickness: 2px; text-underline-offset: 0.55em;
+}
+
+.public-explore { position: relative; }
+.public-explore-button { gap: 0.35rem; border: 0; cursor: pointer; }
+.public-explore-button svg { transition: transform 150ms ease; }
+.public-explore-button[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.public-explore-menu {
+  position: absolute; top: calc(100% + 0.5rem); left: 50%; transform: translateX(-50%);
+  min-width: 15rem; display: grid; padding: 0.5rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 12%); z-index: 50;
+}
+.public-header .public-explore-menu a {
+  display: flex; align-items: center; min-height: 44px; padding: 0.65rem 0.85rem;
+  border-radius: 8px; font-size: 0.86rem; text-decoration: none;
+}
+.public-header .public-explore-menu a:hover,
+.public-header .public-explore-menu a:focus-visible { background: var(--surface-subtle); text-decoration: none; }
+.public-header .public-explore-menu a[aria-current="page"] {
+  background: var(--surface-subtle); font-weight: 600; text-decoration: none;
+}
+
+/* 961px and up: link row in the bar */
+@media (min-width: 961px) {
+  .public-header .public-nav-desktop {
+    display: flex; align-items: center; gap: clamp(1.5rem, 3vw, 3rem);
+  }
   .public-header .public-mobile-nav { display: none; }
+  .public-header .public-menu-button { display: none; }
 }
 
-/* 1280px and below: links live in the menu at every width. */
-@media (max-width: 1280px) {
+/* 960px and below: everything lives in the menu */
+@media (max-width: 960px) {
   .public-header .public-nav-desktop,
   .public-header .public-business-link { display: none; }
   .public-header .public-menu-button { display: inline-flex; }
   .public-header .public-mobile-nav {
-    display: grid;
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: max(1rem, calc((100% - var(--public-page-width, 100%)) / 2));
-    left: auto;
-    width: min(28rem, calc(100% - 2rem));
-    max-height: min(70vh, 32rem);
-    overflow-y: auto;
-    margin: 0;
+    display: grid; position: absolute; top: calc(100% + 0.5rem);
+    right: max(1rem, calc((100% - var(--public-page-width, 100%)) / 2)); left: auto;
+    width: min(28rem, calc(100% - 2rem)); max-height: min(70vh, 32rem);
+    overflow-y: auto; margin: 0;
   }
 }
+
+.public-mobile-nav a[aria-current="page"] { background: var(--public-panel); font-weight: 600; }
