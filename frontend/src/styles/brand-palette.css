@@ -1,0 +1,79 @@
+/* 7EVEN brand palette. Loaded after global.css so these values win. */
+:root {
+  /* Permanent brand colours */
+  --brand-primary: #174D3A;
+  --brand-gold: #D6A84B;
+  --brand-secondary: #F7F5EF;
+  --brand-text: #26352E;
+  --brand-text-muted: #4F5B54;
+
+  /* Interactive colour stays Forest Green in every season */
+  --accent: var(--brand-primary);
+  --accent-hover: color-mix(in oklch, var(--brand-primary) 82%, var(--brand-text));
+
+  /* Spring */
+  --spring-sage: #A8BFA5;
+  --spring-leaf: #6F966F;
+  --spring-mint: #DCEBDD;
+  --spring-blossom: #E8C8C5;
+  --spring-cream: #F4F1E6;
+  --spring-olive: #78845A;
+  /* Summer */
+  --summer-sunshine-gold: #F2C14E;
+  --summer-coral: #E98770;
+  --summer-terracotta: #C96F4A;
+  --summer-sand: #EAD8B5;
+  --summer-amber: #D99A32;
+  --summer-warm-cream: #FFF3DC;
+  /* Autumn */
+  --autumn-burnt-orange: #C66A3D;
+  --autumn-copper: #B87345;
+  --autumn-deep-amber: #B98527;
+  --autumn-rust: #9E4935;
+  --autumn-earth-brown: #75513D;
+  --autumn-harvest-cream: #EDE0C8;
+  /* Winter */
+  --winter-midnight-blue: #243B53;
+  --winter-ice-blue: #DCEAF2;
+  --winter-silver: #BFC9D2;
+  --winter-slate: #607487;
+  --winter-deep-navy: #172A3A;
+  --winter-snow-white: #F5F8FA;
+
+  /* Swatches used by the Appearance page */
+  --season-spring: var(--spring-leaf);
+  --season-summer: var(--summer-terracotta);
+  --season-autumn: var(--autumn-burnt-orange);
+  --season-winter: var(--winter-slate);
+
+  /* Defaults until a season is set */
+  --season-tint: color-mix(in srgb, var(--brand-primary) 6%, var(--brand-secondary));
+  --season-soft: color-mix(in srgb, var(--brand-primary) 12%, var(--brand-secondary));
+  --season-deep: var(--brand-primary);
+}
+
+/* Seasons supply tints, ornaments and swatches. Text and controls stay brand colours. */
+:root[data-season="spring"] {
+  --season-accent: var(--spring-leaf);
+  --season-tint: var(--spring-mint);
+  --season-soft: var(--spring-cream);
+  --season-deep: color-mix(in oklch, var(--spring-olive) 55%, var(--brand-text));
+}
+:root[data-season="summer"] {
+  --season-accent: var(--summer-terracotta);
+  --season-tint: var(--summer-warm-cream);
+  --season-soft: var(--summer-sand);
+  --season-deep: color-mix(in oklch, var(--summer-terracotta) 55%, var(--brand-text));
+}
+:root[data-season="autumn"] {
+  --season-accent: var(--autumn-burnt-orange);
+  --season-tint: color-mix(in srgb, var(--autumn-harvest-cream) 55%, var(--brand-secondary));
+  --season-soft: var(--autumn-harvest-cream);
+  --season-deep: var(--autumn-rust);
+}
+:root[data-season="winter"] {
+  --season-accent: var(--winter-slate);
+  --season-tint: var(--winter-snow-white);
+  --season-soft: var(--winter-ice-blue);
+  --season-deep: var(--winter-midnight-blue);
+}

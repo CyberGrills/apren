@@ -10,6 +10,7 @@ import { BrandIntro } from './components/BrandIntro.tsx';
 import { SeasonProvider } from './context/SeasonContext.tsx';
 import { seasonAt } from './lib/season.ts';
 import './styles/global.css';
+import './styles/brand-palette.css';
 import './styles/public.css';
 import './styles/art-culture.css';
 import './styles/demo-catalog.css';
@@ -21,6 +22,7 @@ import './styles/seasonal-brand-assets.css';
 import './styles/authentication.css';
 import './styles/offline.css';
 import './styles/public-header.css';
+import './styles/home.css';
 
 document.documentElement.dataset.season = seasonAt(new Date());
 createRoot(document.getElementById('root')!).render(

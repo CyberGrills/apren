@@ -2,7 +2,6 @@ import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
-import { SeasonalCampaignBanner } from '../../components/SeasonalCampaignBanner.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
@@ -210,7 +209,6 @@ export function PublicHeader() {
         </nav>
       )}
     </header>
-    {location.pathname === '/' && <SeasonalCampaignBanner />}
     </>
   );
 }

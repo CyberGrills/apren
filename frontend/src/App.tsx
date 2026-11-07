@@ -30,7 +30,7 @@ const BusinessApplicationPage = lazy(() => import('./pages/public/BusinessApplic
 const DirectoryPage = lazy(() => import('./pages/public/DirectoryPage.tsx').then((module) => ({ default: module.DirectoryPage })));
 const ExplorePage = lazy(() => import('./pages/public/ExplorePage.tsx').then((module) => ({ default: module.ExplorePage })));
 const ArtCulturePage = lazy(() => import('./pages/public/ArtCulturePage.tsx').then((module) => ({ default: module.ArtCulturePage })));
-const LandingPage = lazy(() => import('./pages/public/LandingPage.tsx').then((module) => ({ default: module.LandingPage })));
+const HomePage = lazy(() => import('./pages/public/HomePage.tsx').then((module) => ({ default: module.HomePage })));
 const OfferingPage = lazy(() => import('./pages/public/OfferingPage.tsx').then((module) => ({ default: module.OfferingPage })));
 const AdminInventoryPage = lazy(() => import('./pages/workspace/AdminInventoryPage.tsx').then((module) => ({ default: module.AdminInventoryPage })));
 const AdminBusinessMedia = lazy(() => import('./pages/workspace/AdminBusinessMedia.tsx').then((module) => ({ default: module.AdminBusinessMedia })));
@@ -224,7 +224,7 @@ export function App() {
             </div>
             <Suspense fallback={<main className="permission-screen" id="main-content"><Loading /></main>}>
               <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<HomePage />} />
               {import.meta.env.PROD ? (
                 <>
                   <Route path="/demo/hotels" element={<Navigate to="/explore?kind=STAY" replace />} />
