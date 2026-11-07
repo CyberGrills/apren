@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { processCreatorArtworkRightsDocumentScans } from '../../backend/platform/src/creatorArtworkRightsDocumentScanner.ts';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
@@ -311,6 +312,17 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       });
       assert.equal(blockedEvidenceReview.status, 409, JSON.stringify(blockedEvidenceReview));
       assert.equal(blockedEvidenceReview.error?.code, 'RIGHTS_DOCUMENT_REQUIRED');
+      const creatorUser = await one<{ user_id: string }>(runtimePool, 'SELECT user_id FROM seven.users WHERE email=$1', ['guest@seven.test']);
+      assert.ok(creatorUser, 'The seeded creator account must exist.');
+      for (let i = 0; i < 5; i += 1) {
+        await runtimePool.query(
+          `INSERT INTO seven.creator_artwork_rights_documents
+            (document_id,artwork_id,evidence_id,uploaded_by,storage_path,original_filename,mime_type,byte_size,status,upload_expires_at)
+           VALUES($1,$2,$3,$4,$5,'expired.pdf','application/pdf',64,'PENDING_UPLOAD',now()-interval '1 minute')`,
+          [randomUUID(), artworkId, evidence.data.evidenceId, creatorUser.user_id, `expired/${randomUUID()}.pdf`],
+        );
+      }
+      // Expired intents must not permanently consume the five-document limit.
       const evidenceBytes = Buffer.from('%PDF-1.7\\nSynthetic licence evidence for integration testing.\\n');
       const evidenceIntent = await creator.request<{ documentId: string; uploadUrl: string; requiredHeaders: { 'Content-Type': string } }>(
         `/creator/artworks/${artworkId}/rights/documents/upload-intents`, 'POST', {
@@ -322,14 +334,18 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       assert.equal(evidenceUpload.status, 200);
       const evidenceComplete = await creator.request(
         `/creator/artworks/${artworkId}/rights/documents/${evidenceIntent.data.documentId}/complete`, 'POST', {});
-      assert.equal(evidenceComplete.status, 200, JSON.stringify(evidenceComplete));
+      assert.equal(evidenceComplete.status, 202, JSON.stringify(evidenceComplete));
+      assert.equal((evidenceComplete.data as { status: string }).status, 'PENDING_SCAN');
+      await processCreatorArtworkRightsDocumentScans(runtimePool, { scan: async () => ({ verdict: 'CLEAN', provider: 'integration-fixture', engineVersion: 'test-1' }) });
       const foreignDocuments = await otherUser.request(`/creator/artworks/${artworkId}/rights/documents`);
       assert.equal(foreignDocuments.status, 404, 'A different account must not list private rights documents.');
       const creatorDocuments = await creator.request<{ items: Array<{ documentId: string; status: string; storagePath?: string }> }>(
         `/creator/artworks/${artworkId}/rights/documents`);
       assert.equal(creatorDocuments.status, 200, JSON.stringify(creatorDocuments));
-      assert.equal(creatorDocuments.data.items[0]?.status, 'AVAILABLE');
-      assert.equal('storagePath' in (creatorDocuments.data.items[0] ?? {}), false, 'Private storage paths must not be returned.');
+      const scannedEvidenceDocument = creatorDocuments.data.items.find((item) => item.documentId === evidenceIntent.data.documentId);
+      assert.ok(scannedEvidenceDocument, 'The completed evidence upload must appear in the creator document list.');
+      assert.equal(scannedEvidenceDocument.status, 'AVAILABLE', 'Only the exact document that passed the clean scan may become available.');
+      assert.equal('storagePath' in scannedEvidenceDocument, false, 'Private storage paths must not be returned.');
       const foreignDownload = await otherUser.request(`/creator/artworks/${artworkId}/rights/documents/${evidenceIntent.data.documentId}/download`);
       assert.equal(foreignDownload.status, 404, 'A different account must not receive a signed private download URL.');
       const nonAdminList = await creator.request(`/admin/creator-submissions/${artworkId}/rights/documents`);
@@ -365,7 +381,8 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       assert.equal(permissionUpload.status, 200);
       const permissionComplete = await creator.request(
         `/creator/artworks/${artworkId}/rights/documents/${permissionIntent.data.documentId}/complete`, 'POST', {});
-      assert.equal(permissionComplete.status, 200, JSON.stringify(permissionComplete));
+      assert.equal(permissionComplete.status, 202, JSON.stringify(permissionComplete));
+      await processCreatorArtworkRightsDocumentScans(runtimePool, { scan: async () => ({ verdict: 'CLEAN', provider: 'integration-fixture', engineVersion: 'test-1' }) });
       const adminDocuments = await admin.request<{ items: Array<{ documentId: string; status: string }> }>(
         `/admin/creator-submissions/${artworkId}/rights/documents`);
       assert.equal(adminDocuments.status, 200, JSON.stringify(adminDocuments));
@@ -448,6 +465,138 @@ test('7EVEN creator artwork PostgreSQL migration and API isolation', {
       const afterTakedown = await creator.request<{ items: Array<{ artworkId: string }> }>('/art-culture/artworks?countryCode=NG');
       assert.equal(afterTakedown.status, 200, JSON.stringify(afterTakedown));
       assert.equal(afterTakedown.data.items.some(item => item.artworkId === artworkId), false);
+    });
+
+    await t.test('rights document scan queue fails closed for infection, outages and duplicate jobs', async () => {
+      const creatorUser = await one<{ user_id: string }>(runtimePool, 'SELECT user_id FROM seven.users WHERE email=$1', ['guest@seven.test']);
+      const evidence = await one<{ evidence_id: string }>(runtimePool,
+        'SELECT evidence_id FROM seven.creator_artwork_rights_evidence WHERE artwork_id=$1 ORDER BY created_at LIMIT 1', [artworkId]);
+      assert.ok(creatorUser && evidence, 'The creator and rights evidence fixtures must exist.');
+
+      const makeFixture = async (label: string) => {
+        const documentId = randomUUID();
+        const bytes = Buffer.from('%PDF-1.7\\nSynthetic scan fixture: ' + label);
+        const checksum = createHash('sha256').update(bytes).digest('hex');
+        const path = 'scan-fixtures/' + documentId + '.pdf';
+        storedObjects.set('creator-artwork-rights-documents/' + path, { bytes, contentType: 'application/pdf' });
+        await runtimePool.query(`
+          INSERT INTO seven.creator_artwork_rights_documents
+            (document_id,artwork_id,evidence_id,uploaded_by,storage_path,original_filename,mime_type,byte_size,status,scan_sha256)
+          VALUES($1,$2,$3,$4,$5,$6,'application/pdf',$7,'PENDING_SCAN',$8)
+        `, [documentId,artworkId,evidence.evidence_id,creatorUser.user_id,path,label + '.pdf',bytes.length,checksum]);
+        await runtimePool.query(
+          'INSERT INTO seven.creator_artwork_rights_document_scan_jobs(scan_job_id,document_id,object_sha256) VALUES($1,$2,$3)',
+          [randomUUID(),documentId,checksum],
+        );
+        return { documentId, checksum };
+      };
+
+      const clean = await makeFixture('clean');
+      let cleanCalls = 0;
+      const cleanScanner = { scan: async () => {
+        cleanCalls++;
+        return { verdict: 'CLEAN' as const, provider: 'integration-fixture', engineVersion: 'test-1' };
+      }};
+      assert.equal(await processCreatorArtworkRightsDocumentScans(runtimePool, cleanScanner), 1);
+      const cleanRow = await one<{ status: string; scan_result: string }>(runtimePool,
+        'SELECT status,scan_result FROM seven.creator_artwork_rights_documents WHERE document_id=$1', [clean.documentId]);
+      assert.deepEqual(cleanRow, { status: 'AVAILABLE', scan_result: 'CLEAN' });
+      await runtimePool.query(
+        'INSERT INTO seven.creator_artwork_rights_document_scan_jobs(scan_job_id,document_id,object_sha256) VALUES($1,$2,$3) ON CONFLICT(document_id,object_sha256) DO NOTHING',
+        [randomUUID(),clean.documentId,clean.checksum],
+      );
+      assert.equal(Number((await one<{ total: number }>(runtimePool,
+        'SELECT count(*)::int AS total FROM seven.creator_artwork_rights_document_scan_jobs WHERE document_id=$1', [clean.documentId]))?.total), 1,
+        'Duplicate enqueue must resolve to one durable job.');
+      assert.equal(await processCreatorArtworkRightsDocumentScans(runtimePool, cleanScanner), 0);
+      assert.equal(cleanCalls, 1, 'A completed clean job must not be scanned twice.');
+
+      const infected = await makeFixture('infected');
+      assert.equal(await processCreatorArtworkRightsDocumentScans(runtimePool, {
+        scan: async () => ({ verdict: 'INFECTED' as const, provider: 'integration-fixture', engineVersion: 'test-1' }),
+      }), 1);
+      const infectedRow = await one<{ status: string; scan_result: string }>(runtimePool,
+        'SELECT status,scan_result FROM seven.creator_artwork_rights_documents WHERE document_id=$1', [infected.documentId]);
+      assert.deepEqual(infectedRow, { status: 'QUARANTINED', scan_result: 'INFECTED' });
+      const infectedDownload = await creator.request(
+        `/creator/artworks/${artworkId}/rights/documents/${infected.documentId}/download`);
+      assert.equal(infectedDownload.status, 404, 'Infected files must never receive signed download URLs.');
+
+      const retry = await makeFixture('retry');
+      await processCreatorArtworkRightsDocumentScans(runtimePool, { scan: async () => { throw new Error('scanner offline'); } });
+      const pendingRetry = await one<{ status: string; document_status: string }>(runtimePool,
+        'SELECT j.status,d.status AS document_status FROM seven.creator_artwork_rights_document_scan_jobs j JOIN seven.creator_artwork_rights_documents d USING(document_id) WHERE j.document_id=$1', [retry.documentId]);
+      assert.equal(pendingRetry?.status, 'QUEUED');
+      assert.equal(pendingRetry?.document_status, 'PENDING_SCAN', 'Scanner outage must not release or delete the document.');
+      await runtimePool.query('UPDATE seven.creator_artwork_rights_document_scan_jobs SET next_attempt_at=now() WHERE document_id=$1', [retry.documentId]);
+      await processCreatorArtworkRightsDocumentScans(runtimePool, cleanScanner);
+      const retried = await one<{ status: string; scan_result: string }>(runtimePool,
+        'SELECT status,scan_result FROM seven.creator_artwork_rights_documents WHERE document_id=$1', [retry.documentId]);
+      assert.deepEqual(retried, { status: 'AVAILABLE', scan_result: 'CLEAN' });
+
+      const exhausted = await makeFixture('retry-exhausted');
+      await runtimePool.query('UPDATE seven.creator_artwork_rights_document_scan_jobs SET attempts=4 WHERE document_id=$1', [exhausted.documentId]);
+      await processCreatorArtworkRightsDocumentScans(runtimePool, { scan: async () => { throw new Error('scanner unavailable'); } });
+      const quarantined = await one<{ status: string; scan_result: string }>(runtimePool,
+        'SELECT status,scan_result FROM seven.creator_artwork_rights_documents WHERE document_id=$1', [exhausted.documentId]);
+      assert.deepEqual(quarantined, { status: 'QUARANTINED', scan_result: 'ERROR' },
+        'Retry exhaustion must quarantine the file rather than fail open.');
+
+      const abandoned = await makeFixture('abandoned-exhausted');
+      await runtimePool.query(`
+        UPDATE seven.creator_artwork_rights_document_scan_jobs
+           SET status='PROCESSING',attempts=5,lease_id=$2,
+               lease_expires_at=now()-interval '1 minute'
+         WHERE document_id=$1
+      `, [abandoned.documentId, randomUUID()]);
+      let abandonedScanCalls = 0;
+      assert.equal(await processCreatorArtworkRightsDocumentScans(runtimePool, {
+        scan: async () => {
+          abandonedScanCalls++;
+          throw new Error('An exhausted job must not be scanned again.');
+        },
+      }), 0);
+      assert.equal(abandonedScanCalls, 0);
+      const abandonedState = await one<{
+        job_status: string; document_status: string; scan_result: string; last_error_code: string;
+      }>(runtimePool, `
+        SELECT j.status AS job_status,d.status AS document_status,d.scan_result,j.last_error_code
+          FROM seven.creator_artwork_rights_document_scan_jobs j
+          JOIN seven.creator_artwork_rights_documents d USING(document_id)
+         WHERE j.document_id=$1
+      `, [abandoned.documentId]);
+      assert.deepEqual(abandonedState, {
+        job_status: 'QUARANTINED',
+        document_status: 'QUARANTINED',
+        scan_result: 'ERROR',
+        last_error_code: 'SCAN_FAILED',
+      }, 'An expired fifth-attempt lease must be quarantined by the next worker pass.');
+
+      const leaseExpired = await makeFixture('lease-expired');
+      const lostLeaseCount = await processCreatorArtworkRightsDocumentScans(runtimePool, {
+        scan: async () => {
+          await runtimePool.query(
+            "UPDATE seven.creator_artwork_rights_document_scan_jobs SET lease_expires_at=now()-interval '1 second' WHERE document_id=$1",
+            [leaseExpired.documentId],
+          );
+          return { verdict: 'CLEAN' as const, provider: 'integration-fixture', engineVersion: 'test-1' };
+        },
+      });
+      assert.equal(lostLeaseCount, 0, 'A result received after lease expiry must not be counted as finalized.');
+      const lostLeaseState = await one<{ job_status: string; document_status: string }>(runtimePool, `
+        SELECT j.status AS job_status,d.status AS document_status
+          FROM seven.creator_artwork_rights_document_scan_jobs j
+          JOIN seven.creator_artwork_rights_documents d USING(document_id)
+         WHERE j.document_id=$1
+      `, [leaseExpired.documentId]);
+      assert.deepEqual(lostLeaseState, { job_status: 'PROCESSING', document_status: 'PENDING_SCAN' });
+
+      assert.equal(await processCreatorArtworkRightsDocumentScans(runtimePool, cleanScanner), 1,
+        'A non-exhausted expired lease must be reclaimed and processed.');
+      const recoveredLease = await one<{ status: string; scan_result: string }>(runtimePool,
+        'SELECT status,scan_result FROM seven.creator_artwork_rights_documents WHERE document_id=$1',
+        [leaseExpired.documentId]);
+      assert.deepEqual(recoveredLease, { status: 'AVAILABLE', scan_result: 'CLEAN' });
     });
 
     await t.test('creator can withdraw a pending artwork and the mutation is audited', async () => {
