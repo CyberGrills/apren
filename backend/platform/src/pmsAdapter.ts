@@ -128,28 +128,30 @@ export function validatePmsSnapshot(snapshot: PmsReadSnapshot): PmsReadSnapshot 
     }
     roomIds.add(room.externalRoomTypeId);
   }
-  const rateIds = new Set<string>();
+  const ratePlansById = new Map<string, PmsRatePlan>();
   for (const rate of snapshot.ratePlans) {
     if (!rate.externalRatePlanId.trim() || !roomIds.has(rate.roomTypeId) ||
         !Number.isSafeInteger(rate.amountMinor) || rate.amountMinor < 0 ||
-        !/^[A-Z]{3}$/.test(rate.currency) || rateIds.has(rate.externalRatePlanId)) {
+        !/^[A-Z]{3}$/.test(rate.currency) || ratePlansById.has(rate.externalRatePlanId)) {
       throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Rate plan data is invalid or duplicated.');
     }
-    rateIds.add(rate.externalRatePlanId);
+    ratePlansById.set(rate.externalRatePlanId, rate);
   }
   const inventoryKeys = new Set<string>();
   for (const night of snapshot.nightlyInventory) {
     const key = [night.roomTypeId, night.ratePlanId, night.date].join('|');
+    const ratePlan = ratePlansById.get(night.ratePlanId);
     const min = night.restrictions.minimumStayNights;
     const max = night.restrictions.maximumStayNights;
-    if (!roomIds.has(night.roomTypeId) || !rateIds.has(night.ratePlanId) ||
+    if (!roomIds.has(night.roomTypeId) || !ratePlan ||
+        ratePlan.roomTypeId !== night.roomTypeId || ratePlan.currency !== night.currency ||
         !validDate(night.date) || !Number.isSafeInteger(night.availableRooms) ||
         night.availableRooms < 0 || !Number.isSafeInteger(night.amountMinor) ||
         night.amountMinor < 0 || !/^[A-Z]{3}$/.test(night.currency) ||
         inventoryKeys.has(key) ||
         (min !== null && (!Number.isSafeInteger(min) || min < 1)) ||
         (max !== null && (!Number.isSafeInteger(max) || max < 1))) {
-      throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Nightly inventory is invalid, duplicated, or references an unknown room/rate.');
+      throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Nightly inventory is invalid, duplicated, or inconsistent with its room/rate plan.');
     }
     inventoryKeys.add(key);
   }
