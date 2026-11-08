@@ -66,6 +66,30 @@ test('normalized snapshot validates but remains observation-only', () => {
   assert.equal(validatePmsSnapshot(snapshot), snapshot);
   assert.equal(snapshot.mode, 'OBSERVATION_ONLY');
 });
+test('snapshot rejects nightly inventory paired to the wrong room type or currency', () => {
+  const crossRoom = structuredClone(fixture);
+  crossRoom.roomTypes.push({
+    externalRoomTypeId: 'room-b',
+    name: 'Second synthetic room fixture',
+    maxOccupancy: 2,
+  });
+  crossRoom.ratePlans.push({
+    externalRatePlanId: 'rate-b',
+    roomTypeId: 'room-b',
+    name: 'Second synthetic rate fixture',
+    currency: 'NGN',
+    amountMinor: 30000000,
+    refundable: true,
+    cancellationPolicyText: 'Fixture only; not hotel-confirmed.',
+  });
+  crossRoom.nightlyInventory[0]!.ratePlanId = 'rate-b';
+  assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(crossRoom));
+
+  const currencyMismatch = structuredClone(fixture);
+  currencyMismatch.nightlyInventory[0]!.currency = 'USD';
+  assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(currencyMismatch));
+});
+
 test('snapshot rejects negative availability, invalid dates, orphan rates and duplicate nights', () => {
   const negative = structuredClone(fixture);
   negative.nightlyInventory[0]!.availableRooms = -1;
