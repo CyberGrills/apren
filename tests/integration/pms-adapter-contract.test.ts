@@ -90,6 +90,35 @@ test('snapshot rejects nightly inventory paired to the wrong room type or curren
   assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(currencyMismatch));
 });
 
+test('snapshot timestamps require a timezone and source data cannot postdate fetch time', () => {
+  const dateOnly = structuredClone(fixture);
+  dateOnly.fetchedAt = '2026-10-27';
+  assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(dateOnly));
+
+  const timezoneLess = structuredClone(fixture);
+  timezoneLess.fetchedAt = '2026-10-27T08:00:00';
+  assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(timezoneLess));
+
+  const sourceAfterFetch = structuredClone(fixture);
+  sourceAfterFetch.sourceUpdatedAt = '2026-10-27T08:05:00.000Z';
+  assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(sourceAfterFetch));
+
+  const equivalentOffset = structuredClone(fixture);
+  equivalentOffset.sourceUpdatedAt = '2026-10-27T09:55:00.000+02:00';
+  assert.equal(validatePmsSnapshot(equivalentOffset), equivalentOffset);
+});
+
+test('snapshot rejects contradictory or malformed stay restrictions', () => {
+  const invertedStay = structuredClone(fixture);
+  invertedStay.nightlyInventory[0]!.restrictions.minimumStayNights = 4;
+  invertedStay.nightlyInventory[0]!.restrictions.maximumStayNights = 3;
+  assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(invertedStay));
+
+  const missingRestrictions = structuredClone(fixture);
+  (missingRestrictions.nightlyInventory[0] as unknown as { restrictions?: unknown }).restrictions = undefined;
+  assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(missingRestrictions));
+});
+
 test('snapshot rejects negative availability, invalid dates, orphan rates and duplicate nights', () => {
   const negative = structuredClone(fixture);
   negative.nightlyInventory[0]!.availableRooms = -1;
