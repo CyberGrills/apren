@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import { one, rows, transaction } from './db.ts';
 import { HttpMalwareScanner } from './malwareScanner.ts';
+import { fetchPrivateStorage, readBoundedResponseBody } from './privateStorageHttp.ts';
 import type { MalwareScanner } from './malwareScanner.ts';
 
 const RIGHTS_BUCKET = 'creator-artwork-rights-documents';
@@ -17,13 +18,13 @@ async function readPrivateObject(path: string): Promise<Uint8Array> {
   const secret = process.env.SUPABASE_SECRET_KEY;
   if (!base || !secret) throw new Error('PRIVATE_STORAGE_NOT_CONFIGURED');
   const encoded = path.split('/').map(encodeURIComponent).join('/');
-  const response = await fetch(base + '/storage/v1/object/' + RIGHTS_BUCKET + '/' + encoded, {
+  const response = await fetchPrivateStorage(base + '/storage/v1/object/' + RIGHTS_BUCKET + '/' + encoded, {
     headers: { apikey: secret, Authorization: 'Bearer ' + secret },
     signal: AbortSignal.timeout(20_000),
   });
   if (!response.ok) throw new Error('PRIVATE_OBJECT_READ_FAILED');
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  if (!bytes.length || bytes.byteLength > 15 * 1024 * 1024) throw new Error('PRIVATE_OBJECT_SIZE_INVALID');
+  const bytes = await readBoundedResponseBody(response, 15 * 1024 * 1024, 'PRIVATE_OBJECT_SIZE_INVALID');
+  if (!bytes.length) throw new Error('PRIVATE_OBJECT_SIZE_INVALID');
   return bytes;
 }
 
