@@ -208,3 +208,8 @@
   .home-tiles { gap: 0.75rem; }
   .home-actions .btn { flex: 1 1 100%; }
 }
+
+/* Photo credits: real links, quiet styling */
+.home-photo figcaption span { overflow-wrap: anywhere; }
+.home-photo figcaption a { color: inherit; text-underline-offset: 3px; }
+.home-photo figcaption a:hover { color: var(--accent); }

@@ -20,10 +20,41 @@ import { editorialImages } from '../../lib/editorialImages.ts';
 import { sevenCopy, useSevenLanguage } from '../../lib/sevenLanguage.ts';
 import { PublicFooter, PublicHeader } from './PublicShell.tsx';
 
+interface PhotoCreditLinks {
+  creator: string;
+  creatorUrl?: string;
+  sourceName: string;
+  sourceUrl: string;
+}
+
 interface Photo {
   src: string;
   alt: string;
+  /** Plain-text credit, used where links cannot be nested (inside a tile link). */
   credit: string;
+  /** Optional linked credit, shown under photos that are not inside a link. */
+  creditLinks?: PhotoCreditLinks;
+}
+
+function PhotoCredit({ photo }: { photo: Photo }) {
+  const links = photo.creditLinks;
+  if (!links) return <span>{photo.credit}</span>;
+  return (
+    <span>
+      Photo:{' '}
+      {links.creatorUrl ? (
+        <a href={links.creatorUrl} target="_blank" rel="noopener noreferrer">
+          {links.creator}
+        </a>
+      ) : (
+        links.creator
+      )}
+      {' / '}
+      <a href={links.sourceUrl} target="_blank" rel="noopener noreferrer">
+        {links.sourceName}
+      </a>
+    </span>
+  );
 }
 
 /*
@@ -57,20 +88,38 @@ const photos: Record<'courtyard' | 'room' | 'dining' | 'coast' | 'stillness' | '
   stillness: {
     src: '/media/home/meditation.jpg',
     alt: 'A person sitting on a porch meditating in the sunset. Illustrative stock photograph.',
-    credit:
-      'Photo by <a href="https://unsplash.com/@jareddrice?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Jared Rice</a> on <a href="https://unsplash.com/photos/woman-meditating-on-floor-with-overlooking-view-of-trees-8w7b4SdhOgw?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>',
+    credit: 'Photo: Jared Rice / Unsplash',
+    creditLinks: {
+      creator: 'Jared Rice',
+      creatorUrl: 'https://unsplash.com/@jareddrice?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText',
+      sourceName: 'Unsplash',
+      sourceUrl:
+        'https://unsplash.com/photos/woman-meditating-on-floor-with-overlooking-view-of-trees-8w7b4SdhOgw?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText',
+    },
   },
   green: {
     src: '/media/home/green.jpg',
     alt: 'An hotel green courtyard. illustrative stock photograph.',
-    credit:
-      'Photo by <a href="https://unsplash.com/@kategundareva?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Kate Gundareva</a> on <a href="https://unsplash.com/photos/green-forest-path-7bVJ9XZQzqY?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>',
+    credit: 'Photo: Kate Gundareva / Unsplash',
+    creditLinks: {
+      creator: 'Kate Gundareva',
+      creatorUrl:
+        'https://unsplash.com/@kategundareva?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText',
+      sourceName: 'Unsplash',
+      sourceUrl:
+        'https://unsplash.com/photos/green-forest-path-7bVJ9XZQzqY?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText',
+    },
   },
   horizon: {
     src: '/media/home/horizon.jpg',
     alt: 'A hotel balcony with a view of the horizon. Illustrative stock photograph.',
-    credit:
-      'Photo by  Photo by Sarah Vivian: https://www.pexels.com/photo/coastal-view-from-modern-interior-balcony-34009161/',
+    credit: 'Photo: Sarah Vivian / Pexels',
+    creditLinks: {
+      creator: 'Sarah Vivian',
+      creatorUrl: 'https://www.pexels.com/@sarahvivian',
+      sourceName: 'Pexels',
+      sourceUrl: 'https://www.pexels.com/photo/coastal-view-from-modern-interior-balcony-34009161/',
+    },
   },
 };
 
@@ -97,7 +146,7 @@ function HomePhoto({
       {(label || photo) && (
         <figcaption>
           {label && <span>{label}</span>}
-          {photo && <span>{photo.credit}</span>}
+          {photo && <PhotoCredit photo={photo} />}
         </figcaption>
       )}
     </figure>
