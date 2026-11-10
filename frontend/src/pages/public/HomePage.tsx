@@ -33,10 +33,7 @@ interface Photo {
  * alt and credit, then add the photographer to SOURCES.txt.
  * Empty slots show a soft colour panel instead of an image.
  */
-const photos: Record<
-  'courtyard' | 'room' | 'dining' | 'coast' | 'stillness' | 'green' | 'horizon',
-  Photo | null
-> = {
+const photos: Record<'courtyard' | 'room' | 'dining' | 'coast' | 'stillness' | 'green' | 'horizon', Photo | null> = {
   courtyard: {
     src: editorialImages.courtyard,
     alt: 'A hotel courtyard with palms and balconies. Illustrative stock photograph.',
@@ -57,9 +54,24 @@ const photos: Record<
     alt: 'Two people beside the ocean in Lagos, Nigeria. Illustrative stock photograph.',
     credit: 'Photo: Ben Iwara / Unsplash',
   },
-  stillness: null,
-  green: null,
-  horizon: null,
+  stillness: {
+    src: '/media/home/meditation.jpg',
+    alt: 'A person sitting on a porch meditating in the sunset. Illustrative stock photograph.',
+    credit:
+      'Photo by <a href="https://unsplash.com/@jareddrice?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Jared Rice</a> on <a href="https://unsplash.com/photos/woman-meditating-on-floor-with-overlooking-view-of-trees-8w7b4SdhOgw?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>',
+  },
+  green: {
+    src: '/media/home/green.jpg',
+    alt: 'An hotel green courtyard. illustrative stock photograph.',
+    credit:
+      'Photo by <a href="https://unsplash.com/@kategundareva?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Kate Gundareva</a> on <a href="https://unsplash.com/photos/green-forest-path-7bVJ9XZQzqY?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>',
+  },
+  horizon: {
+    src: '/media/home/horizon.jpg',
+    alt: 'A hotel balcony with a view of the horizon. Illustrative stock photograph.',
+    credit:
+      'Photo by  Photo by Sarah Vivian: https://www.pexels.com/photo/coastal-view-from-modern-interior-balcony-34009161/',
+  },
 };
 
 function HomePhoto({
