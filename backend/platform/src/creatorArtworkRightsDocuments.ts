@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { SessionUser } from '@7even/contracts';
 import { fail, one, rows, transaction, string } from './db.ts';
 import { digestToken } from './auth.ts';
+import { fetchPrivateStorage, readBoundedResponseBody } from './privateStorageHttp.ts';
 
 const BUCKET = 'creator-artwork-rights-documents';
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -20,7 +21,7 @@ function storageConfig() {
 }
 async function storageRequest(path: string, method: string, body?: unknown) {
   const config = storageConfig();
-  const response = await fetch(config.baseUrl + '/storage/v1' + path, {
+  const response = await fetchPrivateStorage(config.baseUrl + '/storage/v1' + path, {
     method,
     headers: {
       apikey: config.secret,
@@ -144,7 +145,7 @@ export function mountCreatorArtworkRightsDocuments(app: Express, { pool, actor }
       if (!document || !document.upload_expires_at || new Date(document.upload_expires_at).getTime() < Date.now())
         return fail(409, 'UPLOAD_EXPIRED', 'This document upload has expired. Start a new upload.');
       const config = storageConfig(); const path = encodedPath(String(document.storage_path));
-      const head = await fetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
+      const head = await fetchPrivateStorage(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
         method: 'HEAD', headers: { apikey: config.secret, Authorization: 'Bearer ' + config.secret },
       });
       const actualSize = Number(head.headers.get('content-length'));
@@ -153,12 +154,12 @@ export function mountCreatorArtworkRightsDocuments(app: Express, { pool, actor }
         await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
         return fail(422, 'DOCUMENT_METADATA_MISMATCH', 'Uploaded document metadata did not match the declared file.');
       }
-      const object = await fetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
+      const object = await fetchPrivateStorage(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
         headers: { apikey: config.secret, Authorization: 'Bearer ' + config.secret },
         signal: AbortSignal.timeout(20_000),
       });
       if (!object.ok) return fail(502, 'DOCUMENT_READ_FAILED', 'The uploaded document could not be verified.');
-      const bytes = new Uint8Array(await object.arrayBuffer());
+      const bytes = await readBoundedResponseBody(object, MAX_BYTES, 'DOCUMENT_SIZE_LIMIT_EXCEEDED');
       if (bytes.byteLength !== actualSize || !validSignature(actualType, bytes)) {
         await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
         return fail(422, 'INVALID_DOCUMENT_CONTENT', 'The file content does not match an accepted PDF, JPEG or PNG document.');
