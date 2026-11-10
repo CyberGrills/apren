@@ -114,7 +114,6 @@ export function PublicHeader() {
     { to: '/campus-connect/art-culture', label: 'Art & Culture', current: location.pathname.startsWith('/campus-connect/art-culture') },
   ];
   return (
-    <>
     <header className="public-header" ref={headerRef}>
       <div className="public-container public-nav">
         <Link to="/" className="public-brand">
@@ -211,7 +210,6 @@ export function PublicHeader() {
         </nav>
       )}
     </header>
-    </>
   );
 }
 
