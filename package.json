@@ -22,17 +22,20 @@
     "test": "node --test --test-isolation=none packages/engine/test/*.test.ts packages/contracts/test/*.test.ts tests/frontend/*.test.ts frontend/src/lib/*.test.ts frontend/src/pages/customer/checkout.test.ts tests/tooling/*.test.mjs",
     "test:integration": "node --env-file-if-exists=.env --test --test-isolation=none --test-concurrency=1 tests/integration/*.test.ts",
     "db:migrate": "node --env-file-if-exists=.env backend/platform/src/migrate.ts",
-    "db:seed": "node --env-file-if-exists=.env backend/platform/src/seed.ts"
+    "db:seed": "node --env-file-if-exists=.env backend/platform/src/seed.ts",
+    "test:browser": "playwright test"
   },
   "devDependencies": {
-    "typescript": "7.0.2",
+    "@axe-core/playwright": "^4.14.0",
     "@biomejs/biome": "2.5.15",
+    "@playwright/test": "^1.65.0",
+    "@types/express": "5.0.6",
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@types/express": "5.0.6",
-    "@types/pg": "8.23.1",
     "fake-indexeddb": "6.2.6",
+    "typescript": "7.0.2",
     "zod": "4.6.7"
   },
   "overrides": {

@@ -121,6 +121,14 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
       const accepted=input.decision==='APPROVED'||input.decision==='VERIFIED';
       if(kind==='community-permission'&&input.decision==='VERIFIED') return fail(422,'INVALID_RIGHTS_DECISION','Community permission decisions must be APPROVED or REJECTED.');
       if(kind!=='community-permission'&&input.decision==='APPROVED') return fail(422,'INVALID_RIGHTS_DECISION','Evidence and attribution decisions must be VERIFIED or REJECTED.');
+      if(accepted&&kind==='evidence'){
+        const docs=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_rights_documents WHERE evidence_id=$1 AND status='AVAILABLE'",[recordId]);
+        if(!Number(docs?.total)) return fail(409,'RIGHTS_DOCUMENT_REQUIRED','At least one completed private supporting document is required before evidence can be verified.');
+      }
+      if(accepted&&kind==='community-permission'){
+        const docs=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_rights_documents WHERE permission_id=$1 AND status='AVAILABLE'",[recordId]);
+        if(!Number(docs?.total)) return fail(409,'RIGHTS_DOCUMENT_REQUIRED','At least one completed private permission document is required before community permission can be approved.');
+      }
       const status=kind==='community-permission'?(accepted?'APPROVED':'REJECTED'):(accepted?'VERIFIED':'REJECTED');
       await db.query(`UPDATE seven.${table} SET status=$2,reviewed_by=$3,reviewed_at=now(),review_reason=$4 WHERE ${idColumn}=$1`,[recordId,status,a.id,input.reason]);
       const decision=kind==='evidence'?(accepted?'EVIDENCE_VERIFIED':'EVIDENCE_REJECTED'):kind==='community-permission'?(accepted?'COMMUNITY_PERMISSION_APPROVED':'COMMUNITY_PERMISSION_REJECTED'):(accepted?'ATTRIBUTION_VERIFIED':'ATTRIBUTION_REJECTED');
@@ -151,11 +159,11 @@ export function mountCreatorArtworkRights(app: Express, { pool, actor }: Context
       if(art.profile_status!=='VERIFIED') return fail(409,'CREATOR_NOT_VERIFIED','Creator profile must be verified before restoration.');
       const rights=art.rights as Record<string,unknown>;
       if(rights.basis==='LICENSED'||rights.basis==='AUTHORIZED_REPRESENTATIVE'){
-        const evidence=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_rights_evidence WHERE artwork_id=$1 AND evidence_type=$2 AND status='VERIFIED'",[id,rights.basis==='LICENSED'?'LICENSE':'AUTHORIZED_REPRESENTATIVE']);
+        const evidence=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_rights_evidence e WHERE e.artwork_id=$1 AND e.evidence_type=$2 AND e.status='VERIFIED' AND EXISTS (SELECT 1 FROM seven.creator_artwork_rights_documents d WHERE d.evidence_id=e.evidence_id AND d.status='AVAILABLE')",[id,rights.basis==='LICENSED'?'LICENSE':'AUTHORIZED_REPRESENTATIVE']);
         if(!Number(evidence?.total)) return fail(409,'RIGHTS_EVIDENCE_REQUIRED','Verified rights evidence is required before restoration.');
       }
       if(rights.communityPermission!=='NOT_REQUIRED'){
-        const permission=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_community_permissions WHERE artwork_id=$1 AND status='APPROVED'",[id]);
+        const permission=await one(db,"SELECT count(*)::int AS total FROM seven.creator_artwork_community_permissions p WHERE p.artwork_id=$1 AND p.status='APPROVED' AND EXISTS (SELECT 1 FROM seven.creator_artwork_rights_documents d WHERE d.permission_id=p.permission_id AND d.status='AVAILABLE')",[id]);
         if(!Number(permission?.total)) return fail(409,'PERMISSION_EVIDENCE_REQUIRED','Approved community permission is required before restoration.');
       }
       const notice=art.content_notice as Record<string,unknown>; if(notice.containsSensitiveCulturalMaterial===true||(Array.isArray(notice.publicDisplayRestrictions)&&notice.publicDisplayRestrictions.length>0)) return fail(409,'CULTURAL_REVIEW_REQUIRED','Cultural display restrictions still prevent restoration.');

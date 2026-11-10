@@ -148,10 +148,10 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
         >
           <X size={19} />
         </button>
-        <Link to="/" aria-label="7even home">
+        <Link to="/">
           <Brand />
         </Link>
-        <div className="apren-signature" aria-label="Powered by āprən">
+        <div className="apren-signature">
           <strong className="apren-wordmark">āprən</strong>
           <span>Powered by āprən</span>
         </div>

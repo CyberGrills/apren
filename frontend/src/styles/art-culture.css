@@ -62,3 +62,6 @@
 @media(max-width:850px) { .ac-hero { grid-template-columns:1fr 1fr; gap:2rem; } .ac-hero-art { min-height:360px; } .ac-categories { grid-template-columns:repeat(2,minmax(0,1fr)); } .ac-category:nth-child(2) { border-right:0; } .ac-category:nth-child(-n+2) { border-bottom:1px solid var(--ac-line); } }
 @media(max-width:620px) { .ac-hero { grid-template-columns:1fr; padding-top:2rem; } .ac-kicker { margin-top:1.6rem; } .ac-hero-art { min-height:310px; } .ac-intro,.ac-principles-inner { grid-template-columns:1fr; gap:1rem; } .ac-categories { grid-template-columns:1fr 1fr; } .ac-category { min-height:180px; padding:1rem; } .ac-category strong { font-size:1.1rem; } .ac-section-heading,.ac-nft-note { align-items:flex-start; flex-direction:column; } .ac-empty-state { min-height:320px; } }
 @media(prefers-reduced-motion:reduce) { .art-culture-page * { scroll-behavior:auto !important; animation:none !important; transition:none !important; } }
+
+.ac-filter-row { min-width:0; padding:0; border:0; }
+.ac-filter-row legend { padding:0; }
