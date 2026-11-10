@@ -30,9 +30,9 @@ const BusinessApplicationPage = lazy(() => import('./pages/public/BusinessApplic
 const DirectoryPage = lazy(() => import('./pages/public/DirectoryPage.tsx').then((module) => ({ default: module.DirectoryPage })));
 const ExplorePage = lazy(() => import('./pages/public/ExplorePage.tsx').then((module) => ({ default: module.ExplorePage })));
 const ArtCulturePage = lazy(() => import('./pages/public/ArtCulturePage.tsx').then((module) => ({ default: module.ArtCulturePage })));
+const HomePage = lazy(() => import('./pages/public/HomePage.tsx').then((module) => ({ default: module.HomePage })));
 const CreatorStudioPage = lazy(() => import('./pages/public/CreatorStudioPage.tsx').then((module) => ({ default: module.CreatorStudioPage })));
 const CreatorPublicPage = lazy(() => import('./pages/public/CreatorPublicPage.tsx').then((module) => ({ default: module.CreatorPublicPage })));
-const LandingPage = lazy(() => import('./pages/public/LandingPage.tsx').then((module) => ({ default: module.LandingPage })));
 const OfferingPage = lazy(() => import('./pages/public/OfferingPage.tsx').then((module) => ({ default: module.OfferingPage })));
 const AdminInventoryPage = lazy(() => import('./pages/workspace/AdminInventoryPage.tsx').then((module) => ({ default: module.AdminInventoryPage })));
 const AdminBusinessMedia = lazy(() => import('./pages/workspace/AdminBusinessMedia.tsx').then((module) => ({ default: module.AdminBusinessMedia })));
@@ -222,7 +222,7 @@ export function App() {
             <div className="apren-watermark" aria-hidden="true" />
             <Suspense fallback={<main className="permission-screen" id="main-content"><Loading /></main>}>
               <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<HomePage />} />
               {import.meta.env.PROD ? (
                 <>
                   <Route path="/demo/hotels" element={<Navigate to="/explore?kind=STAY" replace />} />

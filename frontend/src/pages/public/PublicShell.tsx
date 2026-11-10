@@ -1,8 +1,7 @@
-import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
-import { SeasonalCampaignBanner } from '../../components/SeasonalCampaignBanner.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
@@ -23,11 +22,14 @@ export function PublicHeader() {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNavRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
+  const [exploreOpen, setExploreOpen] = useState(false);
+  const exploreRef = useRef<HTMLDivElement>(null);
   const [language, setLanguage] = useState<SevenLanguage>(readSevenLanguage);
   // Route changes close the menu even though the effect only needs the stable setter.
   // biome-ignore lint/correctness/useExhaustiveDependencies: this effect intentionally reacts to route changes.
   useEffect(() => {
     setOpen(false);
+    setExploreOpen(false);
   }, [location.pathname, location.search]);
   useEffect(() => {
     if (!open) return;
@@ -70,6 +72,21 @@ export function PublicHeader() {
       window.dispatchEvent(new CustomEvent('7even-language-change', { detail: saved }));
     }
   }, [user?.profileDetails?.preferredLanguage]);
+  useEffect(() => {
+    if (!exploreOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Node && !exploreRef.current?.contains(event.target)) setExploreOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExploreOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [exploreOpen]);
   function changeLanguage(next: SevenLanguage) {
     setLanguage(next);
     try {
@@ -87,18 +104,43 @@ export function PublicHeader() {
         : user?.role === 'RECEPTION'
           ? { label: 'Open reception', href: '/reception' }
           : { label: 'For business', href: '/business/apply' };
+  const exploreKind = new URLSearchParams(location.search).get('kind');
+  const onExplore = location.pathname === '/explore';
+  const navItems = [
+    { to: '/', label: 'Home', current: location.pathname === '/' },
+    { to: '/explore?kind=STAY', label: language === 'pcm' ? 'Places to stay' : 'Hotels & stays', current: onExplore && exploreKind === 'STAY' },
+    { to: '/explore?kind=DINING', label: language === 'pcm' ? 'Food' : 'Dining', current: onExplore && exploreKind === 'DINING' },
+    { to: '/explore?kind=EXPERIENCE', label: 'Things to do', current: onExplore && exploreKind === 'EXPERIENCE' },
+    { to: '/campus-connect/art-culture', label: 'Art & Culture', current: location.pathname.startsWith('/campus-connect/art-culture') },
+  ];
   return (
-    <>
     <header className="public-header" ref={headerRef}>
       <div className="public-container public-nav">
         <Link to="/" className="public-brand">
           <Brand />
         </Link>
         <nav className="public-nav-desktop" aria-label="Main navigation">
-          <Link to="/explore?kind=STAY">{language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}</Link>
-          <Link to="/explore?kind=DINING">{language === 'pcm' ? 'Food' : 'Dining'}</Link>
-          <Link to="/explore?kind=EXPERIENCE">{language === 'pcm' ? 'Things to do' : 'Things to do'}</Link>
-          <Link to="/campus-connect/art-culture">Art & Culture</Link>
+          <Link to="/" aria-current={location.pathname === '/' ? 'page' : undefined}>Home</Link>
+          <div className="public-explore" ref={exploreRef}>
+            <button
+              type="button"
+              className={navItems.slice(1).some((item) => item.current) ? 'public-explore-button is-current' : 'public-explore-button'}
+              aria-expanded={exploreOpen}
+              aria-controls="public-explore-menu"
+              onClick={() => setExploreOpen((current) => !current)}
+            >
+              Explore <ChevronDown size={15} aria-hidden="true" />
+            </button>
+            {exploreOpen && (
+              <div id="public-explore-menu" className="public-explore-menu">
+                {navItems.slice(1).map((item) => (
+                  <Link key={item.to} to={item.to} aria-current={item.current ? 'page' : undefined}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
         <div className="public-nav-actions">
           <fieldset className="seven-language-switch"><legend className="sr-only">Website language</legend>
@@ -149,20 +191,14 @@ export function PublicHeader() {
             }
           }}
         >
-          <Link to="/appearance" onClick={closeMobileMenu}>Appearance</Link>
-          <Link to="/explore?kind=STAY" onClick={closeMobileMenu}>
-            {language === 'pcm' ? 'Places to stay' : 'Hotels & stays'}
-          </Link>
-          <Link to="/explore?kind=DINING" onClick={closeMobileMenu}>
-            {language === 'pcm' ? 'Food' : 'Dining'}
-          </Link>
-          <Link to="/campus-connect/art-culture" onClick={closeMobileMenu}>Art & Culture</Link>
+          {navItems.map((item) => (
+            <Link key={item.to} to={item.to} onClick={closeMobileMenu} aria-current={item.current ? 'page' : undefined}>
+              {item.label}
+            </Link>
+          ))}
           <Link to="/install" onClick={closeMobileMenu}>Install app</Link>
           <Link to={user ? '/app/bookings' : '/login'} onClick={closeMobileMenu}>
             {user ? (language === 'pcm' ? 'Your bookings' : 'Your plans') : language === 'pcm' ? 'Enter' : 'Sign in'}
-          </Link>
-          <Link to="/explore?kind=EXPERIENCE" onClick={closeMobileMenu}>
-            {language === 'pcm' ? 'Things to do' : 'Things to do'}
           </Link>
           {user && <Link to="/app/profile" onClick={closeMobileMenu}>{language === 'pcm' ? 'Your profile' : 'Profile'}</Link>}
           {workspace && (
@@ -170,11 +206,10 @@ export function PublicHeader() {
               {workspace.label}
             </Link>
           )}
+          <Link to="/appearance" onClick={closeMobileMenu}>Appearance</Link>
         </nav>
       )}
     </header>
-    {location.pathname === '/' && <SeasonalCampaignBanner />}
-    </>
   );
 }
 
