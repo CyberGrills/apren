@@ -8,6 +8,7 @@ import { expireHolds } from './reservations.ts';
 import { expireTrades } from './benefits.ts';
 import { observation, notify, paymentProjection } from './store.ts';
 import { buildRecoveryShadowDecision } from './recoveryShadow.ts';
+import { processCreatorArtworkRightsDocumentScans } from './creatorArtworkRightsDocumentScanner.ts';
 
 /** Reconstruct only observed local outcomes. Never relaunch an uncertain external effect. */
 export async function recoverClaims(pool: Pool): Promise<number> {
@@ -268,4 +269,5 @@ export async function runRecovery(pool: Pool, provider: ProviderSource): Promise
   await reconcile(pool, provider);
   await processOutbox(pool);
   await processBookingRecoveryShadow(pool);
+  await processCreatorArtworkRightsDocumentScans(pool);
 }
