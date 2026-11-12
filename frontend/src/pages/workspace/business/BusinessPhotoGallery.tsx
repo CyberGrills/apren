@@ -139,6 +139,7 @@ export function BusinessPhotoGallery() {
   return (
     <section className="business-photo-gallery">
       {error && <ErrorNotice message={error} retry={reload} />}
+      {!error && <>
       {actionError && <ErrorNotice message={actionError} />}
       <div className="business-photo-stats" aria-label="Photo gallery status">
         <div><strong>{approved.length}</strong><span>Approved and guest-facing</span></div>
@@ -199,6 +200,7 @@ export function BusinessPhotoGallery() {
         {pending.length === 0 ? <p className="small-copy">No photos are waiting for review.</p> : <ul className="business-photo-status-list">{pending.map((item) => <li key={item.mediaId}><div><strong>{item.originalFilename}</strong><span>{item.caption || 'No caption'} · {statusLabel(item.status)}</span></div><span className="tag">Pending review</span></li>)}</ul>}
         {rejected.length > 0 && <><h3>Needs attention</h3><ul className="business-photo-status-list">{rejected.map((item) => <li key={item.mediaId}><div><strong>{item.originalFilename}</strong><span>{item.rejectionReason || 'Please review and replace this photo.'}</span></div><span className="tag">Rejected</span></li>)}</ul></>}
       </section>
+      </>}
     </section>
   );
 }
