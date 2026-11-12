@@ -99,7 +99,7 @@ const photos: Record<'courtyard' | 'room' | 'dining' | 'coast' | 'stillness' | '
   },
   green: {
     src: '/media/home/green.jpg',
-    alt: 'An hotel green courtyard. illustrative stock photograph.',
+    alt: 'A green forest path. Illustrative stock photograph.',
     credit: 'Photo: Kate Gundareva / Unsplash',
     creditLinks: {
       creator: 'Kate Gundareva',
@@ -278,8 +278,8 @@ export function HomePage() {
       Icon: Building2,
       title: t('For businesses', 'For business'),
       text: t(
-        'Demand insight to plan rooms, tables and experiences.',
-        'Demand insight to plan rooms, tables and experiences.',
+        'Tools being developed to help businesses understand demand and plan rooms, tables and experiences.',
+        'Tools wey dey develop to help businesses understand demand and plan rooms, tables and experiences.',
       ),
     },
     {
@@ -307,8 +307,8 @@ export function HomePage() {
               <h1 id="home-title">{t('Good places. Worth your time.', 'Correct places. Make your time count.')}</h1>
               <p className="home-lead">
                 {t(
-                  'Find verified stays, tables worth booking and quiet ways to unwind across Nigeria, beginning in Uyo.',
-                  'Find verified places to stay, tables wey worth am and calm ways to rest for Nigeria, starting from Uyo.',
+                  'Plan stays, dining and experiences across Nigeria, beginning in Uyo. A stay is shown as bookable only after the partner confirms its details and availability.',
+                  'Plan places to stay, food and experiences for Nigeria, starting from Uyo. Stay go show as bookable only after partner confirm the details and availability.',
                 )}
               </p>
               <div className="home-actions">
@@ -445,8 +445,8 @@ export function HomePage() {
               </h2>
               <p className="home-lead">
                 {t(
-                  '7even is powered by \u0101pr\u0259n, a hospitality demand intelligence engine. It helps businesses read demand, so rooms, tables and experiences are ready when guests arrive. For you, it means listings and availability you can rely on.',
-                  '7even dey run on \u0101pr\u0259n, hospitality demand intelligence engine. E dey help business read demand, so rooms, tables and experiences go ready when guests reach. For you, e mean listings and availability wey you fit trust.',
+                  '7even is built with \u0101pr\u0259n, a hospitality demand intelligence engine designed to help businesses understand demand and make better availability decisions. For guests, 7even shows clear information and partner-confirmed availability before a stay is shown as bookable.',
+                  '7even dey built with \u0101pr\u0259n, a hospitality demand intelligence engine wey dey designed to help businesses understand demand and make better availability decisions. For guests, 7even dey show clear information and partner-confirmed availability before stay show as bookable.',
                 )}
               </p>
             </div>
