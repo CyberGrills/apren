@@ -12,14 +12,14 @@ const sources = readFileSync(
 );
 
 test('homepage does not imply that bookable hotel supply is already available', () => {
-  assert.match(home, /Plan stays, dining and experiences across Nigeria, beginning in Uyo\\./);
-  assert.match(home, /A stay is shown as bookable only after the partner confirms its details and availability\\./);
+  assert.match(home, /Plan stays, dining and experiences across Nigeria, beginning in Uyo\./);
+  assert.match(home, /A stay is shown as bookable only after the partner confirms its details and availability\./);
   assert.doesNotMatch(home, /Find verified stays, tables worth booking/);
 });
 
 test('Pidgin homepage copy follows the same verified-supply rule', () => {
-  assert.match(home, /Plan places to stay, food and experiences for Nigeria, starting from Uyo\\./);
-  assert.match(home, /Stay go show as bookable only after partner confirm the details and availability\\./);
+  assert.match(home, /Plan places to stay, food and experiences for Nigeria, starting from Uyo\./);
+  assert.match(home, /Stay go show as bookable only after partner confirm the details and availability\./);
   assert.doesNotMatch(home, /Find verified places to stay/);
 });
 
@@ -42,7 +42,7 @@ test('Pidgin copy does not imply that live demand optimization is already operat
 });
 
 test('green editorial image alt text and source register describe the forest-path asset consistently', () => {
-  assert.match(home, /alt: 'A green forest path\\. Illustrative stock photograph\\.'/);
-  assert.match(sources, /6\\. Kate Gundareva, Unsplash\\.\\nA green forest path with trees and foliage\\./);
-  assert.doesNotMatch(sources, /<Describe exactly what the photo page shows\\./);
+  assert.match(home, /alt: 'A green forest path\. Illustrative stock photograph\.'/);
+  assert.match(sources, /6\. Kate Gundareva, Unsplash\.\nA green forest path with trees and foliage\./);
+  assert.doesNotMatch(sources, /<Describe exactly what the photo page shows\./);
 });
