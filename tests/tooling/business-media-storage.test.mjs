@@ -57,9 +57,9 @@ test('private business-media storage redirect failures propagate without followi
 
 test('every business-media storage operation uses the guarded fetch helper', () => {
   const source = readFileSync(new URL('../../backend/platform/src/businessMedia.ts', import.meta.url), 'utf8');
-  const rawFetchCalls = [...source.matchAll(/\\bfetch\\s*\\(/g)];
-  const guardedCalls = [...source.matchAll(/await businessMediaStorageFetch\\s*\\(/g)];
+  const rawFetchCalls = source.split('fetch(').length - 1;
+  const guardedCalls = source.split('await businessMediaStorageFetch(').length - 1;
 
-  assert.equal(rawFetchCalls.length, 1, 'Only the redirect-guarded helper may call fetch directly.');
-  assert.equal(guardedCalls.length, 3, 'Signed URL, upload HEAD, and signature reads must all use the guarded helper.');
+  assert.equal(rawFetchCalls, 1, 'Only the redirect-guarded helper may call fetch directly.');
+  assert.equal(guardedCalls, 3, 'Signed URL, upload HEAD, and signature reads must all use the guarded helper.');
 });
