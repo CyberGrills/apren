@@ -1,4 +1,4 @@
-import type { Express, Response } from 'express';
+import type { Express, Response as ExpressResponse } from 'express';
 import type { Pool, PoolClient } from 'pg';
 import type { SessionUser } from '@7even/contracts';
 import { randomUUID } from 'node:crypto';
@@ -8,7 +8,7 @@ import { fail, one, rows } from './db.ts';
 const BUCKET = 'business-property-photos';
 const MAX_BYTES = 10 * 1024 * 1024;
 const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const;
-interface Context { pool: Pool; actor: (res: Response) => SessionUser; }
+interface Context { pool: Pool; actor: (res: ExpressResponse) => SessionUser; }
 
 function businessIdFor(actor: SessionUser): string {
   if (actor.role !== 'BUSINESS_OWNER' || !actor.businessId)
