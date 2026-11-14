@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { businessMediaStorageFetch } from '../../backend/platform/src/businessMedia.ts';
 
 async function withStorageEnvironment(run) {
@@ -52,4 +53,13 @@ test('private business-media storage redirect failures propagate without followi
       /redirect rejected by fetch/,
     );
   });
+});
+
+test('every business-media storage operation uses the guarded fetch helper', () => {
+  const source = readFileSync(new URL('../../backend/platform/src/businessMedia.ts', import.meta.url), 'utf8');
+  const rawFetchCalls = [...source.matchAll(/\\bfetch\\s*\\(/g)];
+  const guardedCalls = [...source.matchAll(/await businessMediaStorageFetch\\s*\\(/g)];
+
+  assert.equal(rawFetchCalls.length, 1, 'Only the redirect-guarded helper may call fetch directly.');
+  assert.equal(guardedCalls.length, 3, 'Signed URL, upload HEAD, and signature reads must all use the guarded helper.');
 });
