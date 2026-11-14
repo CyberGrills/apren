@@ -2,14 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { businessMediaStorageFetch } from '../../backend/platform/src/businessMedia.ts';
 
-async function withStorageEnvironment(fetchImpl, run) {
+async function withStorageEnvironment(run) {
   const previousUrl = process.env.SUPABASE_URL;
   const previousSecret = process.env.SUPABASE_SECRET_KEY;
   const previousFetch = globalThis.fetch;
   process.env.SUPABASE_URL = 'https://storage.example.test';
   process.env.SUPABASE_SECRET_KEY = 'unit-test-only-secret';
-  globalThis.fetch = fetchImpl;
-
   try {
     await run();
   } finally {
@@ -22,9 +20,7 @@ async function withStorageEnvironment(fetchImpl, run) {
 }
 
 test('private business-media requests attach service credentials and reject redirects', async () => {
-  await withStorageEnvironment(async (_input, init = {}) => {
-    return new Response(null, { status: 204 });
-  }, async () => {
+  await withStorageEnvironment(async () => {
     let captured;
     globalThis.fetch = async (input, init = {}) => {
       captured = { input, init };
@@ -46,10 +42,11 @@ test('private business-media requests attach service credentials and reject redi
 });
 
 test('private business-media storage redirect failures propagate without following the destination', async () => {
-  await withStorageEnvironment(async (_input, init = {}) => {
-    assert.equal(init.redirect, 'error');
-    throw new TypeError('redirect rejected by fetch');
-  }, async () => {
+  await withStorageEnvironment(async () => {
+    globalThis.fetch = async (_input, init = {}) => {
+      assert.equal(init.redirect, 'error');
+      throw new TypeError('redirect rejected by fetch');
+    };
     await assert.rejects(
       businessMediaStorageFetch('https://storage.example.test/storage/v1/object/private/photo.jpg'),
       /redirect rejected by fetch/,
