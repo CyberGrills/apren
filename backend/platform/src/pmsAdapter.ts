@@ -110,14 +110,22 @@ function validDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
+/** Require an explicit timezone so vendor timestamps cannot be interpreted in a server-local timezone. */
+function validTimestamp(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:0\d|1\d|2[0-3]):[0-5]\d)$/.test(value)) return false;
+  return validDate(value.slice(0, 10)) && Number.isFinite(Date.parse(value));
+}
+
 /** Validate normalized vendor data without filling missing rates or availability with guesses. */
 export function validatePmsSnapshot(snapshot: PmsReadSnapshot): PmsReadSnapshot {
   if (!snapshot.externalPropertyId.trim() || snapshot.mode !== 'OBSERVATION_ONLY') {
     throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Snapshot must identify a property and remain observation-only.');
   }
-  if (Number.isNaN(Date.parse(snapshot.fetchedAt)) ||
-      (snapshot.sourceUpdatedAt !== null && Number.isNaN(Date.parse(snapshot.sourceUpdatedAt)))) {
-    throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Snapshot timestamps must be valid ISO timestamps or a null source timestamp.');
+  const fetchedAtMs = Date.parse(snapshot.fetchedAt);
+  if (!validTimestamp(snapshot.fetchedAt) ||
+      (snapshot.sourceUpdatedAt !== null &&
+        (!validTimestamp(snapshot.sourceUpdatedAt) || Date.parse(snapshot.sourceUpdatedAt) > fetchedAtMs))) {
+    throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Snapshot timestamps must be zoned ISO timestamps and source data cannot postdate the fetch.');
   }
   const roomIds = new Set<string>();
   for (const room of snapshot.roomTypes) {
@@ -128,28 +136,34 @@ export function validatePmsSnapshot(snapshot: PmsReadSnapshot): PmsReadSnapshot 
     }
     roomIds.add(room.externalRoomTypeId);
   }
-  const rateIds = new Set<string>();
+  const ratePlansById = new Map<string, PmsRatePlan>();
   for (const rate of snapshot.ratePlans) {
     if (!rate.externalRatePlanId.trim() || !roomIds.has(rate.roomTypeId) ||
         !Number.isSafeInteger(rate.amountMinor) || rate.amountMinor < 0 ||
-        !/^[A-Z]{3}$/.test(rate.currency) || rateIds.has(rate.externalRatePlanId)) {
+        !/^[A-Z]{3}$/.test(rate.currency) || ratePlansById.has(rate.externalRatePlanId)) {
       throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Rate plan data is invalid or duplicated.');
     }
-    rateIds.add(rate.externalRatePlanId);
+    ratePlansById.set(rate.externalRatePlanId, rate);
   }
   const inventoryKeys = new Set<string>();
   for (const night of snapshot.nightlyInventory) {
     const key = [night.roomTypeId, night.ratePlanId, night.date].join('|');
-    const min = night.restrictions.minimumStayNights;
-    const max = night.restrictions.maximumStayNights;
-    if (!roomIds.has(night.roomTypeId) || !rateIds.has(night.ratePlanId) ||
+    const ratePlan = ratePlansById.get(night.ratePlanId);
+    const restrictions = night.restrictions;
+    const min = restrictions?.minimumStayNights;
+    const max = restrictions?.maximumStayNights;
+    if (!roomIds.has(night.roomTypeId) || !ratePlan ||
+        ratePlan.roomTypeId !== night.roomTypeId || ratePlan.currency !== night.currency ||
         !validDate(night.date) || !Number.isSafeInteger(night.availableRooms) ||
         night.availableRooms < 0 || !Number.isSafeInteger(night.amountMinor) ||
         night.amountMinor < 0 || !/^[A-Z]{3}$/.test(night.currency) ||
-        inventoryKeys.has(key) ||
+        inventoryKeys.has(key) || !restrictions ||
+        (restrictions.closedToArrival !== null && typeof restrictions.closedToArrival !== 'boolean') ||
+        (restrictions.closedToDeparture !== null && typeof restrictions.closedToDeparture !== 'boolean') ||
         (min !== null && (!Number.isSafeInteger(min) || min < 1)) ||
-        (max !== null && (!Number.isSafeInteger(max) || max < 1))) {
-      throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Nightly inventory is invalid, duplicated, or references an unknown room/rate.');
+        (max !== null && (!Number.isSafeInteger(max) || max < 1)) ||
+        (min !== null && max !== null && min > max)) {
+      throw new PmsAdapterError('PMS_INVALID_SNAPSHOT', 'Nightly inventory is invalid, duplicated, or inconsistent with its room/rate plan or stay restrictions.');
     }
     inventoryKeys.add(key);
   }
