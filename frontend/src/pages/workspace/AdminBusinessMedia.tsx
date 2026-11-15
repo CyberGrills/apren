@@ -47,7 +47,7 @@ export function AdminBusinessMedia() {
     {error && <ErrorNotice message={error} retry={reload}/>}
     {actionError && <ErrorNotice message={actionError}/>}
     {loading && <Loading/>}
-    {!loading && <>
+    {!loading && !error && <>
       <div className="admin-media-summary" aria-label="Photo review summary">
         <div><strong>{items.length}</strong><span>Awaiting review</span></div>
         <div><strong>{replacements}</strong><span>Replacement photos</span></div>
@@ -60,7 +60,7 @@ export function AdminBusinessMedia() {
         </div>
       </div>
     </> }
-    {!loading && (filteredItems.length ? <div className="admin-media-grid">{filteredItems.map(item => <article className="admin-media-card" key={item.mediaId}>
+    {!loading && !error && (filteredItems.length ? <div className="admin-media-grid">{filteredItems.map(item => <article className="admin-media-card" key={item.mediaId}>
       {item.imageUrl ? <img src={item.imageUrl} alt={item.altText}/> : <div className="admin-media-placeholder">Private preview unavailable</div>}
       <div className="admin-media-copy">
         <p className="eyebrow">{item.businessName}</p>

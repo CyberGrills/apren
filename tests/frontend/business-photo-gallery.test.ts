@@ -74,3 +74,15 @@ testCase('gallery action failures do not show a retry button that only dismisses
     'Clearing the error is not a retry and must not be labelled as one.',
   );
 });
+
+
+testCase('owner gallery does not present missing data as an empty gallery when its read fails', () => {
+  assert.ok(ownerGallery.includes('{!error && <>'));
+  assert.ok(ownerGallery.includes('{error && <ErrorNotice message={error} retry={reload} />}'));
+});
+
+testCase('admin moderation does not report a clear queue when its read fails', () => {
+  assert.ok(adminGallery.includes('{!loading && !error && <>'));
+  assert.ok(adminGallery.includes('{!loading && !error && (filteredItems.length ?'));
+  assert.ok(!adminGallery.includes('{!loading && (filteredItems.length ?'));
+});
