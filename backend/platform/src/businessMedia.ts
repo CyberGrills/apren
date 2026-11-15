@@ -1,4 +1,4 @@
-import type { Express, Response } from 'express';
+import type { Express, Response as ExpressResponse } from 'express';
 import type { Pool, PoolClient } from 'pg';
 import type { SessionUser } from '@7even/contracts';
 import { randomUUID } from 'node:crypto';
@@ -8,7 +8,7 @@ import { fail, one, rows } from './db.ts';
 const BUCKET = 'business-property-photos';
 const MAX_BYTES = 10 * 1024 * 1024;
 const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const;
-interface Context { pool: Pool; actor: (res: Response) => SessionUser; }
+interface Context { pool: Pool; actor: (res: ExpressResponse) => SessionUser; }
 
 function businessIdFor(actor: SessionUser): string {
   if (actor.role !== 'BUSINESS_OWNER' || !actor.businessId)
@@ -21,15 +21,20 @@ function storageConfig() {
   if (!baseUrl || !secret) return fail(503, 'STORAGE_NOT_CONFIGURED', 'Secure photo storage is not configured.');
   return { baseUrl, secret };
 }
+
+/** Authenticated private-storage requests must never forward service credentials across redirects. */
+export async function businessMediaStorageFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const config = storageConfig();
+  const headers = new Headers(init.headers);
+  headers.set('apikey', config.secret);
+  headers.set('Authorization', 'Bearer ' + config.secret);
+  return fetch(url, { ...init, headers, redirect: 'error' });
+}
 async function storageRequest(path: string, method: string, body?: unknown) {
   const config = storageConfig();
-  const response = await fetch(config.baseUrl + '/storage/v1' + path, {
+  const response = await businessMediaStorageFetch(config.baseUrl + '/storage/v1' + path, {
     method,
-    headers: {
-      apikey: config.secret,
-      Authorization: 'Bearer ' + config.secret,
-      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-    },
+    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (!response.ok) {
@@ -166,7 +171,7 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
     if (media.status !== 'PENDING_UPLOAD' || !media.upload_expires_at || new Date(media.upload_expires_at).getTime() < Date.now())
       return fail(409, 'UPLOAD_EXPIRED', 'This upload has expired. Start a new upload.');
     const config = storageConfig(); const path = encodedPath(String(media.storage_path));
-    const head = await fetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'HEAD', headers: { apikey: config.secret, Authorization: 'Bearer ' + config.secret } });
+    const head = await businessMediaStorageFetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, { method: 'HEAD' });
     if (!head.ok) return fail(409, 'UPLOAD_NOT_FOUND', 'The image has not finished uploading.');
     const sizeHeader = head.headers.get('content-length');
     const actualSize = sizeHeader === null ? NaN : Number(sizeHeader);
@@ -175,8 +180,8 @@ export function mountBusinessMedia(app: Express, { pool, actor }: Context): void
       await storageRequest('/object/' + BUCKET + '/' + path, 'DELETE');
       return fail(422, 'IMAGE_METADATA_MISMATCH', 'Uploaded image metadata did not match the declared file.');
     }
-    const sample = await fetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
-      headers: { apikey: config.secret, Authorization: 'Bearer ' + config.secret, Range: 'bytes=0-31' },
+    const sample = await businessMediaStorageFetch(config.baseUrl + '/storage/v1/object/' + BUCKET + '/' + path, {
+      headers: { Range: 'bytes=0-31' },
     });
     if (!sample.ok) return fail(422, 'INVALID_IMAGE_CONTENT', 'The uploaded file could not be inspected.');
     const signature = new Uint8Array(await sample.arrayBuffer());
