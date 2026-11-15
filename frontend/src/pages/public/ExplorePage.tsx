@@ -82,8 +82,6 @@ export function ExplorePage() {
   const directoryListings = useMemo(() => {
     const state = params.get('state')?.trim().toLocaleLowerCase('en-NG') ?? '';
     const city = params.get('city')?.trim().toLocaleLowerCase('en-NG') ?? '';
-    // Hotel source leads remain excluded from Explore. Stay discovery is limited to
-    // canonical business profiles and separately published 7even offerings.
     if (kind === 'STAY') return [];
     return (directoryData?.listings ?? []).filter((listing) => {
       if (listing.kind !== kind) return false;
@@ -156,6 +154,7 @@ export function ExplorePage() {
       setAiLoading(false);
     }
   }
+
   return (
     <div className="public-page">
       <PublicHeader />
@@ -165,6 +164,7 @@ export function ExplorePage() {
           <h1>{heading.title}</h1>
           <p>{heading.description}</p>
         </div>
+
         <nav className="explore-category-tabs" aria-label="Explore categories">
           {[
             { value: 'STAY', label: 'Hotels & stays', Icon: Hotel },
@@ -183,6 +183,7 @@ export function ExplorePage() {
             </button>
           ))}
         </nav>
+
         <div className="explore-filter-toolbar">
           <span>{language === 'pcm' ? 'Search by location and date, then adjust wetin you need.' : 'Search by destination and dates, then refine your results.'}</span>
           <button
@@ -196,7 +197,9 @@ export function ExplorePage() {
             {filtersOpen ? 'Hide filters' : language === 'pcm' ? 'More options' : 'More filters'}
           </button>
         </div>
-        {isStaySearch && <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
+
+        {isStaySearch && (
+          <form className="explore-ai-search" onSubmit={searchWithAssistant} aria-busy={aiLoading}>
             <div className="explore-ai-field">
               <label htmlFor="explore-ai-query">
                 <Search size={17} aria-hidden="true" />
@@ -223,9 +226,13 @@ export function ExplorePage() {
               {aiLoading ? (language === 'pcm' ? 'We dey understand your request…' : 'Understanding your request…') : 'Search with AI'}
             </button>
             <p className="explore-ai-note" id="explore-ai-note">
-              {language === 'pcm' ? 'We use your request to set search filters. 7even supplies the prices and availability wey e get.' : 'Your request goes to OpenAI to turn it into search filters. Prices and availability come from 7even.'}
+              {language === 'pcm'
+                ? 'We use your request to set search filters. 7even supplies the prices and availability wey e get.'
+                : 'Your request goes to OpenAI to turn it into search filters. 7even decides which listings remain visible.'}
             </p>
-        </form>}
+          </form>
+        )}
+
         <form id="explore-filter-form" className={`explore-filters ${filtersOpen ? 'is-open' : ''}`} key={params.toString()} onSubmit={filter}>
           <div className="explore-filter-heading">
             <SlidersHorizontal size={17} aria-hidden="true" />
@@ -283,6 +290,7 @@ export function ExplorePage() {
             <Search size={17} aria-hidden="true" /> {language === 'pcm' ? 'Find places' : 'Find places'}
           </button>
         </form>
+
         {isStaySearch && (
           <a className="explore-skip-results" href="#explore-results-region">
             {language === 'pcm'
@@ -290,8 +298,7 @@ export function ExplorePage() {
               : 'Skip map and pilot; go straight to stay results'}
           </a>
         )}
-        {isStaySearch && <GoogleMapsScene />}
-        {isStaySearch && <ScrollPilotScene />}
+
         <section
           id="explore-results-region"
           className="explore-results-region"
@@ -308,128 +315,151 @@ export function ExplorePage() {
                   : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
             </p>
             <span>
-              {language === 'pcm' ? 'These listings come from 7even. Confirm room availability, final price and capacity before you book.' : 'Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.'}
+              {language === 'pcm'
+                ? 'These listings come from published 7even offerings only. Directory-only profiles are separate, and not bookable.'
+                : 'Published 7even offerings are shown here. Directory-only profiles are separate and not bookable.'}
             </span>
           </div>
-        {loading && <Loading />}
-        {error && <ErrorNotice message={error} retry={reload} />}
-        {directoryError && (
-          <div className="seven-api-unavailable seven-directory-api-note" role="status">
-            <p>Business directory profiles are temporarily unavailable. Published 7even offerings remain available below.</p>
-            <button type="button" className="btn btn-secondary" onClick={() => void reloadDirectory()}>
-              Retry business directory
-            </button>
-          </div>
-        )}
-        {directoryLoading && (
-          <p className="seven-directory-loading" role="status">Loading additional business listings…</p>
-        )}
-        {directoryProfiles.length > 0 && (
-          <section className="explore-results" aria-labelledby="explore-business-profiles-title">
-            <div className="explore-results-heading">
-              <h2 id="explore-business-profiles-title">Business profiles</h2>
-              <span>Directory listings only · not bookable through 7even</span>
+
+          {loading && <Loading />}
+          {error && <ErrorNotice message={error} retry={reload} />}
+          {directoryError && (
+            <div className="seven-api-unavailable seven-directory-api-note" role="status">
+              <p>Business directory profiles are temporarily unavailable. Published 7even offerings remain available below.</p>
+              <button type="button" className="btn btn-secondary" onClick={() => void reloadDirectory()}>
+                Retry business directory
+              </button>
             </div>
-            <div className="explore-grid">
-              {directoryProfiles.map((profile) => (
-                <BusinessDirectoryCard key={profile.id} profile={profile} />
-              ))}
-            </div>
-          </section>
-        )}
-        {directoryListings.length > 0 && (
-          <section className="explore-results" aria-labelledby="explore-source-listings-title">
-            <div className="explore-results-heading">
-              <h2 id="explore-source-listings-title">
-                {kind === 'DINING' ? 'Dining around you' : 'Things to explore'}
+          )}
+          {directoryLoading && (
+            <p className="seven-directory-loading" role="status">Loading additional business listings…</p>
+          )}
+
+          {directoryProfiles.length > 0 && (
+            <section className="explore-results" aria-labelledby="explore-business-profiles-title">
+              <div className="explore-results-heading">
+                <h2 id="explore-business-profiles-title">Business profiles</h2>
+                <span>Directory listings only · not bookable through 7even</span>
+              </div>
+              <div className="explore-grid">
+                {directoryProfiles.map((profile) => (
+                  <BusinessDirectoryCard key={profile.id} profile={profile} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {directoryListings.length > 0 && (
+            <section className="explore-results" aria-labelledby="explore-source-listings-title">
+              <div className="explore-results-heading">
+                <h2 id="explore-source-listings-title">
+                  {kind === 'DINING' ? 'Dining around you' : 'Things to explore'}
+                </h2>
+                <span>Source-backed directory listings · confirm details with each venue</span>
+              </div>
+              <div className="explore-grid">
+                {directoryListings.map((listing) => (
+                  <DirectoryListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {data && data.length > 0 && (
+            <section className="explore-results" aria-labelledby="explore-results-title">
+              <h2 className="sr-only" id="explore-results-title">
+                Places matching your search
               </h2>
-              <span>Source-backed directory listings · confirm details with each venue</span>
-            </div>
-            <div className="explore-grid">
-              {directoryListings.map((listing) => (
-                <DirectoryListingCard key={listing.id} listing={listing} />
-              ))}
-            </div>
-          </section>
-        )}
-        {data && data.length > 0 && (
-          <section className="explore-results" aria-labelledby="explore-results-title">
-            <h2 className="sr-only" id="explore-results-title">
-              Places matching your search
-            </h2>
-            <div className="explore-grid">
-              {data.map((offering) => (
-                <OfferingCard offering={offering} key={offering.id} />
-              ))}
-            </div>
-          </section>
-        )}
-        {data && data.length > 0 && (page > 1 || data.length >= pageSize) && (
-          <nav className="explore-pagination" aria-label="Results pages">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              disabled={page <= 1}
-              onClick={() => {
-                const next = new URLSearchParams(params);
-                next.set('page', String(page - 1));
-                setParams(next);
-              }}
-            >
-              Previous places
-            </button>
-            <p>Page {page}</p>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              disabled={data.length < pageSize || page >= 10000}
-              onClick={() => {
-                const next = new URLSearchParams(params);
-                next.set('page', String(page + 1));
-                setParams(next);
-              }}
-            >
-              More places
-            </button>
-          </nav>
-        )}
-        {data?.length === 0 && directoryProfiles.length === 0 && directoryListings.length === 0 && (
-          <EmptyState
-            title={language === 'pcm' ? 'No place match this search yet.' : 'No places match this search yet.'}
-            description={isStaySearch
-              ? (language === 'pcm' ? 'Try another city or date. Na only verified 7even stays go show as places wey you fit book.' : 'Try another city or date. Only verified 7even stays appear as bookable results.')
-              : 'Try another location or check back as more businesses publish their listings.'}
-            action={
-              page > 1 ? (
-                <div className="explore-empty-actions">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      const previous = new URLSearchParams(params);
-                      previous.set('page', String(page - 1));
-                      setParams(previous);
-                    }}
-                  >
-                    Previous results
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setParams({ kind })}
-                  >
+              <div className="explore-grid">
+                {data.map((offering) => (
+                  <OfferingCard offering={offering} key={offering.id} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {data && data.length > 0 && (page > 1 || data.length >= pageSize) && (
+            <nav className="explore-pagination" aria-label="Results pages">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={page <= 1}
+                onClick={() => {
+                  const next = new URLSearchParams(params);
+                  next.set('page', String(page - 1));
+                  setParams(next);
+                }}
+              >
+                Previous places
+              </button>
+              <p>Page {page}</p>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={data.length < pageSize || page >= 10000}
+                onClick={() => {
+                  const next = new URLSearchParams(params);
+                  next.set('page', String(page + 1));
+                  setParams(next);
+                }}
+              >
+                More places
+              </button>
+            </nav>
+          )}
+
+          {data?.length === 0 && directoryProfiles.length === 0 && directoryListings.length === 0 && (
+            <EmptyState
+              title={language === 'pcm' ? 'No place match this search yet.' : 'No places match this search yet.'}
+              description={isStaySearch
+                ? (language === 'pcm'
+                  ? 'Try another city or date. Na only verified 7even stays go show as places wey you fit book.'
+                  : 'Try another city or date. Only verified 7even stays appear as bookable results.')
+                : 'Try another location or check back as more businesses publish their listings.'}
+              action={
+                page > 1 ? (
+                  <div className="explore-empty-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        const previous = new URLSearchParams(params);
+                        previous.set('page', String(page - 1));
+                        setParams(previous);
+                      }}
+                    >
+                      Previous results
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setParams({ kind })}
+                    >
+                      {isStaySearch ? 'See all stays' : 'Clear filters'}
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" className="btn btn-secondary" onClick={() => setParams({ kind })}>
                     {isStaySearch ? 'See all stays' : 'Clear filters'}
                   </button>
-                </div>
-              ) : (
-                <button type="button" className="btn btn-secondary" onClick={() => setParams({ kind })}>
-                  {isStaySearch ? 'See all stays' : 'Clear filters'}
-                </button>
-              )
-            }
-          />
-        )}
+                )
+              }
+            />
+          )}
         </section>
+
+        {isStaySearch && (
+          <section className="explore-secondary-discovery" aria-labelledby="explore-secondary-title">
+            <div className="explore-secondary-header">
+              <p className="public-eyebrow">More ways to explore</p>
+              <h2 id="explore-secondary-title">Optional discovery views</h2>
+            </div>
+            <div className="explore-secondary-surfaces">
+              <GoogleMapsScene />
+              <ScrollPilotScene />
+            </div>
+          </section>
+        )}
       </main>
       <PublicFooter />
     </div>
