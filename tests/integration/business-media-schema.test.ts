@@ -38,8 +38,10 @@ describe('business media gallery contract', () => {
     assert.match(routes, /'business_media\.' \+ input\.decision\.toLowerCase\(\)/);
   });
 
-  it('registers the feature in the existing platform service', () => {
-    assert.match(app, /import \{ businessMediaGallery, mountBusinessMedia \} from '\.\/businessMedia\.ts'/);
+  it('registers the feature and batches public gallery reads in the existing platform service', () => {
+    assert.match(app, /import \{ businessMediaGalleries, mountBusinessMedia \} from '\.\/businessMedia\.ts'/);
     assert.match(app, /mountBusinessMedia\(app, \{ pool, actor: actorFor \}\)/);
+    assert.match(app, /businessMediaGalleries\(\s*pool,\s*businesses\.map\(\(business\) => business\.id\)/);
+    assert.match(app, /photosByBusiness\.get\(business\.id\)/);
   });
 });
