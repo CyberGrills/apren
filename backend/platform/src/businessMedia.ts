@@ -52,28 +52,106 @@ export interface BusinessMediaPreview {
   isCover: boolean;
 }
 
-export async function businessMediaGallery(pool: Pool, businessId: string): Promise<BusinessMediaPreview[]> {
+type BusinessMediaGalleryRow = {
+  business_id: string;
+  storage_path: string;
+  alt_text: string;
+  caption: string;
+  is_cover: boolean;
+};
+
+function safeMediaErrorCode(error: unknown): string {
+  if (typeof error !== 'object' || error === null || !('code' in error)) return 'UNKNOWN';
+  const code = (error as { code?: unknown }).code;
+  return typeof code === 'string' ? code : 'UNKNOWN';
+}
+
+/**
+ * Load approved media for a directory page in one database query.
+ * Signed URL generation remains isolated per image so one broken object does
+ * not blank the rest of a business gallery or the entire page.
+ */
+export async function businessMediaGalleries(
+  pool: Pool,
+  businessIds: string[],
+): Promise<Map<string, BusinessMediaPreview[]>> {
+  const ids = [...new Set(businessIds)];
+  const galleries = new Map<string, BusinessMediaPreview[]>(
+    ids.map((businessId) => [businessId, []]),
+  );
+  if (ids.length === 0) return galleries;
+
+  let media: BusinessMediaGalleryRow[];
   try {
-    const media = await rows(pool,
-      "SELECT storage_path,alt_text,caption,is_cover FROM seven.business_media WHERE business_id=$1 AND status='APPROVED' ORDER BY is_cover DESC,sort_order,created_at LIMIT 12",
-      [businessId]);
-    return await Promise.all(media.map(async item => {
-      const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(String(item.storage_path)), 'POST', { expiresIn: 3600 });
-      const base = storageConfig().baseUrl;
-      const imageUrl = typeof signed.signedURL === 'string'
-        ? (signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL)
-        : null;
-      return imageUrl ? {
-        imageUrl,
-        altText: String(item.alt_text),
-        caption: String(item.caption),
-        isCover: Boolean(item.is_cover),
-      } : null;
-    })).then(items => items.filter((item): item is BusinessMediaPreview => item !== null));
-  } catch {
-    // A storage outage or an unapplied media migration must not break the public directory.
-    return [];
+    media = await rows<BusinessMediaGalleryRow>(
+      pool,
+      'SELECT business_id::text AS business_id, storage_path, alt_text, caption, is_cover ' +
+        'FROM ( ' +
+        '  SELECT business_id, storage_path, alt_text, caption, is_cover, ' +
+        '         row_number() OVER (PARTITION BY business_id ORDER BY is_cover DESC, sort_order, created_at) AS gallery_rank ' +
+        '  FROM seven.business_media ' +
+        "  WHERE business_id = ANY($1::uuid[]) AND status = 'APPROVED' " +
+        ') AS ranked_media ' +
+        'WHERE gallery_rank <= 12 ' +
+        'ORDER BY business_id, gallery_rank',
+      [ids],
+    );
+  } catch (error) {
+    // The gallery is optional for directory rendering, but do not hide schema or
+    // database failures from runtime monitoring.
+    console.warn('Business media gallery query unavailable', {
+      code: safeMediaErrorCode(error),
+    });
+    return galleries;
   }
+
+  const previews = await Promise.all(
+    media.map(async (item) => {
+      try {
+        const signed = await storageRequest(
+          '/object/sign/' + BUCKET + '/' + encodedPath(String(item.storage_path)),
+          'POST',
+          { expiresIn: 3600 },
+        );
+        const base = storageConfig().baseUrl;
+        const imageUrl =
+          typeof signed.signedURL === 'string'
+            ? signed.signedURL.startsWith('http')
+              ? signed.signedURL
+              : base + '/storage/v1' + signed.signedURL
+            : null;
+        return imageUrl
+          ? {
+              businessId: String(item.business_id),
+              preview: {
+                imageUrl,
+                altText: String(item.alt_text),
+                caption: String(item.caption),
+                isCover: Boolean(item.is_cover),
+              } satisfies BusinessMediaPreview,
+            }
+          : null;
+      } catch (error) {
+        console.warn('Business media preview signing failed', {
+          code: safeMediaErrorCode(error),
+        });
+        return null;
+      }
+    }),
+  );
+
+  for (const item of previews) {
+    if (!item) continue;
+    galleries.get(item.businessId)?.push(item.preview);
+  }
+  return galleries;
+}
+
+export async function businessMediaGallery(
+  pool: Pool,
+  businessId: string,
+): Promise<BusinessMediaPreview[]> {
+  return (await businessMediaGalleries(pool, [businessId])).get(businessId) ?? [];
 }
 async function audit(client: PoolClient, actor: SessionUser, businessId: string, action: string, mediaId: string, details: Record<string, unknown> = {}) {
   await client.query(
