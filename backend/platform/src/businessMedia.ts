@@ -77,7 +77,7 @@ export async function businessMediaGalleries(
 ): Promise<Map<string, BusinessMediaPreview[]>> {
   const ids = [...new Set(businessIds)];
   const galleries = new Map<string, BusinessMediaPreview[]>(
-    ids.map((businessId) => [businessId, []]),
+    ids.map((businessId) => [businessId, [] as BusinessMediaPreview[]] as const),
   );
   if (ids.length === 0) return galleries;
 
