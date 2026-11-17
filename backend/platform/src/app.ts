@@ -39,7 +39,7 @@ import { processInbox, processOutbox } from './worker.ts';
 import { findLocations, retainedLocationState } from './locations.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
-import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
+import { businessMediaGalleries, mountBusinessMedia } from './businessMedia.ts';
 import { mountCreatorArtworks } from './creatorArtworks.ts';
 import { mountCreatorArtworkRights } from './creatorArtworkRights.ts';
 import { mountCreatorArtworkRightsDocuments } from './creatorArtworkRightsDocuments.ts';
@@ -613,10 +613,14 @@ export function createApp(options: AppOptions = {}) {
         [kind, state, searchText, pageSize, (page - 1) * pageSize],
       ),
     ]);
-    const businessesWithPhotos = await Promise.all(businesses.map(async (business) => {
-      const photos = await businessMediaGallery(pool, business.id);
+    const photosByBusiness = await businessMediaGalleries(
+      pool,
+      businesses.map((business) => business.id),
+    );
+    const businessesWithPhotos = businesses.map((business) => {
+      const photos = photosByBusiness.get(business.id) ?? [];
       return { ...business, imageUrl: photos[0]?.imageUrl ?? null, photos };
-    }));
+    });
     return {
       states,
       listings,
