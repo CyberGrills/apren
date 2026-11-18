@@ -7,6 +7,7 @@ import { fail, one, rows } from './db.ts';
 
 const BUCKET = 'business-property-photos';
 const MAX_BYTES = 10 * 1024 * 1024;
+const SIGNED_URL_CONCURRENCY = 8;
 const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const;
 interface Context { pool: Pool; actor: (res: ExpressResponse) => SessionUser; }
 
@@ -66,6 +67,24 @@ function safeMediaErrorCode(error: unknown): string {
   return typeof code === 'string' ? code : 'UNKNOWN';
 }
 
+async function mapWithConcurrency<T, Result>(
+  items: T[],
+  concurrency: number,
+  map: (item: T) => Promise<Result>,
+): Promise<Result[]> {
+  const results = new Array<Result>(items.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(Math.max(1, Math.floor(concurrency)), items.length);
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (true) {
+      const index = nextIndex++;
+      if (index >= items.length) return;
+      results[index] = await map(items[index]!);
+    }
+  }));
+  return results;
+}
+
 /**
  * Load approved media for a directory page in one database query.
  * Signed URL generation remains isolated per image so one broken object does
@@ -105,8 +124,11 @@ export async function businessMediaGalleries(
     return galleries;
   }
 
-  const previews = await Promise.all(
-    media.map(async (item) => {
+  // Bound Storage signing fan-out: a full 20-business page can contain up to 240 approved images.
+  const previews = await mapWithConcurrency(
+    media,
+    SIGNED_URL_CONCURRENCY,
+    async (item) => {
       try {
         const signed = await storageRequest(
           '/object/sign/' + BUCKET + '/' + encodedPath(String(item.storage_path)),
@@ -137,7 +159,7 @@ export async function businessMediaGalleries(
         });
         return null;
       }
-    }),
+    },
   );
 
   for (const item of previews) {
