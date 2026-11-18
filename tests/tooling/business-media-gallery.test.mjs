@@ -73,6 +73,43 @@ test('directory galleries use one ranked database query for all businesses on th
   });
 });
 
+test('signed URL requests stay within the bounded Storage concurrency', async () => {
+  await withStorageEnvironment(async () => {
+    const media = Array.from({ length: 24 }, (_, index) =>
+      mediaRow(index < 12 ? businessA : businessB, 'photo-' + index + '.jpg', index === 0 || index === 12),
+    );
+    const pool = {
+      async query() {
+        return { rows: media };
+      },
+    };
+    let active = 0;
+    let maximumActive = 0;
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      active += 1;
+      maximumActive = Math.max(maximumActive, active);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return new Response(
+          JSON.stringify({ signedURL: '/object/sign/business-property-photos/photo.jpg' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      } finally {
+        active -= 1;
+      }
+    };
+
+    const galleries = await businessMediaGalleries(pool, [businessA, businessB]);
+
+    assert.equal(calls, 24);
+    assert.ok(maximumActive <= 8, 'Storage signing must not exceed eight concurrent requests.');
+    assert.equal(galleries.get(businessA).length, 12);
+    assert.equal(galleries.get(businessB).length, 12);
+  });
+});
+
 test('a failed signed-image request does not blank other approved photos', async () => {
   await withStorageEnvironment(async () => {
     const pool = {
