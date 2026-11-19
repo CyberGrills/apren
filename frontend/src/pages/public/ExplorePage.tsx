@@ -321,34 +321,6 @@ export function ExplorePage() {
         {directoryLoading && (
           <p className="seven-directory-loading" role="status">Loading additional business listings…</p>
         )}
-        {directoryProfiles.length > 0 && (
-          <section className="explore-results" aria-labelledby="explore-business-profiles-title">
-            <div className="explore-results-heading">
-              <h2 id="explore-business-profiles-title">Business profiles</h2>
-              <span>Directory listings only · not bookable through 7even</span>
-            </div>
-            <div className="explore-grid">
-              {directoryProfiles.map((profile) => (
-                <BusinessDirectoryCard key={profile.id} profile={profile} />
-              ))}
-            </div>
-          </section>
-        )}
-        {directoryListings.length > 0 && (
-          <section className="explore-results" aria-labelledby="explore-source-listings-title">
-            <div className="explore-results-heading">
-              <h2 id="explore-source-listings-title">
-                {kind === 'DINING' ? 'Dining around you' : 'Things to explore'}
-              </h2>
-              <span>Source-backed directory listings · confirm details with each venue</span>
-            </div>
-            <div className="explore-grid">
-              {directoryListings.map((listing) => (
-                <DirectoryListingCard key={listing.id} listing={listing} />
-              ))}
-            </div>
-          </section>
-        )}
         {data && data.length > 0 && (
           <section className="explore-results" aria-labelledby="explore-results-title">
             <h2 className="sr-only" id="explore-results-title">
@@ -389,6 +361,34 @@ export function ExplorePage() {
               More places
             </button>
           </nav>
+        )}
+        {directoryProfiles.length > 0 && (
+          <section className="explore-results" aria-labelledby="explore-business-profiles-title">
+            <div className="explore-results-heading">
+              <h2 id="explore-business-profiles-title">Business profiles</h2>
+              <span>Directory listings only · not bookable through 7even</span>
+            </div>
+            <div className="explore-grid">
+              {directoryProfiles.map((profile) => (
+                <BusinessDirectoryCard key={profile.id} profile={profile} />
+              ))}
+            </div>
+          </section>
+        )}
+        {directoryListings.length > 0 && (
+          <section className="explore-results" aria-labelledby="explore-source-listings-title">
+            <div className="explore-results-heading">
+              <h2 id="explore-source-listings-title">
+                {kind === 'DINING' ? 'Dining around you' : 'Things to explore'}
+              </h2>
+              <span>Source-backed directory listings · confirm details with each venue</span>
+            </div>
+            <div className="explore-grid">
+              {directoryListings.map((listing) => (
+                <DirectoryListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          </section>
         )}
         {!loading && !directoryLoading && !error && !directoryError && data?.length === 0 && directoryProfiles.length === 0 && directoryListings.length === 0 && (
           <EmptyState
