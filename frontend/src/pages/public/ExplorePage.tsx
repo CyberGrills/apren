@@ -304,8 +304,8 @@ export function ExplorePage() {
             </p>
             <span>
               {language === 'pcm'
-                ? 'Published 7even offers show booking details from the business. Directory-only places na discovery information; you no fit book dem through 7even.'
-                : 'Published 7even offerings show their booking details. Directory-only profiles and source listings are for discovery and cannot be booked through 7even.'}
+                ? 'Published 7even offers show booking details. Confirm room availability, final price and capacity before you book. Directory-only places na discovery information; you no fit book dem through 7even.'
+                : 'Published 7even offerings show their booking details. Confirm room availability, final price and capacity before you book. Directory-only profiles and source listings are for discovery and cannot be booked through 7even.'}
             </span>
           </div>
         {loading && <Loading />}
