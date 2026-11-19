@@ -12,6 +12,7 @@ import { seasonAt } from './lib/season.ts';
 import './styles/global.css';
 import './styles/brand-palette.css';
 import './styles/public.css';
+import './styles/explore-discovery.css';
 import './styles/art-culture.css';
 import './styles/creator-studio.css';
 import './styles/demo-catalog.css';
