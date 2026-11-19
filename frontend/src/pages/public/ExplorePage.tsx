@@ -306,7 +306,7 @@ export function ExplorePage() {
               {language === 'pcm'
                 ? 'Published 7even offers show booking details from the business. Directory-only places na discovery information; you no fit book dem through 7even.'
                 : 'Published 7even offerings show their booking details. Directory-only profiles and source listings are for discovery and cannot be booked through 7even.'}
-            </span>     </span>
+            </span>
           </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
