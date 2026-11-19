@@ -1,0 +1,106 @@
+.explore-page .explore-category-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: thin;
+}
+
+.explore-page .explore-category-tabs button,
+.explore-page .explore-filter-toggle {
+  min-height: 48px;
+  flex-shrink: 0;
+}
+
+.explore-secondary-discovery {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.explore-secondary-header {
+  margin-bottom: 1.5rem;
+}
+
+.explore-secondary-header h2 {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.explore-secondary-surfaces {
+  display: grid;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.explore-secondary-surfaces > * {
+  min-width: 0;
+}
+
+/* The guide stays fully usable but no longer pins the page or dominates scrolling. */
+.explore-secondary-discovery .seven-pilot-scroll {
+  min-height: 0;
+  margin: 0;
+}
+
+.explore-secondary-discovery .seven-pilot-sticky {
+  position: relative;
+  top: auto;
+  min-height: 0;
+}
+
+.explore-secondary-discovery .seven-pilot-stage {
+  height: clamp(260px, 42vw, 460px);
+}
+
+.explore-secondary-discovery .seven-pilot-avatar {
+  width: clamp(180px, 28vw, 300px);
+  height: clamp(245px, 37vw, 380px);
+}
+
+@media (max-width: 760px) {
+  .explore-page {
+    padding-block: 2rem 4rem;
+  }
+
+  .explore-page .explore-category-tabs {
+    gap: 0.25rem;
+    margin-top: 1.25rem;
+    margin-inline: -0.5rem;
+    padding-inline: 0.5rem;
+  }
+
+  .explore-page .explore-category-tabs button {
+    min-height: 48px;
+    padding-inline: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .explore-secondary-discovery {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+  }
+
+  .explore-secondary-surfaces {
+    gap: 1.25rem;
+  }
+
+  .explore-secondary-discovery .seven-pilot-sticky {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+
+  .explore-secondary-discovery .seven-pilot-stage {
+    height: clamp(220px, 65vw, 320px);
+  }
+
+  .explore-secondary-discovery .seven-pilot-avatar {
+    width: 170px;
+    height: 235px;
+  }
+}
