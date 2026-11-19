@@ -283,15 +283,6 @@ export function ExplorePage() {
             <Search size={17} aria-hidden="true" /> {language === 'pcm' ? 'Find places' : 'Find places'}
           </button>
         </form>
-        {isStaySearch && (
-          <a className="explore-skip-results" href="#explore-results-region">
-            {language === 'pcm'
-              ? 'Skip map and pilot; make I see places to stay'
-              : 'Skip map and pilot; go straight to stay results'}
-          </a>
-        )}
-        {isStaySearch && <GoogleMapsScene />}
-        {isStaySearch && <ScrollPilotScene />}
         <section
           id="explore-results-region"
           className="explore-results-region"
@@ -430,6 +421,19 @@ export function ExplorePage() {
           />
         )}
         </section>
+
+        {isStaySearch && (
+          <section className="explore-secondary-discovery" aria-labelledby="explore-secondary-title">
+            <div className="explore-secondary-header">
+              <p className="public-eyebrow">More ways to explore</p>
+              <h2 id="explore-secondary-title">Optional discovery views</h2>
+            </div>
+            <div className="explore-secondary-surfaces">
+              <GoogleMapsScene />
+              <ScrollPilotScene />
+            </div>
+          </section>
+        )}
       </main>
       <PublicFooter />
     </div>
