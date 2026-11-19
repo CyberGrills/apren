@@ -42,3 +42,12 @@ test('Explore distinguishes published offerings from non-bookable directory disc
   assert.match(explore, /directory-only/);
   assert.match(explore, /cannot be booked through 7even/);
 });
+
+test('published bookable offerings appear before directory-only discovery cards', () => {
+  const offerings = explore.indexOf('{data && data.length > 0 && (');
+  const businessProfiles = explore.indexOf('{directoryProfiles.length > 0 &&');
+  const sourceListings = explore.indexOf('{directoryListings.length > 0 &&');
+  assert.ok(offerings >= 0, 'published offerings have a results section');
+  assert.ok(businessProfiles > offerings, 'directory-only business profiles follow published offerings');
+  assert.ok(sourceListings > offerings, 'source-backed directory listings follow published offerings');
+});
