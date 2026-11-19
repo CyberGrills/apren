@@ -152,14 +152,16 @@ test('Google Maps proof of concept is lazy, key-gated, and does not fabricate pr
   assert.match(mapScene, /Property pins will appear only when 7even has verified coordinates/);
   assert.match(mapScene, /does not request your location or change search, booking, or payment state/);
   assert.doesNotMatch(mapScene, /new google\.maps\.Marker/);
-  assert.match(explore, /isStaySearch && <GoogleMapsScene \/>/);
+  assert.match(explore, /isStaySearch && \(\s*<section className="explore-secondary-discovery"/);
+  assert.match(explore, /className="explore-secondary-discovery"[\s\S]*?<GoogleMapsScene \/>/);
 });
 
 
 test('virtual pilot scroll scene is stay-only, pinned, and respects reduced motion', () => {
   const pilot = source('../../frontend/src/components/ScrollPilotScene.tsx');
   const styles = source('../../frontend/src/styles/scroll-pilot-scene.css');
-  assert.match(explore, /isStaySearch && <ScrollPilotScene \/>/);
+  assert.match(explore, /isStaySearch && \(\s*<section className="explore-secondary-discovery"/);
+  assert.match(explore, /className="explore-secondary-discovery"[\s\S]*?<ScrollPilotScene \/>/);
   assert.match(styles, /position: sticky/);
   assert.match(styles, /prefers-reduced-motion: reduce/);
   assert.match(styles, /\.seven-pilot-avatar \{ animation: none !important; \}/);
