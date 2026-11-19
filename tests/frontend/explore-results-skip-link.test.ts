@@ -7,29 +7,27 @@ const explore = readFileSync(
   'utf8',
 );
 const styles = readFileSync(
-  new URL('../../frontend/src/styles/public.css', import.meta.url),
+  new URL('../../frontend/src/styles/explore-discovery.css', import.meta.url),
   'utf8',
 );
 
-test('stay discovery lets keyboard users bypass the map and pilot before results', () => {
-  const skipLink = explore.indexOf('className="explore-skip-results"');
-  const mapScene = explore.indexOf('{isStaySearch && <GoogleMapsScene />}', skipLink);
-  const pilotScene = explore.indexOf('{isStaySearch && <ScrollPilotScene />}', mapScene);
-  const resultsTarget = explore.indexOf('id="explore-results-region"', pilotScene);
+test('stay discovery prioritizes search results before optional map and pilot scenes', () => {
+  const resultsRegion = explore.indexOf('id="explore-results-region"');
+  const secondarySection = explore.indexOf('className="explore-secondary-discovery"');
+  const mapScene = explore.indexOf('<GoogleMapsScene />', secondarySection);
+  const pilotScene = explore.indexOf('<ScrollPilotScene />', secondarySection);
 
-  assert.ok(skipLink >= 0, 'stay search should expose a skip link');
-  assert.ok(mapScene > skipLink, 'the map should follow the skip link');
-  assert.ok(pilotScene > mapScene, 'the pilot should follow the map');
-  assert.ok(resultsTarget > pilotScene, 'the results target should follow both interstitials');
-  assert.match(explore, /href="#explore-results-region"/);
-  assert.match(explore, /<section[\s\S]*?id="explore-results-region"[\s\S]*?tabIndex=\{-1\}[\s\S]*?role="region"/);
-  assert.match(explore, /id="explore-results-region"[\s\S]*?<\/section>\s*<\/main>/);
+  assert.ok(resultsRegion >= 0, 'the primary results region is present');
+  assert.ok(secondarySection > resultsRegion, 'optional discovery follows primary results');
+  assert.ok(mapScene > secondarySection, 'the map remains available in the secondary section');
+  assert.ok(pilotScene > mapScene, 'the virtual pilot remains available after the map');
+  assert.match(explore, /aria-labelledby="explore-secondary-title"/);
+  assert.match(explore, /<h2 id="explore-secondary-title">Optional discovery views<\/h2>/);
 });
 
-test('the skip link is visible on keyboard focus and respects reduced motion', () => {
-  assert.match(styles, /\.explore-skip-results\s*\{/);
-  assert.match(styles, /\.explore-skip-results:focus-visible\s*\{/);
-  assert.match(styles, /transform:\s*translateY\(0\)/);
-  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.explore-skip-results[\s\S]*?transition:\s*none/);
-  assert.match(styles, /#explore-results-region\s*\{[\s\S]*?scroll-margin-top:\s*1rem/);
+test('secondary discovery keeps the pilot from pinning the main results journey', () => {
+  assert.match(styles, /\.explore-secondary-discovery \.seven-pilot-scroll\s*\{\s*min-height:\s*0/);
+  assert.match(styles, /\.explore-secondary-discovery \.seven-pilot-sticky\s*\{\s*position:\s*relative/);
+  assert.match(styles, /@media \(max-width: 760px\)/);
+  assert.match(styles, /min-height: 48px/);
 });
