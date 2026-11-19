@@ -292,15 +292,21 @@ export function ExplorePage() {
         >
           <div className="explore-results-heading">
             <p aria-live="polite">
-              {loading
+              {loading || directoryLoading
                 ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
-                : data
-                  ? `${data.length} ${data.length === 1 ? 'place' : 'places'} on this page`
-                  : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
+                : error
+                  ? (language === 'pcm' ? 'We no fit load 7even offerings right now.' : 'Published 7even offerings could not be loaded.')
+                  : data
+                    ? language === 'pcm'
+                      ? `${data.length} published offer(s) · ${directoryProfiles.length + directoryListings.length} directory-only place(s)`
+                      : `${data.length} published ${data.length === 1 ? 'offering' : 'offerings'} · ${directoryProfiles.length + directoryListings.length} directory-only ${directoryProfiles.length + directoryListings.length === 1 ? 'place' : 'places'}`
+                    : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
             </p>
             <span>
-              {language === 'pcm' ? 'These listings come from 7even. Confirm room availability, final price and capacity before you book.' : 'Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.'}
-            </span>
+              {language === 'pcm'
+                ? 'Published 7even offers show booking details from the business. Directory-only places na discovery information; you no fit book dem through 7even.'
+                : 'Published 7even offerings show their booking details. Directory-only profiles and source listings are for discovery and cannot be booked through 7even.'}
+            </span>     </span>
           </div>
         {loading && <Loading />}
         {error && <ErrorNotice message={error} retry={reload} />}
@@ -384,7 +390,7 @@ export function ExplorePage() {
             </button>
           </nav>
         )}
-        {data?.length === 0 && directoryProfiles.length === 0 && directoryListings.length === 0 && (
+        {!loading && !directoryLoading && !error && !directoryError && data?.length === 0 && directoryProfiles.length === 0 && directoryListings.length === 0 && (
           <EmptyState
             title={language === 'pcm' ? 'No place match this search yet.' : 'No places match this search yet.'}
             description={isStaySearch
