@@ -298,7 +298,7 @@ export function ExplorePage() {
                   ? (language === 'pcm' ? 'We no fit load 7even offerings right now.' : 'Published 7even offerings could not be loaded.')
                   : data
                     ? language === 'pcm'
-                      ? `${data.length} published offer(s) · ${directoryProfiles.length + directoryListings.length} directory-only place(s)`
+                      ? `${data.length} published 7even offers · ${directoryProfiles.length + directoryListings.length} directory-only places`
                       : `${data.length} published ${data.length === 1 ? 'offering' : 'offerings'} · ${directoryProfiles.length + directoryListings.length} directory-only ${directoryProfiles.length + directoryListings.length === 1 ? 'place' : 'places'}`
                     : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
             </p>
