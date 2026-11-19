@@ -31,3 +31,14 @@ test('secondary discovery keeps the pilot from pinning the main results journey'
   assert.match(styles, /@media \(max-width: 760px\)/);
   assert.match(styles, /min-height: 48px/);
 });
+
+test('Explore waits for both data sources before showing an empty state', () => {
+  assert.match(explore, /!loading && !directoryLoading && !error && !directoryError && data\?\.length === 0/);
+  assert.match(explore, /loading \|\| directoryLoading/);
+});
+
+test('Explore distinguishes published offerings from non-bookable directory discovery', () => {
+  assert.match(explore, /published \$\{data\.length === 1 \? 'offering' : 'offerings'\}/);
+  assert.match(explore, /directory-only/);
+  assert.match(explore, /cannot be booked through 7even/);
+});
