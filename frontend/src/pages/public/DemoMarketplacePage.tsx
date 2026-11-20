@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowUpRight, CalendarDays, CheckCircle2, WalletCards } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PublicFooter, PublicHeader } from './PublicShell.tsx';
@@ -30,9 +30,9 @@ export function DemoMarketplacePage() {
  const [notice,setNotice]=useState('');
  const [error,setError]=useState('');
  const [receipt,setReceipt]=useState<Booking|null>(null);
- const refresh=async()=>{if(!user)return;const [w,b]=await Promise.all([api<Wallet>('/demo/wallet'),api<Booking[]>('/demo/bookings')]);setWallet(w);setBookings(b);};
+ const refresh=useCallback(async()=>{if(!user)return;const [w,b]=await Promise.all([api<Wallet>('/demo/wallet'),api<Booking[]>('/demo/bookings')]);setWallet(w);setBookings(b);},[user]);
  useEffect(()=>{void api<Item[]>('/demo/catalog').then(setItems).catch(e=>setError(e.message));},[]);
- useEffect(()=>{void refresh().catch(e=>setError(e.message));},[user?.id]);
+ useEffect(()=>{void refresh().catch(e=>setError(e.message));},[refresh]);
  const visible=useMemo(()=>items.filter(i=>(kind==='ALL'||i.kind===kind)&&(i.title+i.city+i.state).toLowerCase().includes(query.toLowerCase())),[items,kind,query]);
  function book(e:FormEvent,item:Item){e.preventDefault();if(!user)return;const params=new URLSearchParams({itemId:item.id,startDate:start,quantity:String(quantity)});if(item.kind==='STAY')params.set('endDate',end);navigate('/demo/checkout?'+params.toString());}
  async function cancel(b:Booking){setBusy(b.id);setError('');try{await api('/demo/bookings/'+b.id+'/cancel',{method:'POST',body:{},idempotencyKey:crypto.randomUUID()});setNotice('Demo booking cancelled. Test credits returned.');await refresh();}catch(cause){setError(cause instanceof Error?cause.message:'Could not cancel demo booking.');}finally{setBusy('');}}
