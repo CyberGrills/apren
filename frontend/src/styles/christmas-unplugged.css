@@ -92,6 +92,10 @@
 .ibom-event-card { display:flex; min-width:0; flex-direction:column; overflow:hidden; border:1px solid var(--line); border-radius:var(--radius-md,12px); background:var(--surface); }
 .ibom-event-image-link { position:relative; display:block; overflow:hidden; aspect-ratio:4/5; background:var(--surface-subtle); }
 .ibom-event-image-link img { display:block; width:100%; height:100%; object-fit:contain; background:var(--surface-subtle); transition:transform .35s ease; }
+.ibom-event-image-fallback { display:grid; place-content:center; justify-items:center; gap:.65rem; width:100%; height:100%; min-height:220px; padding:1.25rem; background:var(--surface-subtle); color:var(--muted); text-align:center; }
+.ibom-event-image-fallback svg { color:var(--accent); }
+.ibom-event-image-fallback span { color:var(--ink); font-weight:700; font-size:.9rem; }
+.ibom-event-image-fallback small { max-width:24ch; font-size:.75rem; line-height:1.5; }
 .ibom-event-image-link:hover img { transform:scale(1.025); }
 .ibom-event-image-note { position:absolute; left:.65rem; right:.65rem; bottom:.65rem; padding:.4rem .55rem; border-radius:6px; background:rgba(0,0,0,.72); color:#fff; font-size:.7rem; text-align:center; }
 .ibom-event-card-content { display:flex; flex:1; flex-direction:column; align-items:flex-start; padding:1rem; }
@@ -117,11 +121,13 @@
   .ibom-events-months { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
   .ibom-events-months button { padding-inline:.4rem; }
   .ibom-events-grid { grid-template-columns:1fr; }
-  .ibom-event-card { display:grid; grid-template-columns:minmax(110px,.7fr) minmax(0,1.3fr); }
-  .ibom-event-image-link { aspect-ratio:3/4; height:100%; }
+  .ibom-event-card { display:flex; flex-direction:column; }
+  .ibom-event-image-link { aspect-ratio:4/5; height:auto; max-height:420px; }
+  .ibom-event-image-link img { height:100%; object-fit:contain; }
+  .ibom-event-image-fallback { min-height:240px; }
   .ibom-event-card-content { padding:.85rem; }
   .ibom-event-card h3 { font-size:1.15rem; }
   .ibom-event-description { font-size:.8rem; }
   .ibom-event-action { font-size:.78rem; padding:.5rem .55rem; }
 }
-@media(max-width:390px) { .ibom-event-card { grid-template-columns:1fr; } .ibom-event-image-link { aspect-ratio:4/5; max-height:360px; } }
+@media(max-width:390px) { .ibom-event-image-link { max-height:360px; } }
