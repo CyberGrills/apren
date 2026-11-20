@@ -103,7 +103,7 @@ export function SeasonProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.mode = mode;
     document.documentElement.style.colorScheme = mode;
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (themeColor) themeColor.content = mode === 'dark' ? '#111A15' : '#F7F5EF';
+    if (themeColor) themeColor.content = mode === 'dark' ? '#111A15' : '#fffdf8';
   }, [mode]);
 
   return (
