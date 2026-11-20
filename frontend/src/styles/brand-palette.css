@@ -85,7 +85,7 @@
    surfaces, text and controls to accessible low-light values. */
 :root[data-mode="dark"] {
   color-scheme: dark;
-  --brand-primary: #A7CBB4;
+  --brand-primary: #174D3A;
   --brand-secondary: #111A15;
   --brand-tertiary: #35473B;
   --brand-text: #F0F3ED;
