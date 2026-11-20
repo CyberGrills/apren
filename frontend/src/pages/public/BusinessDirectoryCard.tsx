@@ -63,7 +63,7 @@ export function BusinessDirectoryCard({ profile }: { profile: BusinessDirectoryP
               <img key={photo.imageUrl} src={photo.imageUrl} alt={photo.altText} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
             ))}
           </div>}
-        </div>
+        </section>
       ) : profile.imageUrl ? (
         <div className="seven-directory-image-link">
           <img
