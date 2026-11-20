@@ -413,6 +413,27 @@ export function HomePage() {
           <SeasonalCampaignBanner />
         </Reveal>
 
+        <section className="christmas-home-feature" aria-labelledby="christmas-home-title">
+          <div className="public-container christmas-home-feature-inner">
+            <div className="christmas-home-copy">
+              <p className="public-eyebrow">Uyo · 30 November 2026 – 1 January 2027</p>
+              <h2 id="christmas-home-title">Christmas, unplugged. <em>Akwa Ibom, in full colour.</em></h2>
+              <p>Discover 33 festive days of food, culture, music and heritage at Unity Park. Explore the programme, plan your visit and find places to stay or eat around Uyo.</p>
+              <div className="christmas-home-actions">
+                <Link className="btn btn-primary" to="/experiences/christmas-unplugged">Explore the festival <ArrowRight size={16} aria-hidden="true" /></Link>
+                <a className="btn btn-secondary" href="https://ibomfest.akwaibomstate.gov.ng/schedule" target="_blank" rel="noopener noreferrer">View official programme</a>
+              </div>
+              <p className="christmas-home-note">Festival information is provided by the organisers. 7EVEN is an independent discovery platform and is not presented as an official festival partner.</p>
+            </div>
+            <div className="christmas-home-art" aria-hidden="true">
+              <span className="christmas-home-year">4.0</span>
+              <span className="christmas-home-word">UNPLUGGED</span>
+              <span className="christmas-home-place">UNITY PARK · UYO</span>
+              <span className="christmas-home-dates">30 NOV — 01 JAN</span>
+            </div>
+          </div>
+        </section>
+
         <Section tone="soft" id="eat" labelledBy="eat-title">
           <div className="home-split">
             <Reveal>
