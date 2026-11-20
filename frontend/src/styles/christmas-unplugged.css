@@ -51,9 +51,9 @@
 .christmas-lga-section { background:var(--surface); padding-block:clamp(3rem,7vw,6rem); }
 .christmas-lga-section .christmas-section-heading { align-items:flex-end; }
 .christmas-lga-intro { max-width:60ch; color:var(--muted); line-height:1.7; }
-.christmas-lga-search { display:flex; align-items:center; gap:.75rem; width:min(100%,620px); min-height:52px; padding:0 1rem; border:1px solid var(--line); background:var(--surface); border-radius:var(--radius-md,12px); color:var(--muted); }
+.christmas-lga-search { display:flex; align-items:center; gap:.75rem; width:min(100%,620px); min-height:52px; padding:0 1rem; border:1px solid var(--line); background:var(--surface); border-radius:var(--radius,5px); color:var(--muted); }
 .christmas-lga-search:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
-.christmas-lga-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--text); font:inherit; min-height:48px; }
+.christmas-lga-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--ink); font:inherit; min-height:48px; }
 .christmas-lga-count { margin:1rem 0; color:var(--muted); font-size:.85rem; }
 .christmas-lga-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
 .christmas-lga-card { min-width:0; padding:1.25rem; border:1px solid var(--line); background:var(--surface); border-radius:var(--radius-md,12px); }
