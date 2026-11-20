@@ -141,11 +141,11 @@ export function BusinessPhotoGallery() {
       {error && <ErrorNotice message={error} retry={reload} />}
       {!error && <>
       {actionError && <ErrorNotice message={actionError} />}
-      <div className="business-photo-stats" aria-label="Photo gallery status">
+      <section className="business-photo-stats" aria-label="Photo gallery status">
         <div><strong>{approved.length}</strong><span>Approved and guest-facing</span></div>
         <div><strong>{pending.length}</strong><span>Awaiting review</span></div>
         <div><strong>{rejected.length}</strong><span>Needs your attention</span></div>
-      </div>
+      </section>
       <div className="business-photo-guidance">
         <div><strong>Accepted formats</strong><span>JPEG, PNG, WebP or AVIF · up to 10 MB each</span></div>
         <div><strong>Review process</strong><span>Only approved photos appear on your public listing.</span></div>
