@@ -31,7 +31,7 @@ export function ScrollPilotScene() {
     return () => {
       audio.pause();
     };
-  }, [language]);
+  }, [voiceTrack]);
 
   function playPilot() {
     if (muted || !audioReady || !audioRef.current) return;
