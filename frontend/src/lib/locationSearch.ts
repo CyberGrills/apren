@@ -40,3 +40,18 @@ export function searchLocations<T extends Searchable>(
   ranked.sort((a, b) => a.rank - b.rank || a.index - b.index);
   return ranked.slice(0, limit).map((entry) => entry.item);
 }
+export interface QueryScopedResults<T> {
+  query: string;
+  items: readonly T[];
+}
+
+/** Return server results only when they belong to the active, fully settled query. */
+export function resultsForActiveQuery<T>(
+  result: QueryScopedResults<T> | null,
+  query: string,
+  loading = false,
+): T[] {
+  const activeQuery = query.trim();
+  if (!activeQuery || loading || result?.query !== activeQuery) return [];
+  return [...result.items];
+}
