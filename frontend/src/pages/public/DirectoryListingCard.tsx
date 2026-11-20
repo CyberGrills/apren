@@ -79,7 +79,7 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
                 {source.label} <span aria-hidden="true">↗</span>
               </a>
             ))}
-          </div>
+          </nav>
         )}
         {listing.contactPhone && (
           <p className="seven-directory-contact">
