@@ -21,6 +21,7 @@ import {
   createReservation,
 } from '../../backend/platform/src/reservations.ts';
 import { seed } from '../../backend/platform/src/seed.ts';
+import { seedVerifiedDining } from './helpers/seed-verified-dining.ts';
 import {
   paymentProjection,
   reservationProjection,
@@ -69,6 +70,7 @@ test('concurrent refund observations preserve delivered accounting and flag cont
     await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
     await migrate(pool);
     await seed(pool, 'Refund-observation-fixture-only-42!');
+  await seedVerifiedDining(pool);
     const origin = 'http://localhost:5177';
     const runtime = createApp({
       pool: appPool,
