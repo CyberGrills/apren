@@ -2,13 +2,25 @@
 <html lang="en-NG"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="theme-color" content="#fffdf8" />
 <script>
   (() => {
+    const root = document.documentElement;
+    const themeColor = document.querySelector('meta[name="theme-color"]');
     try {
-      const preference = localStorage.getItem("7even-color-mode");
-      const dark = preference === "dark" || (preference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-      document.documentElement.dataset.mode = dark ? "dark" : "light";
-      document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      const modePreference = localStorage.getItem("7even-color-mode");
+      const dark = modePreference === "dark" || (modePreference === "system" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      root.dataset.mode = dark ? "dark" : "light";
+      root.style.colorScheme = dark ? "dark" : "light";
+      if (themeColor) themeColor.content = dark ? "#111A15" : "#fffdf8";
+      const savedSeason = localStorage.getItem("7even-season-theme");
+      const validSeason = ["spring", "summer", "autumn", "winter"].includes(savedSeason || "");
+      const monthPart = new Intl.DateTimeFormat("en", { timeZone: "Africa/Lagos", month: "numeric" }).format(new Date());
+      const month = Number(monthPart);
+      const calendarSeason = month >= 3 && month <= 5 ? "spring" : month >= 6 && month <= 8 ? "summer" : month >= 9 && month <= 11 ? "autumn" : "winter";
+      root.dataset.season = validSeason ? savedSeason : calendarSeason;
     } catch {
-      document.documentElement.dataset.mode = "light";
+      root.dataset.mode = "light";
+      root.style.colorScheme = "light";
+      root.dataset.season = "autumn";
+      if (themeColor) themeColor.content = "#fffdf8";
     }
   })();
 </script><meta name="description" content="Find rooms, dining and experiences in Nigeria. Reserve with 7even and earn points on completed visits." /><link rel="icon" href="/brand/icon.svg?v=2" type="image/svg+xml" /><link rel="apple-touch-icon" href="/brand/icon-180.png" /><link rel="manifest" href="/manifest.webmanifest" /><title>7even | Good places. Worth your time.</title></head><body><a class="skip-link" href="#main-content">Skip to content</a><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>
