@@ -46,3 +46,6 @@ jobs:
 
       - name: Build production frontend
         run: npm run build
+
+      - name: Verify production demo redirects
+        run: npm run test:browser:production
