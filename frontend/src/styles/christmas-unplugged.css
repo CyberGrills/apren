@@ -114,20 +114,54 @@
 .ibom-event-credit { margin:.65rem 0 0; color:var(--muted); font-size:.68rem; line-height:1.5; }
 .ibom-events-disclosure { margin:1.25rem 0 0; color:var(--muted); font-size:.76rem; line-height:1.65; }
 .ibom-events-empty { padding:2rem; border:1px dashed var(--line); text-align:center; }
-@media(max-width:1000px) { .ibom-events-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+/* Let the directory columns follow the available layout width rather than
+   relying on a small set of device-specific screen sizes. */
+.ibom-events-section,
+.ibom-events-grid,
+.ibom-event-card,
+.ibom-event-card-content,
+.ibom-event-image-link { min-width:0; box-sizing:border-box; }
+.ibom-events-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr)); }
+.ibom-event-card h3,
+.ibom-event-description,
+.ibom-event-venue,
+.ibom-event-credit,
+.ibom-events-disclosure { overflow-wrap:anywhere; }
+
 @media(max-width:650px) {
-  .ibom-events-heading,.ibom-events-tools { align-items:stretch; flex-direction:column; }
-  .ibom-events-search { width:100%; }
-  .ibom-events-months { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
-  .ibom-events-months button { padding-inline:.4rem; }
-  .ibom-events-grid { grid-template-columns:1fr; }
-  .ibom-event-card { display:flex; flex-direction:column; }
-  .ibom-event-image-link { aspect-ratio:4/5; height:auto; max-height:420px; }
-  .ibom-event-image-link img { height:100%; object-fit:contain; }
-  .ibom-event-image-fallback { min-height:240px; }
-  .ibom-event-card-content { padding:.85rem; }
-  .ibom-event-card h3 { font-size:1.15rem; }
-  .ibom-event-description { font-size:.8rem; }
-  .ibom-event-action { font-size:.78rem; padding:.5rem .55rem; }
+  .ibom-events-section {
+    width:100%;
+    margin-block:1.25rem 2rem;
+    padding:clamp(.75rem,3.5vw,1.1rem);
+  }
+  .ibom-events-heading,
+  .ibom-events-tools { align-items:stretch; flex-direction:column; }
+  .ibom-events-heading { gap:.5rem; margin-bottom:1rem; }
+  .ibom-events-heading h2 { font-size:clamp(1.45rem,6vw,1.9rem); line-height:1.12; }
+  .ibom-events-search { width:100%; min-width:0; }
+  .ibom-events-months { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); min-width:0; }
+  .ibom-events-months button { min-width:0; padding-inline:.25rem; font-size:clamp(.68rem,2.8vw,.82rem); }
+  .ibom-events-grid { grid-template-columns:minmax(0,1fr); gap:.85rem; }
+  .ibom-event-card { display:flex; width:100%; flex-direction:column; }
+  .ibom-event-image-link {
+    width:100%;
+    height:clamp(180px,68vw,300px);
+    max-height:300px;
+    aspect-ratio:auto;
+  }
+  .ibom-event-image-link img { width:100%; height:100%; object-fit:contain; }
+  .ibom-event-image-fallback { min-height:100%; padding:1rem; }
+  .ibom-event-card-content { width:100%; padding:clamp(.8rem,3.5vw,1rem); }
+  .ibom-event-card h3 { font-size:clamp(1.05rem,4.5vw,1.2rem); line-height:1.2; }
+  .ibom-event-description { font-size:.875rem; line-height:1.55; }
+  .ibom-event-action { min-height:44px; width:100%; font-size:.82rem; padding:.55rem .65rem; white-space:normal; }
+  .ibom-events-disclosure { font-size:.75rem; line-height:1.6; }
 }
-@media(max-width:390px) { .ibom-event-image-link { max-height:360px; } }
+@media(max-width:360px) {
+  .ibom-events-months { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .ibom-event-image-link { height:clamp(170px,62vw,230px); }
+}
+@media(orientation:landscape) and (max-height:500px) and (max-width:900px) {
+  .ibom-events-section { margin-block:1rem; }
+  .ibom-event-image-link { max-height:240px; }
+}
