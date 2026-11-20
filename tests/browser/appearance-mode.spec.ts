@@ -42,3 +42,20 @@ test('summer and autumn remain visibly different in dark mode', async ({ page })
   expect(autumn).toBe('#E98B55');
   expect(autumn).not.toBe(summer);
 });
+
+
+test('appearance controls remain usable at an iPhone-sized viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installApiMocks(page);
+  await page.goto('/appearance');
+
+  const modeButtons = page.locator('.appearance-mode-option');
+  await expect(modeButtons).toHaveCount(3);
+  for (let index = 0; index < 3; index += 1) {
+    await expect(modeButtons.nth(index)).toBeVisible();
+  }
+  await page.getByRole('button', { name: /Dark/ }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
+  const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  expect(hasHorizontalOverflow).toBe(false);
+});
