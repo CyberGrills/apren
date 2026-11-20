@@ -60,6 +60,8 @@ test('appearance overrides load after every page stylesheet and cover shared pag
   assert.match(appearance, /:root\[data-mode="dark"\]/);
   assert.match(appearance, /\.workspace-sidebar/);
   assert.match(appearance, /\.public-page/);
+  assert.match(appearance, /\.ibom-events-section/);
+  assert.match(appearance, /\.ibom-event-card/);
   assert.match(appearance, /\.customer-main/);
 });
 
