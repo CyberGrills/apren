@@ -21,6 +21,7 @@ import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 import { BusinessDirectoryCard, type BusinessDirectoryProfile } from './BusinessDirectoryCard.tsx';
 import { DirectoryListingCard } from './DirectoryListingCard.tsx';
 import type { DirectoryListing } from '../../lib/nigeriaDirectory.ts';
+import { IbomFestivalEvents } from './IbomFestivalEvents.tsx';
 
 export function ExplorePage() {
   const [params, setParams] = useSearchParams();
@@ -183,6 +184,7 @@ export function ExplorePage() {
             </button>
           ))}
         </nav>
+        {kind === 'EXPERIENCE' && <IbomFestivalEvents />}
         <div className="explore-filter-toolbar">
           <span>{language === 'pcm' ? 'Search by location and date, then adjust wetin you need.' : 'Search by destination and dates, then refine your results.'}</span>
           <button
