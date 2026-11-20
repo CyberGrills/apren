@@ -65,6 +65,8 @@ test.describe('Android appearance persistence', () => {
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
     await expect.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme)).toBe('dark');
 
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('7even-season-theme'))).toBe('autumn');
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('7even-color-mode'))).toBe('dark');
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-season', 'autumn');
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
@@ -75,7 +77,7 @@ test.describe('Android appearance persistence', () => {
       accent: getComputedStyle(element).getPropertyValue('--season-accent').trim(),
       panel: getComputedStyle(document.querySelector('.ibom-events-section')!).backgroundColor,
     }));
-    expect(theme.accent).toBe('#994626');
+    expect(theme.accent).toBe('#E98B55');
     expect(theme.panel).not.toBe('rgba(0, 0, 0, 0)');
   });
 
