@@ -112,6 +112,19 @@ test('unknown routes render the not-found recovery screen', async ({ page }) => 
   await expect(page.getByText('This page could not be found. Continue from the home page.')).toBeVisible();
 });
 
+test('business and reception roles cannot cross into admin or each other’s restricted workspace', async ({ page }) => {
+  const cases = [
+    { path: '/admin', role: 'BUSINESS_OWNER' as const },
+    { path: '/admin', role: 'RECEPTION' as const },
+    { path: '/business', role: 'RECEPTION' as const },
+  ];
+  for (const item of cases) {
+    await installApiMocks(page, item.role);
+    await page.goto(item.path);
+    await expect(page.getByText('Sign in with an account assigned to this workspace.')).toBeVisible();
+  }
+});
+
 test('creator API failure is announced and can be retried', async ({ page }) => {
   await page.route('**/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
