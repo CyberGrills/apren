@@ -19,7 +19,8 @@
     } catch {
       root.dataset.mode = "light";
       root.style.colorScheme = "light";
-      root.dataset.season = "autumn";
+      const fallbackMonth = new Date().getMonth() + 1;
+      root.dataset.season = fallbackMonth >= 3 && fallbackMonth <= 5 ? "spring" : fallbackMonth >= 6 && fallbackMonth <= 8 ? "summer" : fallbackMonth >= 9 && fallbackMonth <= 11 ? "autumn" : "winter";
       if (themeColor) themeColor.content = "#fffdf8";
     }
   })();
