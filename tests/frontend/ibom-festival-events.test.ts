@@ -7,7 +7,7 @@ const component = readFileSync(new URL('../../frontend/src/pages/public/IbomFest
 const css = readFileSync(new URL('../../frontend/src/styles/christmas-unplugged.css', import.meta.url), 'utf8');
 
 test('What to Do includes all 20 organiser-listed Ibom Christmas Unplugged events', () => {
-  assert.match(explore, /kind === 'EXPERIENCE'.*IbomFestivalEvents/s);
+  assert.ok(explore.includes("kind === 'EXPERIENCE' && <IbomFestivalEvents />"));
   assert.equal((component.match(/date: '2026-/g) || []).length, 20);
   for (const title of [
     'Opening Ceremony', 'Ibom Air Day', 'Civil Service Day', 'Corporate Hangout',
@@ -21,23 +21,23 @@ test('What to Do includes all 20 organiser-listed Ibom Christmas Unplugged event
 });
 
 test('event artwork is sourced from the official festival host and credited', () => {
-  assert.match(component, /ibomfest\\.akwaibomstate\\.gov\\.ng\\/__l5e\\/assets-v1/);
-  assert.match(component, /Festival Media Centre/);
-  assert.match(component, /event-specific poster not yet published/i);
+  assert.ok(component.includes('ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/'));
+  assert.ok(component.includes('Festival Media Centre'));
+  assert.ok(component.includes('Event-specific poster not yet published'));
 });
 
 test('event actions go to official event information, not a fake 7EVEN ticket checkout', () => {
-  assert.match(component, /https:\\/\\/ibomfest\\.akwaibomstate\\.gov\\.ng\\/schedule/);
-  assert.match(component, /target=\"_blank\" rel=\"noopener noreferrer\"/);
-  assert.match(component, /does not sell tickets/);
-  assert.match(component, /visitor entry is listed as free/i);
+  assert.ok(component.includes('https://ibomfest.akwaibomstate.gov.ng/schedule'));
+  assert.ok(component.includes('target="_blank" rel="noopener noreferrer"'));
+  assert.ok(component.includes('does not sell tickets'));
+  assert.ok(component.includes('Visitor entry is listed as free'));
 });
 
 test('event directory supports accessible search, month filtering and responsive cards', () => {
-  assert.match(component, /aria-label=\"Search festival events\"/);
-  assert.match(component, /aria-pressed={month === item.value}/);
-  assert.match(component, /aria-live=\"polite\"/);
-  assert.match(css, /\\.ibom-events-grid/);
-  assert.match(css, /@media\\(max-width:650px\\)/);
-  assert.match(css, /@media\\(max-width:390px\\)/);
+  assert.ok(component.includes('aria-label="Search festival events"'));
+  assert.ok(component.includes('aria-pressed={month === item.value}'));
+  assert.ok(component.includes('aria-live="polite"'));
+  assert.ok(css.includes('.ibom-events-grid'));
+  assert.ok(css.includes('@media(max-width:650px)'));
+  assert.ok(css.includes('@media(max-width:390px)'));
 });
