@@ -155,9 +155,10 @@ export function LocationCombobox({
         type="text"
         role="combobox"
         aria-autocomplete="list"
-        aria-expanded={listVisible}
+        aria-expanded={popupVisible}
         aria-controls={listVisible ? listId : undefined}
         aria-activedescendant={listVisible && active >= 0 ? `${listId}-${active}` : undefined}
+        aria-busy={loading}
         autoComplete="off"
         spellCheck={false}
         maxLength={160}
