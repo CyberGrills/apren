@@ -425,12 +425,15 @@ export function HomePage() {
               </div>
               <p className="christmas-home-note">Festival information is provided by the organisers. 7EVEN is an independent discovery platform and is not presented as an official festival partner.</p>
             </div>
-            <div className="christmas-home-art" aria-hidden="true">
-              <span className="christmas-home-year">4.0</span>
-              <span className="christmas-home-word">UNPLUGGED</span>
-              <span className="christmas-home-place">UNITY PARK · UYO</span>
-              <span className="christmas-home-dates">30 NOV — 01 JAN</span>
-            </div>
+            <figure className="christmas-home-artwork">
+              <img
+                src="https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/111485d1-e94f-48d5-b3b9-48dc9503935e/ibom-christmas-logo.png"
+                alt="Official Ibom Christmas Unplugged 4.0 festival artwork"
+                loading="lazy"
+                decoding="async"
+              />
+              <figcaption>Official festival artwork · <a href="https://ibomfest.akwaibomstate.gov.ng/media" target="_blank" rel="noopener noreferrer">Ibom Christmas Unplugged Media Centre</a></figcaption>
+            </figure>
           </div>
         </section>
 
