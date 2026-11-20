@@ -44,10 +44,10 @@
   --winter-snow-white: #F5F8FA;
 
   /* Swatches used by the Appearance page */
-  --season-spring: var(--spring-leaf);
-  --season-summer: var(--summer-terracotta);
-  --season-autumn: var(--autumn-burnt-orange);
-  --season-winter: var(--winter-slate);
+  --season-spring: #567B55;
+  --season-summer: #966000;
+  --season-autumn: #994626;
+  --season-winter: #476A7A;
 
   /* Default values before the provider hydrates the selected season. */
   --season-tint: color-mix(in srgb, var(--brand-primary) 6%, var(--brand-secondary));
@@ -56,25 +56,25 @@
 }
 
 :root[data-season="spring"] {
-  --season-accent: var(--spring-leaf);
+  --season-accent: #567B55;
   --season-tint: var(--spring-mint);
   --season-soft: var(--spring-cream);
   --season-deep: color-mix(in oklch, var(--spring-olive) 55%, var(--brand-text));
 }
 :root[data-season="summer"] {
-  --season-accent: var(--summer-terracotta);
+  --season-accent: #966000;
   --season-tint: var(--summer-warm-cream);
   --season-soft: var(--summer-sand);
   --season-deep: color-mix(in oklch, var(--summer-terracotta) 55%, var(--brand-text));
 }
 :root[data-season="autumn"] {
-  --season-accent: var(--autumn-burnt-orange);
+  --season-accent: #994626;
   --season-tint: color-mix(in srgb, var(--autumn-harvest-cream) 55%, var(--brand-secondary));
   --season-soft: var(--autumn-harvest-cream);
   --season-deep: var(--autumn-rust);
 }
 :root[data-season="winter"] {
-  --season-accent: var(--winter-slate);
+  --season-accent: #476A7A;
   --season-tint: var(--winter-snow-white);
   --season-soft: var(--winter-ice-blue);
   --season-deep: var(--winter-midnight-blue);
@@ -115,8 +115,8 @@
   --season-deep: var(--season-accent);
 }
 :root[data-mode="dark"][data-season="spring"] { --season-accent: #B2D2AC; }
-:root[data-mode="dark"][data-season="summer"] { --season-accent: #F0A17E; }
-:root[data-mode="dark"][data-season="autumn"] { --season-accent: #E7A06D; }
+:root[data-mode="dark"][data-season="summer"] { --season-accent: #F5C85C; }
+:root[data-mode="dark"][data-season="autumn"] { --season-accent: #E98B55; }
 :root[data-mode="dark"][data-season="winter"] { --season-accent: #A6C7D5; }
 :root[data-mode="dark"] body {
   background: var(--paper);
