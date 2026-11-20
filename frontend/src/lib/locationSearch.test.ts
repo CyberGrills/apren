@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeSearchText, searchLocations } from './locationSearch.ts';
+import { normalizeSearchText, resultsForActiveQuery, searchLocations } from './locationSearch.ts';
 
 const places = [
   { name: 'Eket' },
@@ -42,4 +42,11 @@ test('results are capped, and no match gives an empty list', () => {
   const many = Array.from({ length: 200 }, (_, index) => ({ name: `Town ${index}` }));
   assert.equal(searchLocations(many, 'town', 50).length, 50);
   assert.deepEqual(searchLocations(places, 'zzz'), []);
+});
+test('remote suggestions are scoped to the active query and hidden while loading', () => {
+  const result = { query: 'Uyo', items: places.slice(4, 6) };
+  assert.deepEqual(resultsForActiveQuery(result, 'Uyo'), result.items);
+  assert.deepEqual(resultsForActiveQuery(result, 'Eket'), []);
+  assert.deepEqual(resultsForActiveQuery(result, 'Uyo', true), []);
+  assert.deepEqual(resultsForActiveQuery(result, '   '), []);
 });
