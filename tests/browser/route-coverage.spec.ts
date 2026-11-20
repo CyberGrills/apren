@@ -6,6 +6,9 @@ const publicRoutes = [
   ['/campus-connect/art-culture', 'Discover the stories'], ['/creators/test-creator', 'Test Creator'],
   ['/install', 'Take 7even with you.'], ['/offline', 'offline'], ['/help', 'Help'],
   ['/booking-rules', 'Booking'], ['/register', 'Create'],
+  ['/admin/login', 'Sign in to 7even'], ['/appearance', 'Appearance'],
+  ['/forgot-password', 'Let’s get you back in.'], ['/reset-password', 'A fresh start.'],
+  ['/experiences/christmas-unplugged', 'Christmas'],
 ] as const;
 
 for (const [path, heading] of publicRoutes) {
@@ -43,6 +46,8 @@ test('guest business, reception and admin deep links redirect to the correct sig
     { path: '/business/venues?view=all', expected: /\/login\?returnTo=%2Fbusiness%2Fvenues%3Fview%3Dall/ },
     { path: '/reception', expected: /\/login\?returnTo=%2Freception/ },
     { path: '/admin/operations', expected: /\/admin\/login\?returnTo=%2Fadmin%2Foperations/ },
+    { path: '/business/apply', expected: /\/login\?returnTo=%2Fbusiness%2Fapply/ },
+    { path: '/checkout/test/payment-test', expected: /\/login\?returnTo=%2Fcheckout%2Ftest%2Fpayment-test/ },
   ];
   for (const item of cases) {
     await installApiMocks(page, null);
