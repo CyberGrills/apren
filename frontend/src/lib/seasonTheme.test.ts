@@ -68,7 +68,7 @@ test('appearance overrides load after every page stylesheet and cover shared pag
 test('saved appearance is applied before the React app paints', () => {
   assert.match(html, /localStorage\.getItem\("7even-color-mode"\)/);
   assert.match(html, /prefers-color-scheme: dark/);
-  assert.match(html, /document\.documentElement\.dataset\.mode/);
+  assert.match(html, /root\.dataset\.mode/);
   assert.match(html, /7even-season-theme/);
   assert.match(html, /document\.documentElement\.dataset\.season/);
   assert.match(html, /themeColor\.content = dark \? "#111A15" : "#fffdf8"/);
