@@ -110,7 +110,7 @@ export function IbomFestivalEvents() {
                 <button className="btn btn-primary ibom-event-action" type="button" onClick={() => setSelectedEvent(event)} aria-haspopup="dialog">
                   View event
                 </button>
-                <p className="ibom-event-credit">Official event artwork · Akwa Ibom State Government / Ibom Christmas Unplugged Media Centre</p>
+                <p className="ibom-event-credit">Official event artwork · Ibom Christmas Unplugged Festival Media Centre</p>
               </div>
             </article>
           ))}
