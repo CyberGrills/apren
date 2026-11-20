@@ -1,15 +1,18 @@
 /* 7EVEN brand palette. Loaded after global.css so these values win. */
 :root {
-  /* Permanent brand colours */
+  /* Permanent brand colours remain stable across every seasonal campaign. */
   --brand-primary: #174D3A;
   --brand-gold: #D6A84B;
   --brand-secondary: #F7F5EF;
   --brand-text: #26352E;
   --brand-text-muted: #4F5B54;
 
-  /* Interactive colour stays Forest Green in every season */
-  --accent: var(--brand-primary);
-  --accent-hover: color-mix(in oklch, var(--brand-primary) 82%, var(--brand-text));
+  /* Seasonal accents are applied through the shared design tokens. The logo,
+     core forest-green identity and warm-ivory canvas remain unchanged. */
+  --season-accent: var(--brand-primary);
+  --accent: var(--season-accent);
+  --accent-hover: color-mix(in oklch, var(--accent) 82%, var(--brand-text));
+  --season-surface: color-mix(in oklch, var(--season-accent) 11%, var(--brand-secondary));
 
   /* Spring */
   --spring-sage: #A8BFA5;
@@ -46,13 +49,12 @@
   --season-autumn: var(--autumn-burnt-orange);
   --season-winter: var(--winter-slate);
 
-  /* Defaults until a season is set */
+  /* Default values before the provider hydrates the selected season. */
   --season-tint: color-mix(in srgb, var(--brand-primary) 6%, var(--brand-secondary));
   --season-soft: color-mix(in srgb, var(--brand-primary) 12%, var(--brand-secondary));
   --season-deep: var(--brand-primary);
 }
 
-/* Seasons supply tints, ornaments and swatches. Text and controls stay brand colours. */
 :root[data-season="spring"] {
   --season-accent: var(--spring-leaf);
   --season-tint: var(--spring-mint);
