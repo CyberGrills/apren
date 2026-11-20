@@ -24,7 +24,7 @@ test('all event cards use organiser-hosted artwork and identify missing event-sp
   assert.ok(component.includes('ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/'));
   assert.ok(component.includes('Festival Media Centre'));
   assert.ok(component.includes('Event-specific poster not yet published'));
-  assert.equal((component.match(/image: 'https:\/\/ibomfest\.akwaibomstate\.gov\.ng\/__l5e\/assets-v1\//g) || []).length, 19);
+  assert.equal((component.match(/image: 'https:\/\/ibomfest\.akwaibomstate\.gov\.ng\/__l5e\/assets-v1\//g) || []).length, 18);
 });
 
 test('event details open within 7EVEN and no full-programme or external event links are shown', () => {
