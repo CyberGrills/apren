@@ -4,7 +4,7 @@ import { installApiMocks } from './mocks.ts';
 test('dark appearance applies across the page and persists after refresh', async ({ page }) => {
   await installApiMocks(page);
   await page.goto('/appearance');
-  await expect(page.getByRole('heading', { name: 'Appearance' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Appearance', exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: /Dark/ }).click();
   await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
