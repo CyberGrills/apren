@@ -39,7 +39,7 @@ export function DemoHotelsPage() {
           {visible.map((property) => (
             <article className="demo-catalog-card" key={property.id}>
               <div className="demo-catalog-gallery">
-                {property.images.slice(0,3).map((src,index) => <img key={src} src={src} alt={`Illustrative editorial property image ${index+1}; not an actual photo of ${property.name}`} loading="lazy" />)}
+                {property.images.slice(0,3).map((src,index) => <img key={src} src={src} alt={`Illustrative editorial property ${index+1}; not an actual view of ${property.name}`} loading="lazy" />)}
                 <span className="demo-only-pill">DEMO ONLY</span>
               </div>
               <div className="demo-catalog-card-copy">
