@@ -80,7 +80,6 @@
 .ibom-events-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; }
 .ibom-events-heading h2 { margin:.45rem 0; font:400 clamp(1.8rem,3vw,2.7rem)/1.05 var(--font-display); }
 .ibom-events-heading p:not(.public-eyebrow) { margin:0; color:var(--muted); line-height:1.65; }
-.ibom-events-source { display:inline-flex; align-items:center; gap:.45rem; min-height:44px; color:var(--accent); text-underline-offset:4px; white-space:nowrap; }
 .ibom-events-tools { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin:1.25rem 0 .5rem; }
 .ibom-events-search { display:flex; align-items:center; gap:.65rem; width:min(100%,440px); min-height:48px; padding:0 .9rem; border:1px solid var(--line); border-radius:var(--radius,8px); background:var(--surface); color:var(--muted); }
 .ibom-events-search:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
@@ -101,16 +100,19 @@
 .ibom-event-description { margin:0 0 .85rem; color:var(--muted); font-size:.86rem; line-height:1.65; }
 .ibom-event-venue { display:flex; align-items:flex-start; gap:.4rem; margin:auto 0 .35rem; font-size:.78rem; line-height:1.5; }
 .ibom-event-venue svg { flex:0 0 auto; margin-top:.15rem; color:var(--accent); }
-.ibom-event-time { margin:.25rem 0 .8rem; color:var(--muted); font-size:.76rem; }
+.ibom-event-time { margin:.25rem 0 .45rem; color:var(--muted); font-size:.76rem; }
+.ibom-event-entry { margin:0 0 .8rem; color:var(--accent); font-size:.78rem; font-weight:700; }
 .ibom-event-action { display:inline-flex; align-items:center; justify-content:center; gap:.45rem; width:100%; margin-top:auto; text-decoration:none; }
+.ibom-event-details { width:100%; margin-top:.8rem; padding:.85rem; border:1px solid var(--line); border-radius:var(--radius,8px); background:var(--public-panel); }
+.ibom-event-details h4 { margin:0 0 .5rem; font:400 1.1rem/1.2 var(--font-display); }
+.ibom-event-details p { margin:.35rem 0; color:var(--muted); font-size:.78rem; line-height:1.55; }
+.ibom-event-details strong { color:var(--ink); }
 .ibom-event-credit { margin:.65rem 0 0; color:var(--muted); font-size:.68rem; line-height:1.5; }
-.ibom-event-credit a { color:inherit; text-underline-offset:3px; }
 .ibom-events-disclosure { margin:1.25rem 0 0; color:var(--muted); font-size:.76rem; line-height:1.65; }
 .ibom-events-empty { padding:2rem; border:1px dashed var(--line); text-align:center; }
 @media(max-width:1000px) { .ibom-events-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:650px) {
   .ibom-events-heading,.ibom-events-tools { align-items:stretch; flex-direction:column; }
-  .ibom-events-source { align-self:flex-start; }
   .ibom-events-search { width:100%; }
   .ibom-events-months { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
   .ibom-events-months button { padding-inline:.4rem; }
