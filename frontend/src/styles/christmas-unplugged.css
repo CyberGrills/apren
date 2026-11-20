@@ -1,0 +1,49 @@
+.christmas-home-feature { padding-block: clamp(2.5rem, 6vw, 5rem); background: var(--brand-primary); color: var(--paper); }
+.christmas-home-feature-inner { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(250px,.8fr); gap:2rem; align-items:center; }
+.christmas-home-copy .public-eyebrow { color:color-mix(in srgb,var(--paper) 76%,transparent); }
+.christmas-home-copy h2 { max-width:16ch; font-size:clamp(2.2rem,4.5vw,4rem); line-height:1.03; margin:1rem 0; }
+.christmas-home-copy h2 em { color:var(--brand-gold,#d6a84b); font-style:normal; }
+.christmas-home-copy > p:not(.public-eyebrow) { max-width:58ch; line-height:1.8; color:color-mix(in srgb,var(--paper) 86%,transparent); }
+.christmas-home-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1.5rem; }
+.christmas-home-note { font-size:.72rem; line-height:1.6; opacity:.78; margin-top:1rem; }
+.christmas-home-art { min-height:300px; padding:2rem; border:1px solid color-mix(in srgb,var(--paper) 38%,transparent); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--brand-gold,#d6a84b) 23%,transparent),transparent 58%); }
+.christmas-home-year { font:clamp(5rem,12vw,9rem)/.8 var(--font-display); color:var(--brand-gold,#d6a84b); }
+.christmas-home-word { font-size:clamp(1.2rem,3vw,2rem); letter-spacing:.18em; font-weight:600; margin-top:1.3rem; }
+.christmas-home-place,.christmas-home-dates { font-size:.7rem; letter-spacing:.16em; margin-top:1rem; }
+.christmas-page { overflow:hidden; }
+.christmas-hero { background:linear-gradient(135deg,var(--brand-primary),color-mix(in srgb,var(--brand-primary) 78%,#111)); color:var(--paper); padding-block:2rem 5rem; }
+.christmas-hero-inner { max-width:1100px; }
+.christmas-back { display:inline-flex; gap:.5rem; align-items:center; color:var(--paper); min-height:44px; text-decoration:none; margin-bottom:2rem; }
+.christmas-hero .public-eyebrow { color:color-mix(in srgb,var(--paper) 72%,transparent); }
+.christmas-edition { color:var(--brand-gold,#d6a84b); letter-spacing:.2em; font-size:.8rem; margin:2rem 0 .5rem; }
+.christmas-hero h1 { font:400 clamp(3.6rem,9vw,8rem)/.9 var(--font-display); letter-spacing:-.06em; margin:0; }
+.christmas-hero h1 em { color:var(--brand-gold,#d6a84b); font-style:normal; }
+.christmas-subtitle { font:clamp(1.2rem,2.5vw,1.8rem)/1.4 var(--font-display); max-width:34ch; margin:1.5rem 0; }
+.christmas-meta { display:flex; flex-wrap:wrap; gap:.8rem 1.5rem; font-size:.86rem; }
+.christmas-meta span { display:inline-flex; align-items:center; gap:.5rem; }
+.christmas-hero-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:2rem; }
+.christmas-disclosure { font-size:.74rem; line-height:1.65; max-width:78ch; margin-top:1.5rem; color:color-mix(in srgb,var(--paper) 76%,transparent); }
+.christmas-intro { display:grid; grid-template-columns:1fr 1fr; gap:2rem 5rem; padding-block:clamp(3rem,7vw,6rem); }
+.christmas-intro h2,.christmas-section-heading h2,.christmas-plan h2 { font:400 clamp(2.2rem,4.5vw,3.8rem)/1.05 var(--font-display); margin:.8rem 0; }
+.christmas-intro-copy p { line-height:1.8; color:var(--muted); }
+.christmas-text-link { display:inline-flex; align-items:center; gap:.5rem; min-height:44px; color:var(--accent); text-underline-offset:4px; }
+.christmas-highlights { background:var(--public-panel); padding-block:clamp(3rem,7vw,6rem); }
+.christmas-section-heading { display:flex; align-items:end; justify-content:space-between; gap:1rem; margin-bottom:2rem; }
+.christmas-event-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
+.christmas-event-card { padding:1.5rem; background:var(--surface); border:1px solid var(--line); min-height:200px; }
+.christmas-event-date { color:var(--accent); font-size:.72rem; font-weight:700; letter-spacing:.16em; }
+.christmas-event-card h3 { font:400 1.5rem/1.15 var(--font-display); margin:1rem 0 .7rem; }
+.christmas-event-card p { color:var(--muted); font-size:.88rem; line-height:1.7; margin:0; }
+.christmas-discover { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; padding-block:clamp(3rem,7vw,6rem); }
+.christmas-discover article { padding:1.5rem; border:1px solid var(--line); }
+.christmas-discover article > svg { color:var(--accent); }
+.christmas-discover article h2 { font:400 1.7rem/1.15 var(--font-display); margin:.8rem 0; }
+.christmas-discover article p:not(.public-eyebrow) { color:var(--muted); line-height:1.7; font-size:.9rem; }
+.christmas-discover article a { display:inline-flex; gap:.4rem; align-items:center; min-height:44px; color:var(--accent); }
+.christmas-plan { background:var(--season-tint,var(--surface-subtle)); padding-block:3rem; }
+.christmas-plan-inner { display:flex; justify-content:space-between; align-items:center; gap:2rem; }
+.christmas-plan-inner > div:first-child { max-width:60ch; }
+.christmas-plan-inner p:not(.public-eyebrow) { color:var(--muted); line-height:1.8; }
+.christmas-plan-actions { display:flex; flex-wrap:wrap; gap:.75rem; }
+@media(max-width:800px) { .christmas-home-feature-inner,.christmas-intro { grid-template-columns:1fr; } .christmas-event-grid,.christmas-discover { grid-template-columns:repeat(2,minmax(0,1fr)); } .christmas-plan-inner { align-items:flex-start; flex-direction:column; } }
+@media(max-width:560px) { .christmas-home-art { min-height:220px; } .christmas-home-actions,.christmas-hero-actions,.christmas-plan-actions { flex-direction:column; align-items:stretch; } .christmas-event-grid,.christmas-discover { grid-template-columns:1fr; } .christmas-section-heading { align-items:flex-start; flex-direction:column; } }

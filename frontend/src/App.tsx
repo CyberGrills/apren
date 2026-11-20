@@ -29,6 +29,7 @@ const AuthPage = lazy(() => import('./pages/public/AuthPage.tsx').then((module) 
 const BusinessApplicationPage = lazy(() => import('./pages/public/BusinessApplicationPage.tsx').then((module) => ({ default: module.BusinessApplicationPage })));
 const DirectoryPage = lazy(() => import('./pages/public/DirectoryPage.tsx').then((module) => ({ default: module.DirectoryPage })));
 const ExplorePage = lazy(() => import('./pages/public/ExplorePage.tsx').then((module) => ({ default: module.ExplorePage })));
+const ChristmasUnpluggedPage = lazy(() => import('./pages/public/ChristmasUnpluggedPage.tsx').then((module) => ({ default: module.ChristmasUnpluggedPage })));
 const ArtCulturePage = lazy(() => import('./pages/public/ArtCulturePage.tsx').then((module) => ({ default: module.ArtCulturePage })));
 const HomePage = lazy(() => import('./pages/public/HomePage.tsx').then((module) => ({ default: module.HomePage })));
 const CreatorStudioPage = lazy(() => import('./pages/public/CreatorStudioPage.tsx').then((module) => ({ default: module.CreatorStudioPage })));
@@ -239,6 +240,7 @@ export function App() {
               <Route path="/install" element={<InstallAppPage />} />
               <Route path="/offline" element={<OfflinePage />} />
               <Route path="/explore" element={<ExplorePage />} />
+              <Route path="/experiences/christmas-unplugged" element={<ChristmasUnpluggedPage />} />
               <Route path="/campus-connect/art-culture" element={<ArtCulturePage />} />
               <Route path="/creators/:slug" element={<CreatorPublicPage />} />
               <Route path="/directory" element={<DirectoryPage />} />

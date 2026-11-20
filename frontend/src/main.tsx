@@ -24,6 +24,7 @@ import './styles/authentication.css';
 import './styles/offline.css';
 import './styles/public-header.css';
 import './styles/home.css';
+import './styles/christmas-unplugged.css';
 
 document.documentElement.dataset.season = seasonAt(new Date());
 const root = document.getElementById('root');
