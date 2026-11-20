@@ -7,6 +7,7 @@ const context = await readFile(new URL('../context/SeasonContext.tsx', import.me
 const appearance = await readFile(new URL('../styles/appearance.css', import.meta.url), 'utf8');
 const entry = await readFile(new URL('../main.tsx', import.meta.url), 'utf8');
 const html = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
+const serviceWorker = await readFile(new URL('../../public/sw.js', import.meta.url), 'utf8');
 
 test('every seasonal choice changes the shared accent and surface palette', () => {
   for (const season of ['spring', 'summer', 'autumn', 'winter']) {
@@ -66,4 +67,10 @@ test('saved appearance is applied before the React app paints', () => {
   assert.match(html, /localStorage\.getItem\("7even-color-mode"\)/);
   assert.match(html, /prefers-color-scheme: dark/);
   assert.match(html, /document\.documentElement\.dataset\.mode/);
+});
+
+
+test('service worker rotates the cached shell so installed clients receive appearance fixes', () => {
+  assert.match(serviceWorker, /const SHELL_CACHE = 'seven-shell-v6'/);
+  assert.match(serviceWorker, /key\.startsWith\('seven-shell-'\) && key !== SHELL_CACHE/);
 });
