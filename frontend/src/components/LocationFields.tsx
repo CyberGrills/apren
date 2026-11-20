@@ -261,7 +261,7 @@ export function DestinationInput({
             aria-busy={loading}
           >
             {options.map((item, index) => (
-              {/* biome-ignore lint/a11y/useFocusableInteractive: Options are intentionally not tab stops; keyboard focus stays on the combobox and aria-activedescendant identifies the active option. */}
+              // biome-ignore lint/a11y/useFocusableInteractive: Options are intentionally not tab stops; keyboard focus stays on the combobox and aria-activedescendant identifies the active option.
               <div
                 key={item.id}
                 id={`${id}-${index}`}
