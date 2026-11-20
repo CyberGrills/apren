@@ -7,10 +7,11 @@ const context = await readFile(new URL('../context/SeasonContext.tsx', import.me
 
 test('every seasonal choice changes the shared accent and surface palette', () => {
   for (const season of ['spring', 'summer', 'autumn', 'winter']) {
-    const rule = palette.match(new RegExp(\`:root\\\\[data-season="\${season}"\\\\]\\\\s*\\\\{([^}]*)\\\\}\`));
-    assert.ok(rule, \`Missing \${season} theme tokens\`);
-    assert.match(rule[1]!, /--season-accent:/, \`\${season} must define its accent\`);
-    assert.match(rule[1]!, /--season-tint:/, \`\${season} must define its tint\`);
+    const selector = ':root\\[data-season="' + season + '"\\]\\s*\\{([^}]*)\\}';
+    const rule = palette.match(new RegExp(selector));
+    assert.ok(rule, 'Missing ' + season + ' theme tokens');
+    assert.match(rule[1]!, /--season-accent:/, season + ' must define its accent');
+    assert.match(rule[1]!, /--season-tint:/, season + ' must define its tint');
   }
   assert.match(palette, /--accent:\s*var\(--season-accent\)/);
   assert.match(palette, /--accent-hover:\s*color-mix/);
