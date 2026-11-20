@@ -20,24 +20,33 @@ test('What to Do includes all 20 organiser-listed Ibom Christmas Unplugged event
   ]) assert.ok(component.includes(title), 'Missing official event: ' + title);
 });
 
-test('event artwork is sourced from the official festival host and credited', () => {
+test('all event cards use organiser-hosted artwork and identify missing event-specific posters', () => {
   assert.ok(component.includes('ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/'));
   assert.ok(component.includes('Festival Media Centre'));
   assert.ok(component.includes('Event-specific poster not yet published'));
+  assert.equal((component.match(/image: 'https:\/\/ibomfest\.akwaibomstate\.gov\.ng\/__l5e\/assets-v1\//g) || []).length, 19);
 });
 
-test('event actions go to official event information, not a fake 7EVEN ticket checkout', () => {
-  assert.ok(component.includes('https://ibomfest.akwaibomstate.gov.ng/schedule'));
-  assert.ok(component.includes('target="_blank" rel="noopener noreferrer"'));
-  assert.ok(component.includes('does not sell tickets'));
-  assert.ok(component.includes('Visitor entry is listed as free'));
+test('event details open within 7EVEN and no full-programme or external event links are shown', () => {
+  assert.ok(component.includes('aria-haspopup="dialog"'));
+  assert.ok(component.includes('role="dialog"'));
+  assert.ok(component.includes('setSelectedEvent(event)'));
+  assert.ok(component.includes('View event'));
+  assert.ok(component.includes('Free entry for visitors'));
+  assert.ok(component.includes('Visitor entry is free'));
+  assert.ok(!component.includes('Full official programme'));
+  assert.ok(!component.includes('scheduleUrl'));
+  assert.ok(!component.includes('officialUrl'));
+  assert.ok(!component.includes('target="_blank"'));
+  assert.ok(component.includes("event.key === 'Escape'"));
 });
 
-test('event directory supports accessible search, month filtering and responsive cards', () => {
+test('event directory supports accessible search, month filtering and responsive cards/dialog', () => {
   assert.ok(component.includes('aria-label="Search festival events"'));
   assert.ok(component.includes('aria-pressed={month === item.value}'));
   assert.ok(component.includes('aria-live="polite"'));
   assert.ok(css.includes('.ibom-events-grid'));
+  assert.ok(css.includes('.ibom-event-dialog'));
   assert.ok(css.includes('@media(max-width:650px)'));
   assert.ok(css.includes('@media(max-width:390px)'));
 });
