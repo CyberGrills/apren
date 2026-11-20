@@ -35,7 +35,7 @@ test('guest creator route redirects to sign-in and preserves the requested desti
 test('protected-route redirect preserves query parameters and URL fragments', async ({ page }) => {
   await installApiMocks(page, null);
   await page.goto('/creator?tab=drafts#artwork');
-  await expect(page).toHaveURL(/\\/login\\?returnTo=%2Fcreator%3Ftab%3Ddrafts%23artwork/);
+  await expect(page).toHaveURL(/\/login\?returnTo=%2Fcreator%3Ftab%3Ddrafts%23artwork/);
 });
 
 test('authenticated creator route loads the profile and draft workspace', async ({ page }) => {
