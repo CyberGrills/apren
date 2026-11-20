@@ -67,6 +67,15 @@ export function ChristmasUnpluggedPage() {
           <div className="public-container christmas-hero-inner">
             <Link className="christmas-back" to="/explore"><ArrowLeft size={16} aria-hidden="true" /> Back to explore</Link>
             <p className="public-eyebrow">7EVEN · SEASONAL EXPERIENCE · UYO, AKWA IBOM</p>
+            <figure className="christmas-hero-artwork">
+              <img
+                src="https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/111485d1-e94f-48d5-b3b9-48dc9503935e/ibom-christmas-logo.png"
+                alt="Official Ibom Christmas Unplugged 4.0 festival artwork"
+                fetchPriority="high"
+                decoding="async"
+              />
+              <figcaption>Official festival artwork · <a href="https://ibomfest.akwaibomstate.gov.ng/media" target="_blank" rel="noopener noreferrer">Source: festival Media Centre</a></figcaption>
+            </figure>
             <p className="christmas-edition">EDITION 04</p>
             <h1 id="christmas-title">Christmas <em>Unplugged.</em></h1>
             <p className="christmas-subtitle">Taste of Akwa Ibom: Our Food, Culture and Heritage.</p>
