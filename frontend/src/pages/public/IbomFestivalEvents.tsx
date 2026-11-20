@@ -1,8 +1,7 @@
-import { ExternalLink, CalendarDays, MapPin, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { CalendarDays, MapPin, Search, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 const festivalArtwork = 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/111485d1-e94f-48d5-b3b9-48dc9503935e/ibom-christmas-logo.png';
-const scheduleUrl = 'https://ibomfest.akwaibomstate.gov.ng/schedule';
 
 type FestivalEvent = {
   date: string;
@@ -13,7 +12,6 @@ type FestivalEvent = {
   image: string;
   imageAlt: string;
   imageNote?: string;
-  officialUrl?: string;
   time?: string;
 };
 
@@ -26,9 +24,9 @@ const events: FestivalEvent[] = [
   { date: '2026-12-12', dateLabel: '12 December 2026', title: 'Community Outreach', description: 'A Christmas community outreach as part of the festival programme.', venue: 'Unity Park, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/490ea57a-cd75-43ac-895d-c8deb74e9547/community-outreach-2026.jpg', imageAlt: 'Official Community Outreach poster' },
   { date: '2026-12-15', dateLabel: '15 December 2026', title: 'Women’s Day', description: 'Celebrating the women of Akwa Ibom across professions and communities.', venue: 'Unity Park, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/cf562f93-4d77-49cd-a343-92186c444193/womens-day-2026.jpg', imageAlt: 'Official Women’s Day poster' },
   { date: '2026-12-16', dateLabel: '16 December 2026', title: 'ALGON Night', description: 'A celebration of the Association of Local Governments of Nigeria at the festival.', venue: 'Unity Park, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/dd1d4f2a-cc08-40c6-8907-2d668ce65b4a/algon-night-2026.jpg', imageAlt: 'Official ALGON Night poster' },
-  { date: '2026-12-18', dateLabel: '18 December 2026', title: 'Akwa Ibom Christmas Carols Festival', description: 'Choirs and worshippers gather under the theme “Peace on Earth, Goodwill to Men.”', venue: 'Amphitheatre, Unity Park, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/f9d563b5-8649-4473-bdb5-1a0fe8d9b6b6/christmas-carols-festival-2026.jpg', imageAlt: 'Official Akwa Ibom Christmas Carols Festival flyer', officialUrl: 'https://ibomfest.akwaibomstate.gov.ng/carol-night' },
+  { date: '2026-12-18', dateLabel: '18 December 2026', title: 'Akwa Ibom Christmas Carols Festival', description: 'Choirs and worshippers gather under the theme “Peace on Earth, Goodwill to Men.”', venue: 'Amphitheatre, Unity Park, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/f9d563b5-8649-4473-bdb5-1a0fe8d9b6b6/christmas-carols-festival-2026.jpg', imageAlt: 'Official Akwa Ibom Christmas Carols Festival flyer' },
   { date: '2026-12-19', dateLabel: '19 December 2026', title: 'Niger Delta Day', description: 'A celebration of the people, traditions and cultural heritage of the Niger Delta.', venue: 'Unity Park, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/fb2c21a3-b12d-48aa-bad7-960183f968ff/niger-delta-day-2026.jpg', imageAlt: 'Official Niger Delta Day poster' },
-  { date: '2026-12-20', dateLabel: '20 December 2026', title: 'Mbopo Akwa Ibom Beauty Pageant', description: 'The 31-LGA cultural pageant and tourism ambassador platform. Grand finale at 6:00 PM.', venue: 'Arise Palm Banquet Hall, Brooks Street, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/3a249273-2936-4f7e-8e8d-a65b844b3745/mbopo-entries-2026.jpg', imageAlt: 'Official Mbopo Akwa Ibom pageant flyer', imageNote: 'Contestant entry closed 13 November', officialUrl: 'https://ibomfest.akwaibomstate.gov.ng/mbopo-akwa-ibom', time: '6:00 PM' },
+  { date: '2026-12-20', dateLabel: '20 December 2026', title: 'Mbopo Akwa Ibom Beauty Pageant', description: 'The 31-LGA cultural pageant and tourism ambassador platform. Grand finale at 6:00 PM.', venue: 'Arise Palm Banquet Hall, Brooks Street, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/3a249273-2936-4f7e-8e8d-a65b844b3745/mbopo-entries-2026.jpg', imageAlt: 'Official Mbopo Akwa Ibom pageant flyer', imageNote: 'Contestant entry closed 13 November', time: '6:00 PM' },
   { date: '2026-12-21', dateLabel: '21 December 2026', title: 'Arise Football Fiesta', description: 'Football teams representing all 31 LGAs compete, with the grand finale on 21 December.', venue: 'Unity Park, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/588bfad2-cb53-4de4-b845-5576890efae3/arise-football-fiesta-2026.jpg', imageAlt: 'Official Arise Football Fiesta poster' },
   { date: '2026-12-22', dateLabel: '22 December 2026', title: 'Non-Indigenes Day', description: 'A celebration of the diverse communities who call Akwa Ibom home.', venue: 'Unity Park, Uyo', image: 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/a4ddfb69-3481-4c8d-b09f-f595ddd4b2d7/non-indigenes-day-2026.jpg', imageAlt: 'Official Non-Indigenes Day poster' },
   { date: '2026-12-23', dateLabel: '23 December 2026', title: 'EXCO-Hangout', description: 'An event listed in the official festival programme. Further details will be published by the organisers.', venue: 'Unity Park, Uyo', image: festivalArtwork, imageAlt: 'Official Ibom Christmas Unplugged 4.0 festival artwork', imageNote: 'Event-specific poster not yet published' },
@@ -49,11 +47,21 @@ const months = [
 export function IbomFestivalEvents() {
   const [query, setQuery] = useState('');
   const [month, setMonth] = useState('all');
+  const [selectedEvent, setSelectedEvent] = useState<FestivalEvent | null>(null);
   const visibleEvents = useMemo(() => events.filter((event) => {
     const matchesMonth = month === 'all' || event.date.startsWith(month);
     const haystack = [event.title, event.description, event.venue].join(' ').toLocaleLowerCase();
     return matchesMonth && haystack.includes(query.trim().toLocaleLowerCase());
   }), [month, query]);
+
+  useEffect(() => {
+    if (!selectedEvent) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setSelectedEvent(null);
+    }
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [selectedEvent]);
 
   return (
     <section className="ibom-events-section" id="ibom-festival-events" aria-labelledby="ibom-events-title">
@@ -62,10 +70,8 @@ export function IbomFestivalEvents() {
           <p className="public-eyebrow">Official festival programme · Uyo</p>
           <h2 id="ibom-events-title">Ibom Christmas Unplugged 4.0</h2>
           <p>Explore all 20 flagship events announced for 30 November–31 December 2026.</p>
+          <p className="ibom-events-free-entry">Free entry for visitors</p>
         </div>
-        <a className="ibom-events-source" href={scheduleUrl} target="_blank" rel="noopener noreferrer">
-          Full official programme <ExternalLink size={15} aria-hidden="true" />
-        </a>
       </div>
       <div className="ibom-events-tools">
         <label className="ibom-events-search">
@@ -85,20 +91,26 @@ export function IbomFestivalEvents() {
         <div className="ibom-events-grid">
           {visibleEvents.map((event) => (
             <article className="ibom-event-card" key={event.title}>
-              <a className="ibom-event-image-link" href={event.officialUrl ?? scheduleUrl} target="_blank" rel="noopener noreferrer" aria-label={'View ' + event.title + ' on the official festival website'}>
+              <button
+                className="ibom-event-image-link"
+                type="button"
+                onClick={() => setSelectedEvent(event)}
+                aria-label={'View details for ' + event.title}
+                aria-haspopup="dialog"
+              >
                 <img src={event.image} alt={event.imageAlt} loading="lazy" decoding="async" />
                 {event.imageNote && <span className="ibom-event-image-note">{event.imageNote}</span>}
-              </a>
+              </button>
               <div className="ibom-event-card-content">
                 <p className="ibom-event-date"><CalendarDays size={14} aria-hidden="true" /> {event.dateLabel}</p>
                 <h3>{event.title}</h3>
                 <p className="ibom-event-description">{event.description}</p>
                 <p className="ibom-event-venue"><MapPin size={14} aria-hidden="true" /> {event.venue}</p>
                 <p className="ibom-event-time">{event.time ?? 'Time to be announced'}</p>
-                <a className="btn btn-primary ibom-event-action" href={event.officialUrl ?? scheduleUrl} target="_blank" rel="noopener noreferrer">
-                  View official event <ExternalLink size={15} aria-hidden="true" />
-                </a>
-                <p className="ibom-event-credit">Official event artwork · <a href="https://ibomfest.akwaibomstate.gov.ng/media" target="_blank" rel="noopener noreferrer">Festival Media Centre</a></p>
+                <button className="btn btn-primary ibom-event-action" type="button" onClick={() => setSelectedEvent(event)} aria-haspopup="dialog">
+                  View event
+                </button>
+                <p className="ibom-event-credit">Official event artwork · Akwa Ibom State Government / Ibom Christmas Unplugged Media Centre</p>
               </div>
             </article>
           ))}
@@ -109,7 +121,27 @@ export function IbomFestivalEvents() {
           <button type="button" className="btn btn-secondary" onClick={() => { setQuery(''); setMonth('all'); }}>Clear filters</button>
         </div>
       )}
-      <p className="ibom-events-disclosure">Visitor entry is listed as free by the organisers. Event times and details may change; check the official programme before travelling. 7EVEN is an independent discovery platform and does not sell tickets or represent the organisers.</p>
+      <p className="ibom-events-disclosure">Visitor entry is free. Event times and details may change; check this 7EVEN event directory for updates before travelling. 7EVEN is an independent discovery platform and does not sell tickets or represent the organisers.</p>
+      {selectedEvent && (
+        <div className="ibom-event-dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedEvent(null); }}>
+          <section className="ibom-event-dialog" role="dialog" aria-modal="true" aria-labelledby="ibom-event-dialog-title">
+            <button className="ibom-event-dialog-close" type="button" onClick={() => setSelectedEvent(null)} aria-label="Close event details">
+              <X size={20} aria-hidden="true" />
+            </button>
+            <img className="ibom-event-dialog-image" src={selectedEvent.image} alt={selectedEvent.imageAlt} />
+            <div className="ibom-event-dialog-content">
+              <p className="ibom-event-date"><CalendarDays size={14} aria-hidden="true" /> {selectedEvent.dateLabel}</p>
+              <h3 id="ibom-event-dialog-title">{selectedEvent.title}</h3>
+              <p>{selectedEvent.description}</p>
+              <p className="ibom-event-venue"><MapPin size={15} aria-hidden="true" /> {selectedEvent.venue}</p>
+              <p className="ibom-event-time">{selectedEvent.time ?? 'Time to be announced'}</p>
+              <p className="ibom-event-dialog-free">Free entry for visitors</p>
+              {selectedEvent.imageNote && <p className="ibom-event-dialog-note">{selectedEvent.imageNote}</p>}
+              <button className="btn btn-primary" type="button" onClick={() => setSelectedEvent(null)}>Close details</button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
