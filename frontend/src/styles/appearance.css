@@ -82,6 +82,11 @@
   .creator-profile-card,
   .art-culture-card,
   .offering-card,
+  .ibom-events-section,
+  .ibom-event-card,
+  .ibom-event-details,
+  .ibom-events-search,
+  .ibom-events-months button,
   .settings-summary,
   .availability-calendar
 ) {
