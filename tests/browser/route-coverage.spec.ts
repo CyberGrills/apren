@@ -40,9 +40,9 @@ test('protected-route redirect preserves query parameters and URL fragments', as
 
 test('guest business, reception and admin deep links redirect to the correct sign-in route', async ({ page }) => {
   const cases = [
-    { path: '/business/venues?view=all', expected: /\\/login\\?returnTo=%2Fbusiness%2Fvenues%3Fview%3Dall/ },
-    { path: '/reception', expected: /\\/login\\?returnTo=%2Freception/ },
-    { path: '/admin/operations', expected: /\\/admin\\/login\\?returnTo=%2Fadmin%2Foperations/ },
+    { path: '/business/venues?view=all', expected: /\/login\?returnTo=%2Fbusiness%2Fvenues%3Fview%3Dall/ },
+    { path: '/reception', expected: /\/login\?returnTo=%2Freception/ },
+    { path: '/admin/operations', expected: /\/admin\/login\?returnTo=%2Fadmin%2Foperations/ },
   ];
   for (const item of cases) {
     await installApiMocks(page, null);
@@ -66,9 +66,9 @@ test('direct public deep links remain available after a browser refresh', async 
 test('customer workspace aliases resolve to the canonical bookings route', async ({ page }) => {
   await installApiMocks(page, 'CUSTOMER');
   await page.goto('/app');
-  await expect(page).toHaveURL(/\\/app\\/bookings$/);
+  await expect(page).toHaveURL(/\/app\/bookings$/);
   await page.goto('/app/points');
-  await expect(page).toHaveURL(/\\/app\\/bookings$/);
+  await expect(page).toHaveURL(/\/app\/bookings$/);
 });
 
 test('authenticated creator route loads the profile and draft workspace', async ({ page }) => {
