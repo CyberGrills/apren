@@ -42,7 +42,7 @@ jobs:
         run: npm test
 
       - name: Lint frontend and browser tests
-        run: npx biome lint frontend/src tests/browser
+        run: npx biome lint frontend/src tests/browser --max-diagnostics=500
 
       - name: Run browser route, responsive, and accessibility tests
         run: npm run test:browser
