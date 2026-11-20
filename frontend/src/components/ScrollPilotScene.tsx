@@ -24,6 +24,7 @@ export function ScrollPilotScene() {
     if (!audio) return;
     audio.pause();
     audio.currentTime = 0;
+    audio.src = voiceTrack;
     setSpeaking(false);
     setAudioReady(false);
     setVoiceNote('Preparing the professional Nigerian voice recording…');
@@ -212,7 +213,6 @@ export function ScrollPilotScene() {
         <section className="seven-pilot-audio" aria-label="Virtual pilot audio controls">
           <audio
             ref={audioRef}
-            src={voiceTrack}
             preload="metadata"
             onCanPlay={() => {
               setAudioReady(true);
