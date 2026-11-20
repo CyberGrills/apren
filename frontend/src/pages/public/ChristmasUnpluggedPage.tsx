@@ -125,9 +125,9 @@ export function ChristmasUnpluggedPage() {
             </div>
             <label className="christmas-lga-search">
               <Search size={18} aria-hidden="true" />
-              <span className="sr-only">Search local government areas or dishes</span>
               <input
                 type="search"
+                aria-label="Search local government areas or dishes"
                 value={lgaSearch}
                 onChange={(event) => setLgaSearch(event.target.value)}
                 placeholder="Search an LGA or local dish"
