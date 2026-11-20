@@ -283,15 +283,6 @@ export function ExplorePage() {
             <Search size={17} aria-hidden="true" /> {language === 'pcm' ? 'Find places' : 'Find places'}
           </button>
         </form>
-        {isStaySearch && (
-          <a className="explore-skip-results" href="#explore-results-region">
-            {language === 'pcm'
-              ? 'Skip map and pilot; make I see places to stay'
-              : 'Skip map and pilot; go straight to stay results'}
-          </a>
-        )}
-        {isStaySearch && <GoogleMapsScene />}
-        {isStaySearch && <ScrollPilotScene />}
         <section
           id="explore-results-region"
           className="explore-results-region"
@@ -301,14 +292,20 @@ export function ExplorePage() {
         >
           <div className="explore-results-heading">
             <p aria-live="polite">
-              {loading
+              {loading || directoryLoading
                 ? (language === 'pcm' ? 'We dey find places…' : 'Finding places…')
-                : data
-                  ? `${data.length} ${data.length === 1 ? 'place' : 'places'} on this page`
-                  : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
+                : error
+                  ? (language === 'pcm' ? 'We no fit load 7even offerings right now.' : 'Published 7even offerings could not be loaded.')
+                  : data
+                    ? language === 'pcm'
+                      ? `${data.length} published 7even offers · ${directoryProfiles.length + directoryListings.length} directory-only places`
+                      : `${data.length} published ${data.length === 1 ? 'offering' : 'offerings'} · ${directoryProfiles.length + directoryListings.length} directory-only ${directoryProfiles.length + directoryListings.length === 1 ? 'place' : 'places'}`
+                    : (language === 'pcm' ? 'Places for 7even' : 'Places on 7even')}
             </p>
             <span>
-              {language === 'pcm' ? 'These listings come from 7even. Confirm room availability, final price and capacity before you book.' : 'Listings are shown from 7even inventory. Room availability, final price and capacity must be confirmed before booking.'}
+              {language === 'pcm'
+                ? 'Published 7even offers show booking details. Confirm room availability, final price and capacity before you book. Directory-only places na discovery information; you no fit book dem through 7even.'
+                : 'Published 7even offerings show their booking details. Confirm room availability, final price and capacity before you book. Directory-only profiles and source listings are for discovery and cannot be booked through 7even.'}
             </span>
           </div>
         {loading && <Loading />}
@@ -323,34 +320,6 @@ export function ExplorePage() {
         )}
         {directoryLoading && (
           <p className="seven-directory-loading" role="status">Loading additional business listings…</p>
-        )}
-        {directoryProfiles.length > 0 && (
-          <section className="explore-results" aria-labelledby="explore-business-profiles-title">
-            <div className="explore-results-heading">
-              <h2 id="explore-business-profiles-title">Business profiles</h2>
-              <span>Directory listings only · not bookable through 7even</span>
-            </div>
-            <div className="explore-grid">
-              {directoryProfiles.map((profile) => (
-                <BusinessDirectoryCard key={profile.id} profile={profile} />
-              ))}
-            </div>
-          </section>
-        )}
-        {directoryListings.length > 0 && (
-          <section className="explore-results" aria-labelledby="explore-source-listings-title">
-            <div className="explore-results-heading">
-              <h2 id="explore-source-listings-title">
-                {kind === 'DINING' ? 'Dining around you' : 'Things to explore'}
-              </h2>
-              <span>Source-backed directory listings · confirm details with each venue</span>
-            </div>
-            <div className="explore-grid">
-              {directoryListings.map((listing) => (
-                <DirectoryListingCard key={listing.id} listing={listing} />
-              ))}
-            </div>
-          </section>
         )}
         {data && data.length > 0 && (
           <section className="explore-results" aria-labelledby="explore-results-title">
@@ -393,7 +362,35 @@ export function ExplorePage() {
             </button>
           </nav>
         )}
-        {data?.length === 0 && directoryProfiles.length === 0 && directoryListings.length === 0 && (
+        {directoryProfiles.length > 0 && (
+          <section className="explore-results" aria-labelledby="explore-business-profiles-title">
+            <div className="explore-results-heading">
+              <h2 id="explore-business-profiles-title">Business profiles</h2>
+              <span>Directory listings only · not bookable through 7even</span>
+            </div>
+            <div className="explore-grid">
+              {directoryProfiles.map((profile) => (
+                <BusinessDirectoryCard key={profile.id} profile={profile} />
+              ))}
+            </div>
+          </section>
+        )}
+        {directoryListings.length > 0 && (
+          <section className="explore-results" aria-labelledby="explore-source-listings-title">
+            <div className="explore-results-heading">
+              <h2 id="explore-source-listings-title">
+                {kind === 'DINING' ? 'Dining around you' : 'Things to explore'}
+              </h2>
+              <span>Source-backed directory listings · confirm details with each venue</span>
+            </div>
+            <div className="explore-grid">
+              {directoryListings.map((listing) => (
+                <DirectoryListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          </section>
+        )}
+        {!loading && !directoryLoading && !error && !directoryError && data?.length === 0 && directoryProfiles.length === 0 && directoryListings.length === 0 && (
           <EmptyState
             title={language === 'pcm' ? 'No place match this search yet.' : 'No places match this search yet.'}
             description={isStaySearch
@@ -430,6 +427,19 @@ export function ExplorePage() {
           />
         )}
         </section>
+
+        {isStaySearch && (
+          <section className="explore-secondary-discovery" aria-labelledby="explore-secondary-title">
+            <div className="explore-secondary-header">
+              <p className="public-eyebrow">More ways to explore</p>
+              <h2 id="explore-secondary-title">Optional discovery views</h2>
+            </div>
+            <div className="explore-secondary-surfaces">
+              <GoogleMapsScene />
+              <ScrollPilotScene />
+            </div>
+          </section>
+        )}
       </main>
       <PublicFooter />
     </div>
