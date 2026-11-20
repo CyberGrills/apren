@@ -145,7 +145,7 @@ export function GoogleMapsScene() {
     return () => {
       cancelled = true;
     };
-  }, [nearViewport, apiKey]);
+  }, [nearViewport]);
 
   return (
     <section className="seven-map-scene" ref={sectionRef} aria-labelledby="seven-map-title">
