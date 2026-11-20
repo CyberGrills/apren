@@ -266,15 +266,10 @@ export function DestinationInput({
                 id={`${id}-${index}`}
                 role="option"
                 aria-selected={active === index}
-                tabIndex={-1}
                 className={active === index ? 'active' : ''}
-                onPointerDown={(event) => event.preventDefault()}
-                onClick={() => select(item)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    select(item);
-                  }
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  select(item);
                 }}
               >
                 <MapPin size={18} aria-hidden="true" />
