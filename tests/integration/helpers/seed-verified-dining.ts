@@ -35,11 +35,12 @@ export async function seedVerifiedDining(pool: Pool): Promise<void> {
            )
          )
        )
-     WHERE b.business_id IN (
-       SELECT DISTINCT o.business_id
+     WHERE EXISTS (
+       SELECT 1
        FROM seven.offerings AS o
-       JOIN seven.sectors AS s USING (sector_id)
-       WHERE s.sector_code='DINING'
+       JOIN seven.sectors AS s ON s.sector_id = o.sector_id
+       WHERE o.business_id = b.business_id
+         AND s.sector_code = 'DINING'
      )
        AND b.workflow_state_id=(
          SELECT workflow_state_id FROM seven.workflow_states
