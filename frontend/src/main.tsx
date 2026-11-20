@@ -25,6 +25,7 @@ import './styles/offline.css';
 import './styles/public-header.css';
 import './styles/home.css';
 import './styles/christmas-unplugged.css';
+import './styles/appearance.css'; // Keep appearance overrides last so every page respects the selected mode.
 
 document.documentElement.dataset.season = seasonAt(new Date());
 const root = document.getElementById('root');
