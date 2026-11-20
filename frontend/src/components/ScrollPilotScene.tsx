@@ -31,7 +31,7 @@ export function ScrollPilotScene() {
     return () => {
       audio.pause();
     };
-  }, [voiceTrack]);
+  }, [language]);
 
   function playPilot() {
     if (muted || !audioReady || !audioRef.current) return;
@@ -209,10 +209,9 @@ export function ScrollPilotScene() {
           <div className="seven-pilot-orbit-label seven-pilot-label-top">DISCOVER</div>
           <div className="seven-pilot-orbit-label seven-pilot-label-bottom">DECIDE AT YOUR PACE</div>
         </div>
-        <div className="seven-pilot-audio" aria-label="Virtual pilot audio controls">
+        <section className="seven-pilot-audio" aria-label="Virtual pilot audio controls">
           <audio
             ref={audioRef}
-            key={voiceTrack}
             src={voiceTrack}
             preload="metadata"
             onCanPlay={() => {
@@ -233,7 +232,15 @@ export function ScrollPilotScene() {
               setSpeaking(false);
               setVoiceNote('The professional recording has not been added yet. Captions remain available.');
             }}
-          />
+          >
+            <track
+              kind="captions"
+              src={language === 'pcm' ? '/audio/virtual-pilot/primary-pcm-ng.vtt' : '/audio/virtual-pilot/primary-en-ng.vtt'}
+              srcLang={language === 'pcm' ? 'pcm-NG' : 'en-NG'}
+              label={language === 'pcm' ? 'Nigerian Pidgin' : 'English'}
+              default
+            />
+          </audio>
           <div className="seven-pilot-audio-actions">
             <button type="button" className="btn btn-primary" onClick={playPilot} disabled={muted || !audioReady || speaking}>Play voice</button>
             <button type="button" className="btn btn-secondary" onClick={pausePilot} disabled={!speaking}>Pause</button>
@@ -243,7 +250,7 @@ export function ScrollPilotScene() {
           </div>
           <p className="seven-pilot-caption" aria-live="polite">{caption}</p>
           <p className="seven-pilot-voice-note" role="status">{voiceNote}</p>
-        </div>
+        </section>
       </div>
     </section>
   );
