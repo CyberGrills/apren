@@ -41,8 +41,14 @@ jobs:
       - name: Run automated tests
         run: npm test
 
+      - name: Lint frontend and browser tests
+        run: npx biome lint frontend/src tests/browser
+
       - name: Run browser route, responsive, and accessibility tests
         run: npm run test:browser
 
       - name: Build production frontend
         run: npm run build
+
+      - name: Verify production demo redirects
+        run: npm run test:browser:production

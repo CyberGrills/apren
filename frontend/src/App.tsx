@@ -72,7 +72,7 @@ function Protected({ roles }: { roles?: Role[] }) {
   if (!user)
     return (
       <Navigate
-        to={`${loginPathForWorkspace(roles)}?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
+        to={`${loginPathForWorkspace(roles)}?returnTo=${encodeURIComponent(location.pathname + location.search + location.hash)}`}
         replace
       />
     );

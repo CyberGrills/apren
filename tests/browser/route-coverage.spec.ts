@@ -6,6 +6,9 @@ const publicRoutes = [
   ['/campus-connect/art-culture', 'Discover the stories'], ['/creators/test-creator', 'Test Creator'],
   ['/install', 'Take 7even with you.'], ['/offline', 'offline'], ['/help', 'Help'],
   ['/booking-rules', 'Booking'], ['/register', 'Create'],
+  ['/admin/login', 'Sign in to 7even'], ['/appearance', 'Appearance'],
+  ['/forgot-password', 'Let’s get you back in.'], ['/reset-password', 'A fresh start.'],
+  ['/experiences/christmas-unplugged', 'Christmas'],
 ] as const;
 
 for (const [path, heading] of publicRoutes) {
@@ -30,6 +33,47 @@ test('guest creator route redirects to sign-in and preserves the requested desti
   await installApiMocks(page, null);
   await page.goto('/creator');
   await expect(page).toHaveURL(/\/login\?returnTo=%2Fcreator/);
+});
+
+test('protected-route redirect preserves query parameters and URL fragments', async ({ page }) => {
+  await installApiMocks(page, null);
+  await page.goto('/creator?tab=drafts#artwork');
+  await expect(page).toHaveURL(/\/login\?returnTo=%2Fcreator%3Ftab%3Ddrafts%23artwork/);
+});
+
+test('guest business, reception and admin deep links redirect to the correct sign-in route', async ({ page }) => {
+  const cases = [
+    { path: '/business/venues?view=all', expected: /\/login\?returnTo=%2Fbusiness%2Fvenues%3Fview%3Dall/ },
+    { path: '/reception', expected: /\/login\?returnTo=%2Freception/ },
+    { path: '/admin/operations', expected: /\/admin\/login\?returnTo=%2Fadmin%2Foperations/ },
+    { path: '/business/apply', expected: /\/login\?returnTo=%2Fbusiness%2Fapply/ },
+    { path: '/checkout/test/payment-test', expected: /\/login\?returnTo=%2Fcheckout%2Ftest%2Fpayment-test/ },
+  ];
+  for (const item of cases) {
+    await installApiMocks(page, null);
+    await page.goto(item.path);
+    await expect(page).toHaveURL(item.expected);
+  }
+});
+
+test('direct public deep links remain available after a browser refresh', async ({ page }) => {
+  await installApiMocks(page);
+  await page.goto('/campus-connect/art-culture');
+  await expect(page.getByRole('heading', { name: 'Discover the stories' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Discover the stories' })).toBeVisible();
+  await page.goto('/creators/test-creator');
+  await expect(page.getByRole('heading', { name: 'Test Creator' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Test Creator' })).toBeVisible();
+});
+
+test('customer workspace aliases resolve to the canonical bookings route', async ({ page }) => {
+  await installApiMocks(page, 'CUSTOMER');
+  await page.goto('/app');
+  await expect(page).toHaveURL(/\/app\/bookings$/);
+  await page.goto('/app/points');
+  await expect(page).toHaveURL(/\/app\/bookings$/);
 });
 
 test('authenticated creator route loads the profile and draft workspace', async ({ page }) => {
@@ -71,6 +115,19 @@ test('unknown routes render the not-found recovery screen', async ({ page }) => 
   await installApiMocks(page, null);
   await page.goto('/not-a-real-7even-route');
   await expect(page.getByText('This page could not be found. Continue from the home page.')).toBeVisible();
+});
+
+test('business and reception roles cannot cross into admin or each other’s restricted workspace', async ({ page }) => {
+  const cases = [
+    { path: '/admin', role: 'BUSINESS_OWNER' as const },
+    { path: '/admin', role: 'RECEPTION' as const },
+    { path: '/business', role: 'RECEPTION' as const },
+  ];
+  for (const item of cases) {
+    await installApiMocks(page, item.role);
+    await page.goto(item.path);
+    await expect(page.getByText('Sign in with an account assigned to this workspace.')).toBeVisible();
+  }
 });
 
 test('creator API failure is announced and can be retried', async ({ page }) => {
