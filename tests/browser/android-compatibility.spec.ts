@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Android-sized Things to do experience', () => {
-  test('event cards stack cleanly at common Android phone widths', async ({ page }) => {
+  test('event cards adapt to Android viewport widths without clipping or horizontal overflow', async ({ page }) => {
     await page.goto('/explore?kind=EXPERIENCE');
     await expect(page.getByRole('heading', { name: 'Ibom Christmas Unplugged 4.0' })).toBeVisible();
 
-    for (const width of [360, 393, 412]) {
+    for (const width of [320, 360, 393, 412, 480, 600]) {
       await page.setViewportSize({ width, height: 850 });
       const card = page.locator('.ibom-event-card').first();
       const poster = page.locator('.ibom-event-image-link').first();
@@ -16,20 +16,39 @@ test.describe('Android-sized Things to do experience', () => {
         const posterElement = document.querySelector<HTMLElement>('.ibom-event-image-link');
         const contentElement = document.querySelector<HTMLElement>('.ibom-event-card-content');
         if (!cardElement || !posterElement || !contentElement) throw new Error('Event card elements are missing');
+        const cardRect = cardElement.getBoundingClientRect();
+        const posterRect = posterElement.getBoundingClientRect();
+        const contentRect = contentElement.getBoundingClientRect();
         return {
           direction: getComputedStyle(cardElement).flexDirection,
-          posterBottom: posterElement.getBoundingClientRect().bottom,
-          contentTop: contentElement.getBoundingClientRect().top,
+          cardWidth: cardRect.width,
+          posterBottom: posterRect.bottom,
+          posterHeight: posterRect.height,
+          contentTop: contentRect.top,
+          contentWidth: contentRect.width,
           documentWidth: document.documentElement.scrollWidth,
           viewportWidth: window.innerWidth,
         };
       });
       expect(layout.direction).toBe('column');
       expect(layout.posterBottom).toBeLessThanOrEqual(layout.contentTop + 1);
+      expect(layout.cardWidth).toBeLessThanOrEqual(layout.viewportWidth);
+      expect(layout.contentWidth).toBeLessThanOrEqual(layout.cardWidth);
+      expect(layout.posterHeight).toBeLessThanOrEqual(302);
       expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
       await expect(poster).toBeVisible();
       await expect(content).toBeVisible();
     }
+
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.locator('.ibom-event-card').first()).toBeVisible();
+    const landscape = await page.evaluate(() => ({
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+      gridColumns: getComputedStyle(document.querySelector('.ibom-events-grid')!).gridTemplateColumns,
+    }));
+    expect(landscape.documentWidth).toBeLessThanOrEqual(landscape.viewportWidth);
+    expect(landscape.gridColumns.split(' ').length).toBeGreaterThanOrEqual(1);
   });
 
   test('event search, detail expansion and page scrolling work on touch-sized screens', async ({ page }) => {
