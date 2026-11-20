@@ -26,11 +26,16 @@ test('event artwork is sourced from the official festival host and credited', ()
   assert.ok(component.includes('Event-specific poster not yet published'));
 });
 
-test('event actions go to official event information, not a fake 7EVEN ticket checkout', () => {
-  assert.ok(component.includes('https://ibomfest.akwaibomstate.gov.ng/schedule'));
-  assert.ok(component.includes('target="_blank" rel="noopener noreferrer"'));
+test('event details stay on 7EVEN and clearly show free visitor entry', () => {
+  assert.ok(component.includes('View event on 7EVEN'));
+  assert.ok(component.includes('aria-expanded={expandedEvent === event.title}'));
+  assert.ok(component.includes('ibom-event-details-'));
+  assert.ok(component.includes('Free for visitors'));
+  assert.ok(component.includes('Visitor entry is free'));
   assert.ok(component.includes('does not sell tickets'));
-  assert.ok(component.includes('Visitor entry is listed as free'));
+  assert.ok(!component.includes('Full official programme'));
+  assert.ok(!component.includes('scheduleUrl'));
+  assert.ok(!component.includes('target="_blank"'));
 });
 
 test('event directory supports accessible search, month filtering and responsive cards', () => {
