@@ -25,7 +25,7 @@ export function DemoCheckoutPage() {
  const [error,setError]=useState('');
  const [booking,setBooking]=useState<Booking|null>(null);
  useEffect(()=>{void api<Item[]>('/demo/catalog').then(setItems).catch(e=>setError(e.message));},[]);
- useEffect(()=>{if(user)void api<Wallet>('/demo/wallet').then(setWallet).catch(e=>setError(e.message));},[user?.id]);
+ useEffect(()=>{if(user)void api<Wallet>('/demo/wallet').then(setWallet).catch(e=>setError(e.message));},[user]);
  const item=useMemo(()=>items.find(x=>x.id===itemId),[items,itemId]);
  const nights=item?.kind==='STAY'&&startDate&&endDate?Math.max(0,Math.round((new Date(endDate+'T00:00:00Z').getTime()-new Date(startDate+'T00:00:00Z').getTime())/86400000)):1;
  const totalMinor=item?Number(item.unitPriceMinor)*quantity*(item.kind==='STAY'?nights:1):0;
