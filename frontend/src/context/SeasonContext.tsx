@@ -102,6 +102,8 @@ export function SeasonProvider({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     document.documentElement.dataset.mode = mode;
     document.documentElement.style.colorScheme = mode;
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (themeColor) themeColor.content = mode === 'dark' ? '#111A15' : '#F7F5EF';
   }, [mode]);
 
   return (
