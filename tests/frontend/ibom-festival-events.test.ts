@@ -44,5 +44,8 @@ test('event directory supports accessible search, month filtering and responsive
   assert.ok(component.includes('aria-live="polite"'));
   assert.ok(css.includes('.ibom-events-grid'));
   assert.ok(css.includes('@media(max-width:650px)'));
+  assert.ok(css.includes('flex-direction:column'));
+  assert.ok(css.includes('.ibom-event-image-fallback'));
+  assert.ok(component.includes('onError={() => setFailedImages'));
   assert.ok(css.includes('@media(max-width:390px)'));
 });
