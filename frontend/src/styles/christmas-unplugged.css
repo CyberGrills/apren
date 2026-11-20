@@ -73,3 +73,53 @@
 .christmas-lga-source { margin-top:1.5rem; color:var(--muted); font-size:.76rem; line-height:1.65; }
 @media(max-width:900px) { .christmas-lga-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:560px) { .christmas-lga-grid { grid-template-columns:1fr; } .christmas-lga-section .christmas-section-heading { align-items:flex-start; } .christmas-lga-card { padding:1rem; } }
+
+
+/* Official Ibom Christmas Unplugged event directory on What to Do */
+.ibom-events-section { margin:2rem 0 3rem; padding:clamp(1.25rem,3vw,2rem); background:var(--public-panel); border:1px solid var(--line); border-radius:var(--radius-md,14px); }
+.ibom-events-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; }
+.ibom-events-heading h2 { margin:.45rem 0; font:400 clamp(1.8rem,3vw,2.7rem)/1.05 var(--font-display); }
+.ibom-events-heading p:not(.public-eyebrow) { margin:0; color:var(--muted); line-height:1.65; }
+.ibom-events-source { display:inline-flex; align-items:center; gap:.45rem; min-height:44px; color:var(--accent); text-underline-offset:4px; white-space:nowrap; }
+.ibom-events-tools { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin:1.25rem 0 .5rem; }
+.ibom-events-search { display:flex; align-items:center; gap:.65rem; width:min(100%,440px); min-height:48px; padding:0 .9rem; border:1px solid var(--line); border-radius:var(--radius,8px); background:var(--surface); color:var(--muted); }
+.ibom-events-search:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+.ibom-events-search input { width:100%; min-width:0; min-height:44px; border:0; outline:0; background:transparent; color:var(--ink); font:inherit; }
+.ibom-events-months { display:flex; flex-wrap:wrap; gap:.4rem; }
+.ibom-events-months button { min-height:40px; padding:.45rem .85rem; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--ink); cursor:pointer; font:inherit; font-size:.82rem; }
+.ibom-events-months button.active { background:var(--brand-primary); color:var(--paper); border-color:var(--brand-primary); }
+.ibom-events-count { margin:.75rem 0 1rem; color:var(--muted); font-size:.8rem; }
+.ibom-events-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
+.ibom-event-card { display:flex; min-width:0; flex-direction:column; overflow:hidden; border:1px solid var(--line); border-radius:var(--radius-md,12px); background:var(--surface); }
+.ibom-event-image-link { position:relative; display:block; overflow:hidden; aspect-ratio:4/5; background:var(--surface-subtle); }
+.ibom-event-image-link img { display:block; width:100%; height:100%; object-fit:cover; transition:transform .35s ease; }
+.ibom-event-image-link:hover img { transform:scale(1.025); }
+.ibom-event-image-note { position:absolute; left:.65rem; right:.65rem; bottom:.65rem; padding:.4rem .55rem; border-radius:6px; background:rgba(0,0,0,.72); color:#fff; font-size:.7rem; text-align:center; }
+.ibom-event-card-content { display:flex; flex:1; flex-direction:column; align-items:flex-start; padding:1rem; }
+.ibom-event-date { display:flex; align-items:center; gap:.4rem; margin:0 0 .65rem; color:var(--accent); font-size:.75rem; font-weight:700; }
+.ibom-event-card h3 { margin:0 0 .6rem; font:400 1.35rem/1.15 var(--font-display); }
+.ibom-event-description { margin:0 0 .85rem; color:var(--muted); font-size:.86rem; line-height:1.65; }
+.ibom-event-venue { display:flex; align-items:flex-start; gap:.4rem; margin:auto 0 .35rem; font-size:.78rem; line-height:1.5; }
+.ibom-event-venue svg { flex:0 0 auto; margin-top:.15rem; color:var(--accent); }
+.ibom-event-time { margin:.25rem 0 .8rem; color:var(--muted); font-size:.76rem; }
+.ibom-event-action { display:inline-flex; align-items:center; justify-content:center; gap:.45rem; width:100%; margin-top:auto; text-decoration:none; }
+.ibom-event-credit { margin:.65rem 0 0; color:var(--muted); font-size:.68rem; line-height:1.5; }
+.ibom-event-credit a { color:inherit; text-underline-offset:3px; }
+.ibom-events-disclosure { margin:1.25rem 0 0; color:var(--muted); font-size:.76rem; line-height:1.65; }
+.ibom-events-empty { padding:2rem; border:1px dashed var(--line); text-align:center; }
+@media(max-width:1000px) { .ibom-events-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:650px) {
+  .ibom-events-heading,.ibom-events-tools { align-items:stretch; flex-direction:column; }
+  .ibom-events-source { align-self:flex-start; }
+  .ibom-events-search { width:100%; }
+  .ibom-events-months { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .ibom-events-months button { padding-inline:.4rem; }
+  .ibom-events-grid { grid-template-columns:1fr; }
+  .ibom-event-card { display:grid; grid-template-columns:minmax(110px,.7fr) minmax(0,1.3fr); }
+  .ibom-event-image-link { aspect-ratio:3/4; height:100%; }
+  .ibom-event-card-content { padding:.85rem; }
+  .ibom-event-card h3 { font-size:1.15rem; }
+  .ibom-event-description { font-size:.8rem; }
+  .ibom-event-action { font-size:.78rem; padding:.5rem .55rem; }
+}
+@media(max-width:390px) { .ibom-event-card { grid-template-columns:1fr; } .ibom-event-image-link { aspect-ratio:4/5; max-height:360px; } }
