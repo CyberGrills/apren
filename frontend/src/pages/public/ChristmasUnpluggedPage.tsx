@@ -7,37 +7,37 @@ const officialSite = 'https://ibomfest.akwaibomstate.gov.ng/';
 const officialSchedule = 'https://ibomfest.akwaibomstate.gov.ng/schedule';
 
 const lgaShowcases = [
-  { name: 'Ika', date: 'Tue 1 Dec', dishes: ['Mkpafeere', 'Ichichop Ntokajen', 'Atama', 'Ubobok Ukom'] },
-  { name: 'Uyo', date: 'Wed 2 Dec', dishes: ['Ubeed', 'Afia Efere Ebod ye Iyak', 'Afang ye Fufu', 'Usung Ikpong ye Efere Ibaba'] },
-  { name: 'Ikot Ekpene', date: 'Thu 3 Dec', dishes: ['Ubo Akpapa', 'Ubo Ndiyong', 'Afere Afang', 'Afere Atama Abak'] },
-  { name: 'Nsit Ibom', date: 'Fri 4 Dec', dishes: ['Editan Ibat', 'Atama Abak', 'Etidod ye Fufu'] },
-  { name: 'Oron', date: 'Sat 5 Dec', dishes: ['Otong ma Iwe Ekpang', "Fisherman's Soup", 'Efere Ibaba ma Fufu'] },
-  { name: 'ONNA', date: 'Sun 6 Dec', dishes: ['Efere Usung', 'Ntimme Abakpa', 'Efere Afang', 'Edikang Ikong'] },
-  { name: 'Ini', date: 'Mon 7 Dec', dishes: ['Nsana Soup', 'Ndise Soup', 'Mkpafeere Soup ye Usung Iwa', 'Iwuk Edesi'] },
-  { name: 'Ibesikpo Asutan', date: 'Tue 8 Dec', dishes: ['Ubo Nkong', 'Akara Iwa', 'Efere Atama', 'Efere Editan'] },
-  { name: 'Eastern Obolo', date: 'Wed 9 Dec', dishes: ['Grogro Soup', 'Usum Uka', "Fisherman's Soup"] },
-  { name: 'Mbo', date: 'Thu 10 Dec', dishes: ['Okime ma Owieng', 'Efere Ndek Ayak ma Fufu', 'Afang'] },
-  { name: 'Nsit Atai', date: 'Fri 11 Dec', dishes: ['Akume ye Anem', 'Afere Ibaba', 'Efere Atama'] },
-  { name: 'Ikono', date: 'Sat 12 Dec', dishes: ['Efere Nsana ye Mkpafeere', 'Ekpang Nkukwo', 'Afere Akananwan'] },
-  { name: 'Essien Udim', date: 'Sun 13 Dec', dishes: ['Efere Mkpafeere', 'Ekpang Nkukwo', 'Efere Abak Atama'] },
-  { name: 'Ibiono Ibom', date: 'Mon 14 Dec', dishes: ['Asa Abakpa', 'Efere Nyama', 'MTN Rice / Iwuk Edesi', 'Efere Editan'] },
-  { name: 'Mkpat Enin', date: 'Tue 15 Dec', dishes: ['Ubobok Ukom', 'Ototok Mboro', 'Afere Editan', 'Afere Atama'] },
-  { name: 'Ikot Abasi', date: 'Wed 16 Dec', dishes: ['Nyama Idim', 'Afere Mmakrak', "Fisherman's Soup"] },
-  { name: 'Nsit Ubium', date: 'Thu 17 Dec', dishes: ['Abek Akpapa', 'Oto-Iwa', 'Abak', 'Efere Atama'] },
-  { name: 'Uruan', date: 'Sat 19 Dec', dishes: ['Efere Nyama', "Fisherman's Soup", 'Ukwok Afang', 'Edikang Ikong'] },
-  { name: 'Oruk Anam', date: 'Sun 20 Dec', dishes: ['Afere Ibaba', 'Ubo Nkong Efere', 'Atama Abak'] },
-  { name: 'Obot Akara', date: 'Mon 21 Dec', dishes: ['Afere Ukpatörök', 'Ubo Akpakpa', 'Atong Ibat'] },
-  { name: 'Ukanafun', date: 'Tue 22 Dec', dishes: ['Ubo Nkong Efere', 'Afere Mkpafeere', 'Afere Ibaba'] },
-  { name: 'Etinan', date: 'Wed 23 Dec', dishes: ['Asa Iwa', 'Usung Ikpong ye Afia Efere', 'Efere Afang ye Fufu'] },
-  { name: 'Esit Eket', date: 'Thu 24 Dec', dishes: ['Efere Mmeme', "Fisherman's Soup"] },
-  { name: 'Udung Uko', date: 'Thu 24 Dec', dishes: ['Obu ma Atita Iwe', 'Iwekpang ma Otong'] },
-  { name: 'Abak', date: 'Sat 26 Dec', dishes: ['Imaha', 'Nyama Soup', 'Ubobok Ukom', 'Afere Abak'] },
-  { name: 'Ibeno', date: 'Sun 27 Dec', dishes: ['Afere Mbu Eyak', 'Afia Efere', "Fisherman's Soup"] },
-  { name: 'Urue-Offong/Oruko', date: 'Mon 28 Dec', dishes: ['Iwe Ekpang ma Otong', 'Oto Abre', "Fisherman's Soup"] },
-  { name: 'Itu', date: 'Tue 29 Dec', dishes: ['Mkpafeere', "Fisherman's Soup", 'Abak Atama'] },
-  { name: 'Etim Ekpo', date: 'Wed 30 Dec', dishes: ['Afere Afang', 'Ukad ye Local Sauce', 'Afere Editan'] },
-  { name: 'Okobo', date: 'Thu 31 Dec', dishes: ['Efre Otong', 'Efre Ibaba', 'Fisherman Soup'] },
-  { name: 'Eket', date: 'Fri 1 Jan', dishes: ['Efukabu', 'Akpafai Ntokon', 'Abak Nkong', 'Afere Ndakiyak'] },
+  { name: 'Ika', date: 'Tue 1 Dec 2026', dishes: ['Mkpafeere', 'Ichichop Ntokajen', 'Atama', 'Ubobok Ukom'] },
+  { name: 'Uyo', date: 'Wed 2 Dec 2026', dishes: ['Ubeed', 'Afia Efere Ebod ye Iyak', 'Afang ye Fufu', 'Usung Ikpong ye Efere Ibaba'] },
+  { name: 'Ikot Ekpene', date: 'Thu 3 Dec 2026', dishes: ['Ubo Akpapa', 'Ubo Ndiyong', 'Afere Afang', 'Afere Atama Abak'] },
+  { name: 'Nsit Ibom', date: 'Fri 4 Dec 2026', dishes: ['Editan Ibat', 'Atama Abak', 'Etidod ye Fufu'] },
+  { name: 'Oron', date: 'Sat 5 Dec 2026', dishes: ['Otong ma Iwe Ekpang', "Fisherman's Soup", 'Efere Ibaba ma Fufu'] },
+  { name: 'ONNA', date: 'Sun 6 Dec 2026', dishes: ['Efere Usung', 'Ntimme Abakpa', 'Efere Afang', 'Edikang Ikong'] },
+  { name: 'Ini', date: 'Mon 7 Dec 2026', dishes: ['Nsana Soup', 'Ndise Soup', 'Mkpafeere Soup ye Usung Iwa', 'Iwuk Edesi'] },
+  { name: 'Ibesikpo Asutan', date: 'Tue 8 Dec 2026', dishes: ['Ubo Nkong', 'Akara Iwa', 'Efere Atama', 'Efere Editan'] },
+  { name: 'Eastern Obolo', date: 'Wed 9 Dec 2026', dishes: ['Grogro Soup', 'Usum Uka', "Fisherman's Soup"] },
+  { name: 'Mbo', date: 'Thu 10 Dec 2026', dishes: ['Okime ma Owieng', 'Efere Ndek Ayak ma Fufu', 'Afang'] },
+  { name: 'Nsit Atai', date: 'Fri 11 Dec 2026', dishes: ['Akume ye Anem', 'Afere Ibaba', 'Efere Atama'] },
+  { name: 'Ikono', date: 'Sat 12 Dec 2026', dishes: ['Efere Nsana ye Mkpafeere', 'Ekpang Nkukwo', 'Afere Akananwan'] },
+  { name: 'Essien Udim', date: 'Sun 13 Dec 2026', dishes: ['Efere Mkpafeere', 'Ekpang Nkukwo', 'Efere Abak Atama'] },
+  { name: 'Ibiono Ibom', date: 'Mon 14 Dec 2026', dishes: ['Asa Abakpa', 'Efere Nyama', 'MTN Rice / Iwuk Edesi', 'Efere Editan'] },
+  { name: 'Mkpat Enin', date: 'Tue 15 Dec 2026', dishes: ['Ubobok Ukom', 'Ototok Mboro', 'Afere Editan', 'Afere Atama'] },
+  { name: 'Ikot Abasi', date: 'Wed 16 Dec 2026', dishes: ['Nyama Idim', 'Afere Mmakrak', "Fisherman's Soup"] },
+  { name: 'Nsit Ubium', date: 'Thu 17 Dec 2026', dishes: ['Abek Akpapa', 'Oto-Iwa', 'Abak', 'Efere Atama'] },
+  { name: 'Uruan', date: 'Sat 19 Dec 2026', dishes: ['Efere Nyama', "Fisherman's Soup", 'Ukwok Afang', 'Edikang Ikong'] },
+  { name: 'Oruk Anam', date: 'Sun 20 Dec 2026', dishes: ['Afere Ibaba', 'Ubo Nkong Efere', 'Atama Abak'] },
+  { name: 'Obot Akara', date: 'Mon 21 Dec 2026', dishes: ['Afere Ukpatörök', 'Ubo Akpakpa', 'Atong Ibat'] },
+  { name: 'Ukanafun', date: 'Tue 22 Dec 2026', dishes: ['Ubo Nkong Efere', 'Afere Mkpafeere', 'Afere Ibaba'] },
+  { name: 'Etinan', date: 'Wed 23 Dec 2026', dishes: ['Asa Iwa', 'Usung Ikpong ye Afia Efere', 'Efere Afang ye Fufu'] },
+  { name: 'Esit Eket', date: 'Thu 24 Dec 2026', dishes: ['Efere Mmeme', "Fisherman's Soup"] },
+  { name: 'Udung Uko', date: 'Thu 24 Dec 2026', dishes: ['Obu ma Atita Iwe', 'Iwekpang ma Otong'] },
+  { name: 'Abak', date: 'Sat 26 Dec 2026', dishes: ['Imaha', 'Nyama Soup', 'Ubobok Ukom', 'Afere Abak'] },
+  { name: 'Ibeno', date: 'Sun 27 Dec 2026', dishes: ['Afere Mbu Eyak', 'Afia Efere', "Fisherman's Soup"] },
+  { name: 'Urue-Offong/Oruko', date: 'Mon 28 Dec 2026', dishes: ['Iwe Ekpang ma Otong', 'Oto Abre', "Fisherman's Soup"] },
+  { name: 'Itu', date: 'Tue 29 Dec 2026', dishes: ['Mkpafeere', "Fisherman's Soup", 'Abak Atama'] },
+  { name: 'Etim Ekpo', date: 'Wed 30 Dec 2026', dishes: ['Afere Afang', 'Ukad ye Local Sauce', 'Afere Editan'] },
+  { name: 'Okobo', date: 'Thu 31 Dec 2026', dishes: ['Efre Otong', 'Efre Ibaba', 'Fisherman Soup'] },
+  { name: 'Eket', date: 'Fri 1 Jan 2027', dishes: ['Efukabu', 'Akpafai Ntokon', 'Abak Nkong', 'Afere Ndakiyak'] },
 ];
 
 const highlights = [
@@ -49,6 +49,16 @@ const highlights = [
 ];
 
 export function ChristmasUnpluggedPage() {
+  const [lgaSearch, setLgaSearch] = useState('');
+  const filteredLgas = useMemo(() => {
+    const query = lgaSearch.trim().toLocaleLowerCase();
+    if (!query) return lgaShowcases;
+    return lgaShowcases.filter((lga) =>
+      lga.name.toLocaleLowerCase().includes(query) ||
+      lga.dishes.some((dish) => dish.toLocaleLowerCase().includes(query))
+    );
+  }, [lgaSearch]);
+
   return (
     <div className="public-page christmas-page">
       <PublicHeader />
@@ -132,7 +142,7 @@ export function ChristmasUnpluggedPage() {
                     <div className="christmas-lga-card-top">
                       <span className="christmas-lga-mark" aria-hidden="true">{lga.name.slice(0, 1)}</span>
                       <div>
-                        <p className="christmas-lga-date">{lga.date} 2026</p>
+                        <p className="christmas-lga-date">{lga.date}</p>
                         <h3>{lga.name}</h3>
                       </div>
                     </div>
