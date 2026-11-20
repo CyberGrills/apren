@@ -10,6 +10,10 @@ const sources = readFileSync(
   new URL('../../frontend/public/media/SOURCES.txt', import.meta.url),
   'utf8',
 );
+const document = readFileSync(
+  new URL('../../frontend/index.html', import.meta.url),
+  'utf8',
+);
 
 test('homepage does not imply that bookable hotel supply is already available', () => {
   assert.match(home, /Plan stays, dining and experiences across Nigeria, beginning in Uyo\./);
@@ -45,4 +49,10 @@ test('green editorial image alt text and source register describe the forest-pat
   assert.match(home, /alt: 'A green forest path\. Illustrative stock photograph\.'/);
   assert.match(sources, /6\. Kate Gundareva, Unsplash\.\nA green forest path with trees and foliage\./);
   assert.doesNotMatch(sources, /<Describe exactly what the photo page shows\./);
+});
+
+test('document metadata does not promise booking or rewards before partner confirmation', () => {
+  const description = document.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? '';
+  assert.match(description, /only after the partner confirms availability/i);
+  assert.doesNotMatch(description, /\breserve\b|\bearn points\b|\bcompleted visits\b/i);
 });
