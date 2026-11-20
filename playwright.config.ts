@@ -16,7 +16,14 @@ export default defineConfig({
     ...devices['Desktop Chrome'],
     ...(process.env.CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] } } : process.env.CI ? {} : { launchOptions: { executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] } }),
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'android-chromium',
+      testMatch: '**/android-compatibility.spec.ts',
+      use: { ...devices['Pixel 7'] },
+    },
+  ],
   webServer: {
     command: 'npm --workspace @7even/web run dev -- --host 127.0.0.1 --port 4173 --strictPort',
     url: 'http://127.0.0.1:4173',

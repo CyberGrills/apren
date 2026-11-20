@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'seven-shell-v6';
+const SHELL_CACHE = 'seven-shell-v7';
 const IMAGE_CACHE = 'seven-images-v1';
 const SHELL = [
   '/',

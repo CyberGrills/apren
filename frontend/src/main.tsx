@@ -8,7 +8,6 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
 import { BrandIntro } from './components/BrandIntro.tsx';
 import { SeasonProvider } from './context/SeasonContext.tsx';
-import { seasonAt } from './lib/season.ts';
 import './styles/global.css';
 import './styles/brand-palette.css';
 import './styles/public.css';
@@ -27,7 +26,6 @@ import './styles/home.css';
 import './styles/christmas-unplugged.css';
 import './styles/appearance.css'; // Keep appearance overrides last so every page respects the selected mode.
 
-document.documentElement.dataset.season = seasonAt(new Date());
 const root = document.getElementById('root');
 if (!root) throw new Error('The 7even application root is missing.');
 createRoot(root).render(

@@ -48,6 +48,7 @@ export function IbomFestivalEvents() {
   const [query, setQuery] = useState('');
   const [month, setMonth] = useState('all');
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(() => new Set());
   const visibleEvents = useMemo(() => events.filter((event) => {
     const matchesMonth = month === 'all' || event.date.startsWith(month);
     const haystack = [event.title, event.description, event.venue].join(' ').toLocaleLowerCase();
@@ -83,7 +84,22 @@ export function IbomFestivalEvents() {
           {visibleEvents.map((event) => (
             <article className="ibom-event-card" key={event.title}>
               <div className="ibom-event-image-link">
-                <img src={event.image} alt={event.imageAlt} loading="lazy" decoding="async" />
+                {failedImages.has(event.title) ? (
+                  <div className="ibom-event-image-fallback" role="img" aria-label={event.imageAlt}>
+                    <CalendarDays size={30} aria-hidden="true" />
+                    <span>Official event poster unavailable</span>
+                    <small>Event details remain available below.</small>
+                  </div>
+                ) : (
+                  <img
+                    src={event.image}
+                    alt={event.imageAlt}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    onError={() => setFailedImages((current) => new Set(current).add(event.title))}
+                  />
+                )}
                 {event.imageNote && <span className="ibom-event-image-note">{event.imageNote}</span>}
               </div>
               <div className="ibom-event-card-content">

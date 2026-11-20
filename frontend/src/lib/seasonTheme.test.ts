@@ -60,17 +60,22 @@ test('appearance overrides load after every page stylesheet and cover shared pag
   assert.match(appearance, /:root\[data-mode="dark"\]/);
   assert.match(appearance, /\.workspace-sidebar/);
   assert.match(appearance, /\.public-page/);
+  assert.match(appearance, /\.ibom-events-section/);
+  assert.match(appearance, /\.ibom-event-card/);
   assert.match(appearance, /\.customer-main/);
 });
 
 test('saved appearance is applied before the React app paints', () => {
   assert.match(html, /localStorage\.getItem\("7even-color-mode"\)/);
   assert.match(html, /prefers-color-scheme: dark/);
-  assert.match(html, /document\.documentElement\.dataset\.mode/);
+  assert.match(html, /root\.dataset\.mode/);
+  assert.match(html, /7even-season-theme/);
+  assert.match(html, /document\.documentElement\.dataset\.season/);
+  assert.match(html, /themeColor\.content = dark \? "#111A15" : "#fffdf8"/);
 });
 
 
 test('service worker rotates the cached shell so installed clients receive appearance fixes', () => {
-  assert.match(serviceWorker, /const SHELL_CACHE = 'seven-shell-v6'/);
+  assert.match(serviceWorker, /const SHELL_CACHE = 'seven-shell-v7'/);
   assert.match(serviceWorker, /key\.startsWith\('seven-shell-'\) && key !== SHELL_CACHE/);
 });
