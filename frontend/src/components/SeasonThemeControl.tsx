@@ -7,10 +7,10 @@ const options: {
   description: string;
   swatch: string;
 }[] = [
-  { value: 'auto', label: 'Automatic', description: 'Follows the Lagos seasonal calendar', swatch: 'linear-gradient(135deg, #8baa8a 0 25%, #c67b55 25% 50%, #b77943 50% 75%, #466c78 75%)' },
+  { value: 'auto', label: 'Automatic', description: 'Follows the Lagos seasonal calendar', swatch: 'linear-gradient(135deg, #8baa8a 0 25%, #D99A32 25% 50%, #C66A3D 50% 75%, #466c78 75%)' },
   { value: 'spring', label: 'Spring', description: 'Soft sage and fresh seasonal accents', swatch: '#8baa8a' },
-  { value: 'summer', label: 'Summer', description: 'Warm terracotta accents', swatch: '#c67b55' },
-  { value: 'autumn', label: 'Autumn', description: 'Rich copper accents', swatch: '#b77943' },
+  { value: 'summer', label: 'Summer', description: 'Sunshine gold and bright coral accents', swatch: '#D99A32' },
+  { value: 'autumn', label: 'Autumn', description: 'Burnt orange, copper and harvest accents', swatch: '#C66A3D' },
   { value: 'winter', label: 'Winter', description: 'Cool slate-blue accents', swatch: '#466c78' },
 ];
 

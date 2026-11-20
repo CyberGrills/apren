@@ -1,0 +1,151 @@
+/* Global appearance layer. Imported last by main.tsx so every route shares the same tokens. */
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --brand-primary: #174D3A;
+  --brand-secondary: #111A15;
+  --brand-tertiary: #35473B;
+  --brand-text: #F0F3ED;
+  --brand-text-muted: #C1CBC3;
+  --brand-gold: #E6C16F;
+  --paper: #111A15;
+  --ink: #F0F3ED;
+  --line: #3A4B40;
+  --muted: #C1CBC3;
+  --surface: #19241D;
+  --surface-subtle: #202E25;
+  --surface-active: #2B3C30;
+  --control-border: #829589;
+  --accent-hover: color-mix(in oklch, var(--accent) 82%, white);
+  --positive: #91CBA1;
+  --danger: #F19A91;
+  --warning: #EAC27B;
+  --positive-surface: #20372A;
+  --danger-surface: #3A2422;
+  --warning-surface: #3A3020;
+  --overlay: rgb(0 0 0 / 76%);
+  --shadow: rgb(0 0 0 / 42%);
+  --season-surface: color-mix(in oklch, var(--season-accent) 18%, var(--surface));
+  --season-tint: color-mix(in oklch, var(--season-accent) 18%, var(--surface));
+  --season-soft: color-mix(in oklch, var(--season-accent) 25%, var(--surface));
+  --season-deep: var(--season-accent);
+}
+:root[data-mode="dark"][data-season="spring"] { --season-accent: #B2D2AC; }
+:root[data-mode="dark"][data-season="summer"] { --season-accent: #F5C85C; }
+:root[data-mode="dark"][data-season="autumn"] { --season-accent: #E98B55; }
+:root[data-mode="dark"][data-season="winter"] { --season-accent: #A6C7D5; }
+
+:root[data-mode="dark"],
+:root[data-mode="dark"] body,
+:root[data-mode="dark"] #root {
+  min-height: 100%;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+:root[data-mode="dark"] :is(
+  .public-page,
+  .appearance-page,
+  .workspace,
+  .workspace-main,
+  .workspace-content,
+  .customer-main,
+  .payment-page,
+  .permission-screen,
+  .creator-studio-page,
+  .art-culture-page
+) {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+:root[data-mode="dark"] :is(
+  .public-header,
+  .public-footer,
+  .public-mobile-nav,
+  .workspace-sidebar,
+  .workspace-topbar,
+  .workspace-section,
+  .appearance-panel,
+  .appearance-mode-option,
+  .appearance-season-option,
+  .queue-panel,
+  .queue-item,
+  .business-card,
+  .demand-card,
+  .customer-booking,
+  .customer-benefit,
+  .customer-exchange,
+  .customer-profile-editor,
+  .customer-profile-account,
+  .customer-update,
+  .payment-card,
+  .payment-method,
+  .creator-studio-panel,
+  .creator-profile-card,
+  .art-culture-card,
+  .offering-card,
+  .settings-summary,
+  .availability-calendar
+) {
+  background-color: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+:root[data-mode="dark"] :is(
+  .public-page,
+  .workspace,
+  .customer-main,
+  .appearance-page
+) :is(h1, h2, h3, h4, strong, b, dt, dd, label, legend) {
+  color: var(--ink);
+}
+:root[data-mode="dark"] :is(
+  .public-page,
+  .workspace,
+  .customer-main
+) :is(p, small, .public-small, .muted, .workspace-label, .workspace-user small, .customer-page-description) {
+  color: var(--muted);
+}
+:root[data-mode="dark"] :is(.public-page, .workspace, .customer-main) a:not(.btn) {
+  color: var(--season-accent);
+}
+:root[data-mode="dark"] :is(input, select, textarea) {
+  background-color: #17221B;
+  color: var(--ink);
+  border-color: var(--control-border);
+}
+:root[data-mode="dark"] :is(input, textarea)::placeholder {
+  color: #B7C3BA;
+  opacity: 1;
+}
+:root[data-mode="dark"] :is(.btn-secondary, .icon-button, .text-button) {
+  color: var(--ink);
+  border-color: var(--control-border);
+}
+:root[data-mode="dark"] .btn-primary {
+  background-color: var(--season-accent);
+  border-color: var(--season-accent);
+  color: #142018;
+}
+:root[data-mode="dark"] :is(.appearance-mode-option, .appearance-season-option)[aria-pressed="true"] {
+  border-color: var(--season-accent);
+  background-color: var(--season-surface);
+}
+:root[data-mode="dark"] :is(.public-header, .public-footer, .workspace-sidebar, .workspace-topbar) {
+  box-shadow: 0 8px 28px var(--shadow);
+}
+:root[data-mode="dark"] :focus-visible {
+  outline-color: var(--season-accent);
+}
+:root[data-mode="dark"] hr {
+  border-color: var(--line);
+}
+:root[data-mode="dark"] ::selection {
+  color: #142018;
+  background: var(--season-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root,
+  :root body,
+  :root #root {
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+}
