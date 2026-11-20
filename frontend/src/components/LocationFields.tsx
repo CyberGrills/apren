@@ -10,6 +10,7 @@ import {
 import { MapPin } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../lib/api.ts';
+import { resultsForActiveQuery } from '../lib/locationSearch.ts';
 import { LocationCombobox } from './LocationCombobox.tsx';
 import { ErrorNotice } from './ui.tsx';
 import '../styles/location-fields.css';
@@ -70,12 +71,12 @@ export function StateCityFields({
       });
     return () => controller.abort();
   }, [state, attempt]);
-  const [remoteCities, setRemoteCities] = useState<NigeriaLocation[]>([]);
+  const [remoteResult, setRemoteResult] = useState<{ query: string; items: NigeriaLocation[] } | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
   useEffect(() => {
     const query = city.trim();
     if (state || query.length < 2) {
-      setRemoteCities((current) => (current.length ? [] : current));
+      setRemoteResult(null);
       setRemoteLoading(false);
       return;
     }
@@ -86,10 +87,10 @@ export function StateCityFields({
         signal: controller.signal,
       })
         .then((next) => {
-          if (!controller.signal.aborted) setRemoteCities(next);
+          if (!controller.signal.aborted) setRemoteResult({ query, items: next });
         })
         .catch(() => {
-          if (!controller.signal.aborted) setRemoteCities([]);
+          if (!controller.signal.aborted) setRemoteResult({ query, items: [] });
         })
         .finally(() => {
           if (!controller.signal.aborted) setRemoteLoading(false);
@@ -100,6 +101,7 @@ export function StateCityFields({
       controller.abort();
     };
   }, [state, city]);
+  const remoteCities = resultsForActiveQuery(remoteResult, city, remoteLoading);
   return (
     <>
       <div className="location-field">
