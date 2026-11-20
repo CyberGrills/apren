@@ -123,3 +123,25 @@
   .ibom-event-action { font-size:.78rem; padding:.5rem .55rem; }
 }
 @media(max-width:390px) { .ibom-event-card { grid-template-columns:1fr; } .ibom-event-image-link { aspect-ratio:4/5; max-height:360px; } }
+
+
+/* Keep festival event discovery and detail views inside 7EVEN */
+.ibom-events-free-entry { display:inline-flex; align-items:center; margin:.9rem 0 0; padding:.45rem .75rem; border:1px solid var(--line); border-radius:999px; color:var(--accent); font-size:.82rem; font-weight:700; }
+.ibom-event-image-link { width:100%; padding:0; border:0; cursor:pointer; text-align:inherit; }
+.ibom-event-image-link:focus-visible,.ibom-event-action:focus-visible,.ibom-event-dialog-close:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+.ibom-event-action { border:0; cursor:pointer; font:inherit; }
+.ibom-event-dialog-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; overflow-y:auto; padding:1rem; background:rgba(9,18,14,.76); }
+.ibom-event-dialog { position:relative; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); width:min(100%,900px); max-height:min(90vh,900px); overflow:auto; border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--ink); box-shadow:0 24px 80px rgba(0,0,0,.3); }
+.ibom-event-dialog-close { position:absolute; top:.75rem; right:.75rem; z-index:1; display:grid; place-items:center; width:44px; height:44px; border:1px solid rgba(255,255,255,.5); border-radius:50%; background:rgba(0,0,0,.68); color:#fff; cursor:pointer; }
+.ibom-event-dialog-image { display:block; width:100%; height:100%; min-height:360px; max-height:80vh; object-fit:cover; background:var(--surface-subtle); }
+.ibom-event-dialog-content { display:flex; flex-direction:column; align-items:flex-start; justify-content:center; padding:clamp(1.25rem,4vw,2.5rem); }
+.ibom-event-dialog-content h3 { margin:.4rem 0 .8rem; font:400 clamp(1.7rem,3vw,2.5rem)/1.1 var(--font-display); }
+.ibom-event-dialog-content > p:not(.ibom-event-date,.ibom-event-venue,.ibom-event-time) { color:var(--muted); line-height:1.7; }
+.ibom-event-dialog-free { margin:.75rem 0; color:var(--accent)!important; font-weight:700; }
+.ibom-event-dialog-note { font-size:.8rem; }
+.ibom-event-dialog-content > .btn { margin-top:1rem; min-height:44px; }
+@media(max-width:650px) {
+  .ibom-event-dialog { grid-template-columns:1fr; width:min(100%,520px); max-height:92vh; }
+  .ibom-event-dialog-image { min-height:0; max-height:48vh; aspect-ratio:4/3; object-fit:contain; }
+  .ibom-event-dialog-content { padding:1.15rem; }
+}
