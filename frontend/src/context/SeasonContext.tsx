@@ -44,7 +44,7 @@ function readModePreference(): AppearanceModePreference {
   }
 }
 function systemAppearanceMode(): AppearanceMode {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 const browserClock: SeasonClock = {
   now: () => new Date(),
@@ -90,11 +90,17 @@ export function SeasonProvider({ children }: { children: ReactNode }) {
     }
   }, [modePreference]);
   useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const update = () => setSystemMode(media.matches ? 'dark' : 'light');
     update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', update);
+      return () => media.removeEventListener('change', update);
+    }
+    // Older Android WebViews expose the legacy MediaQueryList listener API.
+    media.addListener(update);
+    return () => media.removeListener(update);
   }, []);
   useLayoutEffect(() => {
     document.documentElement.dataset.season = season;
