@@ -32,3 +32,30 @@ test('festival feature has responsive layouts and uses existing 7EVEN design tok
   assert.match(css, /var\(--brand-primary\)/);
   assert.match(css, /var\(--accent\)/);
 });
+
+test('the complete organiser-published 31-LGA showcase is included with searchable dishes', () => {
+  assert.match(page, /const lgaShowcases = \[/);
+  assert.match(page, /Explore all 31 local stories/);
+  assert.match(page, /Search an LGA or local dish/);
+  assert.match(page, /filteredLgas/);
+  assert.match(page, /const \[lgaSearch, setLgaSearch\] = useState\(''\)/);
+  assert.equal((page.match(/\{ name: '/g) || []).length, 31, 'Expected exactly 31 LGA entries');
+  assert.match(page, /Fri 1 Jan 2027/);
+  const lgaNames = [
+    'Ika', 'Uyo', 'Ikot Ekpene', 'Nsit Ibom', 'Oron', 'ONNA', 'Ini',
+    'Ibesikpo Asutan', 'Eastern Obolo', 'Mbo', 'Nsit Atai', 'Ikono',
+    'Essien Udim', 'Ibiono Ibom', 'Mkpat Enin', 'Ikot Abasi', 'Nsit Ubium',
+    'Uruan', 'Oruk Anam', 'Obot Akara', 'Ukanafun', 'Etinan', 'Esit Eket',
+    'Udung Uko', 'Abak', 'Ibeno', 'Urue-Offong/Oruko', 'Itu', 'Etim Ekpo',
+    'Okobo', 'Eket',
+  ];
+  for (const name of lgaNames) assert.ok(page.includes(`name: '${name}'`) || page.includes(`name: "${name}"`), `Missing LGA: ${name}`);
+  assert.match(page, /ibomfest\.akwaibomstate\.gov\.ng\/lgas/);
+});
+
+test('the 31-LGA directory has mobile layouts and accessible search feedback', () => {
+  assert.match(css, /\.christmas-lga-grid/);
+  assert.match(css, /@media\(max-width:560px\)/);
+  assert.match(page, /aria-live="polite"/);
+  assert.match(page, /role="status"/);
+});
