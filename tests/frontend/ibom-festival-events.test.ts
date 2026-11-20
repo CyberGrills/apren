@@ -22,7 +22,7 @@ test('What to Do includes all 20 organiser-listed Ibom Christmas Unplugged event
 
 test('event artwork is sourced from the official festival host and credited', () => {
   assert.ok(component.includes('ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/'));
-  assert.ok(component.includes('Festival Media Centre'));
+  assert.ok(component.includes('Ibom Christmas Unplugged Media Centre'));
   assert.ok(component.includes('Event-specific poster not yet published'));
 });
 
