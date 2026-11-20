@@ -24,3 +24,20 @@ test('the selected seasonal preference persists and is applied to the document r
   assert.match(context, /useLayoutEffect\(\(\) => \{\s*document\.documentElement\.dataset\.season = season;/);
   assert.match(context, /preference === 'auto' \? calendarSeason : preference/);
 });
+
+
+test('light, dark and system appearance preferences persist and apply to the document root', () => {
+  assert.match(context, /const modePreferenceKey = '7even-color-mode'/);
+  assert.match(context, /localStorage\.getItem\(modePreferenceKey\)/);
+  assert.match(context, /localStorage\.setItem\(modePreferenceKey, modePreference\)/);
+  assert.match(context, /modePreference === 'system' \? systemMode : modePreference/);
+  assert.match(context, /document\.documentElement\.dataset\.mode = mode/);
+  assert.match(context, /prefers-color-scheme: dark/);
+});
+
+test('dark mode defines readable semantic tokens and season-aware accents', () => {
+  assert.match(palette, /:root\[data-mode="dark"\]\s*\{[^}]*--paper:[^}]*--ink:[^}]*--surface:/s);
+  for (const season of ['spring', 'summer', 'autumn', 'winter']) {
+    assert.match(palette, new RegExp(':root\\[data-mode="dark"\\]\\[data-season="' + season + '"\\]\\s*\\{\\s*--season-accent:'));
+  }
+});

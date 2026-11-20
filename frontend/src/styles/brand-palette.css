@@ -79,3 +79,46 @@
   --season-soft: var(--winter-ice-blue);
   --season-deep: var(--winter-midnight-blue);
 }
+
+
+/* Dark mode keeps the 7EVEN palette recognizable while switching the canvas,
+   surfaces, text and controls to accessible low-light values. */
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --brand-primary: #174D3A;
+  --brand-secondary: #111A15;
+  --brand-tertiary: #35473B;
+  --brand-text: #F0F3ED;
+  --brand-text-muted: #B6C2B9;
+  --brand-gold: #E6C16F;
+  --paper: #111A15;
+  --ink: #F0F3ED;
+  --line: #35473B;
+  --muted: #B6C2B9;
+  --surface: #19241D;
+  --surface-subtle: #202E25;
+  --surface-active: #2B3C30;
+  --control-border: #718477;
+  --accent: var(--season-accent);
+  --accent-hover: color-mix(in oklch, var(--accent) 82%, white);
+  --season-surface: color-mix(in oklch, var(--season-accent) 18%, var(--surface));
+  --positive: #91CBA1;
+  --danger: #F19A91;
+  --warning: #EAC27B;
+  --positive-surface: color-mix(in oklch, var(--positive) 15%, var(--surface));
+  --danger-surface: color-mix(in oklch, var(--danger) 15%, var(--surface));
+  --warning-surface: color-mix(in oklch, var(--warning) 15%, var(--surface));
+  --overlay: color-mix(in srgb, #000 72%, transparent);
+  --shadow: color-mix(in srgb, #000 38%, transparent);
+  --season-tint: color-mix(in oklch, var(--season-accent) 18%, var(--surface));
+  --season-soft: color-mix(in oklch, var(--season-accent) 25%, var(--surface));
+  --season-deep: var(--season-accent);
+}
+:root[data-mode="dark"][data-season="spring"] { --season-accent: #B2D2AC; }
+:root[data-mode="dark"][data-season="summer"] { --season-accent: #F0A17E; }
+:root[data-mode="dark"][data-season="autumn"] { --season-accent: #E7A06D; }
+:root[data-mode="dark"][data-season="winter"] { --season-accent: #A6C7D5; }
+:root[data-mode="dark"] body {
+  background: var(--paper);
+  color: var(--ink);
+}
