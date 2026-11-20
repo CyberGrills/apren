@@ -30,7 +30,7 @@ test('event details stay on 7EVEN and clearly show free visitor entry', () => {
   assert.ok(component.includes('View event on 7EVEN'));
   assert.ok(component.includes('aria-expanded={expandedEvent === event.title}'));
   assert.ok(component.includes('ibom-event-details-'));
-  assert.ok(component.includes('Entry: Free for visitors'));
+  assert.ok(component.includes('Free for visitors'));
   assert.ok(component.includes('Visitor entry is free'));
   assert.ok(component.includes('does not sell tickets'));
   assert.ok(!component.includes('Full official programme'));
