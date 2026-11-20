@@ -48,16 +48,17 @@ export function AdminBusinessMedia() {
     {actionError && <ErrorNotice message={actionError}/>}
     {loading && <Loading/>}
     {!loading && !error && <>
-      <div className="admin-media-summary" aria-label="Photo review summary">
+      <section className="admin-media-summary" aria-label="Photo review summary">
         <div><strong>{items.length}</strong><span>Awaiting review</span></div>
         <div><strong>{replacements}</strong><span>Replacement photos</span></div>
-      </div>
+      </section>
       <div className="admin-media-toolbar">
         <label className="admin-media-search"><Search size={16} aria-hidden="true"/><span className="sr-only">Search photo submissions</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search business, filename or caption"/></label>
-        <div className="admin-media-filters" role="group" aria-label="Filter photo submissions">
+        <fieldset className="admin-media-filters">
+          <legend className="sr-only">Filter photo submissions</legend>
           <button type="button" className={filter === 'ALL' ? 'active' : ''} aria-pressed={filter === 'ALL'} onClick={() => setFilter('ALL')}>All photos <span>{items.length}</span></button>
           <button type="button" className={filter === 'REPLACEMENTS' ? 'active' : ''} aria-pressed={filter === 'REPLACEMENTS'} onClick={() => setFilter('REPLACEMENTS')}>Replacements <span>{replacements}</span></button>
-        </div>
+        </fieldset>
       </div>
     </> }
     {!loading && !error && (filteredItems.length ? <div className="admin-media-grid">{filteredItems.map(item => <article className="admin-media-card" key={item.mediaId}>

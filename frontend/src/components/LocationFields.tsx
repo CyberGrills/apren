@@ -261,14 +261,17 @@ export function DestinationInput({
             aria-busy={loading}
           >
             {options.map((item, index) => (
+              // biome-ignore lint/a11y/useFocusableInteractive: Options are intentionally not tab stops; keyboard focus stays on the combobox and aria-activedescendant identifies the active option.
               <div
                 key={item.id}
                 id={`${id}-${index}`}
                 role="option"
                 aria-selected={active === index}
                 className={active === index ? 'active' : ''}
-                onPointerDown={(event) => event.preventDefault()}
-                onClick={() => select(item)}
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  select(item);
+                }}
               >
                 <MapPin size={18} aria-hidden="true" />
                 <span>

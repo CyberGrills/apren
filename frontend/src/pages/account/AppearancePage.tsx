@@ -16,7 +16,8 @@ function AppearanceModeControl() {
   const preference = useAppearanceModePreference();
   const setPreference = useSetAppearanceModePreference();
   return (
-    <div className="appearance-mode-options" role="group" aria-label="Choose light or dark appearance">
+    <fieldset className="appearance-mode-options">
+      <legend className="sr-only">Choose light, dark, or system appearance</legend>
       {modeOptions.map((option) => (
         <button
           type="button"
@@ -30,7 +31,7 @@ function AppearanceModeControl() {
           {preference === option.value && <span className="appearance-mode-selected">Selected</span>}
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 }
 

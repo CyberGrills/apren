@@ -21,7 +21,8 @@ export function SeasonThemeControl() {
 
   return (
     <div className="appearance-theme-picker">
-      <div className="appearance-season-grid" role="group" aria-label="Choose the 7even seasonal appearance">
+      <fieldset className="appearance-season-grid">
+        <legend className="sr-only">Choose the 7even seasonal appearance</legend>
         {options.map((option) => {
           const selected = preference === option.value;
           return (
@@ -41,7 +42,7 @@ export function SeasonThemeControl() {
             </button>
           );
         })}
-      </div>
+      </fieldset>
       <div className="appearance-current" role="status" aria-live="polite">
         <span className="appearance-current-swatch" aria-hidden="true" />
         {preference === 'auto'

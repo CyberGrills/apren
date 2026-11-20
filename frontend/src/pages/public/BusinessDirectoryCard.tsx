@@ -47,7 +47,7 @@ export function BusinessDirectoryCard({ profile }: { profile: BusinessDirectoryP
   return (
     <article className="seven-directory-card seven-business-directory-card">
       {profile.photos?.length ? (
-        <div className="seven-business-photo-gallery" aria-label={`${profile.name} photo gallery`}>
+        <section className="seven-business-photo-gallery" aria-label={`${profile.name} photo gallery`}>
           <div className="seven-directory-image-link">
             <img
               src={profile.photos[0]?.imageUrl}

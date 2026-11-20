@@ -68,13 +68,14 @@ export function IbomFestivalEvents() {
           <Search size={17} aria-hidden="true" />
           <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search events or locations" aria-label="Search festival events" />
         </label>
-        <div className="ibom-events-months" role="group" aria-label="Filter events by month">
+        <fieldset className="ibom-events-months">
+          <legend className="sr-only">Filter events by month</legend>
           {months.map((item) => (
             <button key={item.value} type="button" className={month === item.value ? 'active' : ''} aria-pressed={month === item.value} onClick={() => setMonth(item.value)}>
               {item.label}
             </button>
           ))}
-        </div>
+        </fieldset>
       </div>
       <p className="ibom-events-count" aria-live="polite">Showing {visibleEvents.length} of 20 official events</p>
       {visibleEvents.length ? (

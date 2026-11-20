@@ -73,7 +73,7 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
           </section>
         )}
         {listing.externalListings && (
-          <div className="seven-directory-external-links" aria-label="Other booking and source listings">
+          <nav className="seven-directory-external-links" aria-label="Other booking and source listings">
             {listing.externalListings.map((source) => (
               <a key={source.url} href={source.url} target="_blank" rel="noreferrer noopener">
                 {source.label} <span aria-hidden="true">↗</span>
