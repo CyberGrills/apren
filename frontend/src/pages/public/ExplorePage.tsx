@@ -298,7 +298,6 @@ export function ExplorePage() {
           id="explore-results-region"
           className="explore-results-region"
           tabIndex={-1}
-          role="region"
           aria-label="Search results"
         >
           <div className="explore-results-heading">
