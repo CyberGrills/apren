@@ -6,7 +6,7 @@ const publicRoutes = [
   ['/campus-connect/art-culture', 'Discover the stories'], ['/creators/test-creator', 'Test Creator'],
   ['/install', 'Take 7even with you.'], ['/offline', 'offline'], ['/help', 'Help'],
   ['/booking-rules', 'Booking'], ['/register', 'Create'],
-  ['/admin/login', 'Sign in to 7even'], ['/appearance', 'Appearance'],
+  ['/admin/login', 'Staff sign in.'], ['/appearance', 'Appearance'],
   ['/forgot-password', 'Let’s get you back in.'], ['/reset-password', 'A fresh start.'],
   ['/experiences/christmas-unplugged', 'Christmas'],
 ] as const;
@@ -19,7 +19,6 @@ for (const [path, heading] of publicRoutes) {
     await expect(page.locator('body')).toContainText(new RegExp(heading, 'i'));
   });
 }
-
 
 test('login route renders the email and alternative sign-in controls', async ({ page }) => {
   await installApiMocks(page, null);
