@@ -102,6 +102,45 @@ test('7even real PostgreSQL API and invariant acceptance', {
   );
   await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
   await migrate(pool);
+  await t.test('directory server roles cannot read unverified stay leads', async () => {
+    await transaction(pool, async (client) => {
+      const suffix = randomUUID();
+      const stayName = `RLS stay probe ${suffix}`;
+      const diningName = `RLS dining probe ${suffix}`;
+      const names = [stayName, diningName];
+      await client.query(
+        `INSERT INTO seven.discovery_listings
+          (kind,display_name,state_name,city,image_url,image_source_url,source_name,source_url,listing_status,is_bookable)
+         VALUES
+          ('STAY',$1,'Akwa Ibom','Uyo','https://example.test/stay.jpg','https://example.test/stay.jpg','RLS test','https://example.test/stay','DIRECTORY_ONLY',false),
+          ('DINING',$2,'Akwa Ibom','Uyo','https://example.test/dining.jpg','https://example.test/dining.jpg','RLS test','https://example.test/dining','DIRECTORY_ONLY',false)`,
+        names,
+      );
+      const legacyPolicies = await rows<{ tablename: string; policyname: string }>(
+        client,
+        `SELECT tablename,policyname FROM pg_policies
+          WHERE schemaname='seven'
+            AND ((tablename='discovery_listings' AND policyname='discovery_listings_server_read')
+              OR (tablename='state_directories' AND policyname='state_directories_server_read'))`,
+      );
+      assert.deepEqual(legacyPolicies, [], 'legacy permissive policies must be removed');
+      for (const role of ['seven_app', 'seven_readonly'] as const) {
+        await client.query(`SET LOCAL ROLE ${role}`);
+        const visible = await rows<{ kind: string }>(
+          client,
+          'SELECT kind FROM seven.discovery_listings WHERE display_name = ANY($1::text[]) ORDER BY kind',
+          [names],
+        );
+        assert.deepEqual(
+          visible.map((item) => item.kind),
+          ['DINING'],
+          `${role} must not read STAY directory leads`,
+        );
+        await client.query('RESET ROLE');
+      }
+      await client.query('DELETE FROM seven.discovery_listings WHERE display_name = ANY($1::text[])', [names]);
+    });
+  });
   await seed(pool, password);
   const appPool = process.env.TEST_RUNTIME_DATABASE_URL
     ? createPool(process.env.TEST_RUNTIME_DATABASE_URL)
