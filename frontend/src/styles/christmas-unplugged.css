@@ -6,10 +6,14 @@
 .christmas-home-copy > p:not(.public-eyebrow) { max-width:58ch; line-height:1.8; color:color-mix(in srgb,var(--paper) 86%,transparent); }
 .christmas-home-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1.5rem; }
 .christmas-home-note { font-size:.72rem; line-height:1.6; opacity:.78; margin-top:1rem; }
-.christmas-home-art { min-height:300px; padding:2rem; border:1px solid color-mix(in srgb,var(--paper) 38%,transparent); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--brand-gold,#d6a84b) 23%,transparent),transparent 58%); }
-.christmas-home-year { font:clamp(5rem,12vw,9rem)/.8 var(--font-display); color:var(--brand-gold,#d6a84b); }
-.christmas-home-word { font-size:clamp(1.2rem,3vw,2rem); letter-spacing:.18em; font-weight:600; margin-top:1.3rem; }
-.christmas-home-place,.christmas-home-dates { font-size:.7rem; letter-spacing:.16em; margin-top:1rem; }
+.christmas-home-artwork { margin:0; min-width:0; text-align:center; }
+.christmas-home-artwork img { display:block; width:min(100%,440px); height:auto; max-height:440px; object-fit:contain; margin-inline:auto; border-radius:16px; }
+.christmas-home-artwork figcaption,.christmas-hero-artwork figcaption { margin-top:.65rem; font-size:.72rem; line-height:1.5; color:color-mix(in srgb,var(--paper) 78%,transparent); }
+.christmas-home-artwork a,.christmas-hero-artwork a { color:inherit; text-underline-offset:3px; }
+.christmas-hero-artwork { float:right; width:min(38%,360px); margin:0 0 1.5rem 2rem; text-align:center; }
+.christmas-hero-artwork img { display:block; width:100%; height:auto; border-radius:16px; }
+.christmas-hero-artwork figcaption { color:color-mix(in srgb,var(--paper) 78%,transparent); }
+.christmas-hero-inner::after { content:""; display:block; clear:both; }
 .christmas-page { overflow:hidden; }
 .christmas-hero { background:linear-gradient(135deg,var(--brand-primary),color-mix(in srgb,var(--brand-primary) 78%,#111)); color:var(--paper); padding-block:2rem 5rem; }
 .christmas-hero-inner { max-width:1100px; }
@@ -46,7 +50,7 @@
 .christmas-plan-inner p:not(.public-eyebrow) { color:var(--muted); line-height:1.8; }
 .christmas-plan-actions { display:flex; flex-wrap:wrap; gap:.75rem; }
 @media(max-width:800px) { .christmas-home-feature-inner,.christmas-intro { grid-template-columns:1fr; } .christmas-event-grid,.christmas-discover { grid-template-columns:repeat(2,minmax(0,1fr)); } .christmas-plan-inner { align-items:flex-start; flex-direction:column; } }
-@media(max-width:560px) { .christmas-home-art { min-height:220px; } .christmas-home-actions,.christmas-hero-actions,.christmas-plan-actions { flex-direction:column; align-items:stretch; } .christmas-event-grid,.christmas-discover { grid-template-columns:1fr; } .christmas-section-heading { align-items:flex-start; flex-direction:column; } }
+@media(max-width:560px) { .christmas-hero-artwork { float:none; width:min(100%,300px); margin:1.5rem auto; } .christmas-home-actions,.christmas-hero-actions,.christmas-plan-actions { flex-direction:column; align-items:stretch; } .christmas-event-grid,.christmas-discover { grid-template-columns:1fr; } .christmas-section-heading { align-items:flex-start; flex-direction:column; } }
 
 .christmas-lga-section { background:var(--surface); padding-block:clamp(3rem,7vw,6rem); }
 .christmas-lga-section .christmas-section-heading { align-items:flex-end; }
