@@ -38,6 +38,9 @@ test('the complete organiser-published 31-LGA showcase is included with searchab
   assert.match(page, /Explore all 31 local stories/);
   assert.match(page, /Search an LGA or local dish/);
   assert.match(page, /filteredLgas/);
+  assert.match(page, /const \[lgaSearch, setLgaSearch\] = useState\(''\)/);
+  assert.equal((page.match(/\{ name: '/g) || []).length, 31, 'Expected exactly 31 LGA entries');
+  assert.match(page, /Fri 1 Jan 2027/);
   const lgaNames = [
     'Ika', 'Uyo', 'Ikot Ekpene', 'Nsit Ibom', 'Oron', 'ONNA', 'Ini',
     'Ibesikpo Asutan', 'Eastern Obolo', 'Mbo', 'Nsit Atai', 'Ikono',
