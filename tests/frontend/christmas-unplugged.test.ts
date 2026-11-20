@@ -59,3 +59,13 @@ test('the 31-LGA directory has mobile layouts and accessible search feedback', (
   assert.match(page, /aria-live="polite"/);
   assert.match(page, /role="status"/);
 });
+
+\ntest('official 4.0 artwork is displayed on the homepage and festival detail page with source attribution', () => {
+  const artwork = 'https://ibomfest.akwaibomstate.gov.ng/__l5e/assets-v1/111485d1-e94f-48d5-b3b9-48dc9503935e/ibom-christmas-logo.png';
+  assert.ok(home.includes(artwork), 'Homepage should use the official 4.0 artwork');
+  assert.ok(page.includes(artwork), 'Festival detail page should use the official 4.0 artwork');
+  assert.match(home, /Ibom Christmas Unplugged Media Centre/);
+  assert.match(page, /Source: festival Media Centre/);
+  assert.match(css, /\.christmas-home-artwork img/);
+  assert.match(css, /\.christmas-hero-artwork img/);
+});
