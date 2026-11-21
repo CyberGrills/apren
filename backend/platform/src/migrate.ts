@@ -61,18 +61,20 @@ export async function legacySupabaseMigrationAlreadyApplied(
   const legacyName = legacySupabaseMigrationAlias(filename);
   if (!legacyName) return false;
 
+  // Reconcile both migration ledgers against the live schema. A matching
+  // Supabase history row is not enough on its own, and a missing history row
+  // must not cause an already-created (or partially-created) schema to replay.
   const history = await one(
     client,
     "SELECT to_regclass('supabase_migrations.schema_migrations') AS table_name",
   );
-  if (!history?.table_name) return false;
-
-  const applied = await one(
-    client,
-    'SELECT name FROM supabase_migrations.schema_migrations WHERE name=$1 LIMIT 1',
-    [legacyName],
-  );
-  if (!applied) return false;
+  const applied = history?.table_name
+    ? await one(
+        client,
+        'SELECT name FROM supabase_migrations.schema_migrations WHERE name=$1 LIMIT 1',
+        [legacyName],
+      )
+    : undefined;
 
   const state = await one<LegacyMigrationSchemaState>(
     client,
@@ -91,12 +93,20 @@ export async function legacySupabaseMigrationAlreadyApplied(
       (SELECT character_maximum_length FROM information_schema.columns WHERE table_schema='seven' AND table_name='demo_wallet_entries' AND column_name='entry_type') AS "demoEntryTypeLength"`,
   );
 
-  if (!state || !isLegacyMigrationSchemaCompatible(filename, state)) {
-    throw new Error(
-      `Supabase records legacy migration ${legacyName}, but the existing schema does not match ${filename}. Refusing to replay or adopt it; reconcile this database manually.`,
-    );
-  }
-  return true;
+  const hasAnyLegacySchema = Boolean(
+    state &&
+    (state.demoCatalogItemsPresent ||
+      state.demoWalletsPresent ||
+      state.demoBookingsPresent ||
+      state.demoWalletEntriesPresent),
+  );
+  if (!applied && !hasAnyLegacySchema) return false;
+
+  if (state && isLegacyMigrationSchemaCompatible(filename, state)) return true;
+
+  throw new Error(
+    `Legacy migration ${legacyName} is recorded or its schema already exists, but the live schema does not match ${filename}. Refusing to replay or adopt it; reconcile this database manually.`,
+  );
 }
 
 export async function migrate(pool: Pool): Promise<void> {
