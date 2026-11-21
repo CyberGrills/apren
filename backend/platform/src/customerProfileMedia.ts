@@ -92,6 +92,9 @@ export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context
       [mediaId,userId],
     );
     if (!media) return fail(404, 'AVATAR_UPLOAD_NOT_FOUND', 'Profile photo upload was not found.');
+    if (media.status === 'CURRENT') {
+      return res.json({ data: { mediaId, imageUrl: await signedAvatar(String(media.storage_path)) } });
+    }
     if (media.status !== 'PENDING_UPLOAD' || !media.upload_expires_at || new Date(media.upload_expires_at).getTime() < Date.now())
       return fail(409, 'UPLOAD_EXPIRED', 'This photo upload has expired. Start again.');
 
