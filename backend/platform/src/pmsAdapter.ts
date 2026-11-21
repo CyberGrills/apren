@@ -171,11 +171,11 @@ export function validatePmsSnapshot(snapshot: PmsReadSnapshot): PmsReadSnapshot 
 }
 
 export type InventoryFreshness = 'FRESH' | 'STALE' | 'UNKNOWN';
-/** Missing, invalid, future-dated or over-age source timestamps are never considered fresh. */
+/** Default is the documented 5-minute PMS window; pass 2 minutes for other trusted sources. Missing, invalid, future-dated or over-age timestamps are never fresh. */
 export function inventoryFreshness(
   sourceUpdatedAt: string | null,
   now = Date.now(),
-  maxAgeMs = 15 * 60 * 1000,
+  maxAgeMs = 5 * 60 * 1000,
 ): InventoryFreshness {
   if (sourceUpdatedAt === null) return 'UNKNOWN';
   const timestamp = Date.parse(sourceUpdatedAt);
