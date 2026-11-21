@@ -78,3 +78,21 @@ test('customer profile exposes all personal and stay preference fields', async (
 
   await expect(page.getByRole('link', { name: 'Change your password' })).toHaveAttribute('href', '/app/security');
 });
+
+
+test('customer can upload and replace a persistent profile picture', async ({ page }) => {
+  await installApiMocks(page, 'CUSTOMER');
+  await page.route('https://storage.test/avatar', route => route.fulfill({ status: 200, body: 'stored' }));
+  await page.goto('/app/profile');
+
+  const upload = page.getByRole('button', { name: 'Upload photo' });
+  await expect(upload).toBeVisible();
+  await page.getByLabel('Choose profile picture').setInputFiles({
+    name: 'profile.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('test-image-content'),
+  });
+
+  await expect(page.getByRole('button', { name: 'Change photo' })).toBeVisible();
+  await expect(page.locator('.customer-profile-avatar-image')).toHaveAttribute('src', 'https://storage.test/avatar-view');
+});
