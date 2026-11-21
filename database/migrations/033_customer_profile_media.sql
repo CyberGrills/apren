@@ -18,7 +18,7 @@ GRANT SELECT, INSERT, UPDATE ON seven.customer_profile_media TO seven_app;
 GRANT SELECT ON seven.customer_profile_media TO seven_readonly;
 ALTER TABLE seven.customer_profile_media ENABLE ROW LEVEL SECURITY;
 CREATE POLICY seven_app_server_access ON seven.customer_profile_media FOR ALL TO seven_app USING (true) WITH CHECK (true);
-CREATE POLICY seven_readonly_no_access ON seven.customer_profile_media FOR SELECT TO seven_readonly USING (false);
+CREATE POLICY seven_readonly_select_access ON seven.customer_profile_media FOR SELECT TO seven_readonly USING (false);
 CREATE UNIQUE INDEX customer_profile_media_one_current_per_user_idx
   ON seven.customer_profile_media(user_id) WHERE status = 'CURRENT';
 CREATE INDEX customer_profile_media_user_status_idx
