@@ -8,6 +8,21 @@ import {
   legacySupabaseMigrationAlreadyApplied,
 } from '../../backend/platform/src/migrate.ts';
 
+const emptyDemoSchema: LegacyMigrationSchemaState = {
+  demoCatalogItemsPresent: false,
+  demoWalletsPresent: false,
+  demoBookingsPresent: false,
+  demoWalletEntriesPresent: false,
+  demoCatalogColumnsPresent: false,
+  demoWalletColumnsPresent: false,
+  demoBookingColumnsPresent: false,
+  demoWalletEntryColumnsPresent: false,
+  demoTablesRlsEnabled: false,
+  demoAppPoliciesPresent: false,
+  demoCatalogReadonlyPolicyPresent: false,
+  demoEntryTypeLength: null,
+};
+
 const completeDemoSchema: LegacyMigrationSchemaState = {
   demoCatalogItemsPresent: true,
   demoWalletsPresent: true,
@@ -131,14 +146,24 @@ test('adopts a legacy migration only when Supabase history and the verified sche
       legacyHistoryConnection({ historyTable: false }),
       '027_demo_marketplace_wallet.sql',
     ),
-    false,
+    true,
+    'A complete verified schema must not replay merely because Supabase history is absent',
   );
   assert.equal(
     await legacySupabaseMigrationAlreadyApplied(
       legacyHistoryConnection({ applied: false }),
       '027_demo_marketplace_wallet.sql',
     ),
+    true,
+    'A complete verified schema must be adopted when the app ledger is behind',
+  );
+  assert.equal(
+    await legacySupabaseMigrationAlreadyApplied(
+      legacyHistoryConnection({ historyTable: false, state: emptyDemoSchema }),
+      '027_demo_marketplace_wallet.sql',
+    ),
     false,
+    'A genuinely absent legacy schema should still run its migration',
   );
   assert.equal(
     await legacySupabaseMigrationAlreadyApplied(
@@ -152,7 +177,38 @@ test('adopts a legacy migration only when Supabase history and the verified sche
       legacyHistoryConnection({ state: { ...completeDemoSchema, demoTablesRlsEnabled: false } }),
       '027_demo_marketplace_wallet.sql',
     ),
-    /schema does not match/,
+    /live schema does not match/,
+  );
+  await assert.rejects(
+    legacySupabaseMigrationAlreadyApplied(
+      legacyHistoryConnection({ historyTable: false, state: { ...completeDemoSchema, demoWalletEntryColumnsPresent: false } }),
+      '027_demo_marketplace_wallet.sql',
+    ),
+    /live schema does not match/,
+    'A partial schema without a history row must fail closed rather than replay',
+  );
+});
+
+test('does not mistake the varchar(12) column created by migration 027 for an already-applied migration 028', async () => {
+  const connection: Connection = {
+    query: async (sql: string, values?: unknown[]) => {
+      if (sql.includes("to_regclass('supabase_migrations.schema_migrations')")) {
+        return { rows: [{ table_name: 'supabase_migrations.schema_migrations' }] };
+      }
+      if (sql.includes('FROM supabase_migrations.schema_migrations')) {
+        assert.deepEqual(values, ['demo_wallet_ledger_type_028']);
+        return { rows: [] };
+      }
+      if (sql.includes('demoCatalogItemsPresent')) {
+        return { rows: [{ ...completeDemoSchema, demoEntryTypeLength: 12 }] };
+      }
+      throw new Error('Unexpected migration history query.');
+    },
+  } as unknown as Connection;
+  assert.equal(
+    await legacySupabaseMigrationAlreadyApplied(connection, '028_demo_wallet_ledger_type.sql'),
+    false,
+    'Migration 028 must run to widen the existing migration-027 column',
   );
 });
 

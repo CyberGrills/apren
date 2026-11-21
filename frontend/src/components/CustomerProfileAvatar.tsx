@@ -4,7 +4,6 @@ import { api } from '../lib/api.ts';
 interface UploadIntent {
   mediaId: string;
   uploadUrl: string;
-  token: string;
   requiredHeaders: Record<string, string>;
 }
 interface AvatarResult { imageUrl: string | null }
@@ -47,8 +46,6 @@ export function CustomerProfileAvatar({ name }: { name: string }) {
         idempotencyKey: crypto.randomUUID(),
       });
       const headers = new Headers(intent.requiredHeaders);
-      headers.set('Authorization', 'Bearer ' + intent.token);
-      headers.set('x-upsert', 'false');
       const uploaded = await fetch(intent.uploadUrl, {
         method: 'PUT',
         headers,

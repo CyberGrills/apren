@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { installApiMocks } from './mocks.ts';
 
 test.describe('Android-sized Things to do experience', () => {
+  test.beforeEach(async ({ page }) => {
+    // Keep public-page tests isolated from an optional local API process.
+    await installApiMocks(page, null);
+  });
   test('event cards adapt to Android viewport widths without clipping or horizontal overflow', async ({ page }) => {
     await page.goto('/explore?kind=EXPERIENCE');
     await expect(page.getByRole('heading', { name: 'Ibom Christmas Unplugged 4.0' })).toBeVisible();
@@ -45,7 +50,7 @@ test.describe('Android-sized Things to do experience', () => {
     const landscape = await page.evaluate(() => ({
       documentWidth: document.documentElement.scrollWidth,
       viewportWidth: window.innerWidth,
-      gridColumns: getComputedStyle(document.querySelector('.ibom-events-grid')!).gridTemplateColumns,
+      gridColumns: (() => { const grid = document.querySelector('.ibom-events-grid'); return grid ? getComputedStyle(grid).gridTemplateColumns : ''; })(),
     }));
     expect(landscape.documentWidth).toBeLessThanOrEqual(landscape.viewportWidth);
     expect(landscape.gridColumns.split(' ').length).toBeGreaterThanOrEqual(1);
@@ -102,6 +107,9 @@ test.describe('Android-sized Things to do experience', () => {
 });
 
 test.describe('Android appearance persistence', () => {
+  test.beforeEach(async ({ page }) => {
+    await installApiMocks(page, null);
+  });
   test('season and dark mode apply before navigation and remain after reload', async ({ page }) => {
     await page.goto('/appearance');
     await page.getByRole('button', { name: /Autumn/ }).click();
@@ -120,7 +128,7 @@ test.describe('Android appearance persistence', () => {
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
     const theme = await page.locator('html').evaluate((element) => ({
       accent: getComputedStyle(element).getPropertyValue('--season-accent').trim(),
-      panel: getComputedStyle(document.querySelector('.ibom-events-section')!).backgroundColor,
+      panel: (() => { const section = document.querySelector('.ibom-events-section'); return section ? getComputedStyle(section).backgroundColor : ''; })(),
     }));
     expect(theme.accent).toBe('#E98B55');
     expect(theme.panel).not.toBe('rgba(0, 0, 0, 0)');
