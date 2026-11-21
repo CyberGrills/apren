@@ -22,6 +22,8 @@ for (const width of widths) {
       profile: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile')?.getBoundingClientRect(); return rect ? { left: rect.left, right: rect.right } : null; })(),
       editor: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-editor')?.getBoundingClientRect(); return rect ? { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } : null; })(),
       account: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-account')?.getBoundingClientRect(); return rect ? { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } : null; })(),
+      cityInput: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-section:nth-of-type(2) input[autocomplete="address-level2"]')?.getBoundingClientRect(); return rect ? { width: rect.width, height: rect.height } : null; })(),
+      dateInput: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-section:nth-of-type(2) input[type="date"]')?.getBoundingClientRect(); return rect ? { width: rect.width, height: rect.height } : null; })(),
     }));
 
     expect(dimensions.document, `document overflow at ${width}px`).toBeLessThanOrEqual(dimensions.viewport);
@@ -29,6 +31,10 @@ for (const width of widths) {
     expect(dimensions.profile).not.toBeNull();
     expect(dimensions.editor).not.toBeNull();
     expect(dimensions.account).not.toBeNull();
+    expect(dimensions.cityInput).not.toBeNull();
+    expect(dimensions.dateInput).not.toBeNull();
+    expect(dimensions.dateInput!.width).toBeCloseTo(dimensions.cityInput!.width, 0);
+    expect(dimensions.dateInput!.height).toBeCloseTo(dimensions.cityInput!.height, 0);
     if (width <= 860) {
       expect(dimensions.account!.top).toBeGreaterThanOrEqual(dimensions.editor!.bottom - 1);
     } else {

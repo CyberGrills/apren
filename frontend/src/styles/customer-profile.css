@@ -111,3 +111,17 @@
     justify-content: center;
   }
 }
+
+/* Keep the native date control on the same box metrics as adjacent fields. */
+.customer-profile-fields input[type="date"] {
+  display: block;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  block-size: 46px;
+  min-block-size: 46px;
+  padding: 0.8rem 0.9rem;
+  line-height: 1.25;
+  font: inherit;
+}
