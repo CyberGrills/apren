@@ -23,7 +23,14 @@ for (const width of widths) {
       editor: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-editor')?.getBoundingClientRect(); return rect ? { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } : null; })(),
       account: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-account')?.getBoundingClientRect(); return rect ? { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } : null; })(),
       cityInput: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-section:nth-of-type(2) input[autocomplete="address-level2"]')?.getBoundingClientRect(); return rect ? { width: rect.width, height: rect.height } : null; })(),
-      dateInput: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-section:nth-of-type(2) input[type="date"]')?.getBoundingClientRect(); return rect ? { width: rect.width, height: rect.height } : null; })(),
+      dateInput: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-section:nth-of-type(2) input[type="date"]')?.getBoundingClientRect(); return rect ? { left: rect.left, right: rect.right, width: rect.width, height: rect.height } : null; })(),
+      dateField: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-section:nth-of-type(2) input[type="date"]')?.closest('.field')?.getBoundingClientRect(); return rect ? { left: rect.left, right: rect.right, width: rect.width } : null; })(),
+      fieldControlBounds: Array.from(document.querySelectorAll<HTMLElement>('.customer-profile-fields .field')).map((field) => {
+        const fieldRect = field.getBoundingClientRect();
+        const control = field.querySelector<HTMLElement>('.field-input');
+        const controlRect = control?.getBoundingClientRect();
+        return controlRect ? { fieldLeft: fieldRect.left, fieldRight: fieldRect.right, controlLeft: controlRect.left, controlRight: controlRect.right } : null;
+      }).filter(Boolean),
     }));
 
     expect(dimensions.document, `document overflow at ${width}px`).toBeLessThanOrEqual(dimensions.viewport);
@@ -33,6 +40,13 @@ for (const width of widths) {
     expect(dimensions.account).not.toBeNull();
     expect(dimensions.cityInput).not.toBeNull();
     expect(dimensions.dateInput).not.toBeNull();
+    expect(dimensions.dateField).not.toBeNull();
+    expect(dimensions.dateInput!.left).toBeGreaterThanOrEqual(dimensions.dateField!.left - 1);
+    expect(dimensions.dateInput!.right).toBeLessThanOrEqual(dimensions.dateField!.right + 1);
+    for (const bounds of dimensions.fieldControlBounds) {
+      expect(bounds!.controlLeft).toBeGreaterThanOrEqual(bounds!.fieldLeft - 1);
+      expect(bounds!.controlRight).toBeLessThanOrEqual(bounds!.fieldRight + 1);
+    }
     expect(dimensions.dateInput!.width).toBeCloseTo(dimensions.cityInput!.width, 0);
     expect(dimensions.dateInput!.height).toBeCloseTo(dimensions.cityInput!.height, 0);
     if (width <= 860) {
