@@ -137,6 +137,10 @@ test('unknown, stale and future inventory timestamps are not fresh', () => {
   const now = Date.parse('2026-10-27T08:00:00.000Z');
   assert.equal(inventoryFreshness(null, now), 'UNKNOWN');
   assert.equal(inventoryFreshness('2026-10-27T07:59:00.000Z', now), 'FRESH');
+  assert.equal(inventoryFreshness('2026-10-27T07:55:00.000Z', now), 'FRESH');
+  assert.equal(inventoryFreshness('2026-10-27T07:54:59.999Z', now), 'STALE');
+  assert.equal(inventoryFreshness('2026-10-27T07:58:00.000Z', now, 2 * 60 * 1000), 'FRESH');
+  assert.equal(inventoryFreshness('2026-10-27T07:57:59.999Z', now, 2 * 60 * 1000), 'STALE');
   assert.equal(inventoryFreshness('2026-10-27T07:00:00.000Z', now), 'STALE');
   assert.equal(inventoryFreshness('2026-10-27T08:01:00.000Z', now), 'STALE');
 });
