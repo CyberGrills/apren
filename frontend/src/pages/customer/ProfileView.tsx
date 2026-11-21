@@ -2,6 +2,7 @@ import type { SessionUser } from '@7even/contracts';
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AccountSignInMethods } from '../../components/AccountSignInMethods.tsx';
+import { CustomerProfileAvatar } from '../../components/CustomerProfileAvatar.tsx';
 import { ErrorNotice, Field, useFeedback } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { api } from '../../lib/api.ts';
@@ -84,9 +85,7 @@ export function ProfileView({ user }: { user: SessionUser }) {
     <div className="customer-profile">
       <section className="customer-profile-editor" aria-labelledby="profile-details-title">
         <div className="customer-profile-intro">
-          <div className="customer-profile-avatar" aria-hidden="true">
-            {name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || '7'}
-          </div>
+          <CustomerProfileAvatar name={name} />
           <div>
             <span className="public-eyebrow">Your 7even profile</span>
             <h2 id="profile-details-title">{pcm ? 'Make yourself comfortable.' : 'Make yourself at home.'}</h2>

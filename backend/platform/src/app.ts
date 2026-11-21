@@ -40,6 +40,7 @@ import { findLocations, retainedLocationState } from './locations.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
 import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
+import { mountCustomerProfileMedia } from './customerProfileMedia.ts';
 import { mountCreatorArtworks } from './creatorArtworks.ts';
 import { mountCreatorArtworkRights } from './creatorArtworkRights.ts';
 import { mountCreatorArtworkRightsDocuments } from './creatorArtworkRightsDocuments.ts';
@@ -2231,6 +2232,7 @@ export function createApp(options: AppOptions = {}) {
   mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
+  mountCustomerProfileMedia(app, { pool, actor: actorFor });
   mountCreatorArtworks(app, { pool, actor: actorFor });
   mountCreatorArtworkRights(app, { pool, actor: actorFor });
   mountCreatorArtworkRightsDocuments(app, { pool, actor: actorFor });

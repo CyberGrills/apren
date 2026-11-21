@@ -39,6 +39,9 @@ export async function installApiMocks(page: Page, role: 'CUSTOMER' | 'BUSINESS_O
     if (path === '/auth/passkeys') return route.fulfill({ json: { data: { passkeys: [] } } });
     if (path === '/auth/social/accounts') return route.fulfill({ json: { data: { accounts: [] } } });
     if (path === '/me/overview') return route.fulfill({ json: { data: { reservations: [], notifications: [] } } });
+    if (path === '/me/avatar') return route.fulfill({ json: { data: { imageUrl: null } } });
+    if (path === '/me/avatar/upload-intents') return route.fulfill({ status: 201, json: { data: { mediaId: 'avatar-upload-test', uploadUrl: 'https://storage.test/avatar', token: 'signed-upload-token', requiredHeaders: { 'Content-Type': 'image/png' } } } });
+    if (path === '/me/avatar/avatar-upload-test/complete') return route.fulfill({ json: { data: { mediaId: 'avatar-upload-test', imageUrl: 'https://storage.test/avatar-view' } } });
     if (['/business/overview', '/reception/overview', '/admin/overview'].includes(path)) return route.fulfill({ status: 503, json: { error: { code: 'SERVICE_UNAVAILABLE', message: 'Workspace data is unavailable in this isolated browser test.' } } });
     if (path === '/creator/profile') return route.fulfill({ json: { data: { creator: role ? creatorProfile : null } } });
     if (path === '/creator/artworks' || path === '/creator/artworks?limit=50') return route.fulfill({ json: { data: { items: role ? [{ artworkId: artwork.artworkId, title: artwork.title, discipline: artwork.discipline, status: artwork.status, updatedAt: '2026-11-01T10:00:00Z' }] : [], nextCursor: null } } });

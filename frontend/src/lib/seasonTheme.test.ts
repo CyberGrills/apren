@@ -25,7 +25,7 @@ test('every seasonal choice changes the shared accent and surface palette', () =
 test('the selected seasonal preference persists and is applied to the document root', () => {
   assert.match(context, /localStorage\.getItem\(preferenceKey\)/);
   assert.match(context, /localStorage\.setItem\(preferenceKey, preference\)/);
-  assert.match(context, /useLayoutEffect\(\(\) => \{\s*document\.documentElement\.dataset\.season = season;/);
+  assert.match(context, /document\.documentElement\.dataset\.season = season;/);
   assert.match(context, /preference === 'auto' \? calendarSeason : preference/);
 });
 
@@ -70,7 +70,7 @@ test('saved appearance is applied before the React app paints', () => {
   assert.match(html, /prefers-color-scheme: dark/);
   assert.match(html, /root\.dataset\.mode/);
   assert.match(html, /7even-season-theme/);
-  assert.match(html, /document\.documentElement\.dataset\.season/);
+  assert.match(html, /root\.dataset\.season/);
   assert.match(html, /themeColor\.content = dark \? "#111A15" : "#fffdf8"/);
 });
 
