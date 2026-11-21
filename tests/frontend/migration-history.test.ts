@@ -8,6 +8,21 @@ import {
   legacySupabaseMigrationAlreadyApplied,
 } from '../../backend/platform/src/migrate.ts';
 
+const emptyDemoSchema: LegacyMigrationSchemaState = {
+  demoCatalogItemsPresent: false,
+  demoWalletsPresent: false,
+  demoBookingsPresent: false,
+  demoWalletEntriesPresent: false,
+  demoCatalogColumnsPresent: false,
+  demoWalletColumnsPresent: false,
+  demoBookingColumnsPresent: false,
+  demoWalletEntryColumnsPresent: false,
+  demoTablesRlsEnabled: false,
+  demoAppPoliciesPresent: false,
+  demoCatalogReadonlyPolicyPresent: false,
+  demoEntryTypeLength: null,
+};
+
 const completeDemoSchema: LegacyMigrationSchemaState = {
   demoCatalogItemsPresent: true,
   demoWalletsPresent: true,
@@ -131,14 +146,24 @@ test('adopts a legacy migration only when Supabase history and the verified sche
       legacyHistoryConnection({ historyTable: false }),
       '027_demo_marketplace_wallet.sql',
     ),
-    false,
+    true,
+    'A complete verified schema must not replay merely because Supabase history is absent',
   );
   assert.equal(
     await legacySupabaseMigrationAlreadyApplied(
       legacyHistoryConnection({ applied: false }),
       '027_demo_marketplace_wallet.sql',
     ),
+    true,
+    'A complete verified schema must be adopted when the app ledger is behind',
+  );
+  assert.equal(
+    await legacySupabaseMigrationAlreadyApplied(
+      legacyHistoryConnection({ historyTable: false, state: emptyDemoSchema }),
+      '027_demo_marketplace_wallet.sql',
+    ),
     false,
+    'A genuinely absent legacy schema should still run its migration',
   );
   assert.equal(
     await legacySupabaseMigrationAlreadyApplied(
@@ -152,7 +177,15 @@ test('adopts a legacy migration only when Supabase history and the verified sche
       legacyHistoryConnection({ state: { ...completeDemoSchema, demoTablesRlsEnabled: false } }),
       '027_demo_marketplace_wallet.sql',
     ),
-    /schema does not match/,
+    /live schema does not match/,
+  );
+  await assert.rejects(
+    legacySupabaseMigrationAlreadyApplied(
+      legacyHistoryConnection({ historyTable: false, state: { ...completeDemoSchema, demoWalletEntryColumnsPresent: false } }),
+      '027_demo_marketplace_wallet.sql',
+    ),
+    /live schema does not match/,
+    'A partial schema without a history row must fail closed rather than replay',
   );
 });
 
