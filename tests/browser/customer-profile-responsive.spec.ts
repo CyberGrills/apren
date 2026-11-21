@@ -38,6 +38,10 @@ for (const width of widths) {
     expect(dimensions.profile).not.toBeNull();
     expect(dimensions.editor).not.toBeNull();
     expect(dimensions.account).not.toBeNull();
+    expect(dimensions.editor!.left).toBeGreaterThanOrEqual(dimensions.profile!.left - 1);
+    expect(dimensions.editor!.right).toBeLessThanOrEqual(dimensions.profile!.right + 1);
+    expect(dimensions.account!.left).toBeGreaterThanOrEqual(dimensions.profile!.left - 1);
+    expect(dimensions.account!.right).toBeLessThanOrEqual(dimensions.profile!.right + 1);
     expect(dimensions.cityInput).not.toBeNull();
     expect(dimensions.dateInput).not.toBeNull();
     expect(dimensions.dateField).not.toBeNull();
@@ -52,7 +56,7 @@ for (const width of widths) {
     if (width <= 860) {
       expect(dimensions.account!.top).toBeGreaterThanOrEqual(dimensions.editor!.bottom - 1);
     } else {
-      expect(dimensions.account!.left).toBeGreaterThan(dimensions.editor!.left);
+      expect(dimensions.account!.left).toBeGreaterThanOrEqual(dimensions.editor!.right - 1);
     }
   });
 }
