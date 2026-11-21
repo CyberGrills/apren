@@ -49,6 +49,13 @@ test('profile avatars are available to every authenticated 7even account role', 
         headers: { 'Content-Type': 'application/json' },
       });
     }
+    const signedObjectPrefix = objectPrefix + 'sign/';
+    if (method === 'GET' && url.startsWith(signedObjectPrefix)) {
+      const objectPath = url.slice(signedObjectPrefix.length).split('?')[0] ?? '';
+      const stored = storageObjects.get(objectPath);
+      if (!stored) return new Response('Not found', { status: 404 });
+      return new Response(new Uint8Array(stored), { status: 200, headers: { 'Content-Length': String(stored.length), 'Content-Type': 'image/png' } });
+    }
     if (url.startsWith(objectPrefix) && !url.startsWith(uploadPrefix)) {
       const objectPath = url.slice(objectPrefix.length);
       const stored = storageObjects.get(objectPath);
@@ -139,6 +146,10 @@ test('profile avatars are available to every authenticated 7even account role', 
       const refreshedBody = await refreshed.json() as { data?: { imageUrl: string | null } };
       assert.equal(refreshed.status, 200);
       assert.equal(refreshedBody.data?.imageUrl, completeBody.data?.imageUrl, 'The signed image must be readable again from the authenticated profile');
+      const imageReadback = await fetch(refreshedBody.data?.imageUrl ?? 'https://invalid.test');
+      assert.equal(imageReadback.status, 200, 'The private signed image URL must return the stored image');
+      const readbackBytes = new Uint8Array(await imageReadback.arrayBuffer());
+      assert.deepEqual(Array.from(readbackBytes.slice(0, 8)), [137,80,78,71,13,10,26,10]);
       const current = await one(pool, "SELECT user_id,status FROM seven.customer_profile_media WHERE media_id=$1", [uploadBody.data?.mediaId]);
       assert.equal(current?.user_id, userId);
       assert.equal(current?.status, 'CURRENT');
