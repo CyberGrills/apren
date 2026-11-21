@@ -10,6 +10,7 @@ import {
 import { MapPin } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../lib/api.ts';
+import { LocationCombobox } from './LocationCombobox.tsx';
 import { ErrorNotice } from './ui.tsx';
 import '../styles/location-fields.css';
 
@@ -69,6 +70,36 @@ export function StateCityFields({
       });
     return () => controller.abort();
   }, [state, attempt]);
+  const [remoteCities, setRemoteCities] = useState<NigeriaLocation[]>([]);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  useEffect(() => {
+    const query = city.trim();
+    if (state || query.length < 2) {
+      setRemoteCities((current) => (current.length ? [] : current));
+      setRemoteLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setRemoteLoading(true);
+    const timer = window.setTimeout(() => {
+      api<NigeriaLocation[]>(`/locations?q=${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+      })
+        .then((next) => {
+          if (!controller.signal.aborted) setRemoteCities(next);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setRemoteCities([]);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setRemoteLoading(false);
+        });
+    }, 160);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [state, city]);
   return (
     <>
       <div className="location-field">
@@ -93,35 +124,22 @@ export function StateCityFields({
       </div>
       <div className="location-field">
         <label htmlFor={`${prefix}-city`}>City or area</label>
-        <select
+        <LocationCombobox
           id={`${prefix}-city`}
           name="city"
           value={city}
+          onChange={setCity}
+          onSelectOption={(location) => {
+            if (!state) setState(findNigeriaState(location.state)?.name ?? location.state);
+          }}
+          options={state ? cities : remoteCities}
+          loading={state ? loading : remoteLoading}
+          serverFiltered={!state}
           required={required}
-          disabled={!required && !city && (!state || loading || error)}
-          onChange={(event) => setCity(event.target.value)}
-        >
-          <option value="">
-            {loading
-              ? 'Loading cities…'
-              : !state
-                ? 'Select a state first'
-                : required
-                  ? 'Select a city or area'
-                  : 'All cities and areas'}
-          </option>
-          {city && !cities.some((item) => item.name === city) && (
-            <option value={city}>
-              {city}
-              {!state ? ' (current search)' : ''}
-            </option>
-          )}
-          {cities.map((item) => (
-            <option key={item.id} value={item.name}>
-              {item.name}
-            </option>
-          ))}
-        </select>
+          strict={required}
+          placeholder={state ? 'Type a city or area' : 'Type a place, or pick a state first'}
+          hint="Type a place name, or pick a state to browse its cities."
+        />
         {error && (
           <ErrorNotice
             message="Cities could not load. Please try again."
