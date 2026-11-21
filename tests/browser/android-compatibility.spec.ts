@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { installApiMocks } from './mocks.ts';
 
 test.describe('Android-sized Things to do experience', () => {
   test('event cards adapt to Android viewport widths without clipping or horizontal overflow', async ({ page }) => {
+    await installApiMocks(page);
     await page.goto('/explore?kind=EXPERIENCE');
     await expect(page.getByRole('heading', { name: 'Ibom Christmas Unplugged 4.0' })).toBeVisible();
 
@@ -84,6 +86,7 @@ test.describe('Android-sized Things to do experience', () => {
 
 test.describe('Android appearance persistence', () => {
   test('season and dark mode apply before navigation and remain after reload', async ({ page }) => {
+    await installApiMocks(page);
     await page.goto('/appearance');
     await page.getByRole('button', { name: /Autumn/ }).click();
     await expect(page.locator('html')).toHaveAttribute('data-season', 'autumn');
