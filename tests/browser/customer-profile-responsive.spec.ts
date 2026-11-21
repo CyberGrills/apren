@@ -80,19 +80,21 @@ test('customer profile exposes all personal and stay preference fields', async (
 });
 
 
-test('customer can upload and replace a persistent profile picture', async ({ page }) => {
-  await installApiMocks(page, 'CUSTOMER');
-  await page.route('https://storage.test/avatar', route => route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-upsert' }, body: 'stored' }));
-  await page.goto('/app/profile');
+for (const role of ['CUSTOMER', 'BUSINESS_OWNER', 'RECEPTION', 'ADMIN'] as const) {
+  test(`${role.toLowerCase()} can upload and replace a persistent profile picture`, async ({ page }) => {
+    await installApiMocks(page, role);
+    await page.route('https://storage.test/avatar', route => route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-upsert' }, body: 'stored' }));
+    await page.goto('/app/profile');
 
-  const upload = page.getByRole('button', { name: 'Upload photo' });
-  await expect(upload).toBeVisible();
-  await page.getByLabel('Choose profile picture').setInputFiles({
-    name: 'profile.png',
-    mimeType: 'image/png',
-    buffer: Buffer.from('test-image-content'),
+    const upload = page.getByRole('button', { name: 'Upload photo' });
+    await expect(upload).toBeVisible();
+    await page.getByLabel('Choose profile picture').setInputFiles({
+      name: 'profile.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('test-image-content'),
+    });
+
+    await expect(page.getByRole('button', { name: 'Change photo' })).toBeVisible();
+    await expect(page.locator('.customer-profile-avatar-image')).toHaveAttribute('src', 'https://storage.test/avatar-view');
   });
-
-  await expect(page.getByRole('button', { name: 'Change photo' })).toBeVisible();
-  await expect(page.locator('.customer-profile-avatar-image')).toHaveAttribute('src', 'https://storage.test/avatar-view');
-});
+}
