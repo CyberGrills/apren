@@ -87,7 +87,7 @@ test('customer profile exposes all personal and stay preference fields', async (
 for (const role of ['CUSTOMER', 'BUSINESS_OWNER', 'RECEPTION', 'ADMIN'] as const) {
   test(`${role.toLowerCase()} can upload and replace a persistent profile picture`, async ({ page }) => {
     await installApiMocks(page, role);
-    await page.route('https://storage.test/avatar', route => route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-upsert' }, body: 'stored' }));
+    await page.route('https://storage.test/avatar**', route => route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-upsert' }, body: 'stored' }));
     await page.goto('/app/profile');
 
     const upload = page.getByRole('button', { name: 'Upload photo' });
