@@ -78,7 +78,7 @@ export function CustomerProfileAvatar({ name }: { name: string }) {
       </div>
       <input
         ref={inputRef}
-        className="visually-hidden"
+        className="customer-profile-avatar-file"
         type="file"
         accept="image/jpeg,image/png,image/webp,image/avif"
         aria-label="Choose profile picture"
