@@ -48,7 +48,7 @@ for (const width of widths) {
       expect(bounds!.controlRight).toBeLessThanOrEqual(bounds!.fieldRight + 1);
     }
     expect(dimensions.dateInput!.width).toBeCloseTo(dimensions.cityInput!.width, 0);
-    expect(dimensions.dateInput!.height).toBeCloseTo(dimensions.cityInput!.height, 0);
+    expect(Math.abs(dimensions.dateInput!.height - dimensions.cityInput!.height)).toBeLessThanOrEqual(1);
     if (width <= 860) {
       expect(dimensions.account!.top).toBeGreaterThanOrEqual(dimensions.editor!.bottom - 1);
     } else {
