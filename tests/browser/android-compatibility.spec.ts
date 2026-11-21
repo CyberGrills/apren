@@ -42,11 +42,15 @@ test.describe('Android-sized Things to do experience', () => {
 
     await page.setViewportSize({ width: 844, height: 390 });
     await expect(page.locator('.ibom-event-card').first()).toBeVisible();
-    const landscape = await page.evaluate(() => ({
-      documentWidth: document.documentElement.scrollWidth,
-      viewportWidth: window.innerWidth,
-      gridColumns: getComputedStyle(document.querySelector('.ibom-events-grid')!).gridTemplateColumns,
-    }));
+    const landscape = await page.evaluate(() => {
+      const grid = document.querySelector<HTMLElement>('.ibom-events-grid');
+      if (!grid) throw new Error('Festival event grid is missing');
+      return {
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth,
+        gridColumns: getComputedStyle(grid).gridTemplateColumns,
+      };
+    });
     expect(landscape.documentWidth).toBeLessThanOrEqual(landscape.viewportWidth);
     expect(landscape.gridColumns.split(' ').length).toBeGreaterThanOrEqual(1);
   });
@@ -55,7 +59,7 @@ test.describe('Android-sized Things to do experience', () => {
     await page.goto('/explore?kind=EXPERIENCE');
     const search = page.getByRole('searchbox', { name: 'Search festival events' });
     await search.fill('Ibom Air Day');
-    await expect(page.getByText('Showing 1 of 20 official events')).toBeVisible();
+    await expect(page.locator('.ibom-events-count')).toContainText('1 of 20 official events');
     const eventCard = page.locator('.ibom-event-card').filter({ has: page.getByRole('heading', { name: 'Ibom Air Day' }) });
     await expect(eventCard).toBeVisible();
     await eventCard.getByRole('button', { name: 'View event on 7EVEN' }).click();
@@ -82,7 +86,7 @@ test.describe('Android appearance persistence', () => {
     await expect(page.locator('html')).toHaveAttribute('data-season', 'autumn');
     await page.getByRole('button', { name: /Dark/ }).click();
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
-    await expect.poll(() => page.locator('html').evaluate((element) => getComputedStyle(element).colorScheme)).toBe('dark');
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe('dark');
 
     await expect.poll(() => page.evaluate(() => localStorage.getItem('7even-season-theme'))).toBe('autumn');
     await expect.poll(() => page.evaluate(() => localStorage.getItem('7even-color-mode'))).toBe('dark');
@@ -92,10 +96,14 @@ test.describe('Android appearance persistence', () => {
     await page.goto('/explore?kind=EXPERIENCE');
     await expect(page.locator('html')).toHaveAttribute('data-season', 'autumn');
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
-    const theme = await page.locator('html').evaluate((element) => ({
-      accent: getComputedStyle(element).getPropertyValue('--season-accent').trim(),
-      panel: getComputedStyle(document.querySelector('.ibom-events-section')!).backgroundColor,
-    }));
+    const theme = await page.evaluate(() => {
+      const section = document.querySelector<HTMLElement>('.ibom-events-section');
+      if (!section) throw new Error('Festival event section is missing');
+      return {
+        accent: getComputedStyle(document.documentElement).getPropertyValue('--season-accent').trim(),
+        panel: getComputedStyle(section).backgroundColor,
+      };
+    });
     expect(theme.accent).toBe('#E98B55');
     expect(theme.panel).not.toBe('rgba(0, 0, 0, 0)');
   });
