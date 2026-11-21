@@ -71,7 +71,7 @@ export function CustomerProfileAvatar({ name }: { name: string }) {
 
   return (
     <div className="customer-profile-avatar-wrap">
-      <div className="customer-profile-avatar" aria-label={imageUrl ? 'Your profile photo' : 'Profile initials'}>
+      <div className="customer-profile-avatar" role="img" aria-label={imageUrl ? 'Your profile photo' : 'Profile initials'}>
         {imageUrl
           ? <img src={imageUrl} alt="" className="customer-profile-avatar-image" />
           : initials}
