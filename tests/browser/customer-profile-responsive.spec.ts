@@ -9,7 +9,7 @@ for (const width of widths) {
     await installApiMocks(page, 'CUSTOMER');
     await page.goto('/app/profile');
 
-    await expect(page.getByRole('heading', { name: 'Make yourself at home.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Make yourself at home.', level: 2 })).toBeVisible();
     await expect(page.getByLabel('Your name')).toBeVisible();
     await expect(page.getByLabel('Email address')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Keep it yours.' })).toBeVisible();
@@ -19,9 +19,9 @@ for (const width of widths) {
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
       body: document.body.scrollWidth,
-      profile: document.querySelector<HTMLElement>('.customer-profile')?.getBoundingClientRect(),
-      editor: document.querySelector<HTMLElement>('.customer-profile-editor')?.getBoundingClientRect(),
-      account: document.querySelector<HTMLElement>('.customer-profile-account')?.getBoundingClientRect(),
+      profile: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile')?.getBoundingClientRect(); return rect ? { left: rect.left, right: rect.right } : null; })(),
+      editor: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-editor')?.getBoundingClientRect(); return rect ? { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } : null; })(),
+      account: (() => { const rect = document.querySelector<HTMLElement>('.customer-profile-account')?.getBoundingClientRect(); return rect ? { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } : null; })(),
     }));
 
     expect(dimensions.document, `document overflow at ${width}px`).toBeLessThanOrEqual(dimensions.viewport);
