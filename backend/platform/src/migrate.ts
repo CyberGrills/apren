@@ -93,19 +93,26 @@ export async function legacySupabaseMigrationAlreadyApplied(
       (SELECT character_maximum_length FROM information_schema.columns WHERE table_schema='seven' AND table_name='demo_wallet_entries' AND column_name='entry_type') AS "demoEntryTypeLength"`,
   );
 
-  const hasAnyLegacySchema = Boolean(
+  // Migration 028 intentionally alters a table created by 027. Its mere
+  // existence is therefore not evidence that 028 has already run; only the
+  // widened varchar(20) column is the schema marker for that migration.
+  const hasLegacySchemaMarker = Boolean(
     state &&
-    (state.demoCatalogItemsPresent ||
-      state.demoWalletsPresent ||
-      state.demoBookingsPresent ||
-      state.demoWalletEntriesPresent),
+    (filename === '027_demo_marketplace_wallet.sql'
+      ? state.demoCatalogItemsPresent ||
+        state.demoWalletsPresent ||
+        state.demoBookingsPresent ||
+        state.demoWalletEntriesPresent
+      : filename === '028_demo_wallet_ledger_type.sql'
+        ? state.demoEntryTypeLength === 20
+        : false),
   );
-  if (!applied && !hasAnyLegacySchema) return false;
+  if (!applied && !hasLegacySchemaMarker) return false;
 
   if (state && isLegacyMigrationSchemaCompatible(filename, state)) return true;
 
   throw new Error(
-    `Legacy migration ${legacyName} is recorded or its schema already exists, but the live schema does not match ${filename}. Refusing to replay or adopt it; reconcile this database manually.`,
+    `Legacy migration ${legacyName} is recorded or its schema marker already exists, but the live schema does not match ${filename}. Refusing to replay or adopt it; reconcile this database manually.`,
   );
 }
 
