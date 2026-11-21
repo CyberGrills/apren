@@ -25,7 +25,7 @@ test('profile avatars are available to every authenticated 7even account role', 
   globalThis.fetch = async (input, init) => {
     const url = input instanceof Request ? input.url : String(input);
     if (url.startsWith('https://storage.test/storage/v1/object/upload/sign/')) {
-      return new Response(JSON.stringify({ signedURL: '/object/upload/sign/customer-profile-photos/synthetic', token: 'synthetic-signed-upload-token' }), {
+      return new Response(JSON.stringify({ url: '/object/upload/sign/customer-profile-photos/synthetic?token=synthetic-signed-upload-token' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -68,10 +68,12 @@ test('profile avatars are available to every authenticated 7even account role', 
         headers: { Origin: origin, 'Content-Type': 'application/json', Cookie: cookie, 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ filename: 'profile.png', mimeType: 'image/png', byteSize: 128 }),
       });
-      const uploadBody = await upload.json() as { data?: { mediaId: string; token: string; uploadUrl: string }; error?: { code: string } };
+      const uploadBody = await upload.json() as { data?: { mediaId: string; uploadUrl: string }; error?: { code: string } };
       assert.equal(upload.status, 201, `${role} account should create its own upload intent: ${JSON.stringify(uploadBody)}`);
-      assert.equal(uploadBody.data?.token, 'synthetic-signed-upload-token');
-      assert.match(uploadBody.data?.uploadUrl ?? '', /^https:\/\/storage\.test\/storage\/v1\//);
+      const signedUploadUrl = new URL(uploadBody.data?.uploadUrl ?? 'https://invalid.test');
+      assert.equal(signedUploadUrl.origin, 'https://storage.test');
+      assert.equal(signedUploadUrl.searchParams.get('token'), 'synthetic-signed-upload-token');
+      assert.equal('token' in (uploadBody.data ?? {}), false, 'The signed token belongs in the URL query, not an Authorization header payload');
       const pending = await one(pool, 'SELECT user_id,status FROM seven.customer_profile_media WHERE media_id=$1', [uploadBody.data?.mediaId]);
       assert.equal(pending?.user_id, userId, 'Avatar uploads must be scoped to the authenticated account');
       assert.equal(pending?.status, 'PENDING_UPLOAD');
