@@ -11,8 +11,9 @@ const MAX_BYTES = 5 * 1024 * 1024;
 const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const;
 type Context = { pool: Pool; actor: (res: Response) => SessionUser };
 
-function customer(actor: SessionUser): string {
-  if (actor.role !== 'CUSTOMER') return fail(403, 'CUSTOMER_REQUIRED', 'Customer account access is required.');
+function authenticatedUser(actor: SessionUser): string {
+  // The account profile is shared across 7even workspaces. Every signed-in
+  // account may manage its own avatar; ownership is always scoped to actor.id.
   return actor.id;
 }
 const encodedPath = (path: string) => path.split('/').map(encodeURIComponent).join('/');
@@ -47,7 +48,7 @@ async function signedAvatar(storagePath: string): Promise<string> {
 
 export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context): void {
   app.get('/api/me/avatar', async (_req, res) => {
-    const userId = customer(actor(res));
+    const userId = authenticatedUser(actor(res));
     const current = await one(pool,
       "SELECT storage_path FROM seven.customer_profile_media WHERE user_id=$1 AND status='CURRENT'",
       [userId],
@@ -56,7 +57,7 @@ export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context
   });
 
   app.post('/api/me/avatar/upload-intents', async (req, res) => {
-    const userId = customer(actor(res));
+    const userId = authenticatedUser(actor(res));
     const input = z.strictObject({
       filename: z.string().trim().min(1).max(255),
       mimeType: z.enum(imageTypes),
@@ -94,7 +95,7 @@ export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context
   });
 
   app.post('/api/me/avatar/:id/complete', async (req, res) => {
-    const userId = customer(actor(res));
+    const userId = authenticatedUser(actor(res));
     const mediaId = z.uuid().parse(req.params.id);
     const media = await one(pool,
       "SELECT media_id,storage_path,mime_type,byte_size,status,upload_expires_at FROM seven.customer_profile_media WHERE media_id=$1 AND user_id=$2",
