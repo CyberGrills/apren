@@ -35,7 +35,7 @@ test('profile avatars are available to every authenticated 7even account role', 
       });
     }
     if (method === 'PUT' && url.startsWith(uploadPrefix)) {
-      const objectPath = url.slice(uploadPrefix.length).split('?')[0]!;
+      const objectPath = url.slice(uploadPrefix.length).split('?')[0] ?? '';
       const bytes = Buffer.from(await new Response(init.body).arrayBuffer());
       storageObjects.set(objectPath, bytes);
       return new Response(null, { status: 200 });
@@ -113,12 +113,12 @@ test('profile avatars are available to every authenticated 7even account role', 
       assert.equal(uploaded.status, 200, 'The signed URL must accept the selected image bytes');
 
       if (firstMediaId) {
-        const чужой = await fetch(`${base}/api/me/avatar/${firstMediaId}/complete`, {
+        const foreignOwnerAttempt = await fetch(`${base}/api/me/avatar/${firstMediaId}/complete`, {
           method: 'POST',
           headers: { Origin: origin, 'Content-Type': 'application/json', Cookie: cookie, 'X-CSRF-Token': csrfToken },
           body: JSON.stringify({}),
         });
-        assert.equal(чужой.status, 404, 'Another account role must not complete someone else’s avatar upload');
+        assert.equal(foreignOwnerAttempt.status, 404, 'Another account role must not complete someone else’s avatar upload');
       } else {
         firstMediaId = uploadBody.data?.mediaId ?? null;
       }
