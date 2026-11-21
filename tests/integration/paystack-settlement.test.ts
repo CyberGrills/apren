@@ -10,6 +10,7 @@ import { MockProvider } from '../../backend/platform/src/provider.ts';
 import { ProviderRegistry } from '../../backend/platform/src/providerRegistry.ts';
 import { createQuote, createReservation } from '../../backend/platform/src/reservations.ts';
 import { seed } from '../../backend/platform/src/seed.ts';
+import { seedVerifiedDining } from './helpers/seed-verified-dining.ts';
 import { paymentProjection, userProjection } from '../../backend/platform/src/store.ts';
 
 test('Paystack settlement reports remain observations until bank delivery is independently established', {
@@ -33,6 +34,7 @@ test('Paystack settlement reports remain observations until bank delivery is ind
     await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
     await migrate(pool);
     await seed(pool, 'Paystack-settlement-fixture-only-42!');
+  await seedVerifiedDining(pool);
     const guest = await one(pool, "SELECT user_id FROM seven.users WHERE email='guest@seven.test'");
     assert.ok(guest);
     const projectedActor = await userProjection(appPool, guest.user_id);

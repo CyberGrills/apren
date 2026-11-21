@@ -919,6 +919,10 @@ export function createApp(options: AppOptions = {}) {
        WHERE o.is_published
          AND b.workflow_state_id=${S.sid('APPROVED')}
          AND (
+           s.sector_code <> 'DINING'
+           OR b.details #>> '{diningVerificationReview,checklistVersion}' = '1'
+         )
+         AND (
            s.sector_code <> 'STAY'
            OR (
              ${genericStayVerificationGate}
@@ -974,6 +978,15 @@ export function createApp(options: AppOptions = {}) {
     let offer = await S.offeringProjection(pool, id(req));
     if (!offer) return fail(404, 'NOT_FOUND', 'Offering not found.');
     const b = await S.businessProjection(pool, offer.businessId);
+    let verifiedDining = offer.kind !== 'DINING';
+    if (offer.kind === 'DINING') {
+      const review = await one<{ checklist_version: string | null }>(
+        pool,
+        "SELECT details #>> '{diningVerificationReview,checklistVersion}' AS checklist_version FROM seven.businesses WHERE business_id=$1",
+        [offer.businessId],
+      );
+      verifiedDining = review?.checklist_version === '1';
+    }
     let verifiedStay = offer.kind !== 'STAY' || Boolean(environment !== 'production' && b?.isSample);
     if (offer.kind === 'STAY' && !verifiedStay) {
       const review = await one<{ checklist_version: string | null }>(
@@ -983,7 +996,7 @@ export function createApp(options: AppOptions = {}) {
       );
       verifiedStay = review?.checklist_version === '1';
     }
-    const publicEligible = offer.published && b?.status === 'APPROVED' && verifiedStay;
+    const publicEligible = offer.published && b?.status === 'APPROVED' && verifiedStay && verifiedDining;
     if (!publicEligible) {
       const actor = actorFor(res);
       S.requireTenant(actor, offer.businessId);
@@ -2034,6 +2047,31 @@ export function createApp(options: AppOptions = {}) {
       let details = current.details ?? {};
       const businessSector =
         typeof details.sector === 'string' ? details.sector : 'STAY';
+      if (input.status === 'APPROVED' && businessSector === 'DINING') {
+        const verification = input.diningVerification;
+        if (!verification)
+          return fail(
+            409,
+            'DINING_VERIFICATION_REQUIRED',
+            'Complete the Dining verification checklist and attach evidence references before approval.',
+          );
+        const evidenceItems = Object.values(verification);
+        if (evidenceItems.some((item) => !item.confirmed || !item.evidenceReference.trim()))
+          return fail(
+            409,
+            'DINING_VERIFICATION_INCOMPLETE',
+            'Every Dining verification item must be confirmed with an evidence reference.',
+          );
+        details = {
+          ...details,
+          diningVerificationReview: {
+            checklistVersion: 1,
+            evidence: verification,
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: actor.id,
+          },
+        };
+      }
       if (input.status === 'APPROVED' && businessSector === 'STAY') {
         const verification = input.verification;
         if (!verification)

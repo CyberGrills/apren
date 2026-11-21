@@ -18,6 +18,7 @@ import type { PaymentProvider } from '../../backend/platform/src/provider.ts';
 import { MockProvider, minorToDecimal } from '../../backend/platform/src/provider.ts';
 import { providerIds } from '../../backend/platform/src/providerRegistry.ts';
 import { seed } from '../../backend/platform/src/seed.ts';
+import { seedVerifiedDining } from './helpers/seed-verified-dining.ts';
 import {
   pointsProjection,
   reservationProjection,
@@ -103,6 +104,7 @@ test('7even real PostgreSQL API and invariant acceptance', {
   await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
   await migrate(pool);
   await seed(pool, password);
+  await seedVerifiedDining(pool);
   const appPool = process.env.TEST_RUNTIME_DATABASE_URL
     ? createPool(process.env.TEST_RUNTIME_DATABASE_URL)
     : pool;
