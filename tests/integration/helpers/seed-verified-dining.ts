@@ -27,7 +27,7 @@ export async function seedVerifiedDining(pool: Pool): Promise<void> {
        jsonb_build_object(
          'diningVerificationReview',
          jsonb_build_object(
-           'checklistVersion', '1',
+           'checklistVersion', 1,
            'evidence', $1::jsonb,
            'reviewedAt', now(),
            'reviewerId', (
