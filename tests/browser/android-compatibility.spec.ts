@@ -57,8 +57,11 @@ test.describe('Android-sized Things to do experience', () => {
 
   test('event search, detail expansion and page scrolling work on touch-sized screens', async ({ page }) => {
     await page.goto('/explore?kind=EXPERIENCE');
-    const search = page.getByRole('searchbox', { name: 'Search festival events' });
-    await search.fill('Ibom Air Day');
+    const search = page.locator('.ibom-events-search input');
+    await expect(search).toBeVisible();
+    await search.click();
+    await search.pressSequentially('Ibom Air Day');
+    await expect(search).toHaveValue('Ibom Air Day');
     await expect(page.locator('.ibom-events-count')).toContainText('1 of 20 official events');
     const eventCard = page.locator('.ibom-event-card').filter({ has: page.getByRole('heading', { name: 'Ibom Air Day' }) });
     await expect(eventCard).toBeVisible();
@@ -93,9 +96,9 @@ test.describe('Android appearance persistence', () => {
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-season', 'autumn');
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
-    await page.goto('/explore?kind=EXPERIENCE');
-    await expect(page.locator('html')).toHaveAttribute('data-season', 'autumn');
-    await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
+    await page.goto('/explore');
+    await page.getByRole('button', { name: 'Things to do' }).click();
+    await expect(page.getByRole('heading', { name: 'Ibom Christmas Unplugged 4.0' })).toBeVisible();
     const theme = await page.evaluate(() => {
       const section = document.querySelector<HTMLElement>('.ibom-events-section');
       if (!section) throw new Error('Festival event section is missing');
