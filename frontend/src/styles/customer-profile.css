@@ -1,0 +1,113 @@
+/* Customer profile layout overrides.
+   This stylesheet loads after the shared responsive layer so legacy account
+   styles cannot reintroduce the old divider and indentation on stacked cards. */
+.customer-profile {
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.8fr);
+  gap: clamp(1rem, 2.5vw, 2.25rem);
+  align-items: start;
+}
+
+.customer-profile-editor,
+.customer-profile-account {
+  min-width: 0;
+  border: 1px solid var(--line);
+  padding: clamp(1rem, 2.5vw, 2rem);
+}
+
+.customer-profile-account {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  border-left: 1px solid var(--line);
+}
+
+.customer-profile-intro {
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.customer-profile-intro > div:last-child {
+  min-width: 0;
+}
+
+.customer-profile-intro h2,
+.customer-profile-account h2 {
+  overflow-wrap: anywhere;
+}
+
+.customer-profile-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.customer-profile-fields > *,
+.customer-profile-save-row > * {
+  min-width: 0;
+}
+
+.customer-profile-save-row {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.customer-profile-save-row > .btn {
+  min-height: 44px;
+}
+
+.customer-profile-save-row > .text-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  overflow-wrap: anywhere;
+}
+
+.customer-profile-account > .btn {
+  width: 100%;
+  min-height: 44px;
+}
+
+@media (max-width: 860px) {
+  .customer-profile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .customer-profile-account {
+    order: 2;
+    border: 1px solid var(--line);
+    padding: clamp(1rem, 3vw, 1.5rem);
+  }
+}
+
+@media (max-width: 520px) {
+  .customer-profile-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .customer-profile-editor,
+  .customer-profile-account {
+    padding: 1rem;
+  }
+
+  .customer-profile-intro {
+    gap: 0.8rem;
+  }
+
+  .customer-profile-avatar {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+  }
+
+  .customer-profile-intro h2,
+  .customer-profile-account h2 {
+    font-size: clamp(1.5rem, 7vw, 1.8rem);
+  }
+
+  .customer-profile-save-row {
+    align-items: stretch;
+  }
+
+  .customer-profile-save-row > .btn,
+  .customer-profile-save-row > .text-button {
+    justify-content: center;
+  }
+}
