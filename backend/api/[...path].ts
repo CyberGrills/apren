@@ -1,7 +1,7 @@
 import { createApp } from "../platform/src/app.ts";
 import { createPool } from "../platform/src/db.ts";
 import { paymentReadiness } from "../platform/src/providerRegistry.ts";
-import { schemaIsReady } from "../platform/src/schemaReadiness.ts";
+import { creatorArtworkSchemaIsReady, schemaIsReady } from "../platform/src/schemaReadiness.ts";
 
 const vercelEnvironment = process.env.VERCEL_ENV;
 const environment =
@@ -67,8 +67,15 @@ export default async function handler(req: HandlerRequest, res: HandlerResponse)
         });
       }
       const payments = paymentReadiness(environment);
+      const creatorStudioReady = await creatorArtworkSchemaIsReady(pool).catch(() => false);
       return res.status(200).json({
-        data: { status: "ready", storage: "postgresql", paymentMode: payments.mode, payments },
+        data: {
+          status: "ready",
+          storage: "postgresql",
+          paymentMode: payments.mode,
+          payments,
+          features: { creatorStudio: creatorStudioReady ? "ready" : "not_ready" },
+        },
       });
     } catch {
       return res.status(503).json({
