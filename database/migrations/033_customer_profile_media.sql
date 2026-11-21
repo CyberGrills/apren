@@ -24,11 +24,34 @@ CREATE UNIQUE INDEX customer_profile_media_one_current_per_user_idx
 CREATE INDEX customer_profile_media_user_status_idx
   ON seven.customer_profile_media(user_id,status,created_at DESC);
 DO $customer_profile_storage$
+DECLARE
+  bucket_public boolean;
+  bucket_file_size_limit bigint;
+  bucket_mime_types text[];
+  expected_mime_types text[] := ARRAY['image/jpeg','image/png','image/webp','image/avif']::text[];
 BEGIN
-  IF to_regclass('storage.buckets') IS NOT NULL THEN
-    INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
-    VALUES ('customer-profile-photos','customer-profile-photos',false,5242880,ARRAY['image/jpeg','image/png','image/webp','image/avif']::text[])
-    ON CONFLICT (id) DO NOTHING;
+  IF to_regclass('storage.buckets') IS NULL THEN
+    RAISE EXCEPTION 'Supabase Storage is not available; refusing to create profile media without its private bucket';
+  END IF;
+
+  INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
+  VALUES ('customer-profile-photos','customer-profile-photos',false,5242880,expected_mime_types)
+  ON CONFLICT (id) DO NOTHING;
+
+  SELECT public,file_size_limit,allowed_mime_types
+    INTO bucket_public,bucket_file_size_limit,bucket_mime_types
+    FROM storage.buckets
+    WHERE id='customer-profile-photos' AND name='customer-profile-photos';
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Customer profile photo bucket is missing after creation';
+  END IF;
+
+  IF bucket_public IS DISTINCT FROM false
+     OR bucket_file_size_limit IS DISTINCT FROM 5242880
+     OR COALESCE(bucket_mime_types, ARRAY[]::text[]) @> expected_mime_types IS FALSE
+     OR expected_mime_types @> COALESCE(bucket_mime_types, ARRAY[]::text[]) IS FALSE THEN
+    RAISE EXCEPTION 'Customer profile photo bucket has unsafe settings; expected private access, 5 MiB limit, and JPEG/PNG/WebP/AVIF only';
   END IF;
 END;
 $customer_profile_storage$;
