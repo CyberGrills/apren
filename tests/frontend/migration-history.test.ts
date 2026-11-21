@@ -189,6 +189,29 @@ test('adopts a legacy migration only when Supabase history and the verified sche
   );
 });
 
+test('does not mistake the varchar(12) column created by migration 027 for an already-applied migration 028', async () => {
+  const connection: Connection = {
+    query: async (sql: string, values?: unknown[]) => {
+      if (sql.includes("to_regclass('supabase_migrations.schema_migrations')")) {
+        return { rows: [{ table_name: 'supabase_migrations.schema_migrations' }] };
+      }
+      if (sql.includes('FROM supabase_migrations.schema_migrations')) {
+        assert.deepEqual(values, ['demo_wallet_ledger_type_028']);
+        return { rows: [] };
+      }
+      if (sql.includes('demoCatalogItemsPresent')) {
+        return { rows: [{ ...completeDemoSchema, demoEntryTypeLength: 12 }] };
+      }
+      throw new Error('Unexpected migration history query.');
+    },
+  } as unknown as Connection;
+  assert.equal(
+    await legacySupabaseMigrationAlreadyApplied(connection, '028_demo_wallet_ledger_type.sql'),
+    false,
+    'Migration 028 must run to widen the existing migration-027 column',
+  );
+});
+
 test('adopts the legacy ledger migration only with a verified varchar(20) column', async () => {
   const connection: Connection = {
     query: async (sql: string, values?: unknown[]) => {
