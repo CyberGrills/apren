@@ -24,7 +24,9 @@ import './styles/offline.css';
 import './styles/public-header.css';
 import './styles/home.css';
 import './styles/christmas-unplugged.css';
-import './styles/appearance.css'; // Keep appearance overrides after page styles.\nimport './styles/responsive.css'; // Global device-size safeguards load last.
+import './styles/appearance.css'; // Keep appearance overrides after page styles.
+import './styles/responsive.css'; // Global device-size safeguards load after page styles.
+import './styles/customer-profile.css'; // Profile-specific layout overrides load last.
 
 const root = document.getElementById('root');
 if (!root) throw new Error('The 7even application root is missing.');
