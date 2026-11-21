@@ -43,7 +43,16 @@ async function signedAvatar(storagePath: string): Promise<string> {
   const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(storagePath), 'POST', { expiresIn: 3600 });
   if (typeof signed.signedURL !== 'string') return fail(502, 'SIGNED_URL_FAILED', 'Profile photo could not be displayed.');
   const base = process.env.SUPABASE_URL!.replace(/\/$/, '');
-  return signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL;
+  const candidate = signed.signedURL.startsWith('http')
+    ? signed.signedURL
+    : signed.signedURL.startsWith('/storage/v1/')
+      ? base + signed.signedURL
+      : base + '/storage/v1' + signed.signedURL;
+  const imageUrl = new URL(candidate);
+  if (imageUrl.origin !== new URL(base).origin) {
+    return fail(502, 'SIGNED_URL_FAILED', 'Profile photo could not be displayed.');
+  }
+  return imageUrl.toString();
 }
 
 export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context): void {
