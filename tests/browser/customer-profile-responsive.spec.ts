@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { installApiMocks } from './mocks.ts';
 
-const widths = [320, 375, 390, 520, 768, 820, 1024, 1440];
+const widths = [320, 375, 390, 520, 768, 820, 860, 861, 900, 1024, 1440];
 
 for (const width of widths) {
   test(`customer profile fits a ${width}px viewport`, async ({ page }) => {
