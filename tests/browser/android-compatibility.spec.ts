@@ -64,6 +64,32 @@ test.describe('Android-sized Things to do experience', () => {
     await expect(page.getByText(/Visitor entry is free/)).toBeVisible();
   });
 
+  test('official festival posters load in Android-sized Chromium without suppressing the source referrer', async ({ page }) => {
+    const imageRequests: string[] = [];
+    await page.route('https://ibomfest.akwaibomstate.gov.ng/**', async (route) => {
+      if (route.request().resourceType() === 'image') {
+        imageRequests.push(route.request().headers().referer ?? '');
+        await route.fulfill({
+          status: 200,
+          contentType: 'image/png',
+          body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/pXcAAAAASUVORK5CYII=', 'base64'),
+        });
+        return;
+      }
+      await route.continue();
+    });
+    await page.setViewportSize({ width: 393, height: 850 });
+    await page.goto('/explore?kind=EXPERIENCE');
+    const poster = page.locator('.ibom-event-image-link img').first();
+    await expect(poster).toBeVisible();
+    await expect.poll(() => poster.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+    await expect(poster).toHaveAttribute('loading', 'eager');
+    await expect(poster).toHaveAttribute('fetchpriority', 'high');
+    await expect(poster).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    expect(imageRequests.length).toBeGreaterThan(0);
+    expect(imageRequests[0]).toContain('http');
+  });
+
   test('failed official posters show an accessible fallback without hiding event details', async ({ page }) => {
     await page.route('https://ibomfest.akwaibomstate.gov.ng/**', (route) => route.abort());
     await page.goto('/explore?kind=EXPERIENCE');

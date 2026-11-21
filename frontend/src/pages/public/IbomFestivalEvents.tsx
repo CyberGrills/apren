@@ -94,9 +94,10 @@ export function IbomFestivalEvents() {
                   <img
                     src={event.image}
                     alt={event.imageAlt}
-                    loading="lazy"
+                    loading={event.title === events[0]?.title ? 'eager' : 'lazy'}
+                    fetchPriority={event.title === events[0]?.title ? 'high' : 'auto'}
                     decoding="async"
-                    referrerPolicy="no-referrer"
+                    referrerPolicy="strict-origin-when-cross-origin"
                     onError={() => setFailedImages((current) => new Set(current).add(event.title))}
                   />
                 )}
