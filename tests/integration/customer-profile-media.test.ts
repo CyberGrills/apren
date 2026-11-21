@@ -103,7 +103,7 @@ test('profile avatars are available to every authenticated 7even account role', 
       assert.equal(signedUploadUrl.searchParams.get('token'), 'synthetic-signed-upload-token');
       assert.equal('token' in (uploadBody.data ?? {}), false, 'The signed token belongs in the URL query, not an Authorization header payload');
 
-      const image = Buffer.alloc(128);
+      const image = new Uint8Array(128);
       image.set([137,80,78,71,13,10,26,10], 0);
       const uploaded = await fetch(signedUploadUrl, {
         method: 'PUT',
@@ -113,7 +113,7 @@ test('profile avatars are available to every authenticated 7even account role', 
       assert.equal(uploaded.status, 200, 'The signed URL must accept the selected image bytes');
 
       if (firstMediaId) {
-        const foreignOwnerAttempt = await fetch(`${base}/api/me/avatar/${firstMediaId}/complete`, {
+        const foreignOwnerAttempt: Response = await fetch(`${base}/api/me/avatar/${firstMediaId}/complete`, {
           method: 'POST',
           headers: { Origin: origin, 'Content-Type': 'application/json', Cookie: cookie, 'X-CSRF-Token': csrfToken },
           body: JSON.stringify({}),
