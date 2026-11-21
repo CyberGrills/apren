@@ -58,6 +58,7 @@ test.describe('Android-sized Things to do experience', () => {
   });
 
   test('event search, detail expansion and page scrolling work on touch-sized screens', async ({ page }) => {
+    await installApiMocks(page);
     await page.goto('/explore?kind=EXPERIENCE');
     const search = page.locator('.ibom-events-search input');
     await expect(search).toBeVisible();
@@ -74,6 +75,7 @@ test.describe('Android-sized Things to do experience', () => {
   });
 
   test('failed official posters show an accessible fallback without hiding event details', async ({ page }) => {
+    await installApiMocks(page);
     await page.route('https://ibomfest.akwaibomstate.gov.ng/**', (route) => route.abort());
     await page.goto('/explore?kind=EXPERIENCE');
     const poster = page.locator('.ibom-event-image-link').first();
@@ -115,6 +117,7 @@ test.describe('Android appearance persistence', () => {
   });
 
   test('System appearance follows Android Chromium device colour preference', async ({ page }) => {
+    await installApiMocks(page);
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.goto('/appearance');
     await page.getByRole('button', { name: /System/ }).click();
