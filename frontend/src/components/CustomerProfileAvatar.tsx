@@ -46,7 +46,6 @@ export function CustomerProfileAvatar({ name }: { name: string }) {
         idempotencyKey: crypto.randomUUID(),
       });
       const headers = new Headers(intent.requiredHeaders);
-      headers.set('x-upsert', 'false');
       const uploaded = await fetch(intent.uploadUrl, {
         method: 'PUT',
         headers,
