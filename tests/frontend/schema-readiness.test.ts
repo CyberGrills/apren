@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import test from 'node:test';
 import type { Pool } from 'pg';
-import { REQUIRED_SCHEMA_MIGRATION, schemaIsReady } from '../../backend/platform/src/schemaReadiness.ts';
+import { CREATOR_ARTWORK_TABLES, CREATOR_REQUIRED_SCHEMA_MIGRATION, creatorArtworkSchemaIsReady, isCreatorArtworkRoute, REQUIRED_SCHEMA_MIGRATION, schemaIsReady } from '../../backend/platform/src/schemaReadiness.ts';
 
 interface ReadinessRow {
   migration_applied: boolean;
@@ -70,4 +70,69 @@ test('both API entry points use schema-aware readiness rather than an old ledger
   assert.match(app, /schemaIsReady\(pool,\s*environment\)/);
   assert.doesNotMatch(api, /SELECT 1 FROM seven\.migrations LIMIT 1/);
   assert.doesNotMatch(app, /SELECT 1 FROM seven\.migrations LIMIT 1/);
+});
+
+
+function fakeCreatorPool(row: {
+  migration_applied: boolean;
+  creator_tables_ready: boolean;
+}): Pick<Pool, 'query'> {
+  return {
+    query: async (sql: string, values?: unknown[]) => {
+      assert.match(sql, /pg_class/);
+      assert.match(sql, /relrowsecurity/);
+      assert.match(sql, /seven_app_server_access/);
+      assert.match(sql, /cardinality\(\$2::text\[\]\)/);
+      assert.deepEqual(values, [CREATOR_REQUIRED_SCHEMA_MIGRATION, [...CREATOR_ARTWORK_TABLES]]);
+      return { rows: [row] };
+    },
+  } as unknown as Pick<Pool, 'query'>;
+}
+
+test('Creator Studio routes fail closed until every RLS-protected table in migration 036 exists', async () => {
+  assert.equal(
+    CREATOR_REQUIRED_SCHEMA_MIGRATION,
+    '036_creator_artwork_rights_malware_quarantine.sql',
+  );
+  assert.equal(
+    await creatorArtworkSchemaIsReady(fakeCreatorPool({
+      migration_applied: true,
+      creator_tables_ready: true,
+    })),
+    true,
+  );
+  assert.equal(
+    await creatorArtworkSchemaIsReady(fakeCreatorPool({
+      migration_applied: false,
+      creator_tables_ready: true,
+    })),
+    false,
+  );
+  assert.equal(
+    await creatorArtworkSchemaIsReady(fakeCreatorPool({
+      migration_applied: true,
+      creator_tables_ready: false,
+    })),
+    false,
+  );
+});
+
+test('Creator Studio API route detection is narrow and includes public and moderation routes', () => {
+  assert.equal(isCreatorArtworkRoute('/api/creator/profile'), true);
+  assert.equal(isCreatorArtworkRoute('/api/art-culture/artworks'), true);
+  assert.equal(isCreatorArtworkRoute('/api/admin/creator-submissions/123/review'), true);
+  assert.equal(isCreatorArtworkRoute('/api/admin/creator-rights/evidence/123/review'), true);
+  assert.equal(isCreatorArtworkRoute('/api/offerings'), false);
+  assert.equal(isCreatorArtworkRoute('/api/admin/businesses/123/status'), false);
+});
+
+test('creator schema gate is installed before creator route mounts and reported by both health handlers', async () => {
+  const api = await readFile(new URL('../../backend/api/[...path].ts', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../../backend/platform/src/app.ts', import.meta.url), 'utf8');
+  assert.match(app, /isCreatorArtworkRoute\(req\.path\)/);
+  assert.match(app, /CREATOR_SCHEMA_NOT_READY/);
+  assert.ok(app.indexOf('isCreatorArtworkRoute(req.path)') < app.indexOf('mountCreatorArtworks(app'));
+  assert.match(app, /features: \{ creatorStudio: creatorStudioReady \?/);
+  assert.match(api, /creatorArtworkSchemaIsReady\(pool\)/);
+  assert.match(api, /features: \{ creatorStudio: creatorStudioReady \?/);
 });
