@@ -25,7 +25,7 @@ test('every seasonal choice changes the shared accent and surface palette', () =
 test('the selected seasonal preference persists and is applied to the document root', () => {
   assert.match(context, /localStorage\.getItem\(preferenceKey\)/);
   assert.match(context, /localStorage\.setItem\(preferenceKey, preference\)/);
-  assert.match(context, /useLayoutEffect\(\(\) => \{\s*document\.documentElement\.dataset\.season = season;/);
+  assert.match(context, /useLayoutEffect\(\(\) => \{\s*root\.dataset\.season = season;/);
   assert.match(context, /preference === 'auto' \? calendarSeason : preference/);
 });
 
