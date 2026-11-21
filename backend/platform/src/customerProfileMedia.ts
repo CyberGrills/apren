@@ -75,7 +75,16 @@ export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context
       "INSERT INTO seven.customer_profile_media(media_id,user_id,storage_bucket,storage_path,mime_type,byte_size,status,upload_expires_at) VALUES($1,$2,$3,$4,$5,$6,'PENDING_UPLOAD',now()+interval '15 minutes')",
       [mediaId,userId,BUCKET,path,input.mimeType,input.byteSize],
     );
-    const signed = await storageRequest('/object/upload/sign/' + BUCKET + '/' + encodedPath(path), 'POST', { upsert: false });
+    let signed: Record<string, unknown>;
+    try {
+      signed = await storageRequest('/object/upload/sign/' + BUCKET + '/' + encodedPath(path), 'POST', { upsert: false });
+    } catch (error) {
+      await pool.query(
+        "UPDATE seven.customer_profile_media SET status='REMOVED',updated_at=now() WHERE media_id=$1 AND user_id=$2 AND status='PENDING_UPLOAD'",
+        [mediaId,userId],
+      );
+      throw error;
+    }
     const signedURL = typeof signed.signedURL === 'string' ? signed.signedURL : typeof signed.url === 'string' ? signed.url : null;
     const token = typeof signed.token === 'string' ? signed.token : null;
     if (!signedURL || !token) return fail(502, 'UPLOAD_URL_FAILED', 'Secure profile photo upload could not be initialized.');
