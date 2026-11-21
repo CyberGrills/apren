@@ -54,7 +54,7 @@ test('profile avatars are available to every authenticated 7even account role', 
       const stored = storageObjects.get(objectPath);
       if (!stored) return new Response('Not found', { status: 404 });
       if (method === 'HEAD') return new Response(null, { status: 200, headers: { 'Content-Length': String(stored.length), 'Content-Type': 'image/png' } });
-      if (method === 'GET') return new Response(stored.subarray(0, 32), { status: 206, headers: { 'Content-Length': '32', 'Content-Type': 'image/png', 'Content-Range': 'bytes 0-31/' + stored.length } });
+      if (method === 'GET') return new Response(new Uint8Array(stored.subarray(0, 32)), { status: 206, headers: { 'Content-Length': '32', 'Content-Type': 'image/png', 'Content-Range': 'bytes 0-31/' + stored.length } });
       if (method === 'DELETE') { storageObjects.delete(objectPath); return new Response(null, { status: 204 }); }
     }
     return originalFetch(input, init);
