@@ -1,0 +1,227 @@
+/* Site-wide responsive safeguards.
+   Keep page-specific design intact while preventing intrinsic content from
+   forcing the application wider than the device viewport. */
+:root {
+  --seven-page-gutter: clamp(1rem, 3.5vw, 3rem);
+  --seven-content-max: 90rem;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+body {
+  overflow-x: clip;
+}
+
+#root,
+#root > *,
+main,
+main > *,
+section,
+article,
+aside,
+header,
+footer,
+nav,
+form,
+fieldset,
+[class*="grid"],
+[class*="row"],
+[class*="column"] {
+  min-width: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+iframe,
+svg {
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+label,
+legend,
+td,
+th {
+  overflow-wrap: anywhere;
+}
+
+pre,
+.table-wrap,
+[role="region"][aria-label*="scroll" i] {
+  max-width: 100%;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.page-heading,
+.section-heading,
+.page-actions,
+.form-actions,
+.toolbar,
+.modal-heading,
+.row-actions {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.form-grid > *,
+.form-stack > *,
+.two-column > *,
+.metrics-grid > *,
+.public-container > *,
+.workspace-main > *,
+.workspace-content > * {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .two-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .public-container,
+  .workspace-main,
+  .workspace-content {
+    padding-inline: clamp(1rem, 3vw, 2rem);
+  }
+}
+
+@media (max-width: 640px) {
+  .page-heading {
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .page-heading h1 {
+    font-size: clamp(2rem, 8vw, 2.5rem);
+    line-height: 1.06;
+    overflow-wrap: anywhere;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .section-heading > *,
+  .page-actions > *,
+  .form-actions > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-wide {
+    grid-column: auto;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.65rem, 2vw, 1rem);
+  }
+
+  .modal,
+  .feedback-popup {
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+    max-height: 92dvh;
+    padding: clamp(1rem, 4vw, 1.5rem);
+    overflow: auto;
+  }
+
+  .modal-heading h2,
+  .feedback-popup h2 {
+    font-size: clamp(1.5rem, 7vw, 2rem);
+  }
+
+  .toolbar input,
+  .toolbar select,
+  .toolbar button,
+  .form-actions .btn,
+  .page-actions .btn {
+    min-width: 0;
+  }
+
+  .table-wrap {
+    margin-inline: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  :root {
+    font-size: 15px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel {
+    padding: 1rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .brand {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 1600px) {
+  .public-container,
+  .workspace-main,
+  .workspace-content {
+    margin-inline: auto;
+    max-width: var(--seven-content-max);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+}
