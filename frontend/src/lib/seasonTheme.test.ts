@@ -70,7 +70,8 @@ test('saved appearance is applied before the React app paints', () => {
   assert.match(html, /prefers-color-scheme: dark/);
   assert.match(html, /root\.dataset\.mode/);
   assert.match(html, /7even-season-theme/);
-  assert.match(html, /document\.documentElement\.dataset\.season/);
+  assert.match(html, /const root = document\.documentElement/);
+  assert.match(html, /root\.dataset\.season/);
   assert.match(html, /themeColor\.content = dark \? "#111A15" : "#fffdf8"/);
 });
 

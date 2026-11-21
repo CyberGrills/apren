@@ -47,5 +47,6 @@ test('event directory supports accessible search, month filtering and responsive
   assert.ok(css.includes('flex-direction:column'));
   assert.ok(css.includes('.ibom-event-image-fallback'));
   assert.ok(component.includes('onError={() => setFailedImages'));
-  assert.ok(css.includes('@media(max-width:390px)'));
+  assert.match(css, /grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(min\(100%,\s*19rem\),\s*1fr\)\)/);
+  assert.ok(css.includes('@media(max-width:360px)'));
 });
