@@ -72,6 +72,7 @@ test('both API entry points use schema-aware readiness rather than an old ledger
   assert.doesNotMatch(api, /SELECT 1 FROM seven\.migrations LIMIT 1/);
   assert.doesNotMatch(app, /SELECT 1 FROM seven\.migrations LIMIT 1/);
   assert.match(app, /isCustomerProfileMediaRoute\(req\.path\)/);
+  assert.match(app, /actorFor\(res\)/);
   assert.match(app, /PROFILE_MEDIA_SCHEMA_NOT_READY/);
 });
 
