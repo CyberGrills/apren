@@ -108,6 +108,14 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     });
     const startDate=new Date(Date.now()+3*86400000).toISOString().slice(0,10);
     const endDate=new Date(Date.parse(startDate+'T12:00:00Z')+2*86400000).toISOString().slice(0,10);
+    await owner.request('/business/stay/rate-plans/'+plan.rate_plan_id,'PATCH',{
+      code:'FLEX',name:'Stale revision must fail',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
+      refundable:true,cancellationPolicy:'Stale edit.',expectedRevision:1,
+    },409);
+    await owner.request('/business/stay/nightly-rates','PUT',{
+      ratePlanId:plan.rate_plan_id,expectedRevision:1,startDate,endDate,amountMinor:'10000000',
+      closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
+    },409);
     await owner.request('/business/stay/nightly-rates','PUT',{
       ratePlanId:plan.rate_plan_id,expectedRevision:2,startDate,endDate,amountMinor:'10000000',
       closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
@@ -161,6 +169,36 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       offeringId:offer.id,roomTypeId:room.room_type_id,ratePlanId:plan.rate_plan_id,
       checkInDate:startDate,checkOutDate:endDate,rooms:5,
     };
+    const firstRate=await one<{amount_minor:string;closed_to_arrival:boolean;closed_to_departure:boolean;min_stay_nights:number;max_stay_nights:number}>(
+      pool,'SELECT amount_minor::text,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
+    await pool.query('DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
+    await customerA.request('/stay-quotes','POST',quoteBody,409);
+    await pool.query(
+      'INSERT INTO seven.stay_nightly_rates(rate_plan_id,service_date,amount_minor,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights) VALUES($1,$2::date,$3,$4,$5,$6,$7)',
+      [plan.rate_plan_id,startDate,firstRate!.amount_minor,firstRate!.closed_to_arrival,firstRate!.closed_to_departure,firstRate!.min_stay_nights,firstRate!.max_stay_nights],
+    );
+    await pool.query('UPDATE seven.stay_nightly_rates SET closed_to_arrival=true WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
+    await customerA.request('/stay-quotes','POST',quoteBody,409);
+    await pool.query('UPDATE seven.stay_nightly_rates SET closed_to_arrival=false,min_stay_nights=3 WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
+    await customerA.request('/stay-quotes','POST',quoteBody,409);
+    await pool.query('UPDATE seven.stay_nightly_rates SET min_stay_nights=1,max_stay_nights=1 WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
+    await customerA.request('/stay-quotes','POST',quoteBody,409);
+    await pool.query('UPDATE seven.stay_nightly_rates SET max_stay_nights=7 WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
+    await pool.query(
+      'INSERT INTO seven.stay_nightly_rates(rate_plan_id,service_date,amount_minor,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights) VALUES($1,$2::date,$3,false,true,1,7)',
+      [plan.rate_plan_id,endDate,'10000000'],
+    );
+    await customerA.request('/stay-quotes','POST',quoteBody,409);
+    await pool.query('DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,endDate]);
+    await pool.query(
+      "UPDATE seven.inventory_windows SET inventory_confirmed_at=now()-interval '25 hours' WHERE offering_id=$1 AND (starts_at AT TIME ZONE 'Africa/Lagos')::date=$2::date",
+      [offer.id,startDate],
+    );
+    await customerA.request('/stay-quotes','POST',quoteBody,409);
+    await pool.query(
+      "UPDATE seven.inventory_windows SET inventory_confirmed_at=now() WHERE offering_id=$1 AND (starts_at AT TIME ZONE 'Africa/Lagos')::date=$2::date",
+      [offer.id,startDate],
+    );
     const quoteA=await customerA.request<{quote:{id:string;price:{subtotalMinor:string;totalMinor:string};units:number};nightlyBreakdown:Array<{lineTotalMinor:string}>}>(
       '/stay-quotes','POST',quoteBody);
     assert.equal(quoteA.quote.units,2);
@@ -168,6 +206,9 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(quoteA.quote.price.totalMinor,'125000000');
     assert.deepEqual(quoteA.nightlyBreakdown.map(night=>night.lineTotalMinor),['50000000','75000000']);
     const quoteB=await customerB.request<{quote:{id:string}}>('/stay-quotes','POST',quoteBody);
+    const expiredQuote=await customerA.request<{quote:{id:string}}>('/stay-quotes','POST',quoteBody);
+    await pool.query("UPDATE seven.quotes SET expires_at=now()-interval '1 minute' WHERE quote_id=$1",[expiredQuote.quote.id]);
+    await customerA.request('/reservations','POST',{quoteId:expiredQuote.quote.id},409);
     const storedSnapshot=await one<{terms_snapshot:{ratePlan:{id:string;refundable:boolean;cancellationPolicy:string};nightlyBreakdown:Array<{date:string;amountMinor:string}>};amounts:{totalMinor:string}}>(
       pool,'SELECT terms_snapshot,amounts FROM seven.quotes WHERE quote_id=$1',[quoteA.quote.id]);
     assert.equal(storedSnapshot?.terms_snapshot.ratePlan.id,plan.rate_plan_id);
@@ -176,14 +217,36 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(storedSnapshot?.terms_snapshot.nightlyBreakdown.length,2);
     assert.deepEqual(storedSnapshot?.terms_snapshot.nightlyBreakdown.map(night=>night.amountMinor),['10000000','15000000']);
     assert.equal(storedSnapshot?.amounts.totalMinor,'125000000');
+    await owner.request('/business/stay/rate-plans/'+plan.rate_plan_id,'PATCH',{
+      code:'FLEX',name:'Flexible room only revised for future bookings',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
+      refundable:false,cancellationPolicy:'Updated policy for future quotes.',expectedRevision:4,
+    });
+    await owner.request('/business/stay/nightly-rates','PUT',{
+      ratePlanId:plan.rate_plan_id,expectedRevision:5,startDate,endDate:startDate,amountMinor:'30000000',
+      closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
+    });
     await customerA.request('/quotes','POST',{
       offeringId:offer.id,startDate,endDate,quantity:1,
     },409);
+    await pool.query(
+      "UPDATE seven.inventory_windows SET inventory_confirmed_at=now()-interval '25 hours' WHERE offering_id=$1 AND (starts_at AT TIME ZONE 'Africa/Lagos')::date=$2::date",
+      [offer.id,startDate],
+    );
+    await customerA.request('/reservations','POST',{quoteId:quoteA.quote.id},409);
+    await pool.query(
+      "UPDATE seven.inventory_windows SET inventory_confirmed_at=now() WHERE offering_id=$1 AND (starts_at AT TIME ZONE 'Africa/Lagos')::date=$2::date",
+      [offer.id,startDate],
+    );
     const outcomes=await Promise.allSettled([
-      customerA.request<{id:string}>('/reservations','POST',{quoteId:quoteA.quote.id}),
+      customerA.request<{id:string;stayTerms:{ratePlan:{name:string;refundable:boolean;cancellationPolicy:string};nightlyBreakdown:Array<{amountMinor:string}>}}>('/reservations','POST',{quoteId:quoteA.quote.id}),
       customerB.request<{id:string}>('/reservations','POST',{quoteId:quoteB.quote.id}),
     ]);
     assert.equal(outcomes.filter(outcome=>outcome.status==='fulfilled').length,1);
+    const winner=outcomes.find((outcome):outcome is PromiseFulfilledResult<{id:string;stayTerms:{ratePlan:{name:string;refundable:boolean;cancellationPolicy:string};nightlyBreakdown:Array<{amountMinor:string}>}}>=>outcome.status==='fulfilled')!;
+    assert.equal(winner.value.stayTerms.ratePlan.name,'Flexible room only updated');
+    assert.equal(winner.value.stayTerms.ratePlan.refundable,true);
+    assert.equal(winner.value.stayTerms.ratePlan.cancellationPolicy,'Free cancellation before arrival.');
+    assert.deepEqual(winner.value.stayTerms.nightlyBreakdown.map(night=>night.amountMinor),['10000000','15000000']);
     assert.equal(outcomes.filter(outcome=>outcome.status==='rejected').length,1);
     const allocated=await one<{allocated_count:number}>(
       pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1',[offer.id]);
