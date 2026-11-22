@@ -14,7 +14,8 @@ The current platform already provides:
 
 - `businesses`, `venues`, and `memberships` as the tenant and venue authority boundary.
 - `offerings` as the published hospitality listing.
-- `inventory_windows` as date/time capacity, including `capacity`, `allocated_count`, `revision`, and `inventory_confirmed_at`.
+- `inventory_windows` as date/time capacity, including `capacity`, `allocated_count`, `revision`, `inventory_confirmed_at`, and `inventory_source` (`MANUAL`, `PMS`, or `UNKNOWN`). Legacy rows remain `UNKNOWN` until an authorised owner reconfirms them; new owner-entered windows are `MANUAL`.
+- A single database freshness policy accepts PMS confirmations for five minutes and manual confirmations for the property's approved 1–168-hour window. Unknown sources, missing/future timestamps, and expired confirmations are not bookable. Search, quote creation, and reservation allocation all call the same policy; reservation allocation rechecks while holding the inventory row lock.
 - `quotes` as immutable amount and terms snapshots; creating a quote does not reserve stock.
 - `reservations` and `allocations` for time-limited holds and allocated capacity.
 - Existing reservation expiry/release logic and payment attempts separated from reservation state.
