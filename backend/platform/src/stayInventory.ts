@@ -81,11 +81,11 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
          FROM seven.stay_room_types rt
          JOIN seven.offerings o USING(offering_id)
          JOIN seven.venues v USING(venue_id)
-         LEFT JOIN seven.stay_rate_plans rp ON rp.room_type_id=rt.room_type_id
+         LEFT JOIN seven.stay_rate_plans rp ON rp.room_type_id=rt.room_type_id AND rp.is_active
          LEFT JOIN seven.stay_nightly_rates nr ON nr.rate_plan_id=rp.rate_plan_id AND nr.service_date BETWEEN $2::date AND $3::date
          LEFT JOIN seven.inventory_windows iw ON iw.offering_id=o.offering_id
            AND iw.starts_at=((nr.service_date::timestamp AT TIME ZONE COALESCE(v.timezone_name,'Africa/Lagos')))
-        WHERE o.business_id=$1 AND (rp.rate_plan_id IS NULL OR rp.is_active)
+        WHERE o.business_id=$1
           ${offeringFilter} ${venueFilter}
         ORDER BY o.title,rp.name,nr.service_date`,
       params);
