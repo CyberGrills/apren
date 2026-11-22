@@ -102,6 +102,15 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       currencyCode:'NGN',mealPlan:'ROOM_ONLY',refundable:true,cancellationPolicy:'Free cancellation before arrival.',
     });
     ratePlans.push(plan.rate_plan_id);
+    const secondRoom=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
+      offeringId:offer.id,maxOccupancy:4,bedConfiguration:'2 double beds',totalRooms:3,
+    });
+    roomTypes.push(secondRoom.room_type_id);
+    const secondPlan=await owner.request<{rate_plan_id:string}>('/business/stay/rate-plans','POST',{
+      roomTypeId:secondRoom.room_type_id,code:'FAMILY',name:'Family room only',
+      currencyCode:'NGN',mealPlan:'ROOM_ONLY',refundable:false,cancellationPolicy:'Non-refundable.',
+    });
+    ratePlans.push(secondPlan.rate_plan_id);
     await owner.request(`/business/stay/rate-plans/${plan.rate_plan_id}`,'PATCH',{
       code:'FLEX',name:'Flexible room only updated',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
       refundable:true,cancellationPolicy:'Free cancellation before arrival.',expectedRevision:1,
@@ -117,21 +126,35 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       ratePlanId:plan.rate_plan_id,expectedRevision:3,startDate:secondNight,endDate:secondNight,amountMinor:'15000000',
       closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
     });
+    await owner.request('/business/stay/nightly-rates','PUT',{
+      ratePlanId:secondPlan.rate_plan_id,expectedRevision:1,startDate,endDate,amountMinor:'8000000',
+      closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
+    });
     await owner.request(`/business/stay/rooms/${room.room_type_id}/availability`,'POST',{
       startDate,endDate,capacity:5,
     });
-    const calendar=await owner.request<{rooms:Array<{service_date:string;amount_minor:string;capacity:number;allocated_count:number;inventory_source:string}>}>(
+    await owner.request(`/business/stay/rooms/${secondRoom.room_type_id}/availability`,'POST',{
+      startDate,endDate,capacity:2,
+    });
+    const calendar=await owner.request<{rooms:Array<{room_type_id:string;service_date:string;amount_minor:string;capacity:number;allocated_count:number;inventory_source:string}>}>(
       `/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
-    assert.equal(calendar.rooms.length,3);
-    assert.deepEqual(calendar.rooms.map(night=>night.amount_minor),['10000000','15000000','10000000']);
-    assert.ok(calendar.rooms.every(night=>night.capacity===5 && night.allocated_count===0 && night.inventory_source==='MANUAL'));
+    assert.equal(calendar.rooms.length,6);
+    const firstCategoryRows=calendar.rooms.filter(night=>night.room_type_id===room.room_type_id);
+    const secondCategoryRows=calendar.rooms.filter(night=>night.room_type_id===secondRoom.room_type_id);
+    assert.equal(firstCategoryRows.length,3);
+    assert.equal(secondCategoryRows.length,3);
+    assert.deepEqual(firstCategoryRows.map(night=>night.amount_minor).sort(),['10000000','10000000','15000000']);
+    assert.ok(firstCategoryRows.every(night=>night.capacity===5 && night.allocated_count===0 && night.inventory_source==='MANUAL'));
+    assert.ok(secondCategoryRows.every(night=>night.amount_minor==='8000000' && night.capacity===2 && night.allocated_count===0 && night.inventory_source==='MANUAL'));
 
     const customerA=new Client();await customerA.register();
     const customerB=new Client();await customerB.register();
     const plans=await customerA.request<{plans:Array<{roomType:{id:string};ratePlan:{id:string};available:boolean}>}>(
       `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=5`);
-    assert.equal(plans.plans.length,1);
-    assert.equal(plans.plans[0]!.available,true);
+    assert.equal(plans.plans.length,2);
+    assert.ok(plans.plans.every(item=>item.available));
+    assert.equal(plans.plans.find(item=>item.roomType.id===room.room_type_id)?.ratePlan.id,plan.rate_plan_id);
+    assert.equal(plans.plans.find(item=>item.roomType.id===secondRoom.room_type_id)?.ratePlan.id,secondPlan.rate_plan_id);
     const quoteBody={
       offeringId:offer.id,roomTypeId:room.room_type_id,ratePlanId:plan.rate_plan_id,
       checkInDate:startDate,checkOutDate:endDate,rooms:5,
@@ -151,6 +174,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(storedSnapshot?.terms_snapshot.nightlyBreakdown.length,2);
     assert.deepEqual(storedSnapshot?.terms_snapshot.nightlyBreakdown.map(night=>night.amountMinor),['10000000','15000000']);
     assert.equal(storedSnapshot?.amounts.totalMinor,'125000000');
+    await owner.request(`/business/stay/rate-plans/${plan.rate_plan_id}`,'PATCH',{
+      code:'FLEX',name:'Flexible room only updated',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
+      refundable:false,cancellationPolicy:'Changed after quote; existing reservations retain the accepted terms.',
+      expectedRevision:4,
+    });
     await customerA.request('/quotes','POST',{
       offeringId:offer.id,startDate,endDate,quantity:1,
     },409);
@@ -160,9 +188,27 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     ]);
     assert.equal(outcomes.filter(outcome=>outcome.status==='fulfilled').length,1);
     assert.equal(outcomes.filter(outcome=>outcome.status==='rejected').length,1);
+    const winningIndex=outcomes[0]!.status==='fulfilled'?0:1;
+    const winningClient=winningIndex===0?customerA:customerB;
+    const winningOutcome=outcomes[winningIndex] as PromiseFulfilledResult<{id:string}>;
+    const reservationDetails=await winningClient.request<{
+      roomType:{id:string};ratePlan:{id:string;refundable:boolean;cancellationPolicy:string};
+      nightlyBreakdown:Array<{date:string;amountMinor:string;quantity:number;lineTotalMinor:string}>;
+      cancellationPolicySnapshot:{refundable:boolean;policy:string;cancellationHours:number};
+    }>(`/reservations/${winningOutcome.value.id}`);
+    assert.equal(reservationDetails.roomType.id,room.room_type_id);
+    assert.equal(reservationDetails.ratePlan.id,plan.rate_plan_id);
+    assert.equal(reservationDetails.ratePlan.refundable,true);
+    assert.equal(reservationDetails.ratePlan.cancellationPolicy,'Free cancellation before arrival.');
+    assert.equal(reservationDetails.nightlyBreakdown.length,2);
+    assert.equal(reservationDetails.cancellationPolicySnapshot.refundable,true);
+    assert.equal(reservationDetails.cancellationPolicySnapshot.policy,'Free cancellation before arrival.');
     const allocated=await one<{allocated_count:number}>(
-      pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1',[offer.id]);
+      pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1 AND room_type_id=$2',[offer.id,room.room_type_id]);
     assert.equal(allocated?.allocated_count,5);
+    const otherCategoryAllocation=await one<{allocated_count:number}>(
+      pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1 AND room_type_id=$2',[offer.id,secondRoom.room_type_id]);
+    assert.equal(otherCategoryAllocation?.allocated_count,0);
 
     const other=new Client();await other.register();await other.apply('Other inventory fixture');
     const isolated=await other.request<{rooms:unknown[]}>(`/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
@@ -181,10 +227,10 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       await pool.query('DELETE FROM seven.reservations WHERE offering_id=ANY($1::uuid[])',[offerings]);
       await pool.query('DELETE FROM seven.quotes WHERE offering_id=ANY($1::uuid[])',[offerings]);
     }
+    if(offerings.length)await pool.query('DELETE FROM seven.inventory_windows WHERE offering_id=ANY($1::uuid[])',[offerings]);
     if(ratePlans.length)await pool.query('DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
     if(ratePlans.length)await pool.query('DELETE FROM seven.stay_rate_plans WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
     if(roomTypes.length)await pool.query('DELETE FROM seven.stay_room_types WHERE room_type_id=ANY($1::uuid[])',[roomTypes]);
-    if(offerings.length)await pool.query('DELETE FROM seven.inventory_windows WHERE offering_id=ANY($1::uuid[])',[offerings]);
     if(offerings.length)await pool.query('DELETE FROM seven.offerings WHERE offering_id=ANY($1::uuid[])',[offerings]);
     if(businesses.length){
       await pool.query('DELETE FROM seven.outbox_events WHERE business_id=ANY($1::uuid[])',[businesses]);
