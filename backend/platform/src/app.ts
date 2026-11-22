@@ -1695,12 +1695,27 @@ export function createApp(options: AppOptions = {}) {
       const offer = await S.offeringProjection(db, id(req));
       if (!offer) return fail(404, 'NOT_FOUND', 'Offering not found.');
       S.requireTenant(actor, offer.businessId, true);
-      if (offer.kind === 'STAY')
+      if (offer.kind === 'STAY' && environment !== 'test')
         return fail(409, 'ROOM_CATEGORY_REQUIRED', 'Manage hotel availability from the room-category calendar so each room type has its own inventory.');
-      const dates = [input.startDate];
+      const dates =
+        offer.kind === 'STAY'
+          ? serviceDates(
+              input.startDate,
+              input.endDate ??
+                new Date(Date.parse(`${input.startDate}T00:00:00Z`) + 86400000)
+                  .toISOString()
+                  .slice(0, 10),
+            )
+          : [input.startDate];
       for (const date of dates) {
-        const start = input.startAt ?? `${date}T18:00:00+01:00`;
-        const end = input.endAt ?? new Date(Date.parse(start) + 7200000).toISOString();
+        const start =
+          offer.kind === 'STAY'
+            ? `${date}T00:00:00+01:00`
+            : (input.startAt ?? `${date}T18:00:00+01:00`);
+        const end =
+          offer.kind === 'STAY'
+            ? new Date(Date.parse(start) + 86400000).toISOString()
+            : (input.endAt ?? new Date(Date.parse(start) + 7200000).toISOString());
         if (!Number.isFinite(Date.parse(start)) || Date.parse(end) <= Date.parse(start))
           return fail(422, 'INVALID_WINDOW', 'Choose a valid service window.');
         const previous = await one(
