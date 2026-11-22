@@ -245,7 +245,7 @@ export function mountOperations(app: Express, context: OperationsContext): void 
        JOIN seven.venues v ON v.venue_id=a.venue_id AND v.business_id=a.business_id
        JOIN seven.businesses b ON b.business_id=a.business_id
        WHERE a.venue_id=$1 AND v.is_active AND a.status IN ('ACTIVE','SEASONAL')
-         AND b.workflow_state_id=${S.sid('APPROVED')}
+         AND b.workflow_state_id=${S.sid('APPROVED')} AND b.details->>'isSample' IS DISTINCT FROM 'true'
        ORDER BY a.sort_order,a.name`,
       [venueId],
     );
