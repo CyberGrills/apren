@@ -1695,6 +1695,8 @@ export function createApp(options: AppOptions = {}) {
       const offer = await S.offeringProjection(db, id(req));
       if (!offer) return fail(404, 'NOT_FOUND', 'Offering not found.');
       S.requireTenant(actor, offer.businessId, true);
+      if (offer.kind === 'STAY')
+        return fail(409, 'ROOM_CATEGORY_REQUIRED', 'Manage hotel availability from the room-category calendar so each room type has its own inventory.');
       const dates =
         offer.kind === 'STAY'
           ? serviceDates(
