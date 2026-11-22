@@ -9,6 +9,8 @@ import { BookingPanel } from './BookingPanel.tsx';
 import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 import { editorialImages, PublicFooter, PublicHeader } from './PublicShell.tsx';
 
+type PublicAmenity = { id: string; name: string; description: string; status: 'ACTIVE' | 'SEASONAL'; accessType: 'INCLUDED' | 'PAID'; bookingRequired: boolean; openingHours: Record<string, string>; guestNotes: string };
+
 export function OfferingPage() {
   const { id } = useParams();
   const { data, loading, error, reload } = useApi<Offering>(
@@ -31,6 +33,7 @@ function OfferingDetail({ offering }: { offering: Offering }) {
   const language = useSevenLanguage();
   const pcm = language === 'pcm';
   const [image, setImage] = useState(0);
+  const { data: venueAmenities } = useApi<PublicAmenity[]>(offering.isSample ? null : `/venues/${offering.venueId}/amenities`);
   useEffect(() => {
     if (offering.kind === 'STAY' && !offering.isSample) {
       void recordRecoveryEvent({ offeringId: offering.id, event: 'ROOM_VIEW' });
@@ -125,6 +128,23 @@ function OfferingDetail({ offering }: { offering: Offering }) {
                   <li key={amenity}>
                     <Check size={17} aria-hidden="true" />
                     {amenity}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {venueAmenities && venueAmenities.length > 0 && (
+            <section className="offering-amenities" aria-labelledby="venue-facilities-title">
+              <h2 id="venue-facilities-title">{pcm ? 'Facilities for guests.' : 'Facilities at this property.'}</h2>
+              <ul>
+                {venueAmenities.map((amenity) => (
+                  <li key={amenity.id}>
+                    <Check size={17} aria-hidden="true" />
+                    <span>
+                      <strong>{amenity.name}</strong>
+                      {amenity.description && <span> — {amenity.description}</span>}
+                      <span className="small-copy"> · {amenity.accessType === 'INCLUDED' ? 'Included for eligible guests' : 'Paid separately; confirm details with the property'}{amenity.bookingRequired ? ' · Arrange access in advance' : ''}{amenity.status === 'SEASONAL' ? ' · Seasonal' : ''}{amenity.openingHours.schedule ? ` · ${amenity.openingHours.schedule}` : ''}{amenity.guestNotes ? ` · ${amenity.guestNotes}` : ''}</span>
+                    </span>
                   </li>
                 ))}
               </ul>
