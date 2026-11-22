@@ -48,6 +48,7 @@ import { mountCreatorArtworkRightsDocuments } from './creatorArtworkRightsDocume
 import { mountSocialAuth, socialAuthAvailability } from './socialAuth.ts';
 import type { SocialProvider, SocialProviderId } from './socialAuth.ts';
 import { mountPasskeyRoutes, passkeysEnabled } from './passkeys.ts';
+import { mountStayBookingRequests } from './stayBookingRequests.ts';
 
 export interface AppOptions {
   pool?: Pool;
@@ -2311,6 +2312,7 @@ export function createApp(options: AppOptions = {}) {
   mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
+  mountStayBookingRequests(app, { pool, actor: actorFor });
   app.use(async (req, res, next) => {
     if (!isCustomerProfileMediaRoute(req.path)) return next();
     try {
