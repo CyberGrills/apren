@@ -21,6 +21,7 @@ import { useSession } from '../context/SessionContext.tsx';
 import { clearQueues } from '../lib/receptionQueue.ts';
 import { ErrorNotice } from './ui.tsx';
 import { Brand } from './Brand.tsx';
+import { SocialLinks } from './SocialLinks.tsx';
 
 export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'admin' }) {
   const { user, session, logout } = useSession();
@@ -187,6 +188,7 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
               Appearance
             </Link>
           </nav>
+          <SocialLinks compact />
           <div className="workspace-user">
             <strong>{user?.displayName}</strong>
             <small>{user?.email}</small>
