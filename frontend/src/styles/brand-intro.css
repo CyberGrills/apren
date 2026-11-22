@@ -90,3 +90,10 @@
     animation: none;
   }
 }
+
+
+/* Route loading reuses the opening splash without its auto-dismiss. */
+.brand-intro-persistent {
+  animation: none;
+  pointer-events: auto;
+}
