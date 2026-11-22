@@ -37,6 +37,7 @@ import { configuredRecoveryMailer } from './recoveryMailer.ts';
 import { interpretHotelSearch, isOpenAIConfigured, toHotelSearchParams } from './aiConcierge.ts';
 import { processInbox, processOutbox } from './worker.ts';
 import { findLocations, retainedLocationState } from './locations.ts';
+import { inventoryFreshnessSql } from './inventoryFreshness.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
 import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
@@ -646,10 +647,7 @@ export function createApp(options: AppOptions = {}) {
         environment === 'production'
           ? `b.details #>> '{verificationReview,checklistVersion}' = '1'`
           : `(b.details #>> '{verificationReview,checklistVersion}' = '1' OR b.details->>'isSample' = 'true')`;
-      const inventoryFreshnessGate =
-        environment === 'production'
-          ? `w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour')`
-          : `(b.details->>'isSample' = 'true' OR w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'))`;
+      const inventoryFreshnessGate = inventoryFreshnessSql('w', 'b', environment !== 'production');
       const startDate = req.query.startDate === undefined
         ? undefined
         : z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(req.query.startDate);
@@ -907,10 +905,7 @@ export function createApp(options: AppOptions = {}) {
       environment === 'production'
         ? `b.details #>> '{verificationReview,checklistVersion}' = '1'`
         : `(b.details #>> '{verificationReview,checklistVersion}' = '1' OR b.details->>'isSample' = 'true')`;
-    const genericInventoryFreshnessGate =
-      environment === 'production'
-        ? `w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour')`
-        : `(b.details->>'isSample' = 'true' OR w.inventory_confirmed_at > now() - (COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'))`;
+    const genericInventoryFreshnessGate = inventoryFreshnessSql('w', 'b', environment !== 'production');
     const found = await rows(
       pool,
       `SELECT o.offering_id, s.sector_code
@@ -1716,6 +1711,8 @@ export function createApp(options: AppOptions = {}) {
           'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 AND starts_at=$2 FOR UPDATE',
           [offer.id, start],
         );
+        if (previous?.inventory_source === 'PMS')
+          return fail(409, 'PMS_INVENTORY_MANAGED', 'This inventory is managed by the connected availability provider. Change it through the provider integration.');
         if (
           previous &&
           ((input.expectedRevision !== undefined && previous.revision !== input.expectedRevision) ||
@@ -1729,12 +1726,12 @@ export function createApp(options: AppOptions = {}) {
           );
         if (previous)
           await db.query(
-            'UPDATE seven.inventory_windows SET capacity=$2,ends_at=$3,revision=revision+1,updated_at=now(),inventory_confirmed_at=now() WHERE inventory_window_id=$1',
+            "UPDATE seven.inventory_windows SET capacity=$2,ends_at=$3,revision=revision+1,updated_at=now(),inventory_confirmed_at=now(),inventory_source='MANUAL' WHERE inventory_window_id=$1",
             [previous.inventory_window_id, input.capacity, end],
           );
         else
           await db.query(
-            'INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at) VALUES($1,$2,$3,$4,$5,now())',
+            "INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at,inventory_source) VALUES($1,$2,$3,$4,$5,now(),'MANUAL')",
             [randomUUID(), offer.id, start, end, input.capacity],
           );
       }

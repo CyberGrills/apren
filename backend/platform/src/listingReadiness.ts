@@ -105,7 +105,7 @@ export async function listingReadiness(
       JOIN seven.offerings o USING(offering_id)
       JOIN scoped_businesses b USING(business_id)
       WHERE w.ends_at>now()
-        AND (b.sample_bypass OR w.inventory_confirmed_at>now()-b.freshness_hours*interval '1 hour')
+        AND seven.inventory_window_is_fresh(w.inventory_source,w.inventory_confirmed_at,b.freshness_hours,b.sample_bypass)
     ), available_days AS (
       SELECT w.offering_id, (w.starts_at AT TIME ZONE 'Africa/Lagos')::date AS service_date,
         count(*) AS available_windows
@@ -124,10 +124,10 @@ export async function listingReadiness(
           AND (w.starts_at AT TIME ZONE 'Africa/Lagos')::date >= (now() AT TIME ZONE 'Africa/Lagos')::date)::int AS current_windows,
         count(*) FILTER (WHERE w.ends_at>now()
           AND (w.starts_at AT TIME ZONE 'Africa/Lagos')::date >= (now() AT TIME ZONE 'Africa/Lagos')::date
-          AND (b.sample_bypass OR w.inventory_confirmed_at>now()-b.freshness_hours*interval '1 hour'))::int AS fresh_windows,
+          AND seven.inventory_window_is_fresh(w.inventory_source,w.inventory_confirmed_at,b.freshness_hours,b.sample_bypass))::int AS fresh_windows,
         count(*) FILTER (WHERE w.ends_at>now()
           AND (w.starts_at AT TIME ZONE 'Africa/Lagos')::date >= (now() AT TIME ZONE 'Africa/Lagos')::date
-          AND (b.sample_bypass OR w.inventory_confirmed_at>now()-b.freshness_hours*interval '1 hour')
+          AND seven.inventory_window_is_fresh(w.inventory_source,w.inventory_confirmed_at,b.freshness_hours,b.sample_bypass)
           AND w.capacity>w.allocated_count)::int AS available_windows
       FROM seven.offerings o
       JOIN scoped_businesses b USING(business_id)

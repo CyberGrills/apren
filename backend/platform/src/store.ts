@@ -18,6 +18,7 @@ import type {
 } from '@7even/contracts';
 import { one, rows, fail } from './db.ts';
 import type { Connection } from './db.ts';
+import { inventoryFreshnessSql } from './inventoryFreshness.ts';
 
 export const sid = (code: string): string =>
   `(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='${code}')`;
@@ -244,12 +245,7 @@ export async function offeringProjection(
            AND (
              s.sector_code <> 'STAY'
              OR b.details->>'isSample'='true'
-             OR (
-               b.details #>> '{verificationReview,checklistVersion}'='1'
-               AND w.inventory_confirmed_at > now() - (
-                 COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'
-               )
-             )
+             OR ${inventoryFreshnessSql('w', 'b', true)}
            )
          ORDER BY w.starts_at LIMIT 500`
       : options.upcomingInventoryOnly
@@ -321,12 +317,7 @@ export async function offeringProjections(
              AND (
                s.sector_code <> 'STAY'
                OR b.details->>'isSample'='true'
-               OR (
-                 b.details #>> '{verificationReview,checklistVersion}'='1'
-                 AND w.inventory_confirmed_at > now() - (
-                   COALESCE((b.details #>> '{verificationReview,inventoryFreshnessHours}')::int, 0) * interval '1 hour'
-                 )
-               )
+               OR ${inventoryFreshnessSql('w', 'b', true)}
              )
          ) ranked WHERE projection_rank <= 500 ORDER BY offering_id, starts_at`
       : `SELECT * FROM (

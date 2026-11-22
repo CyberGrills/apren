@@ -223,11 +223,11 @@ test('7even real PostgreSQL API and invariant acceptance', {
         ];
         await pool.query(
           `INSERT INTO seven.inventory_windows
-             (inventory_window_id,offering_id,starts_at,ends_at,capacity)
+             (inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_source)
            SELECT gen_random_uuid(), offer_id,
                   (\$1::date + night_offset + time '13:00') AT TIME ZONE 'UTC',
                   (\$1::date + night_offset + 1 + time '10:00') AT TIME ZONE 'UTC',
-                  3
+                  3, 'MANUAL'
            FROM unnest(\$2::uuid[]) AS offers(offer_id)
            CROSS JOIN generate_series(0,1) AS nights(night_offset)`,
           [checkIn, syntheticOffers.map((item) => item.offering_id)],

@@ -122,6 +122,26 @@ export async function createQuote(
     return fail(409, 'CAPACITY_CHANGED', 'Choose an available service date or sitting.');
   if (selected.some((w) => w.remaining < input.quantity || new Date(w.endAt) <= new Date()))
     return fail(409, 'CAPACITY_CHANGED', 'There is not enough availability for this request.');
+  if (offer.kind === 'STAY') {
+    const review = business.details.verificationReview as
+      | { inventoryFreshnessHours?: unknown }
+      | undefined;
+    const manualFreshnessHours = typeof review?.inventoryFreshnessHours === 'number'
+      ? review.inventoryFreshnessHours : 0;
+    const localSample = business.details.isSample === true && !requireVerifiedHotel;
+    const confirmed = await rows(
+      db,
+      `SELECT inventory_window_id
+       FROM seven.inventory_windows
+       WHERE inventory_window_id = ANY($1::uuid[])
+         AND seven.inventory_window_is_fresh(inventory_source,inventory_confirmed_at,$2,$3)
+       ORDER BY inventory_window_id
+       FOR SHARE`,
+      [selected.map((window) => window.id), manualFreshnessHours, localSample],
+    );
+    if (confirmed.length !== selected.length)
+      return fail(409, 'INVENTORY_STALE', 'The hotel inventory source has not confirmed this availability recently. Request an updated quote.');
+  }
   const policy = await one(db, 'SELECT * FROM seven.policies ORDER BY policy_id DESC LIMIT 1');
   const price = quotePrice({
     unitPriceMinor: offer.priceMinor,
@@ -230,16 +250,27 @@ export async function createReservation(
     requireVenue(actor, offer.venueId);
   }
   for (const windowId of [...quote.inventory_ids].sort()) {
+    const review = business.details.verificationReview as
+      | { inventoryFreshnessHours?: unknown }
+      | undefined;
+    const manualFreshnessHours = typeof review?.inventoryFreshnessHours === 'number'
+      ? review.inventoryFreshnessHours : 0;
+    const localSample = business.details.isSample === true && !requireVerifiedHotel;
     const inventory = await one(
       db,
-      'SELECT * FROM seven.inventory_windows WHERE inventory_window_id=$1 FOR UPDATE',
-      [windowId],
+      `SELECT *,
+         seven.inventory_window_is_fresh(inventory_source,inventory_confirmed_at,$2,$3) AS inventory_fresh
+       FROM seven.inventory_windows
+       WHERE inventory_window_id=$1
+       FOR UPDATE`,
+      [windowId, manualFreshnessHours, localSample],
     );
-    if (offer.kind === 'STAY' && !freshInventoryIds.has(windowId))
+    if (offer.kind === 'STAY' &&
+      (!freshInventoryIds.has(windowId) || inventory?.inventory_fresh !== true))
       return fail(
         409,
         'INVENTORY_STALE',
-        'The hotel has not reconfirmed this room inventory within its freshness window. Request an updated quote.',
+        'The hotel inventory source has not confirmed this availability recently. Request an updated quote.',
       );
     if (
       !inventory ||

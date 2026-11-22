@@ -162,7 +162,7 @@ export async function seed(
           Date.parse(start) + (place.sector === 'STAY' ? 86400000 : 7200000),
         ).toISOString();
         await db.query(
-          'INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity) VALUES($1,$2,$3,$4,$5)',
+          "INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_source) VALUES($1,$2,$3,$4,$5,'MANUAL')",
           [randomUUID(), offeringId, start, end, place.capacity],
         );
       }
