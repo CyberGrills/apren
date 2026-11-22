@@ -89,6 +89,9 @@ export function mountStayBooking(
     }
     const plans = await rows<{
       room_type_id: string;
+      offering_id: string;
+      offering_title: string;
+      inventory_freshness_hours: number;
       max_occupancy: number;
       bed_configuration: string;
       rate_plan_id: string;
@@ -101,14 +104,22 @@ export function mountStayBooking(
       revision: number;
     }>(
       pool,
-      `SELECT rt.room_type_id,rt.max_occupancy,rt.bed_configuration,
+      `SELECT rt.room_type_id,rt.offering_id,o.title AS offering_title,
+              COALESCE((b.details->'verificationReview'->>'inventoryFreshnessHours')::int,0) AS inventory_freshness_hours,
+              rt.max_occupancy,rt.bed_configuration,
               rp.rate_plan_id,rp.code,rp.name,rp.currency_code,rp.meal_plan,
               rp.refundable,rp.cancellation_policy,rp.revision
          FROM seven.stay_room_types rt
          JOIN seven.stay_rate_plans rp USING(room_type_id)
-        WHERE rt.offering_id=$1 AND rt.is_active AND rp.is_active
-        ORDER BY rt.created_at,rp.name`,
-      [offeringId],
+         JOIN seven.offerings o ON o.offering_id=rt.offering_id
+         JOIN seven.sectors s USING(sector_id)
+         JOIN seven.businesses b USING(business_id)
+         JOIN seven.workflow_states ws USING(workflow_state_id)
+        WHERE o.business_id=$1 AND o.venue_id=$2 AND o.is_published
+          AND s.sector_code='STAY' AND ws.workflow_state_code='APPROVED'
+          AND rt.is_active AND rp.is_active
+        ORDER BY o.title,rp.name`,
+      [offering.business_id, offering.venue_id],
     );
     const result = [];
     for (const plan of plans) {
@@ -140,7 +151,7 @@ export function mountStayBooking(
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date >= $4::date
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date < $5::date
           ORDER BY iw.starts_at`,
-        [offeringId, offering.inventory_freshness_hours, !production && offering.business_details.isSample === true, checkInDate, checkOutDate],
+        [plan.offering_id, plan.inventory_freshness_hours, !production && offering.business_details.isSample === true, checkInDate, checkOutDate],
       );
       const inventoryByDate = new Map(inventory.map((night) => [night.service_date, night]));
       const ratesByDate = new Map(nightly.map((night) => [night.service_date, night]));
@@ -163,6 +174,8 @@ export function mountStayBooking(
         dates.length >= minStay &&
         (maxStay === null || dates.length <= maxStay);
       result.push({
+        offeringId: plan.offering_id,
+        offeringTitle: plan.offering_title,
         roomType: {
           id: plan.room_type_id,
           maxOccupancy: plan.max_occupancy,
