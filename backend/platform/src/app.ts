@@ -30,7 +30,7 @@ import * as B from './benefits.ts';
 import { mountOperations } from './operations.ts';
 import { mountBookingRecovery } from './bookingRecovery.ts';
 import { mountDemoMarketplace } from './demoMarketplace.ts';
-import { schemaIsReady } from './schemaReadiness.ts';
+import { creatorArtworkSchemaIsReady, isCreatorArtworkRoute, schemaIsReady } from './schemaReadiness.ts';
 import { mountAccountRoutes, rateLimitAiSearch, rateLimitLogin } from './accounts.ts';
 import type { RecoveryMailer } from './accounts.ts';
 import { configuredRecoveryMailer } from './recoveryMailer.ts';
@@ -407,7 +407,14 @@ export function createApp(options: AppOptions = {}) {
     }
     if (!ready) return fail(503, 'SCHEMA_NOT_READY', 'Database schema migrations are incomplete.');
     const payments = paymentReadiness(environment);
-    return { status: 'ready', storage: 'postgresql', paymentMode: payments.mode, payments };
+    const creatorStudioReady = await creatorArtworkSchemaIsReady(pool).catch(() => false);
+    return {
+      status: 'ready',
+      storage: 'postgresql',
+      paymentMode: payments.mode,
+      payments,
+      features: { creatorStudio: creatorStudioReady ? 'ready' : 'not_ready' },
+    };
   });
   route('post', '/ai/interpret-search', async (req) => {
     const input = z.strictObject({
@@ -2231,6 +2238,20 @@ export function createApp(options: AppOptions = {}) {
   mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
+  app.use(async (req, res, next) => {
+    if (!isCreatorArtworkRoute(req.path)) return next();
+    try {
+      if (await creatorArtworkSchemaIsReady(pool)) return next();
+    } catch {
+      // Treat schema inspection failures as unavailable; never expose database details.
+    }
+    return res.status(503).json({
+      error: {
+        code: 'CREATOR_SCHEMA_NOT_READY',
+        message: 'Creator Studio is temporarily unavailable while its database schema is being prepared.',
+      },
+    });
+  });
   mountCreatorArtworks(app, { pool, actor: actorFor });
   mountCreatorArtworkRights(app, { pool, actor: actorFor });
   mountCreatorArtworkRightsDocuments(app, { pool, actor: actorFor });
