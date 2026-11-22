@@ -2,7 +2,7 @@ import { ArrowRight, ArrowUpRight, Palette, Camera, Shirt, BookOpen, ShieldCheck
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi.ts';
-import { ErrorNotice } from '../../components/ui.tsx';
+import { ErrorNotice, Loading } from '../../components/ui.tsx';
 import { PublicArtworkCard } from './CreatorPublicPage.tsx';
 import type { PublicArtwork } from '../../lib/creatorApi.ts';
 import { PublicFooter, PublicHeader } from './PublicShell.tsx';
@@ -68,7 +68,7 @@ export function ArtCulturePage() {
             {filters.map((filter) => <button type="button" key={filter} className={activeCategory === filter ? 'is-active' : ''} onClick={() => setActiveCategory(filter)}>{filter}</button>)}
           </fieldset>
           {collectionError && <ErrorNotice message={collectionError} retry={reloadCollection} />}
-          {collectionLoading && <p className="ac-loading" role="status">Loading approved artwork…</p>}
+          {collectionLoading && <Loading inline label="Loading approved artwork" />}
           {visibleArtworks.length > 0 ? <div className="creator-public-grid ac-public-artwork-grid">{visibleArtworks.map((artwork) => <PublicArtworkCard artwork={artwork} key={artwork.artworkId} />)}</div> : !collectionLoading && !collectionError ? <div className="ac-empty-state">
             <div className="ac-empty-mark"><Sparkles size={26} strokeWidth={1.4} /></div>
             <p className="public-eyebrow">THE COLLECTION IS GROWING</p>
