@@ -322,9 +322,7 @@ export function ExplorePage() {
             </button>
           </div>
         )}
-        {directoryLoading && (
-          <p className="seven-directory-loading" role="status">Loading additional business listings…</p>
-        )}
+        {directoryLoading && <Loading inline label="Loading additional business listings" />}
         {directoryProfiles.length > 0 && (
           <section className="explore-results" aria-labelledby="explore-business-profiles-title">
             <div className="explore-results-heading">

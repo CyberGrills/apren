@@ -107,3 +107,36 @@
     animation: none;
   }
 }
+
+
+/* Inline loading keeps the exact opening mark animation without covering the page. */
+.brand-intro-inline {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  display: inline-grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  pointer-events: none;
+  animation: none;
+  vertical-align: middle;
+}
+
+.brand-intro-inline .brand {
+  width: 1.8rem;
+  max-height: 2.25rem;
+}
+
+.seven-loading-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+}
+
+.seven-loading-inline .brand-intro-inline {
+  flex: 0 0 auto;
+}

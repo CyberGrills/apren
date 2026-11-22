@@ -64,11 +64,11 @@ export function EmptyState({
 export function ErrorNotice({ message, retry }: { message: string; retry?: () => void }) {
   return <ErrorPopup message={message} retry={retry} />;
 }
-export function Loading() {
+export function Loading({ inline = false, label = 'Preparing your 7even experience' }: { inline?: boolean; label?: string }) {
   return (
-    <div role="status" aria-label="Preparing your 7even experience">
-      <BrandIntro persistent />
-      <span className="sr-only">Preparing your 7even experience…</span>
+    <div className={inline ? 'seven-loading seven-loading-inline' : 'seven-loading'} role="status" aria-label={label} aria-live="polite">
+      <BrandIntro persistent inline={inline} />
+      <span className="sr-only">{label}…</span>
     </div>
   );
 }

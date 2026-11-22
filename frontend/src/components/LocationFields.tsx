@@ -10,7 +10,7 @@ import {
 import { MapPin } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../lib/api.ts';
-import { ErrorNotice } from './ui.tsx';
+import { ErrorNotice, Loading } from './ui.tsx';
 import '../styles/location-fields.css';
 
 const stateCache = new Map<string, NigeriaLocation[]>();
@@ -122,6 +122,7 @@ export function StateCityFields({
             </option>
           ))}
         </select>
+        {loading && <Loading inline label="Loading cities" />}
         {error && (
           <ErrorNotice
             message="Cities could not load. Please try again."
@@ -287,6 +288,7 @@ export function DestinationInput({
               </div>
             ))}
           </div>
+          {loading && <Loading inline label="Finding destinations" />}
           <p className="destination-status" id={`${id}-status`} role="status" aria-live="polite" aria-atomic="true">
             {loading
               ? 'Finding destinations…'

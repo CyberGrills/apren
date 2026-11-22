@@ -12,6 +12,7 @@ import {
   nigeriaStateDirectories,
 } from '../../lib/nigeriaDirectory.ts';
 import { BusinessDirectoryCard, type BusinessDirectoryProfile } from './BusinessDirectoryCard.tsx';
+import { Loading } from '../../components/ui.tsx';
 import { DirectoryListingCard } from './DirectoryListingCard.tsx';
 import { PublicFooter, PublicHeader } from './PublicShell.tsx';
 
@@ -184,11 +185,7 @@ export function DirectoryPage() {
               </button>
             </div>
           )}
-          {directoryLoading && (
-            <p className="seven-directory-loading" role="status">
-              Loading business profiles and directory sources…
-            </p>
-          )}
+          {directoryLoading && <Loading inline label="Loading business profiles and directory sources" />}
         </section>
 
         {businessProfiles.length > 0 && (

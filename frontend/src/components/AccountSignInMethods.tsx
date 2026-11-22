@@ -9,7 +9,7 @@ import {
   type AuthenticationMethods,
   type SocialProvider,
 } from './AuthenticationOptions.tsx';
-import { Field, Modal, useFeedback } from './ui.tsx';
+import { Field, Loading, Modal, useFeedback } from './ui.tsx';
 
 interface Passkey {
   id: string;
@@ -167,7 +167,7 @@ export function AccountSignInMethods() {
       <h3 id="signin-methods-title">How you sign in.</h3>
       <p>Keep your password, or add another way to access your account.</p>
       {loading ? (
-        <p role="status">Loading your sign-in methods…</p>
+        <Loading inline label="Loading your sign-in methods" />
       ) : failed ? (
         <p role="status">
           Your sign-in methods could not load.{' '}
