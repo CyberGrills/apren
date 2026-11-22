@@ -4,6 +4,7 @@ import { api } from '../../../lib/api.ts';
 interface CalendarRow {
   room_type_id: string;
   offering_id: string;
+  room_name: string;
   max_occupancy: number;
   bed_configuration: string;
   total_rooms: number | null;
