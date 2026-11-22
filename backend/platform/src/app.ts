@@ -1478,7 +1478,9 @@ export function createApp(options: AppOptions = {}) {
     });
   });
   route('patch', '/business/venues/:id', async (req, res) => {
-    const input = parse(C.venueInput, req);
+    const input = C.venueInput.parse(
+      Object.fromEntries(Object.entries(req.body).filter(([key]) => key !== 'expectedRevision')),
+    );
     const expectedRevision = z.int().min(1).parse(req.body.expectedRevision);
     return mutate(req, res, async (db, actor) => {
       await businessActor(res, true);
