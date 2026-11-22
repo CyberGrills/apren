@@ -440,8 +440,8 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             />
             <span>
               {pcm
-                ? `I don check the cancellation rule (${offering.cancellationHours} hours before the booking starts). I understand say this booking no confirm until 7even verify my payment.`
-                : `I have reviewed the cancellation policy (${offering.cancellationHours} hours before the booking starts) and understand that this reservation is not confirmed until 7even verifies my payment.`}
+                ? `I don check the cancellation rule (${stayQuoteSnapshot?.cancellationPolicySnapshot.cancellationHours ?? offering.cancellationHours} hours before the booking starts). I understand say this booking no confirm until 7even verify my payment.`
+                : `I have reviewed the cancellation policy (${stayQuoteSnapshot?.cancellationPolicySnapshot.cancellationHours ?? offering.cancellationHours} hours before the booking starts) and understand that this reservation is not confirmed until 7even verifies my payment.`}
             </span>
           </label>
           <button
