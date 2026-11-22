@@ -127,7 +127,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     await owner.request(`/business/stay/rooms/${secondRoom.room_type_id}/availability`,'POST',{
       startDate,endDate,capacity:2,
     });
-    const calendar=await owner.request<{rooms:Array<{service_date:string;amount_minor:string;capacity:number;allocated_count:number;inventory_source:string}>}>(
+    const calendar=await owner.request<{rooms:Array<{room_type_id:string;service_date:string;amount_minor:string;capacity:number;allocated_count:number;inventory_source:string}>}>(
       `/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
     assert.equal(calendar.rooms.length,6);
     const firstCategoryRows=calendar.rooms.filter(night=>night.room_type_id===room.room_type_id);
