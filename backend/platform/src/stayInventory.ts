@@ -119,14 +119,14 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       await db.query(
         'UPDATE seven.stay_room_types SET max_occupancy=$2,bed_configuration=$3,total_rooms=$4,revision=revision+1,updated_at=now() WHERE room_type_id=$1',
         [existing.room_type_id,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null]);
-      await S.audit(db,user,businessId,'stay_room_type.updated',existing.room_type_id);
+      await S.audit(db,user,businessId,'stay_room_type.updated',existing.room_type_id,'Room configuration updated.');
       return one(db,'SELECT * FROM seven.stay_room_types WHERE room_type_id=$1',[existing.room_type_id]);
     }
     const roomTypeId=randomUUID();
     await db.query(
       'INSERT INTO seven.stay_room_types(room_type_id,offering_id,max_occupancy,bed_configuration,total_rooms) VALUES($1,$2,$3,$4,$5)',
       [roomTypeId,input.offeringId,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null]);
-    await S.audit(db,user,businessId,'stay_room_type.created',roomTypeId);
+    await S.audit(db,user,businessId,'stay_room_type.created',roomTypeId,'Room configuration created.');
     return one(db,'SELECT * FROM seven.stay_room_types WHERE room_type_id=$1',[roomTypeId]);
   }));
 
@@ -141,7 +141,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     await db.query(
       'UPDATE seven.stay_room_types SET max_occupancy=$2,bed_configuration=$3,total_rooms=$4,is_active=$5,revision=revision+1,updated_at=now() WHERE room_type_id=$1',
       [roomId,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null,input.isActive ?? room.is_active]);
-    await S.audit(db,user,businessId,'stay_room_type.updated',roomId);
+    await S.audit(db,user,businessId,'stay_room_type.updated',roomId,'Room configuration updated.');
     return one(db,'SELECT * FROM seven.stay_room_types WHERE room_type_id=$1',[roomId]);
   }));
 
@@ -157,7 +157,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     await db.query(
       'INSERT INTO seven.stay_rate_plans(rate_plan_id,room_type_id,offering_id,code,name,currency_code,meal_plan,refundable,cancellation_policy) SELECT $1,rt.room_type_id,o.offering_id,$3,$4,$5,$6,$7,$8 FROM seven.stay_room_types rt JOIN seven.offerings o USING(offering_id) WHERE rt.room_type_id=$2',
       [planId,input.roomTypeId,input.code,input.name,input.currencyCode,input.mealPlan,input.refundable ?? null,input.cancellationPolicy]);
-    await S.audit(db,user,businessId,'stay_rate_plan.created',planId);
+    await S.audit(db,user,businessId,'stay_rate_plan.created',planId,'Rate plan created.');
     return one(db,'SELECT * FROM seven.stay_rate_plans WHERE rate_plan_id=$1',[planId]);
   }));
 
@@ -173,7 +173,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     await db.query(
       'UPDATE seven.stay_rate_plans SET code=$2,name=$3,currency_code=$4,meal_plan=$5,refundable=$6,cancellation_policy=$7,is_active=$8,revision=revision+1,updated_at=now() WHERE rate_plan_id=$1',
       [planId,input.code,input.name,input.currencyCode,input.mealPlan,input.refundable ?? null,input.cancellationPolicy,input.isActive ?? plan.is_active]);
-    await S.audit(db,user,businessId,'stay_rate_plan.updated',planId);
+    await S.audit(db,user,businessId,'stay_rate_plan.updated',planId,'Rate plan updated.');
     return one(db,'SELECT * FROM seven.stay_rate_plans WHERE rate_plan_id=$1',[planId]);
   }));
 
@@ -204,7 +204,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
            revision=seven.stay_nightly_rates.revision+1,updated_at=now()`,
         [input.ratePlanId,plan.room_type_id,date,input.amountMinor,input.closedToArrival,input.closedToDeparture,input.minStayNights ?? null,input.maxStayNights ?? null]);
     }
-    await S.audit(db,user,businessId,'stay_nightly_rates.bulk_updated',input.ratePlanId,{startDate:input.startDate,endDate:input.endDate,days:dates.length});
+    await S.audit(db,user,businessId,'stay_nightly_rates.bulk_updated',input.ratePlanId,\`Updated ${dates.length} nights from ${input.startDate} to ${input.endDate}.\`);
     return {ratePlanId:input.ratePlanId,updatedDates:dates};
   }));
 }
