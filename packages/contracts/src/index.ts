@@ -396,6 +396,10 @@ export interface Reservation {
   createdAt: string;
   fulfilledAt: string | null;
   paymentId: string | null;
+  roomType?: { id: string; maxOccupancy: number; bedConfiguration: string } | null;
+  ratePlan?: { id: string; code: string; name: string; currencyCode: string; mealPlan: string; refundable: boolean | null; cancellationPolicy: string; revision: number } | null;
+  nightlyBreakdown?: Array<{ date: string; amountMinor: string; quantity: number; lineTotalMinor: string }>;
+  cancellationPolicySnapshot?: { refundable: boolean | null; policy: string; cancellationHours: number } | null;
 }
 export interface CryptoQuote {
   reference: string;
