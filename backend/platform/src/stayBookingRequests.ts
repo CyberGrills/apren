@@ -93,21 +93,33 @@ export function mountStayBookingRequests(app: Express, { pool, actor }: Context)
   app.post('/api/business/stay-booking-requests/:id/actions', async (req,res) => {
     const user = actor(res); owner(user);
     const id = z.uuid().parse(req.params.id); const input = actionSchema.parse(req.body);
-    const request = await one(pool,'SELECT * FROM seven.stay_booking_requests WHERE request_id=$1 AND business_id=$2 FOR UPDATE',[id,user.businessId]);
-    if (!request) return fail(404,'REQUEST_NOT_FOUND','Booking request not found.');
-    if (Number(request.revision) !== input.expectedRevision) return fail(409,'REVISION_CONFLICT','This request changed. Refresh before responding.');
-    if (request.status !== 'REQUESTED' || new Date(String(request.expires_at)) <= new Date()) {
-      if (request.status === 'REQUESTED') await pool.query("UPDATE seven.stay_booking_requests SET status='EXPIRED',revision=revision+1,updated_at=now() WHERE request_id=$1",[id]);
-      return fail(409,'REQUEST_NOT_ACTIONABLE','This booking request is no longer awaiting a response.');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const request = await one(client,'SELECT * FROM seven.stay_booking_requests WHERE request_id=$1 AND business_id=$2 FOR UPDATE',[id,user.businessId]);
+      if (!request) { await client.query('ROLLBACK'); return fail(404,'REQUEST_NOT_FOUND','Booking request not found.'); }
+      if (Number(request.revision) !== input.expectedRevision) { await client.query('ROLLBACK'); return fail(409,'REVISION_CONFLICT','This request changed. Refresh before responding.'); }
+      if (request.status !== 'REQUESTED') { await client.query('ROLLBACK'); return fail(409,'REQUEST_NOT_ACTIONABLE','This booking request is no longer awaiting a response.'); }
+      if (new Date(String(request.expires_at)) <= new Date()) {
+        await client.query("UPDATE seven.stay_booking_requests SET status='EXPIRED',revision=revision+1,updated_at=now() WHERE request_id=$1",[id]);
+        await client.query('COMMIT');
+        return fail(409,'REQUEST_EXPIRED','This booking request has expired.');
+      }
+      const status = input.action === 'ACCEPT' ? 'ACCEPTED' : 'DECLINED';
+      await client.query(`UPDATE seven.stay_booking_requests SET status=$2,property_response=$3,responded_by=$4,responded_at=now(),revision=revision+1,updated_at=now() WHERE request_id=$1`,
+        [id,status,input.response,user.id]);
+      await client.query(`INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details)
+        VALUES($1,$2,$3,$4,$5,$6)`,
+        [randomUUID(),user.id,user.businessId,'stay_booking_request.'+status.toLowerCase(),id,{response:input.response}]);
+      await client.query('COMMIT');
+      const updated = await one(pool,select+' WHERE r.request_id=$1',[id]);
+      return res.json({data:project(updated!)});
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
-    const status = input.action === 'ACCEPT' ? 'ACCEPTED' : 'DECLINED';
-    await pool.query(`UPDATE seven.stay_booking_requests SET status=$2,property_response=$3,responded_by=$4,responded_at=now(),revision=revision+1,updated_at=now() WHERE request_id=$1`,
-      [id,status,input.response,user.id]);
-    await pool.query(`INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details)
-      VALUES($1,$2,$3,$4,$5,$6)`,
-      [randomUUID(),user.id,user.businessId,'stay_booking_request.'+status.toLowerCase(),id,{response:input.response}]);
-    const updated = await one(pool,select+' WHERE r.request_id=$1',[id]);
-    return res.json({data:project(updated!)});
   });
   app.get('/api/me/stay-booking-requests', async (_req,res) => {
     const user = actor(res); customer(user);
