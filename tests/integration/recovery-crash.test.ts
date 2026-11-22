@@ -50,7 +50,7 @@ test('financial recovery survives actual process death and PostgreSQL rollback',
   async function held(label:string,initialize=true,amountMinor=10000){
     const offeringId=randomUUID();const windowId=randomUUID();const date=new Date(Date.now()+7*86400000).toISOString().slice(0,10);const endDate=new Date(Date.parse(`${date}T00:00:00Z`)+86400000).toISOString().slice(0,10);
     await pool.query("INSERT INTO seven.offerings(offering_id,business_id,venue_id,sector_id,title,description,city,price_minor,is_published,details) VALUES($1,$2,$3,(SELECT sector_id FROM seven.sectors WHERE sector_code='STAY'),$4,'Synthetic crash recovery fixture','Lagos',$5,true,$6)",[offeringId,base.business_id,base.venue_id,label,amountMinor,{capacity:1,cancellationHours:24}]);
-    await pool.query('INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity) VALUES($1,$2,$3,$4,1)',[windowId,offeringId,`${date}T00:00:00+01:00`,`${endDate}T00:00:00+01:00`]);
+    await pool.query('INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_source) VALUES($1,$2,$3,$4,1,'MANUAL')',[windowId,offeringId,`${date}T00:00:00+01:00`,`${endDate}T00:00:00+01:00`]);
     const reservation=await transaction(pool,async db=>{const quote=await createQuote(db,actor,{offeringId,startDate:date,endDate,quantity:1});return createReservation(db,actor,quote.id);});
     if(!initialize)return {reservation,windowId};
     const payment=await checkout(pool,new MockProvider(),actor,reservation.id,'http://localhost:5177');
