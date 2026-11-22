@@ -62,8 +62,6 @@ export async function createQuote(
 ): Promise<Quote> {
   const offer = await offeringProjection(db, input.offeringId, true);
   if (!offer) return fail(404, 'NOT_FOUND', 'This offering was not found.');
-  if (offer.kind === 'STAY')
-    return fail(409, 'RATE_PLAN_REQUIRED', 'Select a room category and an active nightly rate plan to request a stay quote.');
   if (offer.kind === 'STAY') {
     const parts = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit',
