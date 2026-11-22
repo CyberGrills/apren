@@ -148,6 +148,7 @@ export function mountStayBooking(
                 ) AS fresh
            FROM seven.inventory_windows iw
           WHERE iw.offering_id=$1
+            AND iw.room_type_id=$6
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date >= $4::date
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date < $5::date
           ORDER BY iw.starts_at`,
@@ -319,11 +320,12 @@ export function mountStayBooking(
               seven.inventory_window_is_fresh(iw.inventory_source,iw.inventory_confirmed_at,$2,$3) AS inventory_fresh
          FROM seven.inventory_windows iw
         WHERE iw.offering_id=$1
+            AND iw.room_type_id=$6
           AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date >= $4::date
           AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date < $5::date
         ORDER BY iw.starts_at
         FOR SHARE`,
-      [input.offeringId, offering.inventory_freshness_hours, !production && offering.business_details.isSample === true, input.checkInDate, input.checkOutDate],
+      [input.offeringId, offering.inventory_freshness_hours, !production && offering.business_details.isSample === true, input.checkInDate, input.checkOutDate, selected.room_type_id],
     );
     if (windows.length !== dates.length)
       return fail(409, 'CAPACITY_CHANGED', 'The hotel has not confirmed availability for every night.');
