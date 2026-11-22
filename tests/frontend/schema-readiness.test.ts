@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import test from 'node:test';
 import type { Pool } from 'pg';
-import { REQUIRED_SCHEMA_MIGRATION, schemaIsReady } from '../../backend/platform/src/schemaReadiness.ts';
+import { CUSTOMER_PROFILE_MEDIA_MIGRATION, customerProfileMediaSchemaIsReady, isCustomerProfileMediaRoute, REQUIRED_SCHEMA_MIGRATION, schemaIsReady } from '../../backend/platform/src/schemaReadiness.ts';
 
 interface ReadinessRow {
   migration_applied: boolean;
@@ -70,4 +70,47 @@ test('both API entry points use schema-aware readiness rather than an old ledger
   assert.match(app, /schemaIsReady\(pool,\s*environment\)/);
   assert.doesNotMatch(api, /SELECT 1 FROM seven\.migrations LIMIT 1/);
   assert.doesNotMatch(app, /SELECT 1 FROM seven\.migrations LIMIT 1/);
+});
+
+
+interface ProfileMediaReadinessRow {
+  migration_applied: boolean;
+  table_ready: boolean;
+  app_policy_ready: boolean;
+  readonly_policy_ready: boolean;
+}
+
+function fakeProfileMediaPool(row?: ProfileMediaReadinessRow): Pick<Pool, 'query'> {
+  return {
+    query: async (sql: string, values?: unknown[]) => {
+      assert.match(sql, /customer_profile_media/);
+      assert.match(sql, /relrowsecurity/);
+      assert.match(sql, /seven_app_server_access/);
+      assert.match(sql, /seven_readonly_select_access/);
+      assert.match(sql, /qual, ''\)\)\) = 'false'/);
+      assert.deepEqual(values, [CUSTOMER_PROFILE_MEDIA_MIGRATION]);
+      return { rows: row ? [row] : [] };
+    },
+  } as unknown as Pick<Pool, 'query'>;
+}
+
+test('customer profile media endpoints fail closed until the private RLS-protected schema is ready', async () => {
+  const complete = {
+    migration_applied: true,
+    table_ready: true,
+    app_policy_ready: true,
+    readonly_policy_ready: true,
+  };
+  assert.equal(CUSTOMER_PROFILE_MEDIA_MIGRATION, '033_customer_profile_media.sql');
+  assert.equal(await customerProfileMediaSchemaIsReady(fakeProfileMediaPool(complete)), true);
+  assert.equal(await customerProfileMediaSchemaIsReady(fakeProfileMediaPool()), false);
+  assert.equal(await customerProfileMediaSchemaIsReady(fakeProfileMediaPool({ ...complete, migration_applied: false })), false);
+  assert.equal(await customerProfileMediaSchemaIsReady(fakeProfileMediaPool({ ...complete, table_ready: false })), false);
+  assert.equal(await customerProfileMediaSchemaIsReady(fakeProfileMediaPool({ ...complete, app_policy_ready: false })), false);
+  assert.equal(await customerProfileMediaSchemaIsReady(fakeProfileMediaPool({ ...complete, readonly_policy_ready: false })), false);
+  assert.equal(isCustomerProfileMediaRoute('/api/me/avatar'), true);
+  assert.equal(isCustomerProfileMediaRoute('/api/me/avatar/upload-intents'), true);
+  assert.equal(isCustomerProfileMediaRoute('/api/me/avatar/550e8400-e29b-41d4-a716-446655440000/complete'), true);
+  assert.equal(isCustomerProfileMediaRoute('/api/me/avatarish'), false);
+  assert.equal(isCustomerProfileMediaRoute('/api/me'), false);
 });
