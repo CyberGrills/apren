@@ -102,6 +102,7 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
     { path: '/business/rewards', label: 'Rewards', icon: Gift },
     { path: '/business/team', label: 'Your team', icon: Users },
     { path: '/business/settings', label: 'Business details', icon: Settings2 },
+    { path: '/business/notifications', label: 'Business updates', icon: Bell },
   ];
   const adminLinks = [
     { path: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -234,9 +235,11 @@ export function WorkspaceShell({ mode }: { mode: 'business' | 'reception' | 'adm
                 timeZone: 'Africa/Lagos',
               }).format(new Date())}
             </time>
-            <Link to="/app/activity" className="icon-button" aria-label="Your updates">
-              <Bell size={16} />
-            </Link>
+            {mode === 'business' && (
+              <Link to="/business/notifications" className="icon-button" aria-label="Business updates">
+                <Bell size={16} />
+              </Link>
+            )}
           </div>
         </header>
         <main className="workspace-content" id="main-content">

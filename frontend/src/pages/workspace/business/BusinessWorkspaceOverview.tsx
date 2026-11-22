@@ -1,5 +1,5 @@
 import type { BusinessOverview } from '@7even/contracts';
-import { ArrowUpRight, Check, ChevronRight, ClipboardList, Clock3 } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, ChartNoAxesCombined, Check, ChevronRight, ClipboardList, Clock3, Images, MapPin, Store, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../../hooks/useApi.ts';
 import { Metric, PageHeader } from '../../../components/ui.tsx';
@@ -178,6 +178,38 @@ export function BusinessWorkspaceOverview({
             </i>
           </div>
         )}
+      </section>
+      <section className="business-quick-links" aria-label="Business workspace shortcuts">
+        <Link to="/business/reservations">
+          <CalendarDays size={19} aria-hidden="true" />
+          <span><strong>Reservations</strong><small>Manage guest bookings</small></span>
+          <ChevronRight size={16} aria-hidden="true" />
+        </Link>
+        <Link to="/business/offerings">
+          <Store size={19} aria-hidden="true" />
+          <span><strong>Places & availability</strong><small>Update listings and capacity</small></span>
+          <ChevronRight size={16} aria-hidden="true" />
+        </Link>
+        <Link to="/business/photos">
+          <Images size={19} aria-hidden="true" />
+          <span><strong>Photos & gallery</strong><small>Manage approved guest photos</small></span>
+          <ChevronRight size={16} aria-hidden="true" />
+        </Link>
+        <Link to="/business/venues">
+          <MapPin size={19} aria-hidden="true" />
+          <span><strong>Venues</strong><small>Manage property locations</small></span>
+          <ChevronRight size={16} aria-hidden="true" />
+        </Link>
+        <Link to="/business/team">
+          <Users size={19} aria-hidden="true" />
+          <span><strong>Your team</strong><small>Manage reception access</small></span>
+          <ChevronRight size={16} aria-hidden="true" />
+        </Link>
+        <Link to="/business/demand">
+          <ChartNoAxesCombined size={19} aria-hidden="true" />
+          <span><strong>Demand insights</strong><small>Review measured activity</small></span>
+          <ChevronRight size={16} aria-hidden="true" />
+        </Link>
       </section>
       <section className="workbench-section" aria-labelledby="business-listing-checks">
         <div className="section-heading">

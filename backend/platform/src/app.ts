@@ -1452,6 +1452,88 @@ export function createApp(options: AppOptions = {}) {
       }),
     );
   }
+  route('get', '/business/venues', async (_req, res): Promise<C.Venue[]> => {
+    const actor = await businessActor(res, true);
+    return (await rows(
+      pool,
+      'SELECT venue_id::text AS id,business_id::text AS "businessId",venue_name AS "venueName",address_line AS address,city,timezone_name AS "timeZone",revision FROM seven.venues WHERE business_id=$1 AND is_active=true ORDER BY created_at,venue_name',
+      [actor.businessId],
+    )) as unknown as C.Venue[];
+  });
+  route('post', '/business/venues', async (req, res) => {
+    const input = parse(C.venueInput, req);
+    return mutate(req, res, async (db, actor) => {
+      await businessActor(res, true);
+      const venueId = randomUUID();
+      await db.query(
+        "INSERT INTO seven.venues(venue_id,business_id,venue_name,address_line,city,timezone_name) VALUES($1,$2,$3,$4,$5,'Africa/Lagos')",
+        [venueId, actor.businessId, input.venueName, input.address, input.city],
+      );
+      await S.audit(db, actor, actor.businessId!, 'venue.created', venueId);
+      return one(
+        db,
+        'SELECT venue_id::text AS id,business_id::text AS "businessId",venue_name AS "venueName",address_line AS address,city,timezone_name AS "timeZone",revision FROM seven.venues WHERE venue_id=$1',
+        [venueId],
+      );
+    });
+  });
+  route('patch', '/business/venues/:id', async (req, res) => {
+    const input = C.venueInput.parse(
+      Object.fromEntries(Object.entries(req.body).filter(([key]) => key !== 'expectedRevision')),
+    );
+    const expectedRevision = z.int().min(1).parse(req.body.expectedRevision);
+    return mutate(req, res, async (db, actor) => {
+      await businessActor(res, true);
+      const current = await one(
+        db,
+        'SELECT venue_id,business_id,revision FROM seven.venues WHERE venue_id=$1 AND is_active=true FOR UPDATE',
+        [id(req)],
+      );
+      if (!current || current.business_id !== actor.businessId)
+        return fail(404, 'NOT_FOUND', 'Venue not found.');
+      if (Number(current.revision) !== expectedRevision)
+        return fail(409, 'REVISION_CONFLICT', 'This venue changed. Refresh and try again.');
+      await db.query(
+        'UPDATE seven.venues SET venue_name=$2,address_line=$3,city=$4,revision=revision+1,updated_at=now() WHERE venue_id=$1',
+        [current.venue_id, input.venueName, input.address, input.city],
+      );
+      await S.audit(db, actor, actor.businessId!, 'venue.updated', String(current.venue_id));
+      return one(
+        db,
+        'SELECT venue_id::text AS id,business_id::text AS "businessId",venue_name AS "venueName",address_line AS address,city,timezone_name AS "timeZone",revision FROM seven.venues WHERE venue_id=$1',
+        [current.venue_id],
+      );
+    });
+  });
+  route('delete', '/business/venues/:id', async (req, res) =>
+    mutate(req, res, async (db, actor) => {
+      await businessActor(res, true);
+      const current = await one(
+        db,
+        'SELECT venue_id,business_id FROM seven.venues WHERE venue_id=$1 AND is_active=true FOR UPDATE',
+        [id(req)],
+      );
+      if (!current || current.business_id !== actor.businessId)
+        return fail(404, 'NOT_FOUND', 'Venue not found.');
+      const used = await one(
+        db,
+        'SELECT offering_id FROM seven.offerings WHERE venue_id=$1 LIMIT 1',
+        [current.venue_id],
+      );
+      if (used)
+        return fail(
+          409,
+          'VENUE_IN_USE',
+          'This venue is linked to a place. Move or retire its offerings before archiving the venue.',
+        );
+      await db.query(
+        'UPDATE seven.venues SET is_active=false,revision=revision+1,updated_at=now() WHERE venue_id=$1',
+        [current.venue_id],
+      );
+      await S.audit(db, actor, actor.businessId!, 'venue.archived', String(current.venue_id));
+      return { success: true };
+    }),
+  );
   route('get', '/business/overview', async (_req, res): Promise<C.BusinessOverview> => {
     const actor = await businessActor(res, true);
     const businessId = actor.businessId!;

@@ -28,6 +28,7 @@ import { api } from '../../lib/api.ts';
 import { upcomingInventory } from '../../lib/businessWorkspace.ts';
 import { AdminRecords } from './AdminRecords.tsx';
 import { BusinessPayments } from './business/BusinessPayments.tsx';
+import { BusinessNotifications } from './business/BusinessNotifications.tsx';
 import { BusinessPhotoGallery } from './business/BusinessPhotoGallery.tsx';
 import { ListingUpdateReceipt } from './business/ListingUpdateReceipt.tsx';
 import { BusinessWorkspaceOverview } from './business/BusinessWorkspaceOverview.tsx';
@@ -40,7 +41,7 @@ import {
   ReservationTable,
 } from './shared.tsx';
 
-type Tab = 'overview' | 'reservations' | 'offerings' | 'photos' | 'demand' | 'rewards' | 'team' | 'settings';
+type Tab = 'overview' | 'reservations' | 'offerings' | 'photos' | 'demand' | 'rewards' | 'team' | 'settings' | 'notifications';
 type Editor =
   | { kind: 'offering'; offering?: Offering }
   | { kind: 'availability'; offering: Offering }
@@ -56,6 +57,7 @@ const titles: Record<Tab, string> = {
   rewards: 'Rewards',
   team: 'Your team',
   settings: 'Business details',
+  notifications: 'Business updates',
 };
 export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
   const { user } = useSession();
@@ -74,10 +76,12 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
               ? 'Measured activity from 7even, with the period and evidence beside every suggestion.'
               : tab === 'photos'
                 ? 'Manage original property photos and the gallery guests see after approval.'
-                : undefined
+                : tab === 'notifications'
+                  ? 'Reservation changes and important notices for your business.'
+                  : undefined
           }
           actions={
-            tab === 'photos' ? undefined : owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
+            ['photos', 'notifications'].includes(tab) ? undefined : owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
               <button
                 type="button"
                 className="btn btn-primary"
@@ -97,11 +101,11 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                     ? 'Create a reward'
                     : 'Add a team member'}
               </button>
-            ) : (
+            ) : tab === 'reservations' ? (
               <Link to="/reception" className="btn btn-secondary">
                 Open reception <ArrowUpRight size={16} />
               </Link>
-            )
+            ) : undefined
           }
         />
       )}
@@ -235,6 +239,9 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
               />
             ))}
           {tab === 'photos' && <BusinessPhotoGallery />}
+          {tab === 'notifications' && (
+            <BusinessNotifications notifications={data.notifications} reload={reload} />
+          )}
           {tab === 'demand' && (
             <>
               {data.demand.length === 0 && (
@@ -357,6 +364,14 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
               <div className="panel">
                 <h2>{data.business.businessName}</h2>
                 <p>{data.business.description}</p>
+                <p className="small-copy">
+                  These are your registered business details. Changes to the business identity,
+                  address or primary contact should be reviewed by 7EVEN before they are changed
+                  on guest-facing listings. Request an update at{' '}
+                  <a href="mailto:7seven.com.ng@gmail.com?subject=7EVEN%20business%20details%20update">
+                    7seven.com.ng@gmail.com
+                  </a>.
+                </p>
                 <dl className="settings-summary">
                   <div>
                     <dt>Address</dt>
