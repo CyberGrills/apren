@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Link } from 'react-router-dom';
 import { CalendarDays, CloudOff, Download, MapPin, RefreshCw, Trash2 } from 'lucide-react';
 import { useConnectionStatus } from '../../components/OfflineExperience.tsx';
+import { Loading } from '../../components/ui.tsx';
 import {
   formatOfflineDate,
   getOfflineListings,
@@ -108,7 +109,7 @@ export function OfflinePage() {
             <div><p className="public-eyebrow">Available on this device</p><h2 id="saved-title">Saved places</h2></div>
             <span>{listings.length} saved</span>
           </div>
-          {loading ? <p role="status">Opening your offline space…</p> : listings.length ? (
+          {loading ? <Loading inline label="Opening your offline space" /> : listings.length ? (
             <div className="seven-offline-list">
               {listings.map((listing) => (
                 <article className="seven-offline-place" key={listing.id}>
