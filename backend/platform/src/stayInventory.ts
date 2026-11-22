@@ -56,20 +56,9 @@ function dateRange(start: string, end: string): string[] {
   if (days > 366) return fail(422, 'DATE_RANGE_TOO_LARGE', 'Update no more than 366 nights at a time.');
   return Array.from({ length: days }, (_, index) => new Date(first + index * 86400000).toISOString().slice(0, 10));
 }
-async function roomFor(pool: Pool, actor: SessionUser, roomTypeId: string, lock = false) {
-  const room = await one(pool,
-    `SELECT rt.room_type_id,rt.offering_id,rt.max_occupancy,rt.bed_configuration,rt.total_rooms,rt.is_active,rt.revision,
-            o.business_id,o.venue_id,o.title
-       FROM seven.stay_room_types rt JOIN seven.offerings o USING(offering_id)
-      WHERE rt.room_type_id=$1 ${lock ? 'FOR UPDATE OF rt' : ''}`,
-    [roomTypeId]);
-  if (!room) return fail(404, 'ROOM_TYPE_NOT_FOUND', 'Room category not found.');
-  if (actor.businessId !== room.business_id) return fail(404, 'ROOM_TYPE_NOT_FOUND', 'Room category not found.');
-  if (actor.role === 'RECEPTION') S.requireVenue(actor, room.venue_id);
-  else if (actor.role !== 'BUSINESS_OWNER') return fail(403, 'FORBIDDEN', 'Business access is required.');
-  return room;
-}
 export function mountStayInventory(app: Express, { pool, actor, mutate }: Context): void {
+  function write(req: Request, res: Response, mutate: Context['mutate'], work: Work) { return mutate(req,res,work).then(data => { if (!res.headersSent) res.json({ data }); }); }
+
   app.get('/api/business/stay/calendar', async (req, res) => {
     const user = actor(res);
     if (!['BUSINESS_OWNER', 'RECEPTION'].includes(user.role) || !user.businessId)
@@ -145,7 +134,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     return one(db,'SELECT * FROM seven.stay_room_types WHERE room_type_id=$1',[roomId]);
   }));
 
-  app.post('/api/business/stay/rate-plans', async (req,res)=>mutate(req,res,async(db,user)=>{
+  app.post('/api/business/stay/rate-plans', async (req,res)=>write(req,res,mutate,async(db,user)=>{
     const businessId=ownerBusiness(user); const input=ratePlanInput.parse(req.body);
     const room=await one(db,
       `SELECT rt.room_type_id,o.business_id FROM seven.stay_room_types rt JOIN seven.offerings o USING(offering_id)
