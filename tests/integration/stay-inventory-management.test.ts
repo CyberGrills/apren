@@ -120,6 +120,29 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     await owner.request(`/business/stay/rooms/${room.room_type_id}/availability`,'POST',{
       startDate,endDate,capacity:5,
     });
+    const venue=await one<{venue_id:string}>(pool,'SELECT venue_id FROM seven.offerings WHERE offering_id=$1',[offer.id]);
+    const secondOffer=await owner.request<{id:string}>('/business/offerings','POST',{
+      title:'Inventory test twin room',description:'Second disposable room category for booking selector tests.',
+      kind:'STAY',venueId:venue!.venue_id,city:'Uyo',state:'Akwa Ibom',address:'1 Inventory Test Lane, Uyo',
+      priceMinor:'4500000',capacity:1,published:true,
+    });
+    offerings.push(secondOffer.id);
+    const secondRoom=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
+      offeringId:secondOffer.id,maxOccupancy:2,bedConfiguration:'2 twin beds',totalRooms:1,
+    });
+    roomTypes.push(secondRoom.room_type_id);
+    const secondPlan=await owner.request<{rate_plan_id:string}>('/business/stay/rate-plans','POST',{
+      roomTypeId:secondRoom.room_type_id,code:'TWIN',name:'Twin room only',
+      currencyCode:'NGN',mealPlan:'ROOM_ONLY',refundable:true,cancellationPolicy:'Free cancellation before arrival.',
+    });
+    ratePlans.push(secondPlan.rate_plan_id);
+    await owner.request('/business/stay/nightly-rates','PUT',{
+      ratePlanId:secondPlan.rate_plan_id,expectedRevision:1,startDate,endDate,amountMinor:'20000000',
+      closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
+    });
+    await owner.request(`/business/stay/rooms/${secondRoom.room_type_id}/availability`,'POST',{
+      startDate,endDate,capacity:1,
+    });
     const calendar=await owner.request<{rooms:Array<{service_date:string;amount_minor:string;capacity:number;allocated_count:number;inventory_source:string}>}>(
       `/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
     assert.equal(calendar.rooms.length,3);
@@ -129,9 +152,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const customerA=new Client();await customerA.register();
     const customerB=new Client();await customerB.register();
     const plans=await customerA.request<{plans:Array<{roomType:{id:string};ratePlan:{id:string};available:boolean}>}>(
-      `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=5`);
-    assert.equal(plans.plans.length,1);
-    assert.equal(plans.plans[0]!.available,true);
+      `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=1`);
+    assert.equal(plans.plans.length,2);
+    assert.equal(plans.plans.filter(plan=>plan.available).length,2);
+    assert.ok(plans.plans.some(plan=>plan.roomType.id===room.room_type_id));
+    assert.ok(plans.plans.some(plan=>plan.roomType.id===secondRoom.room_type_id));
     const quoteBody={
       offeringId:offer.id,roomTypeId:room.room_type_id,ratePlanId:plan.rate_plan_id,
       checkInDate:startDate,checkOutDate:endDate,rooms:5,
