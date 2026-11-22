@@ -2,6 +2,7 @@ import type { Pool, QueryResultRow } from 'pg';
 
 /** Latest migration required by the core recovery API contract. Demo schema is environment-specific. */
 export const REQUIRED_SCHEMA_MIGRATION = '026_quote_recovery_session_attribution.sql';
+export const STAY_BOOKING_REQUESTS_MIGRATION = '040_stay_booking_requests.sql';
 
 interface SchemaReadinessRow extends QueryResultRow {
   migration_applied: boolean;
@@ -9,6 +10,7 @@ interface SchemaReadinessRow extends QueryResultRow {
   quote_recovery_session_column_present: boolean;
   recovery_policy_contract_present: boolean;
   demo_marketplace_schema_present: boolean;
+  stay_booking_requests_ready: boolean;
 }
 
 /**
@@ -51,8 +53,29 @@ export async function schemaIsReady(db: Pick<Pool, 'query'>, environment = 'deve
              AND lower(btrim(coalesce(qual, ''))) = 'true'
              AND with_check IS NULL
          )
-       ) AS recovery_policy_contract_present`,
-    [REQUIRED_SCHEMA_MIGRATION],
+       ) AS recovery_policy_contract_present,
+       (
+         EXISTS (SELECT 1 FROM seven.migrations WHERE migration_name = $2)
+         AND EXISTS (
+           SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+           WHERE n.nspname='seven' AND c.relname='stay_booking_requests'
+             AND c.relkind='r' AND c.relrowsecurity
+         )
+         AND EXISTS (
+           SELECT 1 FROM pg_policies WHERE schemaname='seven'
+             AND tablename='stay_booking_requests' AND policyname='seven_app_server_access'
+             AND cmd='ALL' AND roles=ARRAY['seven_app']::name[]
+             AND lower(btrim(coalesce(qual,'')))='true'
+             AND lower(btrim(coalesce(with_check,'')))='true'
+         )
+         AND EXISTS (
+           SELECT 1 FROM pg_policies WHERE schemaname='seven'
+             AND tablename='stay_booking_requests' AND policyname='seven_readonly_select_access'
+             AND cmd='SELECT' AND roles=ARRAY['seven_readonly']::name[]
+             AND lower(btrim(coalesce(qual,'')))='false' AND with_check IS NULL
+         )
+       ) AS stay_booking_requests_ready`,
+    [REQUIRED_SCHEMA_MIGRATION, STAY_BOOKING_REQUESTS_MIGRATION],
   );
   const row = result.rows[0];
   return (
@@ -60,6 +83,7 @@ export async function schemaIsReady(db: Pick<Pool, 'query'>, environment = 'deve
     row?.booking_recovery_events_present === true &&
     row?.quote_recovery_session_column_present === true &&
     row?.recovery_policy_contract_present === true &&
+    row?.stay_booking_requests_ready === true &&
     (environment === 'production' || row?.demo_marketplace_schema_present === true)
   );
 }
