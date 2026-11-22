@@ -228,9 +228,9 @@ test('listing diagnostics explain inventory, preserve tenant access, and count b
     const cappedOffer = await owner.request<C.Offering>('/business/offerings', 'POST', {
       ...offerInput, title: 'Projection limit fixture', published: true,
     });
-    await pool.query(`INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,allocated_count,inventory_confirmed_at)
+    await pool.query(`INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,allocated_count,inventory_confirmed_at,inventory_source)
       SELECT gen_random_uuid(),$1,date_trunc('day',now())+(n+5)*interval '1 day'+interval '12 hours',
-        date_trunc('day',now())+(n+6)*interval '1 day'+interval '12 hours',2,CASE WHEN n<=500 THEN 2 ELSE 0 END,now()
+        date_trunc('day',now())+(n+6)*interval '1 day'+interval '12 hours',2,CASE WHEN n<=500 THEN 2 ELSE 0 END,now(),'MANUAL'
       FROM generate_series(1,501) n`, [cappedOffer.id]);
     const cappedReadiness = (await readiness()).businesses[0]?.offerings.find((item) => item.offeringId === cappedOffer.id);
     assert.equal(cappedReadiness?.eligible, false);
