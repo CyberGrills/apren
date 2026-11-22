@@ -14,7 +14,7 @@ import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 type StayPlanChoice = {
   offeringId: string;
   offeringTitle: string;
-  roomType: { id: string; maxOccupancy: number; bedConfiguration: string };
+  roomType: { id: string; name: string; maxOccupancy: number; bedConfiguration: string };
   ratePlan: {
     id: string; code: string; name: string; currencyCode: string; mealPlan: string;
     refundable: boolean | null; cancellationPolicy: string; revision: number;
