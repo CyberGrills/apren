@@ -379,6 +379,12 @@ export function BookingPanel({ offering }: { offering: Offering }) {
           <p className="public-eyebrow">{pcm ? 'Wetin you go pay' : 'Your price'}</p>
           {stayQuoteSnapshot && <p className="public-small"><strong>{stayQuoteSnapshot.roomType.bedConfiguration || 'Room'}</strong> · {stayQuoteSnapshot.ratePlan.name} · {stayQuoteSnapshot.ratePlan.mealPlan}</p>}
           {stayQuoteSnapshot?.nightlyBreakdown.map((night) => <p className="public-small" key={night.date}>{friendlyDate(night.date)} · <Money minor={night.amountMinor} /> × {night.quantity}</p>)}
+          {stayQuoteSnapshot && (
+            <section className="booking-rate-policy" aria-label="Selected rate plan terms">
+              <p className="public-small"><strong>{stayQuoteSnapshot.cancellationPolicySnapshot.refundable === true ? 'Refundable rate' : stayQuoteSnapshot.cancellationPolicySnapshot.refundable === false ? 'Non-refundable rate' : 'Refund terms not specified'}</strong></p>
+              {stayQuoteSnapshot.cancellationPolicySnapshot.policy && <p className="public-small">{stayQuoteSnapshot.cancellationPolicySnapshot.policy}</p>}
+            </section>
+          )}
           <dl>
             <div>
               <dt>
