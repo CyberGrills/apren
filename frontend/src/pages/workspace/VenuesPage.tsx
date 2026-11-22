@@ -2,7 +2,7 @@ import { useFeedback } from '../../components/Feedback.tsx';
 import type { Venue } from '@7even/contracts';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { ErrorNotice, Field, Loading, Modal, PageHeader } from '../../components/ui.tsx';
+import { EmptyState, ErrorNotice, Field, Loading, Modal, PageHeader } from '../../components/ui.tsx';
 import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
 export function VenuesPage() {
@@ -23,13 +23,19 @@ export function VenuesPage() {
       />
       {loading && <Loading />}
       {error && <ErrorNotice message={error} retry={reload} />}
+      {data?.length === 0 && !loading && !error && (
+        <EmptyState
+          title="Add your first venue."
+          description="Create the physical location where guests stay, dine or enjoy an experience. You can attach multiple offerings to a venue."
+        />
+      )}
       <div className="work-offering-grid">
         {data?.map((venue) => (
           <article className="panel" key={venue.id}>
             <p className="eyebrow">{venue.city}</p>
             <h2>{venue.venueName}</h2>
             <p>{venue.address}</p>
-            <p className="small-copy">Local time: {venue.timeZone}</p>
+            <p className="small-copy">Local time: {venue.timeZone === 'Africa/Lagos' ? 'West Africa Time (WAT)' : venue.timeZone}</p>
             <button
               type="button"
               className="btn btn-secondary btn-small"
