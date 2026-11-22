@@ -239,6 +239,10 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       code:'FLEX',name:'Flexible room only revised for future bookings',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
       refundable:false,cancellationPolicy:'Updated policy for future quotes.',expectedRevision:4,
     });
+    await owner.request(`/business/stay/rooms/${room.room_type_id}`,'PATCH',{
+      name:'King Room renamed after quote',maxOccupancy:2,bedConfiguration:'1 king bed',
+      totalRooms:8,expectedRevision:1,
+    });
     await owner.request('/business/stay/nightly-rates','PUT',{
       ratePlanId:plan.rate_plan_id,expectedRevision:5,startDate,endDate:startDate,amountMinor:'30000000',
       closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
