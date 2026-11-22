@@ -41,7 +41,7 @@ function toMinorUnits(value: string): string {
   const decimalAt = value.indexOf('.');
   const whole = value.slice(0, decimalAt < 0 ? value.length : decimalAt);
   const fraction = decimalAt < 0 ? '' : value.slice(decimalAt + 1);
-  return (BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'))).toString();
+  return (BigInt(whole ?? '0') * 100n + BigInt(fraction.padEnd(2, '0'))).toString();
 }
 function money(minor: string | null, currency: string | null) {
   if (minor === null) return 'No rate';
