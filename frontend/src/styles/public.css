@@ -3509,3 +3509,94 @@
   .appearance-mode-options { grid-template-columns: 1fr; }
   .appearance-mode-option { min-height: 0; }
 }
+
+
+/* 7EVEN social profile links */
+.seven-social-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--line);
+  margin-top: 2.2rem;
+  padding-top: 1.4rem;
+}
+.seven-social-heading {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.seven-social-list {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.seven-social-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.seven-social-list a:hover,
+.seven-social-list a:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--public-panel);
+  outline-offset: 3px;
+}
+.seven-social-list svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+.seven-social-links-compact {
+  display: block;
+  margin-top: 1.1rem;
+  padding-top: 0.85rem;
+}
+.seven-social-links-compact .seven-social-heading {
+  margin-bottom: 0.6rem;
+  font-size: 0.6rem;
+}
+.seven-social-links-compact .seven-social-list {
+  gap: 0.45rem;
+}
+.seven-social-links-compact .seven-social-list a {
+  justify-content: center;
+  width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
+  border-radius: 50%;
+}
+.seven-social-links-compact .seven-social-list a span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 700px) {
+  .seven-social-links {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .seven-social-list {
+    flex-wrap: wrap;
+  }
+}
