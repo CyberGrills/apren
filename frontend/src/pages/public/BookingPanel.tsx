@@ -103,7 +103,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
   });
   const selectedRoomPlans = stayPlans.filter((plan) => plan.roomType.id === selectedRoomTypeId);
   const selectedPlan = stayPlans.find((plan) => plan.ratePlan.id === selectedRatePlanId) ?? null;
-  const roomTypes = Array.from(new Map(stayPlans.map((plan) => [plan.roomType.id, plan.roomType])).values());
+  const roomTypes = Array.from(new Map(stayPlans.map((plan) => [plan.roomType.id, plan.roomType] as const)).values());
   useEffect(() => {
     if (!isStay || offering.isSample || !startDate || !endDate || endDate <= startDate) {
       setStayPlans([]);
