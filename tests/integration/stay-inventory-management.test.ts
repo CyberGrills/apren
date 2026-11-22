@@ -170,7 +170,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
 
     const customerA=new Client();await customerA.register();
     const customerB=new Client();await customerB.register();
-    const plans=await customerA.request<{plans:Array<{roomType:{id:string};ratePlan:{id:string};available:boolean}>}>(
+    const plans=await customerA.request<{plans:Array<{roomType:{id:string;name:string};ratePlan:{id:string};available:boolean}>}>(
       `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=1`);
     assert.equal(plans.plans.length,2);
     assert.equal(plans.plans.filter(plan=>plan.available).length,2);
