@@ -21,7 +21,7 @@ test('inventory source freshness policy distinguishes manual, PMS, unknown, and 
       FROM information_schema.columns
       WHERE table_schema='seven' AND table_name='inventory_windows' AND column_name='inventory_source'
     `);
-    assert.equal(sourceColumn.rows[0]?.column_default, "'MANUAL'::text");
+    assert.equal(sourceColumn.rows[0]?.column_default, "'UNKNOWN'::text");
     assert.equal(sourceColumn.rows[0]?.is_nullable, 'NO');
     const result = await pool.query(`
       SELECT
