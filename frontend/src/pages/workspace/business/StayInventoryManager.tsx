@@ -136,7 +136,7 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
       {!room ? <div className="stay-inventory-empty"><p>No room category has been configured for this stay listing.</p><button type="button" className="btn btn-primary btn-small" onClick={()=>{setCreatingRoom(true);setShowRoomForm(true);}}>Add first room category</button></div> :
       <>
         <div className="stay-inventory-summary">
-          <div><span>Room category</span><strong>{room.max_occupancy} guests maximum</strong><small>{room.bed_configuration || 'Bed configuration not supplied'} · {room.total_rooms ?? 'Room count not recorded'}</small></div>
+          <div><span>Room category</span><strong>{room.room_name}</strong><small>{room.max_occupancy} guests maximum · {room.bed_configuration || 'Bed configuration not supplied'} · {room.total_rooms ?? 'Room count not recorded'} physical rooms</small></div>
           <div><span>Rate plans</span><strong>{plans.length}</strong><small>{plans.length?'Configured':'Add a rate plan'}</small></div>
         </div>
         <div className="stay-inventory-actions">
