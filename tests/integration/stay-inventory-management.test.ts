@@ -119,8 +119,6 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       code:'FLEX',name:'Flexible room only updated',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
       refundable:true,cancellationPolicy:'Free cancellation before arrival.',expectedRevision:1,
     });
-    const startDate=new Date(Date.now()+3*86400000).toISOString().slice(0,10);
-    const endDate=new Date(Date.parse(startDate+'T12:00:00Z')+2*86400000).toISOString().slice(0,10);
     await owner.request('/business/stay/rate-plans/'+plan.rate_plan_id,'PATCH',{
       code:'FLEX',name:'Stale revision must fail',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
       refundable:true,cancellationPolicy:'Stale edit.',expectedRevision:1,
