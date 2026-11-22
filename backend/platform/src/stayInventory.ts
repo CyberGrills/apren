@@ -51,7 +51,7 @@ function ownerBusiness(actor: SessionUser): string {
 function dateRange(start: string, end: string): string[] {
   const first = Date.parse(start + 'T00:00:00Z');
   const last = Date.parse(end + 'T00:00:00Z');
-  if (!Number.isFinite(first) || !Number.isFinite(last) || last < first)
+  if (!Number.isFinite(first) || !Number.isFinite(last) || new Date(first).toISOString().slice(0,10) !== start || new Date(last).toISOString().slice(0,10) !== end || last < first)
     return fail(422, 'INVALID_DATE_RANGE', 'Choose a valid date range.');
   const days = Math.floor((last - first) / 86400000) + 1;
   if (days > 366) return fail(422, 'DATE_RANGE_TOO_LARGE', 'Update no more than 366 nights at a time.');
@@ -92,7 +92,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     return res.json({ data: { dates, rooms: records } });
   });
 
-  app.post('/api/business/stay/rooms', async (req, res) => mutate(req, res, async (db, user) => {
+  app.post('/api/business/stay/rooms', async (req, res) => write(req, res, mutate, async (db, user) => {
     const businessId = ownerBusiness(user);
     const input = roomInput.parse(req.body);
     const offer = await one(db,
@@ -120,7 +120,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     return one(db,'SELECT * FROM seven.stay_room_types WHERE room_type_id=$1',[roomTypeId]);
   }));
 
-  app.patch('/api/business/stay/rooms/:id', async (req, res) => mutate(req, res, async (db,user) => {
+  app.patch('/api/business/stay/rooms/:id', async (req, res) => write(req, res, mutate, async (db,user) => {
     const businessId=ownerBusiness(user); const roomId=uuid.parse(req.params.id);
     const input=roomInput.omit({offeringId:true}).extend({isActive:z.boolean().optional()}).parse(req.body);
     const room=await one(db,
@@ -151,7 +151,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     return one(db,'SELECT * FROM seven.stay_rate_plans WHERE rate_plan_id=$1',[planId]);
   }));
 
-  app.patch('/api/business/stay/rate-plans/:id', async(req,res)=>mutate(req,res,async(db,user)=>{
+  app.patch('/api/business/stay/rate-plans/:id', async(req,res)=>write(req,res,mutate,async(db,user)=>{
     const businessId=ownerBusiness(user); const planId=uuid.parse(req.params.id);
     const input=ratePlanInput.omit({roomTypeId:true}).extend({isActive:z.boolean().optional()}).parse(req.body);
     const plan=await one(db,
@@ -167,7 +167,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     return one(db,'SELECT * FROM seven.stay_rate_plans WHERE rate_plan_id=$1',[planId]);
   }));
 
-  app.put('/api/business/stay/nightly-rates', async(req,res)=>mutate(req,res,async(db,user)=>{
+  app.put('/api/business/stay/nightly-rates', async(req,res)=>write(req,res,mutate,async(db,user)=>{
     const businessId=ownerBusiness(user); const input=nightlyInput.parse(req.body);
     const dates=dateRange(input.startDate,input.endDate);
     if(input.minStayNights && input.maxStayNights && input.minStayNights>input.maxStayNights)
