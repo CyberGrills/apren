@@ -993,7 +993,12 @@ export function createApp(options: AppOptions = {}) {
   });
   route('post', '/quotes', async (req, res) => {
     const input = parse(C.quoteInput, req);
-    return mutate(req, res, (db, actor) => R.createQuote(db, actor, input, environment === 'production'));
+    return mutate(req, res, async (db, actor) => {
+      const offer = await S.offeringProjection(db, input.offeringId, true);
+      if (offer?.kind === 'STAY')
+        return fail(409, 'RATE_PLAN_REQUIRED', 'Select a room category and an active nightly rate plan to request a stay quote.');
+      return R.createQuote(db, actor, input, environment === 'production');
+    });
   });
   route('post', '/reservations', async (req, res) => {
     const input = parse(C.reservationInput, req);
@@ -2314,7 +2319,7 @@ export function createApp(options: AppOptions = {}) {
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
   mountStayInventory(app, { pool, actor: actorFor, mutate });
-  mountStayBooking(app, { pool, actor: actorFor, mutate }, environment === 'production');
+  mountStayBooking(app, { pool, mutate }, environment === 'production');
   app.use(async (req, res, next) => {
     if (!isCustomerProfileMediaRoute(req.path)) return next();
     try {
