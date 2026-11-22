@@ -290,13 +290,26 @@ test('payment mode, wallet network, refund and recovery boundaries in isolated P
       async () => {
         const before = await guest.request<C.CustomerOverview>('/me/overview');
         const fixture = await paidMock();
+        // This legacy payment/refund regression completes a synthetic stay.
+        // Advance its isolated quote end time and perform the required reception check-in
+        // before fulfillment, matching the production reservation lifecycle.
+        await pool.query(
+          'UPDATE seven.quotes q SET ends_at=now()-interval \'1 minute\' FROM seven.reservations r WHERE r.quote_id=q.quote_id AND r.reservation_id=$1',
+          [fixture.reservation.id],
+        );
         const confirmed = await host.request<C.Reservation>(
           `/reservations/${fixture.reservation.id}`,
         );
+        const checkedIn = await reception.request<C.Reservation>(
+          `/reservations/${fixture.reservation.id}/actions`,
+          'POST',
+          { action: 'CHECK_IN', expectedRevision: confirmed.data.revision },
+        );
+        assert.equal(checkedIn.status, 200, JSON.stringify(checkedIn));
         const completed = await host.request<C.Reservation>(
           `/reservations/${fixture.reservation.id}/actions`,
           'POST',
-          { action: 'FULFILL', expectedRevision: confirmed.data.revision },
+          { action: 'FULFILL', expectedRevision: checkedIn.data.revision },
         );
         assert.equal(completed.status, 200, JSON.stringify(completed));
         const earned = await guest.request<C.CustomerOverview>('/me/overview');
