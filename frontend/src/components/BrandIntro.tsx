@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Brand } from './Brand.tsx';
 
-export function BrandIntro({ persistent = false }: { persistent?: boolean }) {
+export function BrandIntro({ persistent = false, inline = false }: { persistent?: boolean; inline?: boolean }) {
   const [visible, setVisible] = useState(
     () => persistent || !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
@@ -33,7 +33,7 @@ export function BrandIntro({ persistent = false }: { persistent?: boolean }) {
 
   return (
     <div
-      className={persistent ? "brand-intro brand-intro-persistent" : "brand-intro"}
+      className={`brand-intro${persistent ? ' brand-intro-persistent' : ''}${inline ? ' brand-intro-inline' : ''}`}
       aria-hidden="true"
       onAnimationEnd={(event) => {
         if (event.target === event.currentTarget && event.animationName === 'brand-intro-fade') {
