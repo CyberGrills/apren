@@ -13,6 +13,7 @@ interface CalendarRow {
   rate_plan_id: string | null;
   rate_plan_code: string | null;
   rate_plan_name: string | null;
+  rate_plan_revision: number | null;
   currency_code: string | null;
   service_date: string | null;
   amount_minor: string | null;
@@ -71,8 +72,8 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
   useEffect(()=>{void load();},[load]);
   const room=useMemo(()=>data?.rooms[0] ?? null,[data]);
   const plans=useMemo(()=>{
-    const unique=new Map<string,{id:string;name:string;code:string;currency:string}>();
-    for(const row of data?.rooms ?? []) if(row.rate_plan_id) unique.set(row.rate_plan_id,{id:row.rate_plan_id,name:row.rate_plan_name || row.rate_plan_code || 'Rate plan',code:row.rate_plan_code || '',currency:row.currency_code || 'NGN'});
+    const unique=new Map<string,{id:string;name:string;code:string;currency:string;revision:number}>();
+    for(const row of data?.rooms ?? []) if(row.rate_plan_id) unique.set(row.rate_plan_id,{id:row.rate_plan_id,name:row.rate_plan_name || row.rate_plan_code || 'Rate plan',code:row.rate_plan_code || '',currency:row.currency_code || 'NGN',revision:row.rate_plan_revision ?? 1});
     return [...unique.values()];
   },[data]);
   const selectedPlan=plans.find(plan=>plan.id===ratePlanId) ?? plans[0];
@@ -95,7 +96,7 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
         setShowRateForm(false);setNotice('Rate plan saved.');
       } else if(kind==='price') {
         if(!selectedPlan) throw new Error('Create a rate plan first.');
-        await api('/business/stay/nightly-rates',{method:'PUT',idempotencyKey:crypto.randomUUID(),body:{ratePlanId:selectedPlan.id,startDate:get('startDate'),endDate:get('endDate'),amountMinor:toMinorUnits(get('price')),closedToArrival:values.has('closedToArrival'),closedToDeparture:values.has('closedToDeparture'),minStayNights:get('minStayNights')?Number(get('minStayNights')):null,maxStayNights:get('maxStayNights')?Number(get('maxStayNights')):null}});
+        await api('/business/stay/nightly-rates',{method:'PUT',idempotencyKey:crypto.randomUUID(),body:{ratePlanId:selectedPlan.id,expectedRevision:selectedPlan.revision,startDate:get('startDate'),endDate:get('endDate'),amountMinor:toMinorUnits(get('price')),closedToArrival:values.has('closedToArrival'),closedToDeparture:values.has('closedToDeparture'),minStayNights:get('minStayNights')?Number(get('minStayNights')):null,maxStayNights:get('maxStayNights')?Number(get('maxStayNights')):null}});
         setShowPriceForm(false);setNotice('Nightly prices and restrictions saved.');
       } else {
         if(!room) throw new Error('Create the room category first.');
