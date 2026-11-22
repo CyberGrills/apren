@@ -28,6 +28,7 @@ import { api } from '../../lib/api.ts';
 import { upcomingInventory } from '../../lib/businessWorkspace.ts';
 import { AdminRecords } from './AdminRecords.tsx';
 import { BusinessPayments } from './business/BusinessPayments.tsx';
+import { BusinessNotifications } from './business/BusinessNotifications.tsx';
 import { BusinessPhotoGallery } from './business/BusinessPhotoGallery.tsx';
 import { ListingUpdateReceipt } from './business/ListingUpdateReceipt.tsx';
 import { BusinessWorkspaceOverview } from './business/BusinessWorkspaceOverview.tsx';
@@ -40,7 +41,7 @@ import {
   ReservationTable,
 } from './shared.tsx';
 
-type Tab = 'overview' | 'reservations' | 'offerings' | 'photos' | 'demand' | 'rewards' | 'team' | 'settings';
+type Tab = 'overview' | 'reservations' | 'offerings' | 'photos' | 'demand' | 'rewards' | 'team' | 'settings' | 'notifications';
 type Editor =
   | { kind: 'offering'; offering?: Offering }
   | { kind: 'availability'; offering: Offering }
@@ -56,6 +57,7 @@ const titles: Record<Tab, string> = {
   rewards: 'Rewards',
   team: 'Your team',
   settings: 'Business details',
+  notifications: 'Business updates',
 };
 export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
   const { user } = useSession();
@@ -74,7 +76,9 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
               ? 'Measured activity from 7even, with the period and evidence beside every suggestion.'
               : tab === 'photos'
                 ? 'Manage original property photos and the gallery guests see after approval.'
-                : undefined
+                : tab === 'notifications'
+                  ? 'Reservation changes and important notices for your business.'
+                  : undefined
           }
           actions={
             tab === 'photos' ? undefined : owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
@@ -235,6 +239,9 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
               />
             ))}
           {tab === 'photos' && <BusinessPhotoGallery />}
+          {tab === 'notifications' && (
+            <BusinessNotifications notifications={data.notifications} reload={reload} />
+          )}
           {tab === 'demand' && (
             <>
               {data.demand.length === 0 && (
