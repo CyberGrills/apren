@@ -217,9 +217,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       "UPDATE seven.inventory_windows SET inventory_confirmed_at=now() WHERE offering_id=$1 AND (starts_at AT TIME ZONE 'Africa/Lagos')::date=$2::date",
       [offer.id,startDate],
     );
-    const quoteRateRows=await rows<{service_date:string}>(
-      pool,'SELECT service_date::text FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=ANY($2::date[]) ORDER BY service_date',[plan.rate_plan_id,[startDate,secondNight]]);
-    assert.deepEqual(quoteRateRows.map(row=>row.service_date),[startDate,secondNight]);
+    const quoteRateRows=await pool.query<{service_date:string}>(
+      'SELECT service_date::text FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=ANY($2::date[]) ORDER BY service_date',
+      [plan.rate_plan_id,[startDate,secondNight]],
+    );
+    assert.deepEqual(quoteRateRows.rows.map(row=>row.service_date),[startDate,secondNight]);
     const quoteA=await customerA.request<{quote:{id:string;price:{subtotalMinor:string;totalMinor:string};units:number};nightlyBreakdown:Array<{lineTotalMinor:string}>}>(
       '/stay-quotes','POST',quoteBody);
     assert.equal(quoteA.quote.units,2);
