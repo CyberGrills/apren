@@ -79,6 +79,36 @@ test('state-scoped public search separates same-name cities and location edits r
     const secondVenue = await request<Venue>('/business/venues', 'POST', {
       venueName: 'Second fixture venue', city, address: '2 Isolated Test Lane',
     });
+    const amenityInput = {
+      category: 'POOL', name: 'Guest swimming pool', description: 'Outdoor pool confirmed for this test property.',
+      status: 'ACTIVE', accessType: 'INCLUDED', bookingRequired: false,
+      openingHours: { schedule: 'Monday–Sunday, 8am–8pm' }, guestNotes: 'Children must be supervised.', sortOrder: 1,
+    };
+    const amenity = await request<any>(`/business/venues/${firstVenue.id}/amenities`, 'POST', amenityInput);
+    assert.equal(amenity.name, amenityInput.name);
+    assert.equal(amenity.revision, 1);
+    const ownerAmenities = await request<any[]>(`/business/venues/${firstVenue.id}/amenities`);
+    assert.ok(ownerAmenities.some((item) => item.id === amenity.id));
+    assert.deepEqual(await request<any[]>(`/venues/${firstVenue.id}/amenities`), [],
+      'Sample businesses must never expose amenities publicly.');
+    await pool.query("UPDATE seven.businesses SET details=details-'isSample' WHERE business_id=$1", [businessId]);
+    const publicAmenities = await request<any[]>(`/venues/${firstVenue.id}/amenities`);
+    assert.deepEqual(publicAmenities.map((item) => item.id), [amenity.id]);
+    const revisedAmenity = await request<any>(`/business/venues/${firstVenue.id}/amenities/${amenity.id}`, 'PATCH', {
+      ...amenityInput, name: 'Updated guest swimming pool', expectedRevision: amenity.revision,
+    });
+    assert.equal(revisedAmenity.revision, 2);
+    const staleAmenityResponse = await fetch(`${base}/api/business/venues/${firstVenue.id}/amenities/${amenity.id}`, {
+      method: 'PATCH',
+      headers: { Origin: 'http://127.0.0.1:5177', 'Content-Type': 'application/json', Cookie: cookie,
+        'X-CSRF-Token': csrf, 'Idempotency-Key': randomUUID() },
+      body: JSON.stringify({ ...amenityInput, expectedRevision: amenity.revision }),
+    });
+    assert.equal(staleAmenityResponse.status, 409, 'Stale amenity edits must conflict.');
+    await request(`/business/venues/${firstVenue.id}/amenities/${amenity.id}`, 'DELETE', { expectedRevision: revisedAmenity.revision });
+    assert.equal((await request<any[]>(`/venues/${firstVenue.id}/amenities`)).length, 0,
+      'Deactivated amenities must disappear from public results.');
+    assert.equal((await request<any[]>(`/business/venues/${firstVenue.id}/amenities`)).find((item) => item.id === amenity.id)?.status, 'INACTIVE');
     const startDate = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
     const endDate = new Date(Date.now() + 4 * 86400000).toISOString().slice(0, 10);
     const offerInput = { title: 'Geographic fixture room', description: 'A room created only for isolated location integration tests.',
