@@ -131,7 +131,7 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
     {notice && <p className="stay-inventory-success" role="status">{notice}</p>}
     {loading ? <p className="small-copy">Loading room calendar…</p> : <>
       {roomTypes.length>0 && <label className="stay-inventory-plan">Room category<select value={room?.room_type_id || ''} onChange={event=>{setRoomTypeId(event.target.value);setRatePlanId('');}}>
-        {roomTypes.map(item=><option key={item.room_type_id} value={item.room_type_id}>{item.bed_configuration || 'Room category'} · up to {item.max_occupancy} guests</option>)}
+        {roomTypes.map(item=><option key={item.room_type_id} value={item.room_type_id}>{item.room_name} · up to {item.max_occupancy} guests</option>)}
       </select></label>}
       {!room ? <div className="stay-inventory-empty"><p>No room category has been configured for this stay listing.</p><button type="button" className="btn btn-primary btn-small" onClick={()=>{setCreatingRoom(true);setShowRoomForm(true);}}>Add first room category</button></div> :
       <>
