@@ -358,6 +358,17 @@ export async function actOnReservation(
     );
   if (input.action !== 'CANCEL' && r.paymentStatus !== 'PAID')
     return fail(409, 'PAYMENT_REQUIRED', 'The provider must confirm payment before this action.');
+  if (input.action === 'FULFILL') {
+    if (offering?.kind === 'STAY' && r.status !== 'CHECKED_IN')
+      return fail(409, 'CHECK_IN_REQUIRED', 'A hotel stay must be checked in before it can be completed.');
+    const serviceWindow = await one<{ ends_at: Date | string }>(
+      db,
+      'SELECT q.ends_at FROM seven.quotes q JOIN seven.reservations r USING(quote_id) WHERE r.reservation_id=$1',
+      [id],
+    );
+    if (!serviceWindow || new Date(serviceWindow.ends_at).getTime() > Date.now())
+      return fail(409, 'SERVICE_NOT_COMPLETED', 'This booking can only be completed after its scheduled service has ended.');
+  }
   const next =
     input.action === 'CHECK_IN'
       ? 'CHECKED_IN'
