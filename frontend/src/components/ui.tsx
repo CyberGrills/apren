@@ -14,7 +14,7 @@ import {
   type RefObject,
 } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Brand } from './Brand.tsx';
+import { BrandIntro } from './BrandIntro.tsx';
 export function PageHeader({
   eyebrow,
   title,
@@ -66,8 +66,8 @@ export function ErrorNotice({ message, retry }: { message: string; retry?: () =>
 }
 export function Loading() {
   return (
-    <div className="brand-loading-state" role="status" aria-label="Preparing your 7even experience">
-      <Brand />
+    <div role="status" aria-label="Preparing your 7even experience">
+      <BrandIntro persistent />
       <span className="sr-only">Preparing your 7even experience…</span>
     </div>
   );
