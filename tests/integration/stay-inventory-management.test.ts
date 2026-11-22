@@ -93,10 +93,18 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       priceMinor:'4500000',capacity:2,published:true,
     });
     offerings.push(offer.id);
+    const legacyWindowStart=new Date(`${startDate}T00:00:00+01:00`).toISOString();
+    await pool.query(
+      "INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at,inventory_source) VALUES($1,$2,$3,$4,5,now(),'MANUAL')",
+      [randomUUID(),offer.id,legacyWindowStart,new Date(Date.parse(legacyWindowStart)+86400000).toISOString()],
+    );
     const room=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
       offeringId:offer.id,maxOccupancy:2,bedConfiguration:'1 king bed',totalRooms:8,
     });
     roomTypes.push(room.room_type_id);
+    const adoptedLegacyWindow=await one<{room_type_id:string}>(pool,
+      'SELECT room_type_id FROM seven.inventory_windows WHERE offering_id=$1 AND starts_at=$2',[offer.id,legacyWindowStart]);
+    assert.equal(adoptedLegacyWindow?.room_type_id,room.room_type_id);
     const plan=await owner.request<{rate_plan_id:string}>('/business/stay/rate-plans','POST',{
       roomTypeId:room.room_type_id,code:'FLEX',name:'Flexible room only',
       currencyCode:'NGN',mealPlan:'ROOM_ONLY',refundable:true,cancellationPolicy:'Free cancellation before arrival.',
