@@ -105,7 +105,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const startDate=new Date(Date.now()+3*86400000).toISOString().slice(0,10);
     const endDate=new Date(Date.parse(startDate+'T12:00:00Z')+2*86400000).toISOString().slice(0,10);
     await owner.request('/business/stay/nightly-rates','PUT',{
-      ratePlanId:plan.rate_plan_id,expectedRevision:1,startDate,endDate,amountMinor:'12500000',
+      ratePlanId:plan.rate_plan_id,startDate,endDate,amountMinor:'12500000',
       closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
     });
     await owner.request(`/business/stay/rooms/${room.room_type_id}/availability`,'POST',{
