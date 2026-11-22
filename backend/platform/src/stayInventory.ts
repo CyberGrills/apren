@@ -239,7 +239,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
         [randomUUID(),room.offering_id,windowStart,windowEnd,input.capacity]);
     }
     await S.audit(db,user,businessId,'availability.updated',room.offering_id,`Owner confirmed capacity ${input.capacity} for ${dates.length} nights.`);
-    return {businessId,roomTypeId:roomId,updatedDates:dates,capacity:input.capacity};
+    return {businessId,venueId:room.venue_id,roomTypeId:roomId,updatedDates:dates,capacity:input.capacity};
   }));
 
 }
