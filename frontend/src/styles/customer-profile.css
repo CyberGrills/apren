@@ -208,3 +208,147 @@
   margin: 0;
   padding: 0;
 }
+
+/* Polished profile presentation: keep the photo truly circular and give
+   the account sections a consistent, calm card layout across screen sizes. */
+.customer-profile-editor,
+.customer-profile-account {
+  border-radius: 1.1rem;
+  background: var(--surface);
+}
+
+.customer-profile-account {
+  border-left: 1px solid var(--line);
+}
+
+.customer-profile-intro {
+  align-items: center;
+  gap: clamp(1rem, 2vw, 1.4rem);
+}
+
+.customer-profile-avatar-wrap {
+  justify-items: center;
+  align-items: center;
+  gap: 0.55rem;
+  width: 6.25rem;
+  flex: 0 0 6.25rem;
+}
+
+.customer-profile-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 5.25rem;
+  height: 5.25rem;
+  flex: 0 0 5.25rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  outline: 1px solid var(--line);
+  background: var(--surface-subtle);
+  line-height: 1;
+}
+
+.customer-profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border-radius: inherit;
+  object-fit: cover;
+  object-position: center;
+}
+
+.customer-profile-avatar-action {
+  max-width: 100%;
+  min-height: 40px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.customer-profile-avatar-action:focus-visible,
+.customer-profile-save-row .btn:focus-visible,
+.customer-profile-account .btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.customer-profile-section + .customer-profile-section {
+  margin-top: 0.15rem;
+}
+
+.customer-profile-section > .public-eyebrow {
+  display: inline-block;
+  margin-bottom: 0.15rem;
+}
+
+.customer-profile-account {
+  gap: 1.1rem;
+}
+
+.customer-profile-account > .public-eyebrow {
+  margin-bottom: 0.1rem;
+}
+
+@media (max-width: 860px) {
+  .customer-profile-account {
+    border-left: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 520px) {
+  .customer-profile-intro {
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .customer-profile-avatar-wrap {
+    width: 5.25rem;
+    flex-basis: 5.25rem;
+  }
+
+  .customer-profile-avatar {
+    width: 4.5rem;
+    height: 4.5rem;
+    flex-basis: 4.5rem;
+  }
+
+  .customer-profile-avatar-action {
+    min-height: 36px;
+    font-size: 0.75rem;
+  }
+
+  .customer-profile-intro h2,
+  .customer-profile-account h2 {
+    margin-block: 0.25rem 0.4rem;
+    line-height: 1.12;
+  }
+
+  .customer-profile-section {
+    padding-block: 1.15rem 1.35rem;
+  }
+
+  .customer-profile-save-row {
+    gap: 0.65rem;
+  }
+
+  .customer-profile-save-row > .btn,
+  .customer-profile-save-row > .text-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .customer-profile-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .customer-profile-avatar-wrap {
+    width: auto;
+    flex-basis: auto;
+    justify-items: start;
+    align-items: flex-start;
+  }
+}
+
