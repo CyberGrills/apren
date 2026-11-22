@@ -20,6 +20,10 @@ All routes start with `/api`. Success is `{ data: T }`; list data is an array, w
 | GET /offerings/:id | None | Offering | Public published or owning business/admin |
 | POST /quotes | quoteInput | Quote | Customer or authorized reception walk-in flow |
 | POST /reservations | reservationInput | Reservation | Customer, atomically hold capacity |
+| POST /stay-booking-requests | property, dates, room count and guest contact | StayBookingRequest | Signed-in customer; manual enquiry only, no inventory allocation or payment |
+| GET /me/stay-booking-requests | None | StayBookingRequest[] | Customer self |
+| GET /business/stay-booking-requests | None | StayBookingRequest[] | Owning business only |
+| POST /business/stay-booking-requests/:id/actions | ACCEPT/DECLINE, expectedRevision, response | StayBookingRequest | Owning business only; accepted means the property responded, not a live inventory hold or paid reservation |
 | GET /reservations/:id | None | Reservation | Customer self, scoped staff, admin |
 | POST /reservations/:id/actions | reservationActionInput | Reservation | Customer CANCEL subject to policy; scoped staff operations |
 | GET /reservations/:id/payment-options | None | PaymentOptions | Reservation access; read-only provider availability, network and existing payment |
