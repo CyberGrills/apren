@@ -75,6 +75,20 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
   useEffect(() => {
     const authError = params.get('authError');
     if (!authError) return;
+    // A callback can set the session cookie before a later transaction/response
+    // failure sends the browser back to /login. A valid session is authoritative:
+    // do not leave a stale OAuth error dialog over the authenticated workspace.
+    if (session?.user && authError === 'failed') {
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          next.delete('authError');
+          return next;
+        },
+        { replace: true },
+      );
+      return;
+    }
     showError(socialErrorMessage(authError));
     setParams(
       (current) => {
@@ -84,7 +98,7 @@ export function AuthPage({ mode, workspace }: { mode: 'login' | 'register'; work
       },
       { replace: true },
     );
-  }, [params, setParams, showError]);
+  }, [params, setParams, showError, session?.user]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
