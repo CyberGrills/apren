@@ -126,7 +126,7 @@ export function mountStayBooking(
            FROM seven.stay_nightly_rates
           WHERE rate_plan_id=$1 AND service_date >= $2::date AND service_date < $3::date
           ORDER BY service_date`,
-        [plan.rate_plan_id, checkInDate, checkOutDate, plan.room_type_id],
+        [plan.rate_plan_id, checkInDate, checkOutDate],
       );
       const inventory = await rows<{ service_date: string; capacity: number; allocated_count: number; fresh: boolean }>(
         pool,
@@ -141,7 +141,7 @@ export function mountStayBooking(
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date >= $4::date
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date < $5::date
           ORDER BY iw.starts_at`,
-        [offeringId, offering.inventory_freshness_hours, !production && offering.business_details.isSample === true, checkInDate, checkOutDate],
+        [offeringId, offering.inventory_freshness_hours, !production && offering.business_details.isSample === true, checkInDate, checkOutDate, plan.room_type_id],
       );
       const inventoryByDate = new Map(inventory.map((night) => [night.service_date, night]));
       const ratesByDate = new Map(nightly.map((night) => [night.service_date, night]));
@@ -273,7 +273,7 @@ export function mountStayBooking(
          FROM seven.stay_nightly_rates
         WHERE rate_plan_id=$1 AND service_date >= $2::date AND service_date < $3::date
         ORDER BY service_date`,
-      [input.ratePlanId, input.checkInDate, input.checkOutDate, selected.room_type_id],
+      [input.ratePlanId, input.checkInDate, input.checkOutDate],
     );
     if (nightly.length !== dates.length || !dates.every((date, index) => nightly[index]?.service_date === date))
       return fail(409, 'NIGHTLY_RATE_MISSING', 'A price is not available for every night. Ask the hotel to update its rates.');
@@ -312,7 +312,7 @@ export function mountStayBooking(
           AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date < $5::date
         ORDER BY iw.starts_at
         FOR SHARE`,
-      [input.offeringId, offering.inventory_freshness_hours, !production && offering.business_details.isSample === true, input.checkInDate, input.checkOutDate],
+      [input.offeringId, offering.inventory_freshness_hours, !production && offering.business_details.isSample === true, input.checkInDate, input.checkOutDate, selected.room_type_id],
     );
     if (windows.length !== dates.length)
       return fail(409, 'CAPACITY_CHANGED', 'The hotel has not confirmed availability for every night.');
