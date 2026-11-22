@@ -200,7 +200,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     }).parse(req.body);
     const dates=dateRange(input.startDate,input.endDate);
     const room=await one(db,
-      `SELECT rt.room_type_id,o.offering_id,o.venue_id,s.sector_code
+      `SELECT rt.room_type_id,rt.total_rooms,o.offering_id,o.venue_id,s.sector_code
          FROM seven.stay_room_types rt
          JOIN seven.offerings o USING(offering_id)
          JOIN seven.sectors s USING(sector_id)
@@ -209,6 +209,8 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       [roomId,businessId]);
     if(!room) return fail(404,'ROOM_TYPE_NOT_FOUND','Room category not found.');
     if(room.sector_code!=='STAY') return fail(409,'STAY_ONLY','Availability can only be changed for a stay listing.');
+    if(room.total_rooms !== null && input.capacity > room.total_rooms)
+      return fail(422,'CAPACITY_EXCEEDS_ROOM_COUNT','Sellable capacity cannot exceed the recorded physical room count.');
     if(user.role==='RECEPTION' && !user.venueIds.includes(room.venue_id)) return fail(404,'ROOM_TYPE_NOT_FOUND','Room category not found.');
     for(const date of dates){
       const windowStart=`${date}T00:00:00+01:00`;
