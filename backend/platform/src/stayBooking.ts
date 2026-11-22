@@ -250,6 +250,7 @@ export function mountStayBooking(
       room_type_id: string;
       offering_id: string;
       max_occupancy: number;
+      room_name: string;
       bed_configuration: string;
       rate_plan_id: string;
       code: string;
