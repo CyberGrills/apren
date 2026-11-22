@@ -129,13 +129,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     };
     const quoteA=await customerA.request<{quote:{id:string;price:{subtotalMinor:string;totalMinor:string};units:number};nightlyBreakdown:Array<{lineTotalMinor:string}>}>(
       '/stay-quotes','POST',quoteBody);
-    quoteIds.push(quoteA.quote.id);
     assert.equal(quoteA.quote.units,2);
     assert.equal(quoteA.quote.price.subtotalMinor,'125000000');
     assert.equal(quoteA.quote.price.totalMinor,'125000000');
     assert.deepEqual(quoteA.nightlyBreakdown.map(night=>night.lineTotalMinor),['62500000','62500000']);
     const quoteB=await customerB.request<{quote:{id:string}}>('/stay-quotes','POST',quoteBody);
-    quoteIds.push(quoteB.quote.id);
     const storedSnapshot=await one<{terms_snapshot:{ratePlan:{id:string;refundable:boolean;cancellationPolicy:string};nightlyBreakdown:Array<{date:string;amountMinor:string}>};amounts:{totalMinor:string}}>(
       pool,'SELECT terms_snapshot,amounts FROM seven.quotes WHERE quote_id=$1',[quoteA.quote.id]);
     assert.equal(storedSnapshot?.terms_snapshot.ratePlan.id,plan.rate_plan_id);
@@ -153,7 +151,6 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(outcomes.filter(outcome=>outcome.status==='fulfilled').length,1);
     assert.equal(outcomes.filter(outcome=>outcome.status==='rejected').length,1);
     const winner=outcomes.find((outcome):outcome is PromiseFulfilledResult<{id:string}>=>outcome.status==='fulfilled')!;
-    reservationIds.push(winner.value.id);
     const allocated=await one<{allocated_count:number}>(
       pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1',[offer.id]);
     assert.equal(allocated?.allocated_count,5);
