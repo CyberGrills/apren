@@ -165,7 +165,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       'UPDATE seven.stay_rate_plans SET code=$2,name=$3,currency_code=$4,meal_plan=$5,refundable=$6,cancellation_policy=$7,is_active=$8,revision=revision+1,updated_at=now() WHERE rate_plan_id=$1',
       [planId,input.code,input.name,input.currencyCode,input.mealPlan,input.refundable ?? null,input.cancellationPolicy,input.isActive ?? plan.is_active]);
     await S.audit(db,user,businessId,'stay_rate_plan.updated',planId,'Rate plan updated.');
-    return one(db,'SELECT * FROM seven.stay_rate_plans WHERE rate_plan_id=$1',[planId]);
+    return one(db,'SELECT rp.*,o.business_id FROM seven.stay_rate_plans rp JOIN seven.stay_room_types rt USING(room_type_id) JOIN seven.offerings o USING(offering_id) WHERE rp.rate_plan_id=$1',[planId]);
   }));
 
   app.put('/api/business/stay/nightly-rates', async(req,res)=>write(req,res,mutate,async(db,user)=>{
