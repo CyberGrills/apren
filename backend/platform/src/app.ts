@@ -41,6 +41,7 @@ import { inventoryFreshnessSql } from './inventoryFreshness.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
 import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
+import { mountStayInventory } from './stayInventory.ts';
 import { mountCustomerProfileMedia } from './customerProfileMedia.ts';
 import { mountCreatorArtworks } from './creatorArtworks.ts';
 import { mountCreatorArtworkRights } from './creatorArtworkRights.ts';
