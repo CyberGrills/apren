@@ -97,3 +97,13 @@
   animation: none;
   pointer-events: auto;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-intro-persistent {
+    display: grid;
+  }
+  .brand-intro-persistent .brand-stroke-first,
+  .brand-intro-persistent .brand-stroke-second {
+    animation: none;
+  }
+}
