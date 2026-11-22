@@ -133,10 +133,19 @@ test('snapshot rejects negative availability, invalid dates, orphan rates and du
   duplicateNight.nightlyInventory.push(structuredClone(duplicateNight.nightlyInventory[0]!));
   assertPmsError('PMS_INVALID_SNAPSHOT', () => validatePmsSnapshot(duplicateNight));
 });
-test('unknown, stale and future inventory timestamps are not fresh', () => {
+test('PMS inventory uses a five-minute default and trusted sources can use a two-minute override', () => {
   const now = Date.parse('2026-10-27T08:00:00.000Z');
   assert.equal(inventoryFreshness(null, now), 'UNKNOWN');
-  assert.equal(inventoryFreshness('2026-10-27T07:59:00.000Z', now), 'FRESH');
-  assert.equal(inventoryFreshness('2026-10-27T07:00:00.000Z', now), 'STALE');
+
+  // The five-minute PMS boundary is inclusive; anything older is stale.
+  assert.equal(inventoryFreshness('2026-10-27T07:55:01.000Z', now), 'FRESH');
+  assert.equal(inventoryFreshness('2026-10-27T07:55:00.000Z', now), 'FRESH');
+  assert.equal(inventoryFreshness('2026-10-27T07:54:59.999Z', now), 'STALE');
+
+  // Other trusted sources use the stricter two-minute window explicitly.
+  assert.equal(inventoryFreshness('2026-10-27T07:58:00.001Z', now, 2 * 60 * 1000), 'FRESH');
+  assert.equal(inventoryFreshness('2026-10-27T07:58:00.000Z', now, 2 * 60 * 1000), 'FRESH');
+  assert.equal(inventoryFreshness('2026-10-27T07:57:59.999Z', now, 2 * 60 * 1000), 'STALE');
+
   assert.equal(inventoryFreshness('2026-10-27T08:01:00.000Z', now), 'STALE');
 });

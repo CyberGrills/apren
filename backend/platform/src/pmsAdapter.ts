@@ -175,7 +175,7 @@ export type InventoryFreshness = 'FRESH' | 'STALE' | 'UNKNOWN';
 export function inventoryFreshness(
   sourceUpdatedAt: string | null,
   now = Date.now(),
-  maxAgeMs = 15 * 60 * 1000,
+  maxAgeMs = 5 * 60 * 1000,
 ): InventoryFreshness {
   if (sourceUpdatedAt === null) return 'UNKNOWN';
   const timestamp = Date.parse(sourceUpdatedAt);
