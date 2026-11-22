@@ -9,6 +9,8 @@ import { createPool, one } from '../../backend/platform/src/db.ts';
 import { migrate } from '../../backend/platform/src/migrate.ts';
 import { MockProvider } from '../../backend/platform/src/provider.ts';
 
+type AmenityFixture = { id: string; name: string; revision: number; status: string };
+
 test('state-scoped public search separates same-name cities and location edits retain only valid metadata', {
   skip: !process.env.TEST_DATABASE_URL || !process.env.TEST_RUNTIME_DATABASE_URL,
   timeout: 60000,
@@ -84,10 +86,10 @@ test('state-scoped public search separates same-name cities and location edits r
       status: 'ACTIVE', accessType: 'INCLUDED', bookingRequired: false,
       openingHours: { schedule: 'Monday–Sunday, 8am–8pm' }, guestNotes: 'Children must be supervised.', sortOrder: 1,
     };
-    const amenity = await request<any>(`/business/venues/${firstVenue.id}/amenities`, 'POST', amenityInput);
+    const amenity = await request<AmenityFixture>(`/business/venues/${firstVenue.id}/amenities`, 'POST', amenityInput);
     assert.equal(amenity.name, amenityInput.name);
     assert.equal(amenity.revision, 1);
-    const ownerAmenities = await request<any[]>(`/business/venues/${firstVenue.id}/amenities`);
+    const ownerAmenities = await request<AmenityFixture[]>(`/business/venues/${firstVenue.id}/amenities`);
     assert.ok(ownerAmenities.some((item) => item.id === amenity.id));
     assert.deepEqual(await request<any[]>(`/venues/${firstVenue.id}/amenities`), [],
       'Sample businesses must never expose amenities publicly.');
