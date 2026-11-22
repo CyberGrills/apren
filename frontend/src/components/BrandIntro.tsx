@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Brand } from './Brand.tsx';
 
-export function BrandIntro() {
+export function BrandIntro({ persistent = false }: { persistent?: boolean }) {
   const [visible, setVisible] = useState(
-    () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    () => persistent || !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || persistent) return;
 
     const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const dismiss = () => setVisible(false);
@@ -27,13 +27,13 @@ export function BrandIntro() {
       window.removeEventListener('keydown', dismiss, true);
       motionPreference.removeEventListener('change', handleMotionChange);
     };
-  }, [visible]);
+  }, [visible, persistent]);
 
   if (!visible) return null;
 
   return (
     <div
-      className="brand-intro"
+      className={persistent ? "brand-intro brand-intro-persistent" : "brand-intro"}
       aria-hidden="true"
       onAnimationEnd={(event) => {
         if (event.target === event.currentTarget && event.animationName === 'brand-intro-fade') {
