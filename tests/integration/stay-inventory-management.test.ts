@@ -37,7 +37,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.match(String(identity?.name),/_test_db$/);
     assert.deepEqual(await one(appPool,'SELECT current_database() AS name,inet_server_port() AS port'),identity);
     await migrate(pool);
-    const runtime=createApp({pool:appPool,provider:new MockProvider(),environment:'test',publicOrigin:origin});
+    const runtime=createApp({pool:appPool,provider:new MockProvider(),environment:'preview',publicOrigin:origin});
     server=await new Promise<Server>(resolve=>{
       const listener=runtime.app.listen(0,'127.0.0.1',()=>resolve(listener));
     });
