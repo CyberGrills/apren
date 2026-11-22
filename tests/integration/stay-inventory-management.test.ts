@@ -93,6 +93,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       priceMinor:'4500000',capacity:2,published:true,
     });
     offerings.push(offer.id);
+    const startDate=new Date(Date.now()+3*86400000).toISOString().slice(0,10);
+    const endDate=new Date(Date.parse(startDate+'T12:00:00Z')+2*86400000).toISOString().slice(0,10);
+    await owner.request(`/business/offerings/${offer.id}/availability`,'POST',{
+      startDate,endDate,capacity:5,
+    },409);
     const legacyWindowStart=new Date(`${startDate}T00:00:00+01:00`).toISOString();
     await pool.query(
       "INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at,inventory_source) VALUES($1,$2,$3,$4,5,now(),'MANUAL')",
