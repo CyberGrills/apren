@@ -42,7 +42,6 @@ const nightlyInput = z.strictObject({
   closedToDeparture: z.boolean().default(false),
   minStayNights: z.number().int().min(1).max(365).nullable().optional(),
   maxStayNights: z.number().int().min(1).max(365).nullable().optional(),
-  expectedRevision: z.number().int().min(0).optional(),
 });
 function ownerBusiness(actor: SessionUser): string {
   if (actor.role !== 'BUSINESS_OWNER' || !actor.businessId)
