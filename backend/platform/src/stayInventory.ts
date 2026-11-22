@@ -83,7 +83,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
          JOIN seven.venues v USING(venue_id)
          LEFT JOIN seven.stay_rate_plans rp ON rp.room_type_id=rt.room_type_id AND rp.is_active
          LEFT JOIN seven.stay_nightly_rates nr ON nr.rate_plan_id=rp.rate_plan_id AND nr.service_date BETWEEN $2::date AND $3::date
-         LEFT JOIN seven.inventory_windows iw ON iw.offering_id=o.offering_id
+         LEFT JOIN seven.inventory_windows iw ON iw.room_type_id=rt.room_type_id
            AND iw.starts_at=((nr.service_date::timestamp AT TIME ZONE COALESCE(v.timezone_name,'Africa/Lagos')))
         WHERE o.business_id=$1
           ${offeringFilter} ${venueFilter}
@@ -102,16 +102,8 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       [input.offeringId, businessId]);
     if (!offer) return fail(404, 'OFFERING_NOT_FOUND', 'Stay listing not found.');
     if (offer.sector_code !== 'STAY') return fail(422, 'STAY_ONLY', 'Room categories can only be added to a stay listing.');
-    const existing = await one(db, 'SELECT * FROM seven.stay_room_types WHERE offering_id=$1 FOR UPDATE', [input.offeringId]);
-    if (existing) {
-      if (input.expectedRevision === undefined || input.expectedRevision !== existing.revision)
-        return fail(409, 'REVISION_CONFLICT', 'Refresh this room category before editing.');
-      await db.query(
-        'UPDATE seven.stay_room_types SET max_occupancy=$2,bed_configuration=$3,total_rooms=$4,revision=revision+1,updated_at=now() WHERE room_type_id=$1',
-        [existing.room_type_id,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null]);
-      await S.audit(db,user,businessId,'stay_room_type.updated',existing.room_type_id,'Room configuration updated.');
-      return one(db,'SELECT rt.*,o.business_id FROM seven.stay_room_types rt JOIN seven.offerings o USING(offering_id) WHERE rt.room_type_id=$1',[existing.room_type_id]);
-    }
+    if (input.expectedRevision !== undefined)
+      return fail(422, 'UNEXPECTED_REVISION', 'Create a new room category without an existing revision.');
     const roomTypeId=randomUUID();
     await db.query(
       'INSERT INTO seven.stay_room_types(room_type_id,offering_id,max_occupancy,bed_configuration,total_rooms) VALUES($1,$2,$3,$4,$5)',
@@ -222,8 +214,8 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       const windowStart=`${date}T00:00:00+01:00`;
       const windowEnd=new Date(Date.parse(windowStart)+86400000).toISOString();
       const previous=await one(db,
-        'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 AND starts_at=$2 FOR UPDATE',
-        [room.offering_id,windowStart]);
+        'SELECT * FROM seven.inventory_windows WHERE room_type_id=$1 AND starts_at=$2 FOR UPDATE',
+        [roomId,windowStart]);
       if(previous?.inventory_source==='PMS')
         return fail(409,'PMS_INVENTORY_MANAGED','This inventory is managed by the connected availability provider.');
       if(previous && (previous.allocated_count>input.capacity ||
@@ -233,8 +225,8 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
         "UPDATE seven.inventory_windows SET capacity=$2,revision=revision+1,updated_at=now(),inventory_confirmed_at=now(),inventory_source='MANUAL' WHERE inventory_window_id=$1",
         [previous.inventory_window_id,input.capacity]);
       else await db.query(
-        "INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at,inventory_source) VALUES($1,$2,$3,$4,$5,now(),'MANUAL')",
-        [randomUUID(),room.offering_id,windowStart,windowEnd,input.capacity]);
+        "INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,room_type_id,starts_at,ends_at,capacity,inventory_confirmed_at,inventory_source) VALUES($1,$2,$3,$4,$5,$6,now(),'MANUAL')",
+        [randomUUID(),room.offering_id,roomId,windowStart,windowEnd,input.capacity]);
     }
     await S.audit(db,user,businessId,'availability.updated',room.offering_id,`Owner confirmed capacity ${input.capacity} for ${dates.length} nights.`);
     return {businessId,venueId:room.venue_id,roomTypeId:roomId,updatedDates:dates,capacity:input.capacity};
