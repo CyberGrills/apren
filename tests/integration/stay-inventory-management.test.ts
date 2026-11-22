@@ -260,7 +260,9 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       customerB.request<{id:string}>('/reservations','POST',{quoteId:quoteB.quote.id}),
     ]);
     assert.equal(outcomes.filter(outcome=>outcome.status==='fulfilled').length,1);
-    const winner=outcomes.find((outcome):outcome is PromiseFulfilledResult<{id:string;stayTerms:{ratePlan:{name:string;refundable:boolean;cancellationPolicy:string};nightlyBreakdown:Array<{amountMinor:string}>}}>=>outcome.status==='fulfilled')!;
+    const winner=outcomes.find((outcome):outcome is PromiseFulfilledResult<{id:string;stayTerms:{roomType:{id:string;name:string};ratePlan:{name:string;refundable:boolean;cancellationPolicy:string};nightlyBreakdown:Array<{amountMinor:string}>}}>=>outcome.status==='fulfilled')!;
+    assert.equal(winner.value.stayTerms.roomType.id,room.room_type_id);
+    assert.equal(winner.value.stayTerms.roomType.name,'King Room');
     assert.equal(winner.value.stayTerms.ratePlan.name,'Flexible room only updated');
     assert.equal(winner.value.stayTerms.ratePlan.refundable,true);
     assert.equal(winner.value.stayTerms.ratePlan.cancellationPolicy,'Free cancellation before arrival.');
