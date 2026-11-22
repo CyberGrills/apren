@@ -11,7 +11,6 @@ import * as S from './store.ts';
 type Work = (db: Connection, actor: SessionUser) => Promise<unknown>;
 interface Context {
   pool: Pool;
-  actor: (res: Response) => SessionUser;
   mutate: (req: Request, res: Response, work: Work) => Promise<unknown>;
 }
 
