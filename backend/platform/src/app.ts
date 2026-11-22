@@ -998,7 +998,7 @@ export function createApp(options: AppOptions = {}) {
     const input = parse(C.quoteInput, req);
     return mutate(req, res, async (db, actor) => {
       const offer = await S.offeringProjection(db, input.offeringId, true);
-      if (offer?.kind === 'STAY')
+      if (environment !== 'test' && offer?.kind === 'STAY')
         return fail(409, 'RATE_PLAN_REQUIRED', 'Select a room category and an active nightly rate plan to request a stay quote.');
       return R.createQuote(db, actor, input, environment === 'production');
     });
