@@ -180,8 +180,10 @@ export function mountSocialAuth(app: Express, options: SocialAuthOptions): void 
   });
   const callback = async (req: Request, res: Response): Promise<void> => {
     let failureReturnPath: string | undefined;
+    let stage = 'callback_received';
     try {
       const provider = providerInput.parse(req.params.provider);
+      stage = 'provider_validated';
       if ((provider === 'apple' && req.method !== 'POST') || (provider === 'google' && req.method !== 'GET')) return fail(400, 'SOCIAL_STATE_INVALID', 'Start sign-in again.');
       const input = callbackInput.parse(provider === 'apple' ? req.body : req.query);
       await rateLimitSocial(pool, 'callback', req.ip ?? 'unknown');
@@ -191,11 +193,14 @@ export function mountSocialAuth(app: Express, options: SocialAuthOptions): void 
       const challenge = await one(pool, "UPDATE seven.social_auth_challenges SET used_at=now(),updated_at=now() WHERE state_hash=$1 AND browser_hash=$2 AND provider_code=$3 AND expires_at>now() AND used_at IS NULL RETURNING *", [digestToken(input.state), digestToken(browser), provider]);
       res.clearCookie(cookieName(input.state), cookieOptions);
       if (!challenge) return fail(400, 'SOCIAL_STATE_INVALID', 'This sign-in request has expired or was already used.');
+      stage = 'challenge_validated';
       failureReturnPath = safeSocialReturnPath(challenge.return_path);
       if (input.error || !input.code) return fail(401, 'SOCIAL_CANCELLED', 'Sign-in was cancelled.');
       const adapter = await adapterFor(provider);
       const identity = await adapter.exchangeAndVerify({ code: input.code, redirectUri: callbackUri(provider), nonce: challenge.nonce, codeVerifier: challenge.code_verifier });
+      stage = 'provider_verified';
       const subject = z.string().min(1).max(255).parse(identity.subject);
+      stage = 'account_transaction';
       await transaction(pool, async db => {
         // Serialize the provider identity and normalized email to prevent duplicate accounts on concurrent callbacks.
         await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`social:${provider}:${subject}`]);
@@ -230,11 +235,21 @@ export function mountSocialAuth(app: Express, options: SocialAuthOptions): void 
         await audit(db, actor, null, challenge.linking_user_id ? 'account.social_link_completed' : 'account.social_signed_in', userId);
         await options.issueSession(db, res, userId);
       });
+      stage = 'account_transaction_committed';
       const destination = new URL(safeSocialReturnPath(challenge.return_path), publicOrigin);
+      stage = 'redirecting';
       if (challenge.linking_user_id) destination.searchParams.set('authSuccess', 'linked');
       res.redirect(303, destination.pathname + destination.search + destination.hash);
     } catch (error) {
-      // Deliberately expose no token, provider response, account ID or raw error in URLs/logs.
+      // Safe diagnostics only: never log OAuth codes, tokens, emails, cookies, or provider bodies.
+      console.warn(JSON.stringify({
+        event: 'seven.social_auth.callback_failed',
+        provider: req.params.provider === 'google' || req.params.provider === 'apple' ? req.params.provider : 'unknown',
+        stage,
+        errorCode: error instanceof ApiError ? error.code : 'UNEXPECTED_ERROR',
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+        requestId: res.locals.requestId,
+      }));
       const codes: Record<string, string> = { SOCIAL_EXISTING_ACCOUNT: 'existing_account', SOCIAL_ALREADY_LINKED: 'already_linked', SOCIAL_EMAIL_UNVERIFIED: 'email_unverified', SOCIAL_CANCELLED: 'cancelled', SOCIAL_REAUTHENTICATION_REQUIRED: 'reauthenticate', SOCIAL_ACCOUNT_UNAVAILABLE: 'unavailable' };
       const code = error instanceof ApiError ? codes[error.code] ?? 'failed' : 'failed';
       const destination = new URLSearchParams({ authError: code });
