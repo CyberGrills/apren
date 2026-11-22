@@ -84,7 +84,7 @@ test('legacy correlated and grouped hotel eligibility match on the same isolated
     );
     await pool.query(
       `INSERT INTO seven.inventory_windows
-         (inventory_window_id,offering_id,starts_at,ends_at,capacity)
+         (inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_source)
        SELECT gen_random_uuid(), o.offering_id,
               ($1::date + night_offset + time '13:00') AT TIME ZONE 'UTC',
               ($1::date + night_offset + 1 + time '10:00') AT TIME ZONE 'UTC',
