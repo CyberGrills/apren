@@ -42,6 +42,7 @@ import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
 import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
 import { mountStayInventory } from './stayInventory.ts';
+import { mountStayBooking } from './stayBooking.ts';
 import { mountCustomerProfileMedia } from './customerProfileMedia.ts';
 import { mountCreatorArtworks } from './creatorArtworks.ts';
 import { mountCreatorArtworkRights } from './creatorArtworkRights.ts';
@@ -2313,6 +2314,7 @@ export function createApp(options: AppOptions = {}) {
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
   mountStayInventory(app, { pool, actor: actorFor, mutate });
+  mountStayBooking(app, { pool, actor: actorFor, mutate }, environment === 'production');
   app.use(async (req, res, next) => {
     if (!isCustomerProfileMediaRoute(req.path)) return next();
     try {
