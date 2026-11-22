@@ -152,7 +152,7 @@ export function mountStayBooking(
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date >= $4::date
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date < $5::date
           ORDER BY iw.starts_at`,
-        [plan.offering_id, plan.inventory_freshness_hours, !production && offering.business_details.isSample === true, checkInDate, checkOutDate],
+        [plan.offering_id, plan.inventory_freshness_hours, !production && offering.business_details.isSample === true, checkInDate, checkOutDate, plan.room_type_id],
       );
       const inventoryByDate = new Map(inventory.map((night) => [night.service_date, night]));
       const ratesByDate = new Map(nightly.map((night) => [night.service_date, night]));
