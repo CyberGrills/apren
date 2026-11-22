@@ -105,7 +105,12 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const startDate=new Date(Date.now()+3*86400000).toISOString().slice(0,10);
     const endDate=new Date(Date.parse(startDate+'T12:00:00Z')+2*86400000).toISOString().slice(0,10);
     await owner.request('/business/stay/nightly-rates','PUT',{
-      ratePlanId:plan.rate_plan_id,expectedRevision:1,startDate,endDate,amountMinor:'12500000',
+      ratePlanId:plan.rate_plan_id,expectedRevision:1,startDate,endDate,amountMinor:'10000000',
+      closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
+    });
+    const secondNight=new Date(Date.parse(startDate+'T12:00:00Z')+86400000).toISOString().slice(0,10);
+    await owner.request('/business/stay/nightly-rates','PUT',{
+      ratePlanId:plan.rate_plan_id,expectedRevision:2,startDate:secondNight,endDate:secondNight,amountMinor:'15000000',
       closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
     });
     await owner.request(`/business/stay/rooms/${room.room_type_id}/availability`,'POST',{
@@ -114,7 +119,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const calendar=await owner.request<{rooms:Array<{service_date:string;amount_minor:string;capacity:number;allocated_count:number;inventory_source:string}>}>(
       `/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
     assert.equal(calendar.rooms.length,3);
-    assert.ok(calendar.rooms.every(night=>night.amount_minor==='12500000'));
+    assert.deepEqual(calendar.rooms.map(night=>night.amount_minor),['10000000','15000000','10000000']);
     assert.ok(calendar.rooms.every(night=>night.capacity===5 && night.allocated_count===0 && night.inventory_source==='MANUAL'));
 
     const customerA=new Client();await customerA.register();
@@ -132,7 +137,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(quoteA.quote.units,2);
     assert.equal(quoteA.quote.price.subtotalMinor,'125000000');
     assert.equal(quoteA.quote.price.totalMinor,'125000000');
-    assert.deepEqual(quoteA.nightlyBreakdown.map(night=>night.lineTotalMinor),['62500000','62500000']);
+    assert.deepEqual(quoteA.nightlyBreakdown.map(night=>night.lineTotalMinor),['50000000','75000000']);
     const quoteB=await customerB.request<{quote:{id:string}}>('/stay-quotes','POST',quoteBody);
     const storedSnapshot=await one<{terms_snapshot:{ratePlan:{id:string;refundable:boolean;cancellationPolicy:string};nightlyBreakdown:Array<{date:string;amountMinor:string}>};amounts:{totalMinor:string}}>(
       pool,'SELECT terms_snapshot,amounts FROM seven.quotes WHERE quote_id=$1',[quoteA.quote.id]);
@@ -140,6 +145,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(storedSnapshot?.terms_snapshot.ratePlan.refundable,true);
     assert.equal(storedSnapshot?.terms_snapshot.ratePlan.cancellationPolicy,'Free cancellation before arrival.');
     assert.equal(storedSnapshot?.terms_snapshot.nightlyBreakdown.length,2);
+    assert.deepEqual(storedSnapshot?.terms_snapshot.nightlyBreakdown.map(night=>night.amountMinor),['10000000','15000000']);
     assert.equal(storedSnapshot?.amounts.totalMinor,'125000000');
     await customerA.request('/quotes','POST',{
       offeringId:offer.id,startDate,endDate,quantity:1,
