@@ -135,7 +135,7 @@ export function mountStayBooking(
         `SELECT service_date::text,amount_minor::text,closed_to_arrival,closed_to_departure,
                 min_stay_nights,max_stay_nights
            FROM seven.stay_nightly_rates
-          WHERE rate_plan_id=$1 AND service_date = ANY($2::date[])
+          WHERE rate_plan_id=$1 AND service_date >= $2::date AND service_date < $3::date
           ORDER BY service_date`,
         [plan.rate_plan_id, checkInDate, checkOutDate],
       );
