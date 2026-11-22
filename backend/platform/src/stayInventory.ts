@@ -102,12 +102,15 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       [input.offeringId, businessId]);
     if (!offer) return fail(404, 'OFFERING_NOT_FOUND', 'Stay listing not found.');
     if (offer.sector_code !== 'STAY') return fail(422, 'STAY_ONLY', 'Room categories can only be added to a stay listing.');
+    const priorRoomType = await one(db, 'SELECT room_type_id FROM seven.stay_room_types WHERE offering_id=$1 ORDER BY created_at LIMIT 1 FOR UPDATE', [input.offeringId]);
     if (input.expectedRevision !== undefined)
       return fail(422, 'UNEXPECTED_REVISION', 'Create a new room category without an existing revision.');
     const roomTypeId=randomUUID();
     await db.query(
       'INSERT INTO seven.stay_room_types(room_type_id,offering_id,max_occupancy,bed_configuration,total_rooms) VALUES($1,$2,$3,$4,$5)',
       [roomTypeId,input.offeringId,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null]);
+    if (!priorRoomType)
+      await db.query('UPDATE seven.inventory_windows SET room_type_id=$2 WHERE offering_id=$1 AND room_type_id IS NULL', [input.offeringId,roomTypeId]);
     await S.audit(db,user,businessId,'stay_room_type.created',roomTypeId,'Room configuration created.');
     return one(db,'SELECT rt.*,o.business_id FROM seven.stay_room_types rt JOIN seven.offerings o USING(offering_id) WHERE rt.room_type_id=$1',[roomTypeId]);
   }));
