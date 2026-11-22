@@ -36,7 +36,7 @@ function localDate(offset = 0) {
 function toMinorUnits(value: string): string {
   if (!/^(0|[1-9]\d*)(\.\d{1,2})?$/.test(value)) throw new Error('Enter a valid price with up to two decimal places.');
   const [whole, fraction = ''] = value.split('.');
-  return (BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'))).toString();
+  return (BigInt(whole ?? '0') * 100n + BigInt(fraction.padEnd(2, '0'))).toString();
 }
 function money(minor: string | null, currency: string | null) {
   if (minor === null) return 'No rate';
