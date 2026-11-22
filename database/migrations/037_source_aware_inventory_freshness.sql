@@ -7,7 +7,7 @@ UPDATE seven.inventory_windows
 SET inventory_source = 'UNKNOWN';
 
 ALTER TABLE seven.inventory_windows
-  ALTER COLUMN inventory_source SET DEFAULT 'MANUAL',
+  ALTER COLUMN inventory_source SET DEFAULT 'UNKNOWN',
   ALTER COLUMN inventory_source SET NOT NULL,
   ADD CONSTRAINT inventory_windows_inventory_source_check
     CHECK (inventory_source IN ('MANUAL', 'PMS', 'UNKNOWN'));
