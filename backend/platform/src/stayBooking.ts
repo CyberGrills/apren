@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from 'express';
+import type { Express, NextFunction, Request, Response } from 'express';
 import type { Pool } from 'pg';
 import type { SessionUser } from '@7even/contracts';
 import { randomUUID } from 'node:crypto';
@@ -31,10 +31,13 @@ function sendMutation(
   res: Response,
   mutate: Context['mutate'],
   work: Work,
+  next: NextFunction,
 ): void {
-  void mutate(req, res, work).then((data) => {
-    if (!res.headersSent) res.json({ data });
-  });
+  void mutate(req, res, work)
+    .then((data) => {
+      if (!res.headersSent) res.json({ data });
+    })
+    .catch(next);
 }
 
 function isVerified(details: Record<string, unknown>, production: boolean): boolean {
@@ -208,7 +211,7 @@ export function mountStayBooking(
     return res.json({ data: { offeringId, checkInDate, checkOutDate, nights: dates.length, plans: result } });
   });
 
-  app.post('/api/stay-quotes', (req, res) => sendMutation(req, res, mutate, async (db, user) => {
+  app.post('/api/stay-quotes', (req, res, next) => sendMutation(req, res, mutate, async (db, user) => {
     if (user.role !== 'CUSTOMER')
       return fail(403, 'CUSTOMER_ACCOUNT_REQUIRED', 'Sign in with a customer account to request a stay quote.');
     const input = stayQuoteInput.parse(req.body);
@@ -405,5 +408,5 @@ export function mountStayBooking(
       nightlyBreakdown,
       cancellationPolicySnapshot: termsSnapshot.cancellationPolicySnapshot,
     };
-  }));
+  }, next));
 }
