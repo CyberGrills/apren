@@ -109,8 +109,11 @@ export function ReservationTable({
                   {r.quantity}{' '}
                   {r.kind === 'STAY' ? 'room(s)' : r.kind === 'DINING' ? 'guest(s)' : 'seat(s)'}
                 </small>
-                {r.stayTerms && <small>{r.stayTerms.roomType.bedConfiguration || 'Room'} · {r.stayTerms.ratePlan.name}</small>}
-                {r.stayTerms && <small>{r.stayTerms.ratePlan.mealPlan} · {r.stayTerms.cancellationPolicySnapshot.policy || 'No additional cancellation text'} · {r.stayTerms.cancellationPolicySnapshot.cancellationHours}h cancellation notice</small>}
+                {r.stayTerms && (
+                  <small>
+                    {r.stayTerms.roomType.bedConfiguration} · {r.stayTerms.ratePlan.name} · {r.stayTerms.ratePlan.mealPlan}
+                  </small>
+                )}
               </td>
               <td>
                 {dateLabel(r.startDate)}
