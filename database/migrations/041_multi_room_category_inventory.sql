@@ -6,6 +6,17 @@
 ALTER TABLE seven.stay_room_types
   DROP CONSTRAINT IF EXISTS stay_room_types_offering_id_key;
 
+ALTER TABLE seven.stay_room_types
+  ADD COLUMN IF NOT EXISTS name varchar(120) NOT NULL DEFAULT 'Room category';
+
+UPDATE seven.stay_room_types
+   SET name = COALESCE(NULLIF(left(btrim(bed_configuration), 120), ''), 'Room category')
+ WHERE name = 'Room category';
+
+ALTER TABLE seven.stay_room_types
+  ADD CONSTRAINT stay_room_types_name_ck
+  CHECK (char_length(btrim(name)) BETWEEN 2 AND 120);
+
 CREATE INDEX IF NOT EXISTS stay_room_types_offering_active_idx
   ON seven.stay_room_types (offering_id, is_active, created_at);
 
