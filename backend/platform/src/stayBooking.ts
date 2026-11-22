@@ -93,6 +93,7 @@ export function mountStayBooking(
       offering_title: string;
       inventory_freshness_hours: number;
       max_occupancy: number;
+      room_name: string;
       bed_configuration: string;
       rate_plan_id: string;
       code: string;
@@ -106,7 +107,7 @@ export function mountStayBooking(
       pool,
       `SELECT rt.room_type_id,rt.offering_id,o.title AS offering_title,
               COALESCE((b.details->'verificationReview'->>'inventoryFreshnessHours')::int,0) AS inventory_freshness_hours,
-              rt.max_occupancy,rt.bed_configuration,
+              rt.max_occupancy,rt.name AS room_name,rt.bed_configuration,
               rp.rate_plan_id,rp.code,rp.name,rp.currency_code,rp.meal_plan,
               rp.refundable,rp.cancellation_policy,rp.revision
          FROM seven.stay_room_types rt
@@ -179,6 +180,7 @@ export function mountStayBooking(
         offeringTitle: plan.offering_title,
         roomType: {
           id: plan.room_type_id,
+          name: plan.room_name,
           maxOccupancy: plan.max_occupancy,
           bedConfiguration: plan.bed_configuration,
         },
@@ -372,6 +374,7 @@ export function mountStayBooking(
       cancellationHours: Number(offering.details.cancellationHours ?? 24),
       roomType: {
         id: selected.room_type_id,
+        name: selected.room_name,
         maxOccupancy: selected.max_occupancy,
         bedConfiguration: selected.bed_configuration,
       },
