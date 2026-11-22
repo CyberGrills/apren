@@ -116,6 +116,18 @@ export function BookingList({
                   reservation.startAt &&
                   ` · ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(reservation.startAt))} WAT`}
               </p>
+              {reservation.kind === 'STAY' && reservation.roomType && reservation.ratePlan && (
+                <details className="customer-booking-stay-details">
+                  <summary>Room, rate and cancellation details</summary>
+                  <dl className="customer-booking-details">
+                    <div><dt>Room category</dt><dd>{reservation.roomType.bedConfiguration || 'Room category'} · up to {reservation.roomType.maxOccupancy} guests</dd></div>
+                    <div><dt>Rate plan</dt><dd>{reservation.ratePlan.name} · {reservation.ratePlan.mealPlan.replaceAll('_', ' ').toLowerCase()}</dd></div>
+                    <div><dt>Refundability</dt><dd>{reservation.ratePlan.refundable === null ? 'Not specified' : reservation.ratePlan.refundable ? 'Refundable' : 'Non-refundable'}</dd></div>
+                    {reservation.nightlyBreakdown?.map(night => <div key={night.date}><dt>{friendlyDate(night.date)}</dt><dd><Money minor={night.lineTotalMinor} /></dd></div>)}
+                    {reservation.cancellationPolicySnapshot && <div><dt>Cancellation terms at booking</dt><dd>{reservation.cancellationPolicySnapshot.policy || 'No additional policy text supplied'} · {reservation.cancellationPolicySnapshot.cancellationHours} hours</dd></div>}
+                  </dl>
+                </details>
+              )}
               <dl className="customer-booking-details">
                 <div>
                   <dt>{pcm ? 'Booking reference' : 'Reference'}</dt>
