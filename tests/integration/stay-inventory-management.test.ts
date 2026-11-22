@@ -12,11 +12,11 @@ const origin='http://127.0.0.1:5177';
 const password='Stay-Inventory-Integration-Test-Passphrase-42!';
 
 test('owner room, rate and room-night APIs are tenant scoped and preserve manual inventory authority',{
-  skip:!process.env.TEST_DATABASE_URL || !process.env.TEST_RUNTIME_DATABASE_URL,
+  skip:!process.env.TEST_DATABASE_URL,
   timeout:120000,
 },async()=>{
   const ownerUrl=process.env.TEST_DATABASE_URL!;
-  const runtimeUrl=process.env.TEST_RUNTIME_DATABASE_URL!;
+  const runtimeUrl=process.env.TEST_RUNTIME_DATABASE_URL ?? ownerUrl;
   const targets=[ownerUrl,runtimeUrl].map(value=>{
     const url=new URL(value);
     assert.doesNotMatch(url.hostname,/(?:^|\.)supabase\.co$|(?:^|\.)pooler\.supabase\.com$/i);
