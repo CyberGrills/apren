@@ -2,6 +2,7 @@ import { ArrowUpRight, ChevronDown, Menu, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Brand } from '../../components/Brand.tsx';
+import { SocialLinks } from '../../components/SocialLinks.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
 import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
@@ -240,6 +241,7 @@ export function PublicFooter() {
             <Link to="/booking-rules">Booking rules</Link>
           </nav>
         </div>
+        <SocialLinks />
         <div className="public-footer-bottom">
           <p>© {new Date().getFullYear()} 7even · Nigeria first.</p>
           <a href="/media/SOURCES.txt">Photography and design sources</a>
