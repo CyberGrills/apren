@@ -294,6 +294,7 @@ export function mountStayBooking(
 
     const windows = await rows<{
       inventory_window_id: string;
+      service_date: string;
       starts_at: Date;
       ends_at: Date;
       capacity: number;
@@ -301,7 +302,7 @@ export function mountStayBooking(
       inventory_fresh: boolean;
     }>(
       db,
-      `SELECT iw.*,
+      `SELECT iw.*,(iw.starts_at AT TIME ZONE 'Africa/Lagos')::date::text AS service_date,
               seven.inventory_window_is_fresh(iw.inventory_source,iw.inventory_confirmed_at,$2,$3) AS inventory_fresh
          FROM seven.inventory_windows iw
         WHERE iw.offering_id=$1
@@ -315,8 +316,8 @@ export function mountStayBooking(
       return fail(409, 'CAPACITY_CHANGED', 'The hotel has not confirmed availability for every night.');
     for (let index = 0; index < dates.length; index++) {
       const window = windows[index]!;
-      if ((window.starts_at instanceof Date ? new Date(window.starts_at).toISOString().slice(0, 10) : String(window.starts_at)).length === 0)
-        return fail(409, 'CAPACITY_CHANGED', 'The selected availability has changed.');
+      if (window.service_date !== dates[index])
+        return fail(409, 'CAPACITY_CHANGED', 'The hotel has not confirmed availability for every night.');
       if (!window.inventory_fresh)
         return fail(409, 'INVENTORY_STALE', 'The hotel must confirm its availability before this stay can be quoted.');
       if (window.capacity - window.allocated_count < input.rooms)
