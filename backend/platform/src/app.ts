@@ -1503,6 +1503,35 @@ export function createApp(options: AppOptions = {}) {
       );
     });
   });
+  route('delete', '/business/venues/:id', async (req, res) =>
+    mutate(req, res, async (db, actor) => {
+      await businessActor(res, true);
+      const current = await one(
+        db,
+        'SELECT venue_id,business_id FROM seven.venues WHERE venue_id=$1 AND is_active=true FOR UPDATE',
+        [id(req)],
+      );
+      if (!current || current.business_id !== actor.businessId)
+        return fail(404, 'NOT_FOUND', 'Venue not found.');
+      const used = await one(
+        db,
+        'SELECT offering_id FROM seven.offerings WHERE venue_id=$1 LIMIT 1',
+        [current.venue_id],
+      );
+      if (used)
+        return fail(
+          409,
+          'VENUE_IN_USE',
+          'This venue is linked to a place. Move or retire its offerings before archiving the venue.',
+        );
+      await db.query(
+        'UPDATE seven.venues SET is_active=false,revision=revision+1,updated_at=now() WHERE venue_id=$1',
+        [current.venue_id],
+      );
+      await S.audit(db, actor, actor.businessId!, 'venue.archived', String(current.venue_id));
+      return { success: true };
+    }),
+  );
   route('get', '/business/overview', async (_req, res): Promise<C.BusinessOverview> => {
     const actor = await businessActor(res, true);
     const businessId = actor.businessId!;
