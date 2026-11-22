@@ -229,6 +229,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             </div>
                           ))}
                         </div>
+                        </>}
                         {owner && offer.kind === 'STAY' && (
                           <StayInventoryManager offeringId={offer.id} title={offer.title} />
                         )}
