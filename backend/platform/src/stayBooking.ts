@@ -262,7 +262,7 @@ export function mountStayBooking(
       revision: number;
     }>(
       db,
-      `SELECT rt.room_type_id,rt.offering_id,rt.max_occupancy,rt.bed_configuration,
+      `SELECT rt.room_type_id,rt.offering_id,rt.max_occupancy,rt.name AS room_name,rt.bed_configuration,
               rp.rate_plan_id,rp.code,rp.name,rp.currency_code,rp.meal_plan,
               rp.refundable,rp.cancellation_policy,rp.revision
          FROM seven.stay_room_types rt
