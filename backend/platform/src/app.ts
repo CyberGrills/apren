@@ -2235,6 +2235,11 @@ export function createApp(options: AppOptions = {}) {
   app.use(async (req, res, next) => {
     if (!isCustomerProfileMediaRoute(req.path)) return next();
     try {
+      actorFor(res);
+    } catch (error) {
+      return next(error);
+    }
+    try {
       if (await customerProfileMediaSchemaIsReady(pool)) return next();
     } catch {
       // Treat missing or incomplete media schema as unavailable; do not leak database errors.
