@@ -88,7 +88,7 @@ test('legacy correlated and grouped hotel eligibility match on the same isolated
        SELECT gen_random_uuid(), o.offering_id,
               ($1::date + night_offset + time '13:00') AT TIME ZONE 'UTC',
               ($1::date + night_offset + 1 + time '10:00') AT TIME ZONE 'UTC',
-              3
+              3, 'MANUAL'
        FROM seven.offerings o
        CROSS JOIN generate_series(0,1) AS nights(night_offset)
        WHERE o.title LIKE 'Scale synthetic hotel %'`,
