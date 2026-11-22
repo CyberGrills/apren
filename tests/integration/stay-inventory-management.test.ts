@@ -164,6 +164,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(storedSnapshot?.terms_snapshot.ratePlan.cancellationPolicy,'Free cancellation before arrival.');
     assert.equal(storedSnapshot?.terms_snapshot.nightlyBreakdown.length,2);
     assert.equal(storedSnapshot?.amounts.totalMinor,'125000000');
+    await owner.request(`/business/stay/rate-plans/${plan.rate_plan_id}`,'PATCH',{
+      code:'FLEX',name:'Flexible room only',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
+      refundable:false,cancellationPolicy:'Changed after quote; must not alter existing quotes.',
+      expectedRevision:2,
+    });
     await customerA.request('/quotes','POST',{
       offeringId:offer.id,startDate,endDate,quantity:1,
     },409);
@@ -173,6 +178,21 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     ]);
     assert.equal(outcomes.filter(outcome=>outcome.status==='fulfilled').length,1);
     assert.equal(outcomes.filter(outcome=>outcome.status==='rejected').length,1);
+    const winningIndex=outcomes[0]!.status==='fulfilled'?0:1;
+    const winningClient=winningIndex===0?customerA:customerB;
+    const winningOutcome=outcomes[winningIndex] as PromiseFulfilledResult<{id:string}>;
+    const reservationDetails=await winningClient.request<{
+      roomType:{id:string};ratePlan:{id:string;refundable:boolean;cancellationPolicy:string};
+      nightlyBreakdown:Array<{date:string;amountMinor:string;quantity:number;lineTotalMinor:string}>;
+      cancellationPolicySnapshot:{refundable:boolean;policy:string;cancellationHours:number};
+    }>(`/reservations/${winningOutcome.value.id}`);
+    assert.equal(reservationDetails.roomType.id,room.room_type_id);
+    assert.equal(reservationDetails.ratePlan.id,plan.rate_plan_id);
+    assert.equal(reservationDetails.ratePlan.refundable,true);
+    assert.equal(reservationDetails.ratePlan.cancellationPolicy,'Free cancellation before arrival.');
+    assert.equal(reservationDetails.nightlyBreakdown.length,2);
+    assert.equal(reservationDetails.cancellationPolicySnapshot.refundable,true);
+    assert.equal(reservationDetails.cancellationPolicySnapshot.policy,'Free cancellation before arrival.');
     const allocated=await one<{allocated_count:number}>(
       pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1 AND room_type_id=$2',[offer.id,room.room_type_id]);
     assert.equal(allocated?.allocated_count,5);
