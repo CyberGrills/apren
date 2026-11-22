@@ -24,6 +24,7 @@ const stayQuoteInput = z.strictObject({
   checkInDate: localDate,
   checkOutDate: localDate,
   rooms: z.number().int().min(1).max(20),
+  recoverySessionId: uuid.optional(),
 });
 
 function sendMutation(
@@ -377,10 +378,10 @@ export function mountStayBooking(
       },
     };
     await db.query(
-      `INSERT INTO seven.quotes(quote_id,user_id,offering_id,starts_at,ends_at,quantity,amounts,inventory_ids,expires_at,terms_snapshot)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,now()+interval '10 minutes',$9)`,
+      `INSERT INTO seven.quotes(quote_id,user_id,offering_id,starts_at,ends_at,quantity,amounts,inventory_ids,expires_at,terms_snapshot,recovery_session_id)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,now()+interval '10 minutes',$9,$10)`,
       [quoteId,user.id,offering.offering_id,windows[0]!.starts_at,windows[windows.length-1]!.ends_at,
-        input.rooms,amounts,JSON.stringify(windows.map((window) => window.inventory_window_id)),termsSnapshot],
+        input.rooms,amounts,JSON.stringify(windows.map((window) => window.inventory_window_id)),termsSnapshot,input.recoverySessionId ?? null],
     );
     await S.observation(db, offering.business_id, offering.offering_id, 'QUOTE', `quote:${quoteId}`);
     const quote = await S.quoteProjection(db, quoteId);
