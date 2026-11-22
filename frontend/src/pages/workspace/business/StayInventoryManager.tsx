@@ -30,9 +30,11 @@ interface CalendarRow {
 }
 interface CalendarResponse { dates: string[]; rooms: CalendarRow[]; }
 function localDate(offset = 0) {
-  const date = new Date();
-  date.setDate(date.getDate() + offset);
-  return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const part = (type: string) => parts.find(item => item.type === type)?.value ?? '00';
+  const date = new Date(`${part('year')}-${part('month')}-${part('day')}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
 }
 function toMinorUnits(value: string): string {
   if (!/^(0|[1-9]\d*)(\.\d{1,2})?$/.test(value)) throw new Error('Enter a valid price with up to two decimal places.');
@@ -132,7 +134,7 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
         <div className="stay-inventory-range"><label>From<input type="date" value={startDate} onChange={event=>setStartDate(event.target.value)} /></label><label>Through<input type="date" value={endDate} onChange={event=>setEndDate(event.target.value)} /></label></div>
         {plans.length===0 ? <p className="small-copy">Add a rate plan before entering nightly prices.</p> : <div className="stay-inventory-grid">
           {nights.length===0 ? <p className="small-copy">No nightly rates are configured in this date range. Add explicit prices to make these nights eligible for booking.</p> : nights.map(night=><article className="stay-inventory-night" key={night.service_date}>
-            <span>{new Date(night.service_date+'T12:00:00').toLocaleDateString('en-NG',{weekday:'short',day:'numeric',month:'short'})}</span>
+            <span>{new Date(night.service_date+'T12:00:00Z').toLocaleDateString('en-NG',{timeZone:'Africa/Lagos',weekday:'short',day:'numeric',month:'short'})}</span>
             <strong>{money(night.amount_minor,night.currency_code)}</strong>
             <small>{night.capacity===null?'Inventory not confirmed':`${Math.max(0,night.capacity-(night.allocated_count ?? 0))} / ${night.capacity} rooms remaining`}</small>
             <small>{night.inventory_source==='MANUAL' && night.inventory_confirmed_at?'Owner confirmed':'Availability needs confirmation'}</small>
