@@ -185,6 +185,8 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     if(ratePlans.length)await pool.query('DELETE FROM seven.stay_rate_plans WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
     if(roomTypes.length)await pool.query('DELETE FROM seven.stay_room_types WHERE room_type_id=ANY($1::uuid[])',[roomTypes]);
     if(offerings.length)await pool.query('DELETE FROM seven.inventory_windows WHERE offering_id=ANY($1::uuid[])',[offerings]);
+    if(offerings.length)await pool.query('DELETE FROM seven.observations WHERE offering_id=ANY($1::uuid[])',[offerings]);
+    if(businesses.length)await pool.query('DELETE FROM seven.observations WHERE business_id=ANY($1::uuid[])',[businesses]);
     if(offerings.length)await pool.query('DELETE FROM seven.offerings WHERE offering_id=ANY($1::uuid[])',[offerings]);
     if(businesses.length){
       await pool.query('DELETE FROM seven.outbox_events WHERE business_id=ANY($1::uuid[])',[businesses]);
