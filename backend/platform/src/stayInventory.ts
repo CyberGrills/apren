@@ -17,6 +17,7 @@ const uuid = z.uuid();
 const localDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const roomInput = z.strictObject({
   offeringId: uuid,
+  name: z.string().trim().min(2).max(120).optional(),
   maxOccupancy: z.number().int().min(1).max(30),
   bedConfiguration: z.string().trim().max(180).default(''),
   totalRooms: z.number().int().min(1).max(10000).nullable().optional(),
@@ -73,7 +74,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     if (offeringId) params.push(offeringId);
     const venueFilter = user.role === 'RECEPTION' ? 'AND o.venue_id=ANY($' + (params.push(user.venueIds), params.length) + '::uuid[])' : '';
     const records = await rows(pool,
-      `SELECT rt.room_type_id,rt.offering_id,rt.max_occupancy,rt.bed_configuration,rt.total_rooms,rt.is_active AS room_active,rt.revision AS room_revision,
+      `SELECT rt.room_type_id,rt.offering_id,rt.name AS room_name,rt.max_occupancy,rt.bed_configuration,rt.total_rooms,rt.is_active AS room_active,rt.revision AS room_revision,
               o.title,o.venue_id,v.timezone_name,
               rp.rate_plan_id,rp.code AS rate_plan_code,rp.name AS rate_plan_name,rp.currency_code,rp.revision AS rate_plan_revision,rp.is_active AS rate_plan_active,
               nr.service_date,nr.amount_minor::text AS amount_minor,nr.closed_to_arrival,nr.closed_to_departure,nr.min_stay_nights,nr.max_stay_nights,nr.revision AS rate_revision,
@@ -107,8 +108,8 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       return fail(422, 'UNEXPECTED_REVISION', 'Create a new room category without an existing revision.');
     const roomTypeId=randomUUID();
     await db.query(
-      'INSERT INTO seven.stay_room_types(room_type_id,offering_id,max_occupancy,bed_configuration,total_rooms) VALUES($1,$2,$3,$4,$5)',
-      [roomTypeId,input.offeringId,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null]);
+      'INSERT INTO seven.stay_room_types(room_type_id,offering_id,name,max_occupancy,bed_configuration,total_rooms) VALUES($1,$2,$3,$4,$5,$6)',
+      [roomTypeId,input.offeringId,input.name ?? input.bedConfiguration || 'Room category',input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null]);
     if (!priorRoomType)
       await db.query('UPDATE seven.inventory_windows SET room_type_id=$2 WHERE offering_id=$1 AND room_type_id IS NULL', [input.offeringId,roomTypeId]);
     await S.audit(db,user,businessId,'stay_room_type.created',roomTypeId,'Room configuration created.');
@@ -124,8 +125,8 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     if(!room) return fail(404,'ROOM_TYPE_NOT_FOUND','Room category not found.');
     if(input.expectedRevision!==room.revision) return fail(409,'REVISION_CONFLICT','Refresh this room category before editing.');
     await db.query(
-      'UPDATE seven.stay_room_types SET max_occupancy=$2,bed_configuration=$3,total_rooms=$4,is_active=$5,revision=revision+1,updated_at=now() WHERE room_type_id=$1',
-      [roomId,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null,input.isActive ?? room.is_active]);
+      'UPDATE seven.stay_room_types SET name=$2,max_occupancy=$3,bed_configuration=$4,total_rooms=$5,is_active=$6,revision=revision+1,updated_at=now() WHERE room_type_id=$1',
+      [roomId,input.name ?? room.name,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null,input.isActive ?? room.is_active]);
     await S.audit(db,user,businessId,'stay_room_type.updated',roomId,'Room configuration updated.');
     return one(db,'SELECT rt.*,o.business_id FROM seven.stay_room_types rt JOIN seven.offerings o USING(offering_id) WHERE rt.room_type_id=$1',[roomId]);
   }));
