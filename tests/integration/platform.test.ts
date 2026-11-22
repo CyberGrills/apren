@@ -475,6 +475,40 @@ test('7even real PostgreSQL API and invariant acceptance', {
           reason: 'Verify accepted policy does not change retroactively.',
         });
         reservation = (await guest.request<C.Reservation>(`/reservations/${reservation.id}`)).data;
+        const pointsBeforeCompletion = (await pointsProjection(pool, guestUser.id)).balance;
+        const prematureFulfillment = await receptionist.request<C.Reservation>(
+          `/reservations/${reservation.id}/actions`,
+          'POST',
+          { action: 'FULFILL', expectedRevision: reservation.revision },
+          randomUUID(),
+        );
+        assert.equal(prematureFulfillment.status, 409);
+        assert.equal(prematureFulfillment.error?.code, 'CHECK_IN_REQUIRED');
+        assert.equal((await pointsProjection(pool, guestUser.id)).balance, pointsBeforeCompletion);
+
+        const checkedIn = await receptionist.request<C.Reservation>(
+          `/reservations/${reservation.id}/actions`,
+          'POST',
+          { action: 'CHECK_IN', expectedRevision: reservation.revision },
+          randomUUID(),
+        );
+        assert.equal(checkedIn.status, 200, JSON.stringify(checkedIn));
+        reservation = checkedIn.data;
+        const beforeCheckout = await receptionist.request<C.Reservation>(
+          `/reservations/${reservation.id}/actions`,
+          'POST',
+          { action: 'FULFILL', expectedRevision: reservation.revision },
+          randomUUID(),
+        );
+        assert.equal(beforeCheckout.status, 409);
+        assert.equal(beforeCheckout.error?.code, 'SERVICE_NOT_COMPLETED');
+        assert.equal((await pointsProjection(pool, guestUser.id)).balance, pointsBeforeCompletion);
+
+        await pool.query(
+          "UPDATE seven.quotes SET ends_at=now()-interval '1 minute' WHERE quote_id=(SELECT quote_id FROM seven.reservations WHERE reservation_id=$1)",
+          [reservation.id],
+        );
+        reservation = (await guest.request<C.Reservation>(`/reservations/${reservation.id}`)).data;
         fulfillKey = randomUUID();
         const fulfillment = await receptionist.request<C.Reservation>(
           `/reservations/${reservation.id}/actions`,
