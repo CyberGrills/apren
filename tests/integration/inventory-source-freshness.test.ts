@@ -9,13 +9,20 @@ test('inventory source freshness policy distinguishes manual, PMS, unknown, and 
 }, async () => {
   const value = process.env.TEST_DATABASE_URL!;
   const url = new URL(value);
-  assert.doesNotMatch(url.hostname, /(?:^|\\.)supabase\\.co$|(?:^|\\.)pooler\\.supabase\\.com$/i);
+  assert.doesNotMatch(url.hostname, /(?:^|\.)supabase\.co$|(?:^|\.)pooler\.supabase\.com$/i);
   assert.match(decodeURIComponent(url.pathname.slice(1)), /_test_db$/);
   const pool = createPool(value);
   try {
     const identity = await pool.query('SELECT current_database() AS name');
     assert.match(String(identity.rows[0]?.name), /_test_db$/);
     await migrate(pool);
+    const sourceColumn = await pool.query(`
+      SELECT column_default, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema='seven' AND table_name='inventory_windows' AND column_name='inventory_source'
+    `);
+    assert.equal(sourceColumn.rows[0]?.column_default, "'MANUAL'::text");
+    assert.equal(sourceColumn.rows[0]?.is_nullable, 'NO');
     const result = await pool.query(`
       SELECT
         seven.inventory_window_is_fresh('PMS', now() - interval '4 minutes', 24, false) AS pms_fresh,
