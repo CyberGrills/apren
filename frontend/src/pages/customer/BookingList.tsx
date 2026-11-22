@@ -31,6 +31,7 @@ export function BookingList({
   const [busy, setBusy] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [expandedReservationId, setExpandedReservationId] = useState<string | null>(null);
   const attempt = useRef<Record<string, string>>({});
   function key(action: string) {
     attempt.current[action] ??= crypto.randomUUID();
