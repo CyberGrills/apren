@@ -199,7 +199,8 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
   }));
 
   app.post('/api/business/stay/rooms/:id/availability', async (req,res)=>write(req,res,mutate,async(db,user)=>{
-    const businessId=ownerBusiness(user);
+    if(!['BUSINESS_OWNER','RECEPTION'].includes(user.role) || !user.businessId) return fail(403,'BUSINESS_ACCESS_REQUIRED','Authorised hotel staff access is required.');
+    const businessId=user.businessId;
     const roomId=uuid.parse(req.params.id);
     const input=z.strictObject({
       startDate:localDate,
@@ -218,6 +219,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       [roomId,businessId]);
     if(!room) return fail(404,'ROOM_TYPE_NOT_FOUND','Room category not found.');
     if(room.sector_code!=='STAY') return fail(409,'STAY_ONLY','Availability can only be changed for a stay listing.');
+    if(user.role==='RECEPTION' && !user.venueIds.includes(room.venue_id)) return fail(404,'ROOM_TYPE_NOT_FOUND','Room category not found.');
     for(const date of dates){
       const windowStart=`${date}T00:00:00+01:00`;
       const windowEnd=new Date(Date.parse(windowStart)+86400000).toISOString();
