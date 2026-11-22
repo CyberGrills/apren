@@ -136,9 +136,9 @@ export function mountStayBooking(
         `SELECT service_date::text,amount_minor::text,closed_to_arrival,closed_to_departure,
                 min_stay_nights,max_stay_nights
            FROM seven.stay_nightly_rates
-          WHERE rate_plan_id=$1 AND service_date >= $2::date AND service_date < $3::date
+          WHERE rate_plan_id=$1 AND service_date = ANY($2::date[])
           ORDER BY service_date`,
-        [plan.rate_plan_id, checkInDate, checkOutDate],
+        [plan.rate_plan_id, dates],
       );
       const inventory = await rows<{ service_date: string; capacity: number; allocated_count: number; fresh: boolean }>(
         pool,
@@ -250,7 +250,6 @@ export function mountStayBooking(
       room_type_id: string;
       offering_id: string;
       max_occupancy: number;
-      room_name: string;
       bed_configuration: string;
       rate_plan_id: string;
       code: string;
@@ -262,7 +261,7 @@ export function mountStayBooking(
       revision: number;
     }>(
       db,
-      `SELECT rt.room_type_id,rt.offering_id,rt.max_occupancy,rt.name AS room_name,rt.bed_configuration,
+      `SELECT rt.room_type_id,rt.offering_id,rt.max_occupancy,rt.bed_configuration,
               rp.rate_plan_id,rp.code,rp.name,rp.currency_code,rp.meal_plan,
               rp.refundable,rp.cancellation_policy,rp.revision
          FROM seven.stay_room_types rt
@@ -287,9 +286,9 @@ export function mountStayBooking(
       `SELECT service_date::text,amount_minor::text,closed_to_arrival,closed_to_departure,
               min_stay_nights,max_stay_nights
          FROM seven.stay_nightly_rates
-        WHERE rate_plan_id=$1 AND service_date >= $2::date AND service_date < $3::date
+        WHERE rate_plan_id=$1 AND service_date = ANY($2::date[])
         ORDER BY service_date`,
-      [input.ratePlanId, input.checkInDate, input.checkOutDate],
+      [input.ratePlanId, dates],
     );
     if (nightly.length !== dates.length || !dates.every((date, index) => nightly[index]?.service_date === date))
       return fail(409, 'NIGHTLY_RATE_MISSING', 'A price is not available for every night. Ask the hotel to update its rates.');
