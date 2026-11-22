@@ -115,6 +115,20 @@ export function BookingList({
                   reservation.startAt &&
                   ` · ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(reservation.startAt))} WAT`}
               </p>
+              {reservation.stayTerms && (
+                <section className="booking-rate-policy" aria-label="Booked room and rate terms">
+                  <p><strong>{reservation.stayTerms.roomType.bedConfiguration || 'Room'}</strong> · {reservation.stayTerms.ratePlan.name}</p>
+                  <p className="public-small">{reservation.stayTerms.ratePlan.mealPlan} · {reservation.stayTerms.roomType.maxOccupancy} guests maximum · {reservation.stayTerms.cancellationPolicySnapshot.refundable === true ? 'Refundable' : reservation.stayTerms.cancellationPolicySnapshot.refundable === false ? 'Non-refundable' : 'Refund terms not specified'}</p>
+                  {reservation.stayTerms.nightlyBreakdown.map((night) => (
+                    <p className="public-small" key={night.date}>
+                      {friendlyDate(night.date)} · <Money minor={night.amountMinor} /> × {night.quantity}
+                    </p>
+                  ))}
+                  {reservation.stayTerms.cancellationPolicySnapshot.policy && (
+                    <p className="public-small">{reservation.stayTerms.cancellationPolicySnapshot.policy}</p>
+                  )}
+                </section>
+              )}
               <dl className="customer-booking-details">
                 <div>
                   <dt>{pcm ? 'Booking reference' : 'Reference'}</dt>
