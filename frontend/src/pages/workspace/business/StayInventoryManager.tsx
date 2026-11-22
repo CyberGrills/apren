@@ -33,7 +33,12 @@ function localDate(offset = 0) {
   date.setDate(date.getDate() + offset);
   return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
 }
-function toMinorUnits(value: string): string {\n  if (!/^(0|[1-9]\\d*)(\\.\\d{1,2})?$/.test(value)) throw new Error('Enter a valid price with up to two decimal places.');\n  const [whole,fraction='']=value.split('.');\n  return (BigInt(whole)*100n+BigInt(fraction.padEnd(2,'0'))).toString();\n}\nfunction money(minor: string | null, currency: string | null) {
+function toMinorUnits(value: string): string {
+  if (!/^(0|[1-9]\d*)(\.\d{1,2})?$/.test(value)) throw new Error('Enter a valid price with up to two decimal places.');
+  const [whole, fraction = ''] = value.split('.');
+  return (BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'))).toString();
+}
+function money(minor: string | null, currency: string | null) {
   if (minor === null) return 'No rate';
   return new Intl.NumberFormat('en-NG',{style:'currency',currency:currency || 'NGN',maximumFractionDigits:2}).format(Number(minor)/100);
 }
