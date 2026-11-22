@@ -9,13 +9,13 @@ const allowedLegacyDuplicate = new Map([
 
 export async function auditMigrationHistory({ directory, ledger = [] }) {
   const filenames = (await readdir(directory))
-    .filter((name) => /^\\d+.*\\.sql$/.test(name))
+    .filter((name) => /^\d+.*\.sql$/.test(name))
     .sort();
   const errors = [];
   const byPrefix = new Map();
 
   for (const filename of filenames) {
-    const match = /^(\\d+).*\\.sql$/.exec(filename);
+    const match = /^(\d+).*\.sql$/.exec(filename);
     if (!match) continue;
     const prefix = match[1];
     const names = byPrefix.get(prefix) ?? [];
