@@ -34,6 +34,7 @@ const ratePlanInput = z.strictObject({
 });
 const nightlyInput = z.strictObject({
   ratePlanId: uuid,
+  expectedRevision: z.number().int().min(1),
   startDate: localDate,
   endDate: localDate,
   amountMinor: z.string().regex(/^(0|[1-9]\d{0,14})$/),
@@ -75,7 +76,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     const records = await rows(pool,
       `SELECT rt.room_type_id,rt.offering_id,rt.max_occupancy,rt.bed_configuration,rt.total_rooms,rt.is_active AS room_active,rt.revision AS room_revision,
               o.title,o.venue_id,v.timezone_name,
-              rp.rate_plan_id,rp.code AS rate_plan_code,rp.name AS rate_plan_name,rp.currency_code,rp.is_active AS rate_plan_active,
+              rp.rate_plan_id,rp.code AS rate_plan_code,rp.name AS rate_plan_name,rp.currency_code,rp.revision AS rate_plan_revision,rp.is_active AS rate_plan_active,
               nr.service_date,nr.amount_minor::text AS amount_minor,nr.closed_to_arrival,nr.closed_to_departure,nr.min_stay_nights,nr.max_stay_nights,nr.revision AS rate_revision,
               iw.capacity,iw.allocated_count,iw.revision AS inventory_revision,iw.inventory_confirmed_at,iw.inventory_source,iw.starts_at
          FROM seven.stay_room_types rt
@@ -179,11 +180,8 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
         WHERE rp.rate_plan_id=$1 AND o.business_id=$2 FOR UPDATE OF rp`,
       [input.ratePlanId,businessId]);
     if(!plan || !plan.is_active) return fail(404,'RATE_PLAN_NOT_FOUND','Active rate plan not found.');
-    const current=await rows(db,
-      'SELECT service_date,revision FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date BETWEEN $2::date AND $3::date FOR UPDATE',
-      [input.ratePlanId,input.startDate,input.endDate]);
-    if(input.expectedRevision!==undefined && current.some(row=>Number(row.revision)!==input.expectedRevision))
-      return fail(409,'REVISION_CONFLICT','Some nightly rates changed. Refresh the calendar and try again.');
+    if(input.expectedRevision!==plan.revision)
+      return fail(409,'REVISION_CONFLICT','This rate plan changed. Refresh the calendar before changing nightly prices.');
     for(const date of dates){
       await db.query(
         `INSERT INTO seven.stay_nightly_rates(rate_plan_id,room_type_id,service_date,amount_minor,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights)
@@ -194,6 +192,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
            revision=seven.stay_nightly_rates.revision+1,updated_at=now()`,
         [input.ratePlanId,plan.room_type_id,date,input.amountMinor,input.closedToArrival,input.closedToDeparture,input.minStayNights ?? null,input.maxStayNights ?? null]);
     }
+    await db.query('UPDATE seven.stay_rate_plans SET revision=revision+1,updated_at=now() WHERE rate_plan_id=$1',[input.ratePlanId]);
     await S.audit(db,user,businessId,'stay_nightly_rates.bulk_updated',input.ratePlanId,`Updated ${dates.length} nights from ${input.startDate} to ${input.endDate}.`);
     return {ratePlanId:input.ratePlanId,updatedDates:dates};
   }));
