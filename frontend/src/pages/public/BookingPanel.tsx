@@ -12,6 +12,8 @@ import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
 
 type StayPlanChoice = {
+  offeringId: string;
+  offeringTitle: string;
   roomType: { id: string; maxOccupancy: number; bedConfiguration: string };
   ratePlan: {
     id: string; code: string; name: string; currencyCode: string; mealPlan: string;
@@ -103,7 +105,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
   });
   const selectedRoomPlans = stayPlans.filter((plan) => plan.roomType.id === selectedRoomTypeId);
   const selectedPlan = stayPlans.find((plan) => plan.ratePlan.id === selectedRatePlanId) ?? null;
-  const roomTypes = Array.from(new Map(stayPlans.map((plan) => [plan.roomType.id, plan.roomType] as const)).values());
+  const roomTypes = Array.from(new Map(stayPlans.map((plan) => [plan.roomType.id, { ...plan.roomType, offeringId: plan.offeringId, offeringTitle: plan.offeringTitle }] as const)).values());
   useEffect(() => {
     if (!isStay || offering.isSample || !startDate || !endDate || endDate <= startDate) {
       setStayPlans([]);
@@ -118,8 +120,13 @@ export function BookingPanel({ offering }: { offering: Offering }) {
     void api<StayRatePlanResponse>(`/offerings/${encodeURIComponent(offering.id)}/stay-rate-plans?${params}`, { signal: controller.signal })
       .then((result) => {
         setStayPlans(result.plans);
-        setSelectedRoomTypeId((current) => result.plans.some((plan) => plan.roomType.id === current) ? current : (result.plans[0]?.roomType.id ?? ''));
-        setSelectedRatePlanId((current) => result.plans.some((plan) => plan.ratePlan.id === current) ? current : (result.plans.find((plan) => plan.available)?.ratePlan.id ?? result.plans[0]?.ratePlan.id ?? ''));
+        const preferredRoom = result.plans.find((plan) => plan.roomType.id === selectedRoomTypeId && plan.available)
+          ?? result.plans.find((plan) => plan.available)
+          ?? result.plans[0];
+        const preferredPlan = result.plans.find((plan) => plan.roomType.id === preferredRoom?.roomType.id && plan.available)
+          ?? result.plans.find((plan) => plan.roomType.id === preferredRoom?.roomType.id);
+        setSelectedRoomTypeId(preferredRoom?.roomType.id ?? '');
+        setSelectedRatePlanId(preferredPlan?.ratePlan.id ?? '');
       })
       .catch((cause) => {
         if (!controller.signal.aborted) {
@@ -154,7 +161,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
         ? await api<StayQuoteResponse>('/stay-quotes', {
             method: 'POST',
             body: {
-              offeringId: offering.id,
+              offeringId: selectedPlan?.offeringId ?? offering.id,
               roomTypeId: selectedRoomTypeId,
               ratePlanId: selectedRatePlanId,
               checkInDate: startDate,
@@ -318,7 +325,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
                     clearQuote();
                   }}>
                   <option value="">Choose a room category</option>
-                  {roomTypes.map((room) => <option key={room.id} value={room.id}>{room.bedConfiguration || 'Room'} · up to {room.maxOccupancy} guests</option>)}
+                  {roomTypes.map((room) => <option key={room.id} value={room.id}>{room.offeringTitle} · {room.bedConfiguration || 'Room'} · up to {room.maxOccupancy} guests</option>)}
                 </select>
               </Field>
               <Field label="Rate plan">
