@@ -15,7 +15,7 @@ interface Context {
 }
 
 const uuid = z.uuid();
-const localDate = z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/);
+const localDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const stayQuoteInput = z.strictObject({
   offeringId: uuid,
   roomTypeId: uuid,
@@ -51,7 +51,7 @@ function isVerified(details: Record<string, unknown>, production: boolean): bool
 
 export function mountStayBooking(
   app: Express,
-  { pool, actor, mutate }: Context,
+  { pool, mutate }: Context,
   production: boolean,
 ): void {
   app.get('/api/offerings/:id/stay-rate-plans', async (req, res) => {
