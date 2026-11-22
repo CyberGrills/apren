@@ -10,6 +10,32 @@ import { recordRecoveryEvent, recoverySessionId } from '../../lib/recoveryTeleme
 import { addDays, friendlyDate, localDateNow } from './PublicShell.tsx';
 import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 
+
+type StayPlanChoice = {
+  roomType: { id: string; maxOccupancy: number; bedConfiguration: string };
+  ratePlan: {
+    id: string; code: string; name: string; currencyCode: string; mealPlan: string;
+    refundable: boolean | null; cancellationPolicy: string; revision: number;
+  };
+  nightlyRates: Array<{ date: string; amountMinor: string }>;
+  stayTotalPerRoomMinor: string;
+  rooms: number;
+  totalMinor: string;
+  available: boolean;
+  unavailableReason: string | null;
+};
+type StayRatePlanResponse = {
+  offeringId: string; checkInDate: string; checkOutDate: string; nights: number;
+  plans: StayPlanChoice[];
+};
+type StayQuoteResponse = {
+  quote: Quote;
+  roomType: StayPlanChoice['roomType'];
+  ratePlan: StayPlanChoice['ratePlan'];
+  nightlyBreakdown: Array<{ date: string; amountMinor: string; quantity: number; lineTotalMinor: string }>;
+  cancellationPolicySnapshot: { refundable: boolean | null; policy: string; cancellationHours: number };
+};
+
 export function BookingPanel({ offering }: { offering: Offering }) {
   const language = useSevenLanguage();
   const pcm = language === 'pcm';
@@ -45,6 +71,12 @@ export function BookingPanel({ offering }: { offering: Offering }) {
     : '1';
   const [quantity, setQuantity] = useState(initialQuantity);
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [stayPlans, setStayPlans] = useState<StayPlanChoice[]>([]);
+  const [selectedRoomTypeId, setSelectedRoomTypeId] = useState('');
+  const [selectedRatePlanId, setSelectedRatePlanId] = useState('');
+  const [ratePlansLoading, setRatePlansLoading] = useState(false);
+  const [ratePlansError, setRatePlansError] = useState<string | null>(null);
+  const [stayQuoteSnapshot, setStayQuoteSnapshot] = useState<StayQuoteResponse | null>(null);
   const [held, setHeld] = useState<Reservation | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [policyAccepted, setPolicyAccepted] = useState(false);
@@ -69,8 +101,38 @@ export function BookingPanel({ offering }: { offering: Offering }) {
     reserve: crypto.randomUUID(),
     checkout: crypto.randomUUID(),
   });
+  const selectedRoomPlans = stayPlans.filter((plan) => plan.roomType.id === selectedRoomTypeId);
+  const selectedPlan = stayPlans.find((plan) => plan.ratePlan.id === selectedRatePlanId) ?? null;
+  const roomTypes = Array.from(new Map(stayPlans.map((plan) => [plan.roomType.id, plan.roomType] as const)).values());
+  useEffect(() => {
+    if (!isStay || offering.isSample || !startDate || !endDate || endDate <= startDate) {
+      setStayPlans([]);
+      setSelectedRoomTypeId('');
+      setSelectedRatePlanId('');
+      return;
+    }
+    const controller = new AbortController();
+    const params = new URLSearchParams({ checkInDate: startDate, checkOutDate: endDate, rooms: quantity || '1' });
+    setRatePlansLoading(true);
+    setRatePlansError(null);
+    void api<StayRatePlanResponse>(`/offerings/${encodeURIComponent(offering.id)}/stay-rate-plans?${params}`, { signal: controller.signal })
+      .then((result) => {
+        setStayPlans(result.plans);
+        setSelectedRoomTypeId((current) => result.plans.some((plan) => plan.roomType.id === current) ? current : (result.plans[0]?.roomType.id ?? ''));
+        setSelectedRatePlanId((current) => result.plans.some((plan) => plan.ratePlan.id === current) ? current : (result.plans.find((plan) => plan.available)?.ratePlan.id ?? result.plans[0]?.ratePlan.id ?? ''));
+      })
+      .catch((cause) => {
+        if (!controller.signal.aborted) {
+          setStayPlans([]);
+          setRatePlansError(cause instanceof Error ? cause.message : 'Room rates are temporarily unavailable.');
+        }
+      })
+      .finally(() => { if (!controller.signal.aborted) setRatePlansLoading(false); });
+    return () => controller.abort();
+  }, [isStay, offering.id, offering.isSample, startDate, endDate, quantity]);
   function clearQuote() {
     setQuote(null);
+    setStayQuoteSnapshot(null);
     setPolicyAccepted(false);
     setError(null);
     keys.current = {
@@ -88,28 +150,37 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       void recordRecoveryEvent({ offeringId: offering.id, event: 'BOOKING_START' });
     }
     try {
-      const body = {
-        offeringId: offering.id,
-        ...(isStay ? { recoverySessionId: recoverySessionId() } : {}),
-        startDate,
-        quantity: Number(quantity),
-        ...(isStay ? { endDate } : { windowId }),
-      };
-      const nextQuote = await api<Quote>('/quotes', {
-        method: 'POST',
-        body,
-        idempotencyKey: quote ? crypto.randomUUID() : keys.current.quote,
-      });
+      const nextQuote = isStay
+        ? await api<StayQuoteResponse>('/stay-quotes', {
+            method: 'POST',
+            body: {
+              offeringId: offering.id,
+              roomTypeId: selectedRoomTypeId,
+              ratePlanId: selectedRatePlanId,
+              checkInDate: startDate,
+              checkOutDate: endDate,
+              rooms: Number(quantity),
+              recoverySessionId: recoverySessionId(),
+            },
+            idempotencyKey: quote ? crypto.randomUUID() : keys.current.quote,
+          })
+        : { quote: await api<Quote>('/quotes', {
+            method: 'POST',
+            body: { offeringId: offering.id, startDate, quantity: Number(quantity), windowId },
+            idempotencyKey: quote ? crypto.randomUUID() : keys.current.quote,
+          }) };
+      const quoteResult = nextQuote.quote;
       keys.current.reserve = crypto.randomUUID();
       keys.current.checkout = crypto.randomUUID();
-      setQuote(nextQuote);
+      setQuote(quoteResult);
+      setStayQuoteSnapshot(isStay ? nextQuote as StayQuoteResponse : null);
       setPolicyAccepted(false);
       if (isStay) {
         recoveryCheckoutViewed.current = true;
         void recordRecoveryEvent({
           offeringId: offering.id,
           event: 'CHECKOUT_VIEW',
-          amountMinor: nextQuote.price.totalMinor,
+          amountMinor: quoteResult.price.totalMinor,
         });
       }
     } catch (cause) {
@@ -169,8 +240,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       <div className="booking-panel-top">
         <span className="public-eyebrow">{pcm ? 'Make your plan' : 'Make a plan'}</span>
         <h2 id="booking-title">
-          <Money minor={offering.priceMinor} currency={offering.currency} />
-          <small>{offering.unitLabel}</small>
+          {isStay ? 'Choose your room and rate' : <><Money minor={offering.priceMinor} currency={offering.currency} /><small>{offering.unitLabel}</small></>}
         </h2>
       </div>
       <form onSubmit={getQuote}>
@@ -235,6 +305,38 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               </select>
             </Field>
           )}
+          {isStay && (
+            <>
+              <Field label="Room category">
+                <select className="field-input" value={selectedRoomTypeId} required disabled={busy || ratePlansLoading || roomTypes.length === 0}
+                  onChange={(event) => {
+                    const nextRoom = event.target.value;
+                    setSelectedRoomTypeId(nextRoom);
+                    const firstPlan = stayPlans.find((plan) => plan.roomType.id === nextRoom && plan.available)
+                      ?? stayPlans.find((plan) => plan.roomType.id === nextRoom);
+                    setSelectedRatePlanId(firstPlan?.ratePlan.id ?? '');
+                    clearQuote();
+                  }}>
+                  <option value="">Choose a room category</option>
+                  {roomTypes.map((room) => <option key={room.id} value={room.id}>{room.bedConfiguration || 'Room'} · up to {room.maxOccupancy} guests</option>)}
+                </select>
+              </Field>
+              <Field label="Rate plan">
+                <select className="field-input" value={selectedRatePlanId} required disabled={busy || ratePlansLoading || selectedRoomPlans.length === 0}
+                  onChange={(event) => { setSelectedRatePlanId(event.target.value); clearQuote(); }}>
+                  <option value="">Choose a rate plan</option>
+                  {selectedRoomPlans.map((plan) => <option key={plan.ratePlan.id} value={plan.ratePlan.id} disabled={!plan.available}>
+                    {plan.ratePlan.name} · {plan.ratePlan.mealPlan}{plan.ratePlan.refundable === true ? ' · Refundable' : ''}
+                    {!plan.available ? ' · Not available for these dates' : ''}
+                  </option>)}
+                </select>
+              </Field>
+              {ratePlansLoading && <p className="public-small" role="status">Checking room rates and availability…</p>}
+              {ratePlansError && <p className="public-small" role="alert">{ratePlansError}</p>}
+              {!ratePlansLoading && !ratePlansError && stayPlans.length === 0 && <p className="public-small">No active room categories and rate plans are available for these dates.</p>}
+              {selectedPlan && <p className="public-small">{selectedPlan.ratePlan.name}: {selectedPlan.ratePlan.mealPlan}. {selectedPlan.roomType.bedConfiguration}. {selectedPlan.available ? 'Available for all selected nights.' : 'This plan cannot currently be booked for all selected nights.'}</p>}
+            </>
+          )}
           <Field
             label={isStay ? (pcm ? 'How many rooms?' : 'Rooms') : (pcm ? 'How many people?' : 'Guests')}
             hint={pcm ? `You fit book up to ${Math.min(100, offering.capacity)} for one reservation.` : `Up to ${Math.min(100, offering.capacity)} per reservation.`}
@@ -265,7 +367,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
             <button
               className="btn btn-secondary booking-cta"
               type="submit"
-              disabled={busy || (!isStay && !windowId)}
+              disabled={busy || (!isStay && !windowId) || (isStay && (ratePlansLoading || !selectedPlan?.available))}
             >
               {busy ? (pcm ? 'We dey check am…' : 'Checking…') : quote ? (pcm ? 'Check price again' : 'Check price again') : (pcm ? 'See the full price' : 'See the full price')}
             </button>
@@ -275,6 +377,14 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       {quote && (
         <div className="quote-breakdown" aria-live="polite">
           <p className="public-eyebrow">{pcm ? 'Wetin you go pay' : 'Your price'}</p>
+          {stayQuoteSnapshot && <p className="public-small"><strong>{stayQuoteSnapshot.roomType.bedConfiguration || 'Room'}</strong> · {stayQuoteSnapshot.ratePlan.name} · {stayQuoteSnapshot.ratePlan.mealPlan}</p>}
+          {stayQuoteSnapshot?.nightlyBreakdown.map((night) => <p className="public-small" key={night.date}>{friendlyDate(night.date)} · <Money minor={night.amountMinor} /> × {night.quantity}</p>)}
+          {stayQuoteSnapshot && (
+            <section className="booking-rate-policy" aria-label="Selected rate plan terms">
+              <p className="public-small"><strong>{stayQuoteSnapshot.cancellationPolicySnapshot.refundable === true ? 'Refundable rate' : stayQuoteSnapshot.cancellationPolicySnapshot.refundable === false ? 'Non-refundable rate' : 'Refund terms not specified'}</strong></p>
+              {stayQuoteSnapshot.cancellationPolicySnapshot.policy && <p className="public-small">{stayQuoteSnapshot.cancellationPolicySnapshot.policy}</p>}
+            </section>
+          )}
           <dl>
             <div>
               <dt>
@@ -360,9 +470,9 @@ export function BookingPanel({ offering }: { offering: Offering }) {
         <LockKeyhole size={15} aria-hidden="true" /> {pcm ? 'We dey verify payment securely.' : 'Payments are checked on the server.'}
       </p>
       <p className="public-small">
-        {pcm
+        {stayQuoteSnapshot?.cancellationPolicySnapshot.policy || (pcm
           ? `Cancellation rule: cancel at least ${offering.cancellationHours} hours before the booking starts. The business own policy still apply.`
-          : `Cancellation rules: ${offering.cancellationHours} hours before the booking starts. The business's policy applies.`}
+          : `Cancellation rules: ${offering.cancellationHours} hours before the booking starts. The business's policy applies.`)}
       </p>
       {paymentOpen && held && (
         <PaymentMethodDialog
