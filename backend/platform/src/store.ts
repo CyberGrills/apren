@@ -429,6 +429,10 @@ export async function reservationRow(db: Connection, r: QueryResultRow): Promise
     createdAt: iso(r.created_at),
     fulfilledAt: r.fulfilled_at ? iso(r.fulfilled_at) : null,
     paymentId: r.payment_id ?? null,
+    roomType: r.terms_snapshot.roomType ?? null,
+    ratePlan: r.terms_snapshot.ratePlan ?? null,
+    nightlyBreakdown: Array.isArray(r.terms_snapshot.nightlyBreakdown) ? r.terms_snapshot.nightlyBreakdown : [],
+    cancellationPolicySnapshot: r.terms_snapshot.cancellationPolicySnapshot ?? null,
   };
 }
 export async function paymentProjection(db: Connection, id: string): Promise<Payment | null> {
