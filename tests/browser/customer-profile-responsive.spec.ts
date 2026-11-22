@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { installApiMocks } from './mocks.ts';
 
-const widths = [320, 375, 390, 520, 768, 820, 1024, 1440];
+const widths = [320, 375, 390, 520, 768, 820, 860, 861, 900, 1024, 1440];
 
 for (const width of widths) {
   test(`customer profile fits a ${width}px viewport`, async ({ page }) => {
@@ -38,6 +38,10 @@ for (const width of widths) {
     expect(dimensions.profile).not.toBeNull();
     expect(dimensions.editor).not.toBeNull();
     expect(dimensions.account).not.toBeNull();
+    expect(dimensions.editor!.left).toBeGreaterThanOrEqual(dimensions.profile!.left - 1);
+    expect(dimensions.editor!.right).toBeLessThanOrEqual(dimensions.profile!.right + 1);
+    expect(dimensions.account!.left).toBeGreaterThanOrEqual(dimensions.profile!.left - 1);
+    expect(dimensions.account!.right).toBeLessThanOrEqual(dimensions.profile!.right + 1);
     expect(dimensions.cityInput).not.toBeNull();
     expect(dimensions.dateInput).not.toBeNull();
     expect(dimensions.dateField).not.toBeNull();
@@ -48,11 +52,14 @@ for (const width of widths) {
       expect(bounds!.controlRight).toBeLessThanOrEqual(bounds!.fieldRight + 1);
     }
     expect(dimensions.dateInput!.width).toBeCloseTo(dimensions.cityInput!.width, 0);
-    expect(dimensions.dateInput!.height).toBeCloseTo(dimensions.cityInput!.height, 0);
+    // Native date controls vary slightly by browser; assert a usable touch target,
+    // while the field-boundary checks above catch actual clipping or overlap.
+    expect(dimensions.dateInput!.height).toBeGreaterThanOrEqual(44);
+    expect(dimensions.dateInput!.height).toBeLessThanOrEqual(52);
     if (width <= 860) {
       expect(dimensions.account!.top).toBeGreaterThanOrEqual(dimensions.editor!.bottom - 1);
     } else {
-      expect(dimensions.account!.left).toBeGreaterThan(dimensions.editor!.left);
+      expect(dimensions.account!.left).toBeGreaterThanOrEqual(dimensions.editor!.right - 1);
     }
   });
 }
@@ -80,19 +87,21 @@ test('customer profile exposes all personal and stay preference fields', async (
 });
 
 
-test('customer can upload and replace a persistent profile picture', async ({ page }) => {
-  await installApiMocks(page, 'CUSTOMER');
-  await page.route('https://storage.test/avatar', route => route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-upsert' }, body: 'stored' }));
-  await page.goto('/app/profile');
+for (const role of ['CUSTOMER', 'BUSINESS_OWNER', 'RECEPTION', 'ADMIN'] as const) {
+  test(`${role.toLowerCase()} can upload and replace a persistent profile picture`, async ({ page }) => {
+    await installApiMocks(page, role);
+    await page.route('https://storage.test/avatar**', route => route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'PUT, OPTIONS', 'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-upsert' }, body: 'stored' }));
+    await page.goto('/app/profile');
 
-  const upload = page.getByRole('button', { name: 'Upload photo' });
-  await expect(upload).toBeVisible();
-  await page.getByLabel('Choose profile picture').setInputFiles({
-    name: 'profile.png',
-    mimeType: 'image/png',
-    buffer: Buffer.from('test-image-content'),
+    const upload = page.getByRole('button', { name: 'Upload photo' });
+    await expect(upload).toBeVisible();
+    await page.getByLabel('Choose profile picture').setInputFiles({
+      name: 'profile.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('test-image-content'),
+    });
+
+    await expect(page.getByRole('button', { name: 'Change photo' })).toBeVisible();
+    await expect(page.locator('.customer-profile-avatar-image')).toHaveAttribute('src', 'https://storage.test/avatar-view');
   });
-
-  await expect(page.getByRole('button', { name: 'Change photo' })).toBeVisible();
-  await expect(page.locator('.customer-profile-avatar-image')).toHaveAttribute('src', 'https://storage.test/avatar-view');
-});
+}

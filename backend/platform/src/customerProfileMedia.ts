@@ -11,8 +11,9 @@ const MAX_BYTES = 5 * 1024 * 1024;
 const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const;
 type Context = { pool: Pool; actor: (res: Response) => SessionUser };
 
-function customer(actor: SessionUser): string {
-  if (actor.role !== 'CUSTOMER') return fail(403, 'CUSTOMER_REQUIRED', 'Customer account access is required.');
+function authenticatedUser(actor: SessionUser): string {
+  // The account profile is shared across 7even workspaces. Every signed-in
+  // account may manage its own avatar; ownership is always scoped to actor.id.
   return actor.id;
 }
 const encodedPath = (path: string) => path.split('/').map(encodeURIComponent).join('/');
@@ -42,12 +43,21 @@ async function signedAvatar(storagePath: string): Promise<string> {
   const signed = await storageRequest('/object/sign/' + BUCKET + '/' + encodedPath(storagePath), 'POST', { expiresIn: 3600 });
   if (typeof signed.signedURL !== 'string') return fail(502, 'SIGNED_URL_FAILED', 'Profile photo could not be displayed.');
   const base = process.env.SUPABASE_URL!.replace(/\/$/, '');
-  return signed.signedURL.startsWith('http') ? signed.signedURL : base + '/storage/v1' + signed.signedURL;
+  const candidate = signed.signedURL.startsWith('http')
+    ? signed.signedURL
+    : signed.signedURL.startsWith('/storage/v1/')
+      ? base + signed.signedURL
+      : base + '/storage/v1' + signed.signedURL;
+  const imageUrl = new URL(candidate);
+  if (imageUrl.origin !== new URL(base).origin) {
+    return fail(502, 'SIGNED_URL_FAILED', 'Profile photo could not be displayed.');
+  }
+  return imageUrl.toString();
 }
 
 export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context): void {
   app.get('/api/me/avatar', async (_req, res) => {
-    const userId = customer(actor(res));
+    const userId = authenticatedUser(actor(res));
     const current = await one(pool,
       "SELECT storage_path FROM seven.customer_profile_media WHERE user_id=$1 AND status='CURRENT'",
       [userId],
@@ -56,7 +66,7 @@ export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context
   });
 
   app.post('/api/me/avatar/upload-intents', async (req, res) => {
-    const userId = customer(actor(res));
+    const userId = authenticatedUser(actor(res));
     const input = z.strictObject({
       filename: z.string().trim().min(1).max(255),
       mimeType: z.enum(imageTypes),
@@ -77,7 +87,9 @@ export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context
     );
     let signed: Record<string, unknown>;
     try {
-      signed = await storageRequest('/object/upload/sign/' + BUCKET + '/' + encodedPath(path), 'POST', { upsert: false });
+      // Supabase's signed-upload endpoint returns a URL containing the token
+      // in its query string. The token is not an Authorization bearer token.
+      signed = await storageRequest('/object/upload/sign/' + BUCKET + '/' + encodedPath(path), 'POST');
     } catch (error) {
       await pool.query(
         "UPDATE seven.customer_profile_media SET status='REMOVED',updated_at=now() WHERE media_id=$1 AND user_id=$2 AND status='PENDING_UPLOAD'",
@@ -85,16 +97,30 @@ export function mountCustomerProfileMedia(app: Express, { pool, actor }: Context
       );
       throw error;
     }
-    const signedURL = typeof signed.signedURL === 'string' ? signed.signedURL : typeof signed.url === 'string' ? signed.url : null;
-    const token = typeof signed.token === 'string' ? signed.token : null;
-    if (!signedURL || !token) return fail(502, 'UPLOAD_URL_FAILED', 'Secure profile photo upload could not be initialized.');
+    const signedURL = typeof signed.signedURL === 'string'
+      ? signed.signedURL
+      : typeof signed.signedUrl === 'string'
+        ? signed.signedUrl
+        : typeof signed.url === 'string'
+          ? signed.url
+          : null;
+    if (!signedURL) return fail(502, 'UPLOAD_URL_FAILED', 'Secure profile photo upload could not be initialized.');
     const base = process.env.SUPABASE_URL!.replace(/\/$/, '');
-    const uploadUrl = signedURL.startsWith('http') ? signedURL : base + '/storage/v1' + signedURL;
-    res.status(201).json({ data: { mediaId, uploadUrl, token, expiresIn: 900, requiredHeaders: { 'Content-Type': input.mimeType } } });
+    const storageOrigin = new URL(base).origin;
+    const relativePath = signedURL.replace(/^\/(?:storage\/v1\/)?/, '');
+    const upload = new URL(
+      signedURL.startsWith('http') ? signedURL : base + '/storage/v1/' + relativePath,
+    );
+    if (upload.origin !== storageOrigin) return fail(502, 'UPLOAD_URL_FAILED', 'Secure profile photo upload could not be initialized.');
+    const token = typeof signed.token === 'string' ? signed.token : upload.searchParams.get('token');
+    if (!token) return fail(502, 'UPLOAD_URL_FAILED', 'Secure profile photo upload could not be initialized.');
+    upload.searchParams.set('token', token);
+    const uploadUrl = upload.toString();
+    res.status(201).json({ data: { mediaId, uploadUrl, expiresIn: 900, requiredHeaders: { 'Content-Type': input.mimeType } } });
   });
 
   app.post('/api/me/avatar/:id/complete', async (req, res) => {
-    const userId = customer(actor(res));
+    const userId = authenticatedUser(actor(res));
     const mediaId = z.uuid().parse(req.params.id);
     const media = await one(pool,
       "SELECT media_id,storage_path,mime_type,byte_size,status,upload_expires_at FROM seven.customer_profile_media WHERE media_id=$1 AND user_id=$2",

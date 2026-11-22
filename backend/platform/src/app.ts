@@ -30,7 +30,7 @@ import * as B from './benefits.ts';
 import { mountOperations } from './operations.ts';
 import { mountBookingRecovery } from './bookingRecovery.ts';
 import { mountDemoMarketplace } from './demoMarketplace.ts';
-import { schemaIsReady } from './schemaReadiness.ts';
+import { customerProfileMediaSchemaIsReady, isCustomerProfileMediaRoute, schemaIsReady } from './schemaReadiness.ts';
 import { mountAccountRoutes, rateLimitAiSearch, rateLimitLogin } from './accounts.ts';
 import type { RecoveryMailer } from './accounts.ts';
 import { configuredRecoveryMailer } from './recoveryMailer.ts';
@@ -2232,6 +2232,25 @@ export function createApp(options: AppOptions = {}) {
   mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
+  app.use(async (req, res, next) => {
+    if (!isCustomerProfileMediaRoute(req.path)) return next();
+    try {
+      actorFor(res);
+    } catch (error) {
+      return next(error);
+    }
+    try {
+      if (await customerProfileMediaSchemaIsReady(pool)) return next();
+    } catch {
+      // Treat missing or incomplete media schema as unavailable; do not leak database errors.
+    }
+    return res.status(503).json({
+      error: {
+        code: 'PROFILE_MEDIA_SCHEMA_NOT_READY',
+        message: 'Profile photos are temporarily unavailable while secure storage is being prepared.',
+      },
+    });
+  });
   mountCustomerProfileMedia(app, { pool, actor: actorFor });
   mountCreatorArtworks(app, { pool, actor: actorFor });
   mountCreatorArtworkRights(app, { pool, actor: actorFor });

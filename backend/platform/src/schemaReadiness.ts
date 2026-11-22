@@ -63,3 +63,71 @@ export async function schemaIsReady(db: Pick<Pool, 'query'>, environment = 'deve
     (environment === 'production' || row?.demo_marketplace_schema_present === true)
   );
 }
+
+
+/** Migration that creates the private customer profile photo table and bucket. */
+export const CUSTOMER_PROFILE_MEDIA_MIGRATION = '033_customer_profile_media.sql';
+
+interface CustomerProfileMediaSchemaReadinessRow extends QueryResultRow {
+  migration_applied: boolean;
+  table_ready: boolean;
+  app_policy_ready: boolean;
+  readonly_policy_ready: boolean;
+}
+
+/**
+ * Avatar endpoints are optional until the private media table and its exact
+ * least-privilege policies are installed. This prevents a missing migration
+ * from becoming an unhandled PostgreSQL relation error after an app deploy.
+ */
+export async function customerProfileMediaSchemaIsReady(
+  db: Pick<Pool, 'query'>,
+): Promise<boolean> {
+  const result = await db.query<CustomerProfileMediaSchemaReadinessRow>(
+    `SELECT
+       EXISTS (
+         SELECT 1 FROM seven.migrations WHERE migration_name = $1
+       ) AS migration_applied,
+       EXISTS (
+         SELECT 1
+         FROM pg_class c
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+         WHERE n.nspname = 'seven'
+           AND c.relname = 'customer_profile_media'
+           AND c.relkind = 'r'
+           AND c.relrowsecurity
+       ) AS table_ready,
+       EXISTS (
+         SELECT 1 FROM pg_policies
+         WHERE schemaname = 'seven'
+           AND tablename = 'customer_profile_media'
+           AND policyname = 'seven_app_server_access'
+           AND cmd = 'ALL'
+           AND permissive = 'PERMISSIVE'
+           AND roles = ARRAY['seven_app']::name[]
+           AND lower(btrim(coalesce(qual, ''))) = 'true'
+           AND lower(btrim(coalesce(with_check, ''))) = 'true'
+       ) AS app_policy_ready,
+       EXISTS (
+         SELECT 1 FROM pg_policies
+         WHERE schemaname = 'seven'
+           AND tablename = 'customer_profile_media'
+           AND policyname = 'seven_readonly_select_access'
+           AND cmd = 'SELECT'
+           AND permissive = 'PERMISSIVE'
+           AND roles = ARRAY['seven_readonly']::name[]
+           AND lower(btrim(coalesce(qual, ''))) = 'false'
+           AND with_check IS NULL
+       ) AS readonly_policy_ready`,
+    [CUSTOMER_PROFILE_MEDIA_MIGRATION],
+  );
+  const row = result.rows[0];
+  return row?.migration_applied === true
+    && row?.table_ready === true
+    && row?.app_policy_ready === true
+    && row?.readonly_policy_ready === true;
+}
+
+export function isCustomerProfileMediaRoute(pathname: string): boolean {
+  return pathname === '/api/me/avatar' || pathname.startsWith('/api/me/avatar/');
+}
