@@ -175,7 +175,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     const plan=await one(db,
       `SELECT rp.rate_plan_id,rp.room_type_id,rp.revision,rp.is_active,o.business_id
          FROM seven.stay_rate_plans rp JOIN seven.stay_room_types rt USING(room_type_id)
-         JOIN seven.offerings o USING(offering_id)
+         JOIN seven.offerings o ON o.offering_id=rt.offering_id
         WHERE rp.rate_plan_id=$1 AND o.business_id=$2 FOR UPDATE OF rp`,
       [input.ratePlanId,businessId]);
     if(!plan || !plan.is_active) return fail(404,'RATE_PLAN_NOT_FOUND','Active rate plan not found.');
