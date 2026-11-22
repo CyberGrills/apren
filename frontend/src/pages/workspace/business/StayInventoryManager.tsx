@@ -88,7 +88,9 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
     setBusy(true);setError(null);setNotice(null);
     try {
       if(kind==='room') {
-        await api('/business/stay/rooms',{method:'POST',idempotencyKey:crypto.randomUUID(),body:{offeringId,maxOccupancy:Number(get('maxOccupancy')),bedConfiguration:get('bedConfiguration'),totalRooms:get('totalRooms')?Number(get('totalRooms')):null}});
+        const roomBody={maxOccupancy:Number(get('maxOccupancy')),bedConfiguration:get('bedConfiguration'),totalRooms:get('totalRooms')?Number(get('totalRooms')):null};
+        if(room) await api(`/business/stay/rooms/${room.room_type_id}`,{method:'PATCH',idempotencyKey:crypto.randomUUID(),body:{...roomBody,expectedRevision:room.room_revision}});
+        else await api('/business/stay/rooms',{method:'POST',idempotencyKey:crypto.randomUUID(),body:{offeringId,...roomBody}});
         setShowRoomForm(false);setNotice('Room category saved.');
       } else if(kind==='rate') {
         if(!room) throw new Error('Create the room category first.');
@@ -122,7 +124,7 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
           <div><span>Rate plans</span><strong>{plans.length}</strong><small>{plans.length?'Configured':'Add a rate plan'}</small></div>
         </div>
         <div className="stay-inventory-actions">
-          <button type="button" className="btn btn-secondary btn-small" onClick={()=>setShowRateForm(true)}>Add rate plan</button>
+          <button type="button" className="btn btn-secondary btn-small" onClick={()=>setShowRoomForm(true)}>Edit room details</button><button type="button" className="btn btn-secondary btn-small" onClick={()=>setShowRateForm(true)}>Add rate plan</button>
           <button type="button" className="btn btn-secondary btn-small" onClick={()=>setShowPriceForm(true)} disabled={!plans.length}>Set nightly prices</button>
           <button type="button" className="btn btn-primary btn-small" onClick={()=>setShowCapacityForm(true)}>Update availability</button>
         </div>
@@ -139,7 +141,7 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
         </div>}
       </>}
       {showRoomForm && <form className="stay-inventory-form" onSubmit={event=>void submit(event,'room')}>
-        <h4>Room category details</h4><label>Maximum guests<input name="maxOccupancy" type="number" min="1" max="30" defaultValue="2" required /></label><label>Bed configuration<input name="bedConfiguration" maxLength={180} placeholder="1 king bed" /></label><label>Total physical rooms, if verified<input name="totalRooms" type="number" min="1" max="10000" /></label><button className="btn btn-primary btn-small" disabled={busy}>{busy?'Saving…':'Save room category'}</button>
+        <h4>Room category details</h4><label>Maximum guests<input name="maxOccupancy" type="number" min="1" max="30" defaultValue={room?.max_occupancy ?? 2} required /></label><label>Bed configuration<input name="bedConfiguration" maxLength={180} placeholder="1 king bed" defaultValue={room?.bed_configuration ?? ''} /></label><label>Total physical rooms, if verified<input name="totalRooms" type="number" min="1" max="10000" defaultValue={room?.total_rooms ?? ''} /></label><button className="btn btn-primary btn-small" disabled={busy}>{busy?'Saving…':'Save room category'}</button>
       </form>}
       {showRateForm && <form className="stay-inventory-form" onSubmit={event=>void submit(event,'rate')}>
         <h4>New rate plan</h4><label>Plan name<input name="name" required minLength={2} maxLength={120} placeholder="Flexible room only" /></label><label>Plan code<input name="code" required minLength={2} maxLength={40} placeholder="FLEX" /></label><label>Currency<select name="currencyCode" defaultValue="NGN"><option value="NGN">NGN · Naira</option></select></label><label>Meal plan<select name="mealPlan" defaultValue="ROOM_ONLY"><option value="ROOM_ONLY">Room only</option><option value="BREAKFAST">Breakfast included</option><option value="HALF_BOARD">Half board</option><option value="FULL_BOARD">Full board</option></select></label><label>Refundability<select name="refundable" defaultValue="unknown"><option value="unknown">Not specified</option><option value="yes">Refundable</option><option value="no">Non-refundable</option></select></label><label>Cancellation policy<textarea name="cancellationPolicy" maxLength={4000} /></label><button className="btn btn-primary btn-small" disabled={busy}>{busy?'Saving…':'Save rate plan'}</button>
