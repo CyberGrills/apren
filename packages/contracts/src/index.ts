@@ -374,6 +374,7 @@ export interface Quote {
 export interface StayReservationTerms {
   roomType: {
     id: string;
+    name?: string;
     maxOccupancy: number;
     bedConfiguration: string;
   };
