@@ -272,6 +272,8 @@ export function createApp(options: AppOptions = {}) {
           cached.ownerId !== actor.id
         )
           S.requireTenant(actor, cached.businessId);
+        if (req.path.startsWith('/api/business/stay/rooms/') && typeof cached.venueId === 'string')
+          S.requireVenue(actor, cached.venueId);
         if (req.path.includes('/reservations/') && typeof cached.id === 'string') {
           const current = await S.reservationProjection(db, cached.id);
           if (current) {
