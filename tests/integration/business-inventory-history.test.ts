@@ -92,7 +92,7 @@ test('business inventory excludes history before its limit and retains stale upc
     const currentId = randomUUID();
     const freshId = randomUUID();
     const staleId = randomUUID();
-    await pool.query(`INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at)
+    await pool.query(`INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at,inventory_source)
       VALUES ($2,$1,now()-interval '1 hour',now()+interval '1 hour',2,now(),'MANUAL'),
         ($3,$1,now()+interval '1 day',now()+interval '2 days',2,now(),'MANUAL'),
         ($4,$1,now()+interval '3 days',now()+interval '4 days',2,now()-interval '25 hours','MANUAL')`,
