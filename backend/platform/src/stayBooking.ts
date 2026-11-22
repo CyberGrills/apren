@@ -137,7 +137,7 @@ export function mountStayBooking(
            FROM seven.stay_nightly_rates
           WHERE rate_plan_id=$1 AND service_date = ANY($2::date[])
           ORDER BY service_date`,
-        [plan.rate_plan_id, dates],
+        [plan.rate_plan_id, checkInDate, checkOutDate],
       );
       const inventory = await rows<{ service_date: string; capacity: number; allocated_count: number; fresh: boolean }>(
         pool,
@@ -283,9 +283,9 @@ export function mountStayBooking(
       `SELECT service_date::text,amount_minor::text,closed_to_arrival,closed_to_departure,
               min_stay_nights,max_stay_nights
          FROM seven.stay_nightly_rates
-        WHERE rate_plan_id=$1 AND service_date = ANY($2::date[])
+        WHERE rate_plan_id=$1 AND service_date >= $2::date AND service_date < $3::date
         ORDER BY service_date`,
-      [input.ratePlanId, dates],
+      [input.ratePlanId, input.checkInDate, input.checkOutDate],
     );
     if (nightly.length !== dates.length || !dates.every((date, index) => nightly[index]?.service_date === date))
       return fail(409, 'NIGHTLY_RATE_MISSING', 'A price is not available for every night. Ask the hotel to update its rates.');
