@@ -1,9 +1,13 @@
 -- Venue-level amenities and facilities, separate from purchasable offerings.
 -- A facility describes what a property has; a paid/bookable service remains an offering.
+-- The composite venue FK prevents a business from attaching amenities to another tenant's venue.
+ALTER TABLE seven.venues
+  ADD CONSTRAINT venues_venue_business_unique UNIQUE (venue_id, business_id);
+
 CREATE TABLE seven.venue_amenities (
   amenity_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id uuid NOT NULL REFERENCES seven.businesses(business_id) ON DELETE CASCADE,
-  venue_id uuid NOT NULL REFERENCES seven.venues(venue_id) ON DELETE CASCADE,
+  venue_id uuid NOT NULL,
   category text NOT NULL,
   name text NOT NULL,
   description text NOT NULL DEFAULT '',
@@ -20,10 +24,12 @@ CREATE TABLE seven.venue_amenities (
   created_by uuid,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT venue_amenities_venue_business_fk
+    FOREIGN KEY (venue_id, business_id)
+    REFERENCES seven.venues (venue_id, business_id) ON DELETE CASCADE,
   CONSTRAINT venue_amenities_name_length CHECK (char_length(btrim(name)) BETWEEN 2 AND 120),
   CONSTRAINT venue_amenities_description_length CHECK (char_length(description) <= 1200),
-  CONSTRAINT venue_amenities_notes_length CHECK (char_length(guest_notes) <= 1200),
-  CONSTRAINT venue_amenities_business_venue_unique UNIQUE (amenity_id, business_id, venue_id)
+  CONSTRAINT venue_amenities_notes_length CHECK (char_length(guest_notes) <= 1200)
 );
 
 CREATE INDEX venue_amenities_public_listing_idx
