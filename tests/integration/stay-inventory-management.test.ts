@@ -104,7 +104,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       [randomUUID(),offer.id,legacyWindowStart,new Date(Date.parse(legacyWindowStart)+86400000).toISOString()],
     );
     const room=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
-      offeringId:offer.id,maxOccupancy:2,bedConfiguration:'1 king bed',totalRooms:8,
+      offeringId:offer.id,name:'King Room',maxOccupancy:2,bedConfiguration:'1 king bed',totalRooms:8,
     });
     roomTypes.push(room.room_type_id);
     const adoptedLegacyWindow=await one<{room_type_id:string}>(pool,
@@ -140,7 +140,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       startDate,endDate,capacity:5,
     });
     const secondRoom=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
-      offeringId:offer.id,maxOccupancy:2,bedConfiguration:'2 twin beds',totalRooms:3,
+      offeringId:offer.id,name:'Twin Room',maxOccupancy:2,bedConfiguration:'2 twin beds',totalRooms:3,
     });
     roomTypes.push(secondRoom.room_type_id);
     const secondPlan=await owner.request<{rate_plan_id:string}>('/business/stay/rate-plans','POST',{
@@ -155,13 +155,15 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     await owner.request(`/business/stay/rooms/${secondRoom.room_type_id}/availability`,'POST',{
       startDate,endDate,capacity:1,
     });
-    const calendar=await owner.request<{rooms:Array<{room_type_id:string;service_date:string;amount_minor:string;capacity:number;allocated_count:number;inventory_source:string}>}>(
+    const calendar=await owner.request<{rooms:Array<{room_type_id:string;room_name:string;service_date:string;amount_minor:string;capacity:number;allocated_count:number;inventory_source:string}>}>(
       `/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
     assert.equal(calendar.rooms.length,6);
     const firstCategoryRows=calendar.rooms.filter(night=>night.room_type_id===room.room_type_id);
     const secondCategoryRows=calendar.rooms.filter(night=>night.room_type_id===secondRoom.room_type_id);
     assert.equal(firstCategoryRows.length,3);
     assert.equal(secondCategoryRows.length,3);
+    assert.ok(firstCategoryRows.every(night=>night.room_name==='King Room'));
+    assert.ok(secondCategoryRows.every(night=>night.room_name==='Twin Room'));
     assert.deepEqual(firstCategoryRows.map(night=>night.amount_minor).sort(),['10000000','10000000','15000000']);
     assert.ok(firstCategoryRows.every(night=>night.capacity===5 && night.allocated_count===0 && night.inventory_source==='MANUAL'));
     assert.ok(secondCategoryRows.every(night=>night.amount_minor==='20000000' && night.capacity===1 && night.allocated_count===0 && night.inventory_source==='MANUAL'));
@@ -172,8 +174,8 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=1`);
     assert.equal(plans.plans.length,2);
     assert.equal(plans.plans.filter(plan=>plan.available).length,2);
-    assert.ok(plans.plans.some(plan=>plan.roomType.id===room.room_type_id));
-    assert.ok(plans.plans.some(plan=>plan.roomType.id===secondRoom.room_type_id));
+    assert.ok(plans.plans.some(plan=>plan.roomType.id===room.room_type_id && plan.roomType.name==='King Room'));
+    assert.ok(plans.plans.some(plan=>plan.roomType.id===secondRoom.room_type_id && plan.roomType.name==='Twin Room'));
     const largerRequest=await customerA.request<{plans:Array<{roomType:{id:string};available:boolean}>}>(
       `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=2`);
     assert.equal(largerRequest.plans.find(item=>item.roomType.id===room.room_type_id)?.available,true);
