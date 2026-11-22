@@ -341,7 +341,22 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               {ratePlansLoading && <p className="public-small" role="status">Checking room rates and availability…</p>}
               {ratePlansError && <p className="public-small" role="alert">{ratePlansError}</p>}
               {!ratePlansLoading && !ratePlansError && stayPlans.length === 0 && <p className="public-small">No active room categories and rate plans are available for these dates.</p>}
-              {selectedPlan && <p className="public-small">{selectedPlan.ratePlan.name}: {selectedPlan.ratePlan.mealPlan}. {selectedPlan.roomType.bedConfiguration}. {selectedPlan.available ? 'Available for all selected nights.' : 'This plan cannot currently be booked for all selected nights.'}</p>}
+              {selectedPlan && (
+                <section className="booking-rate-policy" aria-label="Selected room rate details">
+                  <p className="public-small">
+                    <strong>{selectedPlan.ratePlan.name}</strong> · {selectedPlan.ratePlan.mealPlan} · {selectedPlan.roomType.bedConfiguration}
+                  </p>
+                  <p className="public-small">
+                    {selectedPlan.ratePlan.refundable === true ? 'Refundable rate' : selectedPlan.ratePlan.refundable === false ? 'Non-refundable rate' : 'Refund terms not specified'}
+                    {selectedPlan.available ? ' · Available for all selected nights.' : ' · Not currently bookable for all selected nights.'}
+                  </p>
+                  {selectedPlan.ratePlan.cancellationPolicy && <p className="public-small">{selectedPlan.ratePlan.cancellationPolicy}</p>}
+                  <p className="public-small"><strong>Nightly room prices before applicable taxes and fees</strong></p>
+                  {selectedPlan.nightlyRates.map((night) => (
+                    <p className="public-small" key={night.date}>{friendlyDate(night.date)} · <Money minor={night.amountMinor} /></p>
+                  ))}
+                </section>
+              )}
             </>
           )}
           <Field
