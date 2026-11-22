@@ -148,7 +148,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
       'INSERT INTO seven.stay_rate_plans(rate_plan_id,room_type_id,offering_id,code,name,currency_code,meal_plan,refundable,cancellation_policy) SELECT $1,rt.room_type_id,o.offering_id,$3,$4,$5,$6,$7,$8 FROM seven.stay_room_types rt JOIN seven.offerings o USING(offering_id) WHERE rt.room_type_id=$2',
       [planId,input.roomTypeId,input.code,input.name,input.currencyCode,input.mealPlan,input.refundable ?? null,input.cancellationPolicy]);
     await S.audit(db,user,businessId,'stay_rate_plan.created',planId,'Rate plan created.');
-    return one(db,'SELECT rp.*,o.business_id FROM seven.stay_rate_plans rp JOIN seven.stay_room_types rt USING(room_type_id) JOIN seven.offerings o USING(offering_id) WHERE rp.rate_plan_id=$1',[planId]);
+    return one(db,'SELECT rp.*,o.business_id FROM seven.stay_rate_plans rp JOIN seven.stay_room_types rt USING(room_type_id) JOIN seven.offerings o ON o.offering_id=rt.offering_id WHERE rp.rate_plan_id=$1',[planId]);
   }));
 
   app.patch('/api/business/stay/rate-plans/:id', async(req,res)=>write(req,res,mutate,async(db,user)=>{
