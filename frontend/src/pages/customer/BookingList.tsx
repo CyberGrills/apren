@@ -213,9 +213,17 @@ export function BookingList({
             <p>
               {cancel.title} · {cancel.reference}
             </p>
+            {cancel.stayTerms && (
+              <section className="booking-rate-policy" aria-label="Saved cancellation terms">
+                <p className="public-small"><strong>{cancel.stayTerms.ratePlan.name}</strong> · {cancel.stayTerms.ratePlan.refundable === true ? 'Refundable rate' : cancel.stayTerms.ratePlan.refundable === false ? 'Non-refundable rate' : 'Refund terms not specified'}</p>
+                {cancel.stayTerms.cancellationPolicySnapshot.policy && (
+                  <p className="public-small">{cancel.stayTerms.cancellationPolicySnapshot.policy}</p>
+                )}
+                <p className="public-small">Cancellation window: {cancel.stayTerms.cancellationPolicySnapshot.cancellationHours} hours before check-in.</p>
+              </section>
+            )}
             <p className="public-small">
-              The business's cancellation policy applies. If a refund is due, it will be tracked
-              separately. This action does not promise an immediate refund.
+              If a refund is due, it will be tracked separately. Cancelling does not promise an immediate refund.
             </p>
             <Field label={pcm ? 'Why you wan cancel am?' : 'Reason for cancelling'}>
               <textarea
