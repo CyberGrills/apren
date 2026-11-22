@@ -90,7 +90,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const offer=await owner.request<{id:string}>('/business/offerings','POST',{
       title:'Inventory test room',description:'Disposable hotel room for inventory API tests.',
       kind:'STAY',city:'Uyo',state:'Akwa Ibom',address:'1 Inventory Test Lane, Uyo',
-      priceMinor:'4500000',capacity:2,published:false,
+      priceMinor:'4500000',capacity:2,published:true,
     });
     offerings.push(offer.id);
     const room=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
@@ -117,6 +117,43 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.ok(calendar.rooms.every(night=>night.amount_minor==='12500000'));
     assert.ok(calendar.rooms.every(night=>night.capacity===5 && night.allocated_count===0 && night.inventory_source==='MANUAL'));
 
+    const customerA=new Client();await customerA.register();
+    const customerB=new Client();await customerB.register();
+    const plans=await customerA.request<{plans:Array<{roomType:{id:string};ratePlan:{id:string};available:boolean}>}>(
+      `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=5`);
+    assert.equal(plans.plans.length,1);
+    assert.equal(plans.plans[0]!.available,true);
+    const quoteBody={
+      offeringId:offer.id,roomTypeId:room.room_type_id,ratePlanId:plan.rate_plan_id,
+      checkInDate:startDate,checkOutDate:endDate,rooms:5,
+    };
+    const quoteA=await customerA.request<{quote:{id:string;price:{subtotalMinor:string;totalMinor:string};units:number};nightlyBreakdown:Array<{lineTotalMinor:string}>}>(
+      '/stay-quotes','POST',quoteBody);
+    assert.equal(quoteA.quote.units,2);
+    assert.equal(quoteA.quote.price.subtotalMinor,'125000000');
+    assert.equal(quoteA.quote.price.totalMinor,'125000000');
+    assert.deepEqual(quoteA.nightlyBreakdown.map(night=>night.lineTotalMinor),['62500000','62500000']);
+    const quoteB=await customerB.request<{quote:{id:string}}>('/stay-quotes','POST',quoteBody);
+    const storedSnapshot=await one<{terms_snapshot:{ratePlan:{id:string;refundable:boolean;cancellationPolicy:string};nightlyBreakdown:Array<{date:string;amountMinor:string}>};amounts:{totalMinor:string}}>(
+      pool,'SELECT terms_snapshot,amounts FROM seven.quotes WHERE quote_id=$1',[quoteA.quote.id]);
+    assert.equal(storedSnapshot?.terms_snapshot.ratePlan.id,plan.rate_plan_id);
+    assert.equal(storedSnapshot?.terms_snapshot.ratePlan.refundable,true);
+    assert.equal(storedSnapshot?.terms_snapshot.ratePlan.cancellationPolicy,'Free cancellation before arrival.');
+    assert.equal(storedSnapshot?.terms_snapshot.nightlyBreakdown.length,2);
+    assert.equal(storedSnapshot?.amounts.totalMinor,'125000000');
+    await customerA.request('/quotes','POST',{
+      offeringId:offer.id,startDate,endDate,quantity:1,
+    },409);
+    const outcomes=await Promise.allSettled([
+      customerA.request<{id:string}>('/reservations','POST',{quoteId:quoteA.quote.id}),
+      customerB.request<{id:string}>('/reservations','POST',{quoteId:quoteB.quote.id}),
+    ]);
+    assert.equal(outcomes.filter(outcome=>outcome.status==='fulfilled').length,1);
+    assert.equal(outcomes.filter(outcome=>outcome.status==='rejected').length,1);
+    const allocated=await one<{allocated_count:number}>(
+      pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1',[offer.id]);
+    assert.equal(allocated?.allocated_count,5);
+
     const other=new Client();await other.register();await other.apply('Other inventory fixture');
     const isolated=await other.request<{rooms:unknown[]}>(`/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
     assert.deepEqual(isolated.rooms,[]);
@@ -129,6 +166,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     },409);
   }finally{
     if(server)await new Promise<void>((resolve,reject)=>server!.close(error=>error?reject(error):resolve()));
+    if(offerings.length){
+      await pool.query('DELETE FROM seven.allocations WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[]))',[offerings]);
+      await pool.query('DELETE FROM seven.reservations WHERE offering_id=ANY($1::uuid[])',[offerings]);
+      await pool.query('DELETE FROM seven.quotes WHERE offering_id=ANY($1::uuid[])',[offerings]);
+    }
     if(ratePlans.length)await pool.query('DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
     if(ratePlans.length)await pool.query('DELETE FROM seven.stay_rate_plans WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
     if(roomTypes.length)await pool.query('DELETE FROM seven.stay_room_types WHERE room_type_id=ANY($1::uuid[])',[roomTypes]);
