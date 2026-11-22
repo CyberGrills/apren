@@ -198,11 +198,14 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     await customerA.request('/stay-quotes','POST',quoteBody,409);
     await pool.query('UPDATE seven.stay_nightly_rates SET max_stay_nights=7 WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
     await pool.query(
-      'INSERT INTO seven.stay_nightly_rates(rate_plan_id,service_date,amount_minor,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights) VALUES($1,$2::date,$3,false,true,1,7)',
-      [plan.rate_plan_id,endDate,'10000000'],
+      'UPDATE seven.stay_nightly_rates SET closed_to_departure=true WHERE rate_plan_id=$1 AND service_date=$2::date',
+      [plan.rate_plan_id,endDate],
     );
     await customerA.request('/stay-quotes','POST',quoteBody,409);
-    await pool.query('DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,endDate]);
+    await pool.query(
+      'UPDATE seven.stay_nightly_rates SET closed_to_departure=false WHERE rate_plan_id=$1 AND service_date=$2::date',
+      [plan.rate_plan_id,endDate],
+    );
     await pool.query(
       "UPDATE seven.inventory_windows SET inventory_confirmed_at=now()-interval '25 hours' WHERE offering_id=$1 AND (starts_at AT TIME ZONE 'Africa/Lagos')::date=$2::date",
       [offer.id,startDate],
