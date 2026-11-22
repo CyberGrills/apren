@@ -194,7 +194,7 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
            revision=seven.stay_nightly_rates.revision+1,updated_at=now()`,
         [input.ratePlanId,plan.room_type_id,date,input.amountMinor,input.closedToArrival,input.closedToDeparture,input.minStayNights ?? null,input.maxStayNights ?? null]);
     }
-    await S.audit(db,user,businessId,'stay_nightly_rates.bulk_updated',input.ratePlanId,\`Updated ${dates.length} nights from ${input.startDate} to ${input.endDate}.\`);
+    await S.audit(db,user,businessId,'stay_nightly_rates.bulk_updated',input.ratePlanId,`Updated ${dates.length} nights from ${input.startDate} to ${input.endDate}.`);
     return {ratePlanId:input.ratePlanId,updatedDates:dates};
   }));
 
