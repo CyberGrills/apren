@@ -45,11 +45,20 @@ function project(r: Record<string, unknown>) {
 }
 const select = `SELECT r.*,o.title,o.city FROM seven.stay_booking_requests r
  JOIN seven.offerings o USING(offering_id)`;
+function validDate(value: string): boolean {
+  const date = new Date(value + 'T00:00:00.000Z');
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10) === value;
+}
+function lagosToday(): string {
+  const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Lagos',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const part = (type: string) => parts.find(item => item.type === type)?.value ?? '';
+  return part('year')+'-'+part('month')+'-'+part('day');
+}
 export function mountStayBookingRequests(app: Express, { pool, actor }: Context): void {
   app.post('/api/stay-booking-requests', async (req,res) => {
     const user = actor(res); customer(user);
     const input = inputSchema.parse(req.body);
-    if (input.checkOut <= input.checkIn) return fail(422,'INVALID_STAY_DATES','Check-out must be after check-in.');
+    if (!validDate(input.checkIn) || !validDate(input.checkOut) || input.checkIn < lagosToday() || input.checkOut <= input.checkIn) return fail(422,'INVALID_STAY_DATES','Choose valid dates, with check-in today or later and check-out after check-in.');
     const key = String(req.get('Idempotency-Key') ?? '').trim();
     if (key.length < 8 || key.length > 200) return fail(400,'IDEMPOTENCY_KEY_REQUIRED','Provide a valid Idempotency-Key.');
     const existing = await one(pool,select+' WHERE r.user_id=$1 AND r.idempotency_key=$2',[user.id,key]);
@@ -87,6 +96,7 @@ export function mountStayBookingRequests(app: Express, { pool, actor }: Context)
   });
   app.get('/api/business/stay-booking-requests', async (_req,res) => {
     const user = actor(res); owner(user);
+    await pool.query("UPDATE seven.stay_booking_requests SET status='EXPIRED',revision=revision+1,updated_at=now() WHERE business_id=$1 AND status='REQUESTED' AND expires_at<=now()",[user.businessId]);
     const found = await rows(pool,select+' WHERE r.business_id=$1 ORDER BY r.created_at DESC LIMIT 200',[user.businessId]);
     return res.json({data:found.map(project)});
   });
@@ -121,8 +131,30 @@ export function mountStayBookingRequests(app: Express, { pool, actor }: Context)
       client.release();
     }
   });
+  app.post('/api/me/stay-booking-requests/:id/cancel', async (req,res) => {
+    const user = actor(res); customer(user);
+    const id = z.uuid().parse(req.params.id);
+    const input = z.strictObject({expectedRevision:z.number().int().min(1)}).parse(req.body);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const request = await one(client,'SELECT * FROM seven.stay_booking_requests WHERE request_id=$1 AND user_id=$2 FOR UPDATE',[id,user.id]);
+      if (!request) return fail(404,'REQUEST_NOT_FOUND','Booking request not found.');
+      if (Number(request.revision) !== input.expectedRevision) return fail(409,'REVISION_CONFLICT','This request changed. Refresh before cancelling.');
+      if (!['REQUESTED','ACCEPTED'].includes(String(request.status))) return fail(409,'REQUEST_NOT_CANCELLABLE','This request can no longer be cancelled.');
+      await client.query("UPDATE seven.stay_booking_requests SET status='CANCELLED',revision=revision+1,updated_at=now() WHERE request_id=$1",[id]);
+      await client.query("INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details) VALUES($1,$2,$3,'stay_booking_request.cancelled',$4,'{}')",[randomUUID(),user.id,request.business_id,id]);
+      await client.query('COMMIT');
+      const updated = await one(pool,select+' WHERE r.request_id=$1',[id]);
+      return res.json({data:project(updated!)});
+    } catch (error) {
+      try { await client.query('ROLLBACK'); } catch { /* Transaction may already be committed. */ }
+      throw error;
+    } finally { client.release(); }
+  });
   app.get('/api/me/stay-booking-requests', async (_req,res) => {
     const user = actor(res); customer(user);
+    await pool.query("UPDATE seven.stay_booking_requests SET status='EXPIRED',revision=revision+1,updated_at=now() WHERE user_id=$1 AND status='REQUESTED' AND expires_at<=now()",[user.id]);
     const found = await rows(pool,select+' WHERE r.user_id=$1 ORDER BY r.created_at DESC LIMIT 100',[user.id]);
     return res.json({data:found.map(project)});
   });
