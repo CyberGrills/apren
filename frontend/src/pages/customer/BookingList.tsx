@@ -117,7 +117,7 @@ export function BookingList({
               </p>
               {reservation.stayTerms && (
                 <section className="booking-rate-policy" aria-label="Booked room and rate terms">
-                  <p><strong>{reservation.stayTerms.roomType.bedConfiguration || 'Room'}</strong> · {reservation.stayTerms.ratePlan.name}</p>
+                  <p><strong>{reservation.stayTerms.roomType.name || reservation.stayTerms.roomType.bedConfiguration || 'Room'}</strong> · {reservation.stayTerms.ratePlan.name}</p>
                   <p className="public-small">{reservation.stayTerms.ratePlan.mealPlan} · {reservation.stayTerms.roomType.maxOccupancy} guests maximum · {reservation.stayTerms.cancellationPolicySnapshot.refundable === true ? 'Refundable' : reservation.stayTerms.cancellationPolicySnapshot.refundable === false ? 'Non-refundable' : 'Refund terms not specified'}</p>
                   {reservation.stayTerms.nightlyBreakdown.map((night) => (
                     <p className="public-small" key={night.date}>
