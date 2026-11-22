@@ -197,4 +197,47 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     await S.audit(db,user,businessId,'stay_nightly_rates.bulk_updated',input.ratePlanId,\`Updated ${dates.length} nights from ${input.startDate} to ${input.endDate}.\`);
     return {ratePlanId:input.ratePlanId,updatedDates:dates};
   }));
+
+  app.post('/api/business/stay/rooms/:id/availability', async (req,res)=>write(req,res,mutate,async(db,user)=>{
+    const businessId=ownerBusiness(user);
+    const roomId=uuid.parse(req.params.id);
+    const input=z.strictObject({
+      startDate:localDate,
+      endDate:localDate,
+      capacity:z.number().int().min(0).max(10000),
+      expectedRevision:z.number().int().min(0).optional(),
+    }).parse(req.body);
+    const dates=dateRange(input.startDate,input.endDate);
+    const room=await one(db,
+      `SELECT rt.room_type_id,o.offering_id,o.venue_id,s.sector_code
+         FROM seven.stay_room_types rt
+         JOIN seven.offerings o USING(offering_id)
+         JOIN seven.sectors s USING(sector_id)
+        WHERE rt.room_type_id=$1 AND o.business_id=$2
+        FOR UPDATE OF rt`,
+      [roomId,businessId]);
+    if(!room) return fail(404,'ROOM_TYPE_NOT_FOUND','Room category not found.');
+    if(room.sector_code!=='STAY') return fail(409,'STAY_ONLY','Availability can only be changed for a stay listing.');
+    for(const date of dates){
+      const windowStart=`${date}T00:00:00+01:00`;
+      const windowEnd=new Date(Date.parse(windowStart)+86400000).toISOString();
+      const previous=await one(db,
+        'SELECT * FROM seven.inventory_windows WHERE offering_id=$1 AND starts_at=$2 FOR UPDATE',
+        [room.offering_id,windowStart]);
+      if(previous?.inventory_source==='PMS')
+        return fail(409,'PMS_INVENTORY_MANAGED','This inventory is managed by the connected availability provider.');
+      if(previous && (previous.allocated_count>input.capacity ||
+        (input.expectedRevision!==undefined && previous.revision!==input.expectedRevision)))
+        return fail(409,'CAPACITY_CHANGED','Refresh inventory. Existing allocations cannot be displaced.');
+      if(previous) await db.query(
+        "UPDATE seven.inventory_windows SET capacity=$2,revision=revision+1,updated_at=now(),inventory_confirmed_at=now(),inventory_source='MANUAL' WHERE inventory_window_id=$1",
+        [previous.inventory_window_id,input.capacity]);
+      else await db.query(
+        "INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at,inventory_source) VALUES($1,$2,$3,$4,$5,now(),'MANUAL')",
+        [randomUUID(),room.offering_id,windowStart,windowEnd,input.capacity]);
+    }
+    await S.audit(db,user,businessId,'availability.updated',room.offering_id,`Owner confirmed capacity ${input.capacity} for ${dates.length} nights.`);
+    return {roomTypeId:roomId,updatedDates:dates,capacity:input.capacity};
+  }));
+
 }
