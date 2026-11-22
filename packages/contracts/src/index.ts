@@ -177,12 +177,6 @@ export const benefitConsumeInput = z.strictObject({
   code: z.string().min(8).max(80),
   expectedRevision: z.int().min(0),
 });
-export const venueInput = z.strictObject({
-  venueName: z.string().trim().min(2).max(180),
-  address: z.string().trim().min(4).max(500),
-  city: shortText,
-  timeZone: z.literal('Africa/Lagos').optional(),
-});
 export const staffInput = z.strictObject({
   email,
   displayName: z.string().trim().min(2).max(100),
