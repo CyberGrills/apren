@@ -357,6 +357,14 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
               <div className="panel">
                 <h2>{data.business.businessName}</h2>
                 <p>{data.business.description}</p>
+                <p className="small-copy">
+                  These are your registered business details. Changes to the business identity,
+                  address or primary contact should be reviewed by 7EVEN before they are changed
+                  on guest-facing listings. Request an update at{' '}
+                  <a href="mailto:7seven.com.ng@gmail.com?subject=7EVEN%20business%20details%20update">
+                    7seven.com.ng@gmail.com
+                  </a>.
+                </p>
                 <dl className="settings-summary">
                   <div>
                     <dt>Address</dt>
