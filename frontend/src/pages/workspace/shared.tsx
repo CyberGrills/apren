@@ -109,6 +109,9 @@ export function ReservationTable({
                   {r.quantity}{' '}
                   {r.kind === 'STAY' ? 'room(s)' : r.kind === 'DINING' ? 'guest(s)' : 'seat(s)'}
                 </small>
+                {r.kind === 'STAY' && r.roomType && <small>{r.roomType.bedConfiguration || 'Room category'} · up to {r.roomType.maxOccupancy} guests</small>}
+                {r.kind === 'STAY' && r.ratePlan && <small>{r.ratePlan.name} · {r.ratePlan.mealPlan.replaceAll('_', ' ').toLowerCase()}</small>}
+                {r.kind === 'STAY' && r.cancellationPolicySnapshot && <small>At booking: {r.cancellationPolicySnapshot.policy || 'No additional cancellation text'} · {r.cancellationPolicySnapshot.cancellationHours}h</small>}
               </td>
               <td>
                 {dateLabel(r.startDate)}
