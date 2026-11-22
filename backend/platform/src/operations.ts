@@ -125,6 +125,132 @@ export function mountOperations(app: Express, context: OperationsContext): void 
       return { success: true };
     });
   });
+  const amenityInput = z.strictObject({
+    category: z.enum(['POOL', 'GYM', 'SPA', 'STORE', 'SALON', 'RESTAURANT', 'BAR', 'CONFERENCE', 'PARKING', 'SHUTTLE', 'OTHER']),
+    name: z.string().trim().min(2).max(120),
+    description: z.string().trim().max(1200).default(''),
+    status: z.enum(['ACTIVE', 'INACTIVE', 'SEASONAL', 'CLOSED']).default('ACTIVE'),
+    accessType: z.enum(['INCLUDED', 'PAID']).default('INCLUDED'),
+    bookingRequired: z.boolean().default(false),
+    openingHours: z.record(z.string(), z.string().max(80)).default({}),
+    guestNotes: z.string().trim().max(1200).default(''),
+    sortOrder: z.int().min(0).max(10000).default(0),
+  });
+  const amenityProjection = (r: Record<string, unknown>) => ({
+    id: String(r.amenity_id),
+    venueId: String(r.venue_id),
+    category: String(r.category),
+    name: String(r.name),
+    description: String(r.description ?? ''),
+    status: String(r.status),
+    accessType: String(r.access_type),
+    bookingRequired: Boolean(r.booking_required),
+    openingHours: (r.opening_hours ?? {}) as Record<string, string>,
+    guestNotes: String(r.guest_notes ?? ''),
+    sortOrder: Number(r.sort_order),
+    revision: Number(r.revision),
+    createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+    updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
+  });
+  async function ownedVenue(db: Connection, user: C.SessionUser, venueId: string, lock = false) {
+    const venue = await one(db,
+      `SELECT venue_id,business_id FROM seven.venues WHERE venue_id=$1 AND is_active ${lock ? 'FOR UPDATE' : ''}`,
+      [venueId],
+    );
+    if (!venue) return fail(404, 'VENUE_NOT_FOUND', 'Venue not found.');
+    S.requireTenant(user, venue.business_id, true);
+    return venue;
+  }
+  route('get', '/business/venues/:venueId/amenities', async (req, res) => {
+    const user = owner(res);
+    const venueId = z.uuid().parse(req.params.venueId);
+    await ownedVenue(pool, user, venueId);
+    return (await rows(pool,
+      'SELECT * FROM seven.venue_amenities WHERE venue_id=$1 AND business_id=$2 ORDER BY sort_order,name',
+      [venueId, user.businessId],
+    )).map(amenityProjection);
+  });
+  route('post', '/business/venues/:venueId/amenities', async (req, res) => {
+    const input = amenityInput.parse(req.body);
+    owner(res);
+    const venueId = z.uuid().parse(req.params.venueId);
+    return mutate(req, res, async (db, user) => {
+      const venue = await ownedVenue(db, user, venueId, true);
+      const amenityId = randomUUID();
+      const created = (await one(db,
+        `INSERT INTO seven.venue_amenities
+          (amenity_id,business_id,venue_id,category,name,description,status,access_type,booking_required,opening_hours,guest_notes,sort_order,created_by)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13) RETURNING *`,
+        [amenityId, venue.business_id, venueId, input.category, input.name, input.description,
+          input.status, input.accessType, input.bookingRequired, JSON.stringify(input.openingHours),
+          input.guestNotes, input.sortOrder, user.id],
+      ))!;
+      await S.audit(db, user, venue.business_id, 'venue_amenity.created', amenityId, input.name);
+      return amenityProjection(created);
+    });
+  });
+  route('patch', '/business/venues/:venueId/amenities/:id', async (req, res) => {
+    const input = amenityInput.extend({ expectedRevision: z.int().min(1) }).parse(req.body);
+    owner(res);
+    const venueId = z.uuid().parse(req.params.venueId);
+    const amenityId = z.uuid().parse(req.params.id);
+    return mutate(req, res, async (db, user) => {
+      const venue = await ownedVenue(db, user, venueId, true);
+      const current = await one(db,
+        'SELECT * FROM seven.venue_amenities WHERE amenity_id=$1 AND venue_id=$2 AND business_id=$3 FOR UPDATE',
+        [amenityId, venueId, venue.business_id],
+      );
+      if (!current) return fail(404, 'AMENITY_NOT_FOUND', 'Amenity not found.');
+      if (Number(current.revision) !== input.expectedRevision)
+        return fail(409, 'REVISION_CONFLICT', 'This amenity changed. Refresh before editing.');
+      const updated = (await one(db,
+        `UPDATE seven.venue_amenities SET category=$4,name=$5,description=$6,status=$7,access_type=$8,
+          booking_required=$9,opening_hours=$10::jsonb,guest_notes=$11,sort_order=$12,
+          revision=revision+1,updated_at=now()
+         WHERE amenity_id=$1 AND venue_id=$2 AND business_id=$3 RETURNING *`,
+        [amenityId, venueId, venue.business_id, input.category, input.name, input.description,
+          input.status, input.accessType, input.bookingRequired, JSON.stringify(input.openingHours),
+          input.guestNotes, input.sortOrder],
+      ))!;
+      await S.audit(db, user, venue.business_id, 'venue_amenity.updated', amenityId, input.name);
+      return amenityProjection(updated);
+    });
+  });
+  route('delete', '/business/venues/:venueId/amenities/:id', async (req, res) => {
+    owner(res);
+    const venueId = z.uuid().parse(req.params.venueId);
+    const amenityId = z.uuid().parse(req.params.id);
+    return mutate(req, res, async (db, user) => {
+      const venue = await ownedVenue(db, user, venueId, true);
+      const current = await one(db,
+        'SELECT amenity_id,revision FROM seven.venue_amenities WHERE amenity_id=$1 AND venue_id=$2 AND business_id=$3 FOR UPDATE',
+        [amenityId, venueId, venue.business_id],
+      );
+      if (!current) return fail(404, 'AMENITY_NOT_FOUND', 'Amenity not found.');
+      const expectedRevision = z.int().min(1).parse(req.body?.expectedRevision);
+      if (Number(current.revision) !== expectedRevision)
+        return fail(409, 'REVISION_CONFLICT', 'This amenity changed. Refresh before editing.');
+      await db.query(
+        "UPDATE seven.venue_amenities SET status='INACTIVE',revision=revision+1,updated_at=now() WHERE amenity_id=$1",
+        [amenityId],
+      );
+      await S.audit(db, user, venue.business_id, 'venue_amenity.deactivated', amenityId);
+      return { success: true };
+    });
+  });
+  route('get', '/venues/:venueId/amenities', async (req) => {
+    const venueId = z.uuid().parse(req.params.venueId);
+    const found = await rows(pool,
+      `SELECT a.* FROM seven.venue_amenities a
+       JOIN seven.venues v ON v.venue_id=a.venue_id AND v.business_id=a.business_id
+       JOIN seven.businesses b ON b.business_id=a.business_id
+       WHERE a.venue_id=$1 AND v.is_active AND a.status IN ('ACTIVE','SEASONAL')
+         AND b.workflow_state_id=${S.sid('APPROVED')} AND b.details->>'isSample' IS DISTINCT FROM 'true'
+       ORDER BY a.sort_order,a.name`,
+      [venueId],
+    );
+    return found.map(amenityProjection);
+  });
   const noteProjection = (r: Record<string, unknown>): C.PaymentNote => ({
     id: String(r.payment_note_id),
     reservationId: String(r.reservation_id),

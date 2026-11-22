@@ -49,6 +49,11 @@ All routes start with `/api`. Success is `{ data: T }`; list data is an array, w
 | POST /business/venues | venueInput | Venue | Owner, own business, audited |
 | PATCH /business/venues/:id | venueInput plus expectedRevision | Venue | Owner, own business, revision checked |
 | DELETE /business/venues/:id | None | `{ success: true }` | Owner, archives an unused venue; retained offerings and memberships prevent archival |
+| GET /business/venues/:venueId/amenities | None | Amenity[] | Business owner, own active venue; includes inactive/closed records for management |
+| POST /business/venues/:venueId/amenities | amenityInput | Amenity | Business owner, tenant-scoped venue, idempotent and audited |
+| PATCH /business/venues/:venueId/amenities/:id | amenityInput plus expectedRevision | Amenity | Business owner, tenant-scoped row lock and optimistic revision check |
+| DELETE /business/venues/:venueId/amenities/:id | `{ expectedRevision }` | `{ success: true }` | Business owner, deactivates rather than deletes; idempotent and audited |
+| GET /venues/:venueId/amenities | None | Amenity[] | Public, only ACTIVE/SEASONAL amenities for approved non-sample businesses and active venues |
 | POST /business/offerings | offeringInput | Offering | Approved business owner |
 | PATCH /business/offerings/:id | offeringInput plus expectedRevision if required | Offering | Owning business owner |
 | POST /business/offerings/:id/availability | availabilityInput | Offering | Owning business owner, cannot evict accepted allocation |
