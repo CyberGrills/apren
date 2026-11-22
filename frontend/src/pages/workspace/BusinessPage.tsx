@@ -217,6 +217,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             </button>
                           </div>
                         )}
+                        {offer.kind !== 'STAY' && <>
                         <p className="availability-legend">Upcoming dates · available / total</p>
                         <div className="availability-calendar">
                           {windows.slice(0, 7).map((w) => (
