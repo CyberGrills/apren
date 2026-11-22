@@ -101,7 +101,7 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
     setBusy(true);setError(null);setNotice(null);
     try {
       if(kind==='room') {
-        const roomBody={maxOccupancy:Number(get('maxOccupancy')),bedConfiguration:get('bedConfiguration'),totalRooms:get('totalRooms')?Number(get('totalRooms')):null};
+        const roomBody={name:get('name'),maxOccupancy:Number(get('maxOccupancy')),bedConfiguration:get('bedConfiguration'),totalRooms:get('totalRooms')?Number(get('totalRooms')):null};
         if(room && !creatingRoom) await api(`/business/stay/rooms/${room.room_type_id}`,{method:'PATCH',idempotencyKey:crypto.randomUUID(),body:{...roomBody,expectedRevision:room.room_revision}});
         else await api('/business/stay/rooms',{method:'POST',idempotencyKey:crypto.randomUUID(),body:{offeringId,...roomBody}});
         setShowRoomForm(false);setCreatingRoom(false);setNotice('Room category saved.');
