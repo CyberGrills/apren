@@ -76,7 +76,7 @@ export function mountStayBookingRequests(app: Express, { pool, actor }: Context)
     if (!created) {
       const prior = await one(pool,select+' WHERE r.user_id=$1 AND r.idempotency_key=$2',[user.id,key]);
       if (!prior) return fail(409,'REQUEST_CONFLICT','Refresh and retry your booking request.');
-      if (prior.offering_id !== input.offeringId) return fail(409,'IDEMPOTENCY_CONFLICT','This request key was already used for different booking details.');
+      if (prior.offering_id !== input.offeringId || String(prior.check_in).slice(0,10) !== input.checkIn || String(prior.check_out).slice(0,10) !== input.checkOut || Number(prior.room_count) !== input.roomCount || String(prior.guest_email) !== input.guestEmail || String(prior.guest_phone) !== input.guestPhone || String(prior.guest_name) !== input.guestName) return fail(409,'IDEMPOTENCY_CONFLICT','This request key was already used for different booking details.');
       return res.json({data:project(prior)});
     }
     await pool.query(`INSERT INTO seven.audit_events(audit_event_id,user_id,business_id,action_code,resource_id,details)
@@ -115,7 +115,7 @@ export function mountStayBookingRequests(app: Express, { pool, actor }: Context)
       const updated = await one(pool,select+' WHERE r.request_id=$1',[id]);
       return res.json({data:project(updated!)});
     } catch (error) {
-      await client.query('ROLLBACK');
+      try { await client.query('ROLLBACK'); } catch { /* The transaction may already have committed before a response error. */ }
       throw error;
     } finally {
       client.release();
