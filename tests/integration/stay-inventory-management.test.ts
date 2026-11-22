@@ -176,7 +176,7 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(plans.plans.filter(plan=>plan.available).length,2);
     assert.ok(plans.plans.some(plan=>plan.roomType.id===room.room_type_id && plan.roomType.name==='King Room'));
     assert.ok(plans.plans.some(plan=>plan.roomType.id===secondRoom.room_type_id && plan.roomType.name==='Twin Room'));
-    const largerRequest=await customerA.request<{plans:Array<{roomType:{id:string};available:boolean}>}>(
+    const largerRequest=await customerA.request<{plans:Array<{roomType:{id:string;name:string};available:boolean}>}>(
       `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=2`);
     assert.equal(largerRequest.plans.find(item=>item.roomType.id===room.room_type_id)?.available,true);
     assert.equal(largerRequest.plans.find(item=>item.roomType.id===secondRoom.room_type_id)?.available,false);
