@@ -10,7 +10,9 @@ ALTER TABLE seven.stay_room_types
   ADD COLUMN IF NOT EXISTS name varchar(120) NOT NULL DEFAULT 'Room category';
 
 UPDATE seven.stay_room_types
-   SET name = COALESCE(NULLIF(left(btrim(bed_configuration), 120), ''), 'Room category')
+   SET name = CASE WHEN char_length(btrim(bed_configuration)) BETWEEN 2 AND 120
+                   THEN left(btrim(bed_configuration), 120)
+                   ELSE 'Room category' END
  WHERE name = 'Room category';
 
 ALTER TABLE seven.stay_room_types
