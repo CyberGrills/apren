@@ -169,13 +169,13 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       offeringId:offer.id,roomTypeId:room.room_type_id,ratePlanId:plan.rate_plan_id,
       checkInDate:startDate,checkOutDate:endDate,rooms:5,
     };
-    const firstRate=await one<{amount_minor:string;closed_to_arrival:boolean;closed_to_departure:boolean;min_stay_nights:number;max_stay_nights:number}>(
-      pool,'SELECT amount_minor::text,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
+    const firstRate=await one<{room_type_id:string;amount_minor:string;closed_to_arrival:boolean;closed_to_departure:boolean;min_stay_nights:number;max_stay_nights:number}>(
+      pool,'SELECT room_type_id,amount_minor::text,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
     await pool.query('DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
     await customerA.request('/stay-quotes','POST',quoteBody,409);
     await pool.query(
-      'INSERT INTO seven.stay_nightly_rates(rate_plan_id,service_date,amount_minor,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights) VALUES($1,$2::date,$3,$4,$5,$6,$7)',
-      [plan.rate_plan_id,startDate,firstRate!.amount_minor,firstRate!.closed_to_arrival,firstRate!.closed_to_departure,firstRate!.min_stay_nights,firstRate!.max_stay_nights],
+      'INSERT INTO seven.stay_nightly_rates(rate_plan_id,room_type_id,service_date,amount_minor,closed_to_arrival,closed_to_departure,min_stay_nights,max_stay_nights) VALUES($1,$2,$3::date,$4,$5,$6,$7,$8)',
+      [plan.rate_plan_id,firstRate!.room_type_id,startDate,firstRate!.amount_minor,firstRate!.closed_to_arrival,firstRate!.closed_to_departure,firstRate!.min_stay_nights,firstRate!.max_stay_nights],
     );
     await pool.query('UPDATE seven.stay_nightly_rates SET closed_to_arrival=true WHERE rate_plan_id=$1 AND service_date=$2::date',[plan.rate_plan_id,startDate]);
     await customerA.request('/stay-quotes','POST',quoteBody,409);
