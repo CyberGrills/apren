@@ -325,7 +325,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
                     clearQuote();
                   }}>
                   <option value="">Choose a room category</option>
-                  {roomTypes.map((room) => <option key={room.id} value={room.id}>{room.offeringTitle} · {room.bedConfiguration || 'Room'} · up to {room.maxOccupancy} guests</option>)}
+                  {roomTypes.map((room) => <option key={room.id} value={room.id}>{room.name} · {room.bedConfiguration || 'Bed details not supplied'} · up to {room.maxOccupancy} guests</option>)}
                 </select>
               </Field>
               <Field label="Rate plan">
