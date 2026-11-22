@@ -86,16 +86,16 @@ test('business inventory excludes history before its limit and retains stale upc
       kind: 'STAY', city: 'Uyo', state: 'Akwa Ibom', address: '1 Isolated History Test Lane',
       priceMinor: '4000000', capacity: 2, published: true,
     });
-    await pool.query(`INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at)
+    await pool.query(`INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at,inventory_source)
       SELECT gen_random_uuid(),$1,date_trunc('day',now())-(n+2)*interval '1 day',
-        date_trunc('day',now())-(n+1)*interval '1 day',2,now() FROM generate_series(1,500) n`, [offer.id]);
+        date_trunc('day',now())-(n+1)*interval '1 day',2,now(),'MANUAL' FROM generate_series(1,500) n`, [offer.id]);
     const currentId = randomUUID();
     const freshId = randomUUID();
     const staleId = randomUUID();
     await pool.query(`INSERT INTO seven.inventory_windows(inventory_window_id,offering_id,starts_at,ends_at,capacity,inventory_confirmed_at)
-      VALUES ($2,$1,now()-interval '1 hour',now()+interval '1 hour',2,now()),
-        ($3,$1,now()+interval '1 day',now()+interval '2 days',2,now()),
-        ($4,$1,now()+interval '3 days',now()+interval '4 days',2,now()-interval '25 hours')`,
+      VALUES ($2,$1,now()-interval '1 hour',now()+interval '1 hour',2,now(),'MANUAL'),
+        ($3,$1,now()+interval '1 day',now()+interval '2 days',2,now(),'MANUAL'),
+        ($4,$1,now()+interval '3 days',now()+interval '4 days',2,now()-interval '25 hours','MANUAL')`,
       [offer.id, currentId, freshId, staleId]);
 
     const view = await owner<BusinessOverview>('/business/overview');
