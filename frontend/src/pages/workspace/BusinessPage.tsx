@@ -81,7 +81,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                   : undefined
           }
           actions={
-            tab === 'photos' ? undefined : owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
+            ['photos', 'notifications'].includes(tab) ? undefined : owner && ['offerings', 'rewards', 'team'].includes(tab) ? (
               <button
                 type="button"
                 className="btn btn-primary"
@@ -101,11 +101,11 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                     ? 'Create a reward'
                     : 'Add a team member'}
               </button>
-            ) : (
+            ) : tab === 'reservations' ? (
               <Link to="/reception" className="btn btn-secondary">
                 Open reception <ArrowUpRight size={16} />
               </Link>
-            )
+            ) : undefined
           }
         />
       )}
