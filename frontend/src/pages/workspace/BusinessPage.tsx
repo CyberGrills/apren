@@ -199,7 +199,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             ))}
                           </ul>
                         )}
-                        {owner && (
+                        {owner && offer.kind !== 'STAY' && (
                           <div className="work-offering-actions">
                             <button
                               type="button"
