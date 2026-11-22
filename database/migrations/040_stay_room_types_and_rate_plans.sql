@@ -55,7 +55,6 @@ CREATE TABLE seven.stay_nightly_rates (
   CONSTRAINT stay_nightly_rates_plan_room_fk
     FOREIGN KEY (rate_plan_id, room_type_id)
     REFERENCES seven.stay_rate_plans(rate_plan_id, room_type_id) ON DELETE RESTRICT,
-  CONSTRAINT stay_nightly_rates_date_uk UNIQUE (rate_plan_id, service_date),
   CONSTRAINT stay_nightly_rates_stay_bounds_ck
     CHECK (min_stay_nights IS NULL OR max_stay_nights IS NULL OR min_stay_nights <= max_stay_nights),
   CONSTRAINT stay_nightly_rates_pk PRIMARY KEY (rate_plan_id, service_date)
