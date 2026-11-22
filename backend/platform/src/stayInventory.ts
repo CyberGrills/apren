@@ -107,9 +107,12 @@ export function mountStayInventory(app: Express, { pool, actor, mutate }: Contex
     if (input.expectedRevision !== undefined)
       return fail(422, 'UNEXPECTED_REVISION', 'Create a new room category without an existing revision.');
     const roomTypeId=randomUUID();
+    const roomName = input.name ?? (input.bedConfiguration.trim().length >= 2
+      ? input.bedConfiguration.trim().slice(0, 120)
+      : 'Room category');
     await db.query(
       'INSERT INTO seven.stay_room_types(room_type_id,offering_id,name,max_occupancy,bed_configuration,total_rooms) VALUES($1,$2,$3,$4,$5,$6)',
-      [roomTypeId,input.offeringId,input.name ?? (input.bedConfiguration || 'Room category'),input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null]);
+      [roomTypeId,input.offeringId,roomName,input.maxOccupancy,input.bedConfiguration,input.totalRooms ?? null]);
     if (!priorRoomType)
       await db.query('UPDATE seven.inventory_windows SET room_type_id=$2 WHERE offering_id=$1 AND room_type_id IS NULL', [input.offeringId,roomTypeId]);
     await S.audit(db,user,businessId,'stay_room_type.created',roomTypeId,'Room configuration created.');
