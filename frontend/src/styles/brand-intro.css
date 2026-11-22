@@ -28,6 +28,33 @@
   animation-delay: 320ms;
 }
 
+.brand-loading-state {
+  width: 100%;
+  min-height: 124px;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  color: var(--accent);
+}
+
+.brand-loading-state .brand {
+  width: clamp(132px, 20vw, 176px);
+  height: auto;
+  color: inherit;
+  animation: brand-loading-breathe 1.35s ease-in-out infinite;
+}
+
+@keyframes brand-loading-breathe {
+  0%, 100% {
+    opacity: 0.58;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes brand-intro-stroke {
   from {
     opacity: 0;
@@ -56,6 +83,10 @@
 
   .brand-intro .brand-stroke-first,
   .brand-intro .brand-stroke-second {
+    animation: none;
+  }
+
+  .brand-loading-state .brand {
     animation: none;
   }
 }

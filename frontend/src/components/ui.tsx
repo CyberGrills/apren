@@ -14,6 +14,7 @@ import {
   type RefObject,
 } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Brand } from './Brand.tsx';
 export function PageHeader({
   eyebrow,
   title,
@@ -65,9 +66,10 @@ export function ErrorNotice({ message, retry }: { message: string; retry?: () =>
 }
 export function Loading() {
   return (
-    <p className="loading-state" role="status">
-      <span className="loading-dot" /> Loading…
-    </p>
+    <div className="brand-loading-state" role="status" aria-label="Preparing your 7even experience">
+      <Brand />
+      <span className="sr-only">Preparing your 7even experience…</span>
+    </div>
   );
 }
 export function Money({ minor, currency = 'NGN' }: { minor: string; currency?: string }) {
