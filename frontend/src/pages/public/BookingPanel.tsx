@@ -344,7 +344,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               {selectedPlan && (
                 <section className="booking-rate-policy" aria-label="Selected room rate details">
                   <p className="public-small">
-                    <strong>{selectedPlan.ratePlan.name}</strong> · {selectedPlan.ratePlan.mealPlan} · {selectedPlan.roomType.bedConfiguration}
+                    <strong>{selectedPlan.roomType.name}</strong> · {selectedPlan.ratePlan.name} · {selectedPlan.ratePlan.mealPlan} · {selectedPlan.roomType.bedConfiguration}
                   </p>
                   <p className="public-small">
                     {selectedPlan.ratePlan.refundable === true ? 'Refundable rate' : selectedPlan.ratePlan.refundable === false ? 'Non-refundable rate' : 'Refund terms not specified'}
