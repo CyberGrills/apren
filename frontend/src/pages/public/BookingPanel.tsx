@@ -14,7 +14,7 @@ import { useSevenLanguage } from '../../lib/sevenLanguage.ts';
 type StayPlanChoice = {
   offeringId: string;
   offeringTitle: string;
-  roomType: { id: string; maxOccupancy: number; bedConfiguration: string };
+  roomType: { id: string; name: string; maxOccupancy: number; bedConfiguration: string };
   ratePlan: {
     id: string; code: string; name: string; currencyCode: string; mealPlan: string;
     refundable: boolean | null; cancellationPolicy: string; revision: number;
@@ -325,7 +325,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
                     clearQuote();
                   }}>
                   <option value="">Choose a room category</option>
-                  {roomTypes.map((room) => <option key={room.id} value={room.id}>{room.offeringTitle} · {room.bedConfiguration || 'Room'} · up to {room.maxOccupancy} guests</option>)}
+                  {roomTypes.map((room) => <option key={room.id} value={room.id}>{room.name} · {room.bedConfiguration || 'Bed details not supplied'} · up to {room.maxOccupancy} guests</option>)}
                 </select>
               </Field>
               <Field label="Rate plan">
@@ -344,7 +344,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
               {selectedPlan && (
                 <section className="booking-rate-policy" aria-label="Selected room rate details">
                   <p className="public-small">
-                    <strong>{selectedPlan.ratePlan.name}</strong> · {selectedPlan.ratePlan.mealPlan} · {selectedPlan.roomType.bedConfiguration}
+                    <strong>{selectedPlan.roomType.name}</strong> · {selectedPlan.ratePlan.name} · {selectedPlan.ratePlan.mealPlan} · {selectedPlan.roomType.bedConfiguration}
                   </p>
                   <p className="public-small">
                     {selectedPlan.ratePlan.refundable === true ? 'Refundable rate' : selectedPlan.ratePlan.refundable === false ? 'Non-refundable rate' : 'Refund terms not specified'}
