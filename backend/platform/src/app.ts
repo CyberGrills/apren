@@ -262,7 +262,8 @@ export function createApp(options: AppOptions = {}) {
       if (previous) {
         const cached = previous.response_body as Record<string, unknown>;
         if (req.path.startsWith('/api/business/') && req.path !== '/api/business/applications') {
-          requireRole(actor, ['BUSINESS_OWNER']);
+          const assignedInventoryEdit = /^\\/api\\/business\\/stay\\/rooms\\/[^/]+\\/availability$/.test(req.path);
+          requireRole(actor, assignedInventoryEdit ? ['BUSINESS_OWNER', 'RECEPTION'] : ['BUSINESS_OWNER']);
           if (!actor.businessId) return fail(403, 'FORBIDDEN', 'Business access was revoked.');
         }
         if (
