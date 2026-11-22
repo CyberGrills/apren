@@ -424,6 +424,18 @@ export async function reservationRow(db: Connection, r: QueryResultRow): Promise
     paymentStatus: r.payment_code,
     settlementStatus: payment?.settlementStatus ?? 'UNSETTLED',
     price: r.amounts,
+    stayTerms: r.terms_snapshot.kind === 'STAY' && r.terms_snapshot.roomType && r.terms_snapshot.ratePlan
+      ? {
+          roomType: r.terms_snapshot.roomType,
+          ratePlan: r.terms_snapshot.ratePlan,
+          nightlyBreakdown: r.terms_snapshot.nightlyBreakdown ?? [],
+          cancellationPolicySnapshot: r.terms_snapshot.cancellationPolicySnapshot ?? {
+            refundable: r.terms_snapshot.ratePlan.refundable ?? null,
+            policy: r.terms_snapshot.ratePlan.cancellationPolicy ?? '',
+            cancellationHours: Number(r.terms_snapshot.cancellationHours ?? 24),
+          },
+        }
+      : null,
     holdExpiresAt: r.state_code === 'HELD' ? iso(r.expires_at) : null,
     revision: r.revision,
     createdAt: iso(r.created_at),
