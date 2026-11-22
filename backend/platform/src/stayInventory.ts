@@ -4,9 +4,10 @@ import type { SessionUser } from '@7even/contracts';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { fail, one, rows } from './db.ts';
+import type { Connection } from './db.ts';
 import * as S from './store.ts';
 
-type Work = (db: any, actor: SessionUser) => Promise<unknown>;
+type Work = (db: Connection, actor: SessionUser) => Promise<unknown>;
 interface Context {
   pool: Pool;
   actor: (res: Response) => SessionUser;
