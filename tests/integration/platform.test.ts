@@ -437,6 +437,27 @@ test('7even real PostgreSQL API and invariant acceptance', {
     await t.test(
       'checkout completion, webhook-equivalent requery and once-only accepted-policy points',
       async () => {
+        const pointsBeforeUnpaidAttempt = (await pointsProjection(pool, guestUser.id)).balance;
+        await pool.query(
+          "UPDATE seven.reservations SET workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='CONFIRMED'),revision=revision+1 WHERE reservation_id=$1",
+          [reservation.id],
+        );
+        reservation = (await guest.request<C.Reservation>(`/reservations/${reservation.id}`)).data;
+        const unpaidFulfillment = await receptionist.request<C.Reservation>(
+          `/reservations/${reservation.id}/actions`,
+          'POST',
+          { action: 'FULFILL', expectedRevision: reservation.revision },
+          randomUUID(),
+        );
+        assert.equal(unpaidFulfillment.status, 409);
+        assert.equal(unpaidFulfillment.error?.code, 'PAYMENT_REQUIRED');
+        assert.equal((await pointsProjection(pool, guestUser.id)).balance, pointsBeforeUnpaidAttempt);
+        await pool.query(
+          "UPDATE seven.reservations SET workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='HELD'),revision=revision+1 WHERE reservation_id=$1",
+          [reservation.id],
+        );
+        reservation = (await guest.request<C.Reservation>(`/reservations/${reservation.id}`)).data;
+
         checkoutKey = randomUUID();
         const checkout = await guest.request<C.Checkout>(
           `/reservations/${reservation.id}/checkout`,
