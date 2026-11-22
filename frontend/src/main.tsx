@@ -16,6 +16,7 @@ import './styles/creator-studio.css';
 import './styles/demo-catalog.css';
 import './styles/customer.css';
 import './styles/workspace.css';
+import './styles/stay-inventory.css';
 import './styles/workbench.css';
 import './styles/brand-intro.css';
 import './styles/seasonal-brand-assets.css';
