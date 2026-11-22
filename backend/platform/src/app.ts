@@ -1454,11 +1454,11 @@ export function createApp(options: AppOptions = {}) {
   }
   route('get', '/business/venues', async (_req, res): Promise<C.Venue[]> => {
     const actor = await businessActor(res, true);
-    return rows(
+    return (await rows(
       pool,
       'SELECT venue_id::text AS id,business_id::text AS "businessId",venue_name AS "venueName",address_line AS address,city,timezone_name AS "timeZone",revision FROM seven.venues WHERE business_id=$1 AND is_active=true ORDER BY created_at,venue_name',
       [actor.businessId],
-    ) as Promise<C.Venue[]>;
+    )) as unknown as C.Venue[];
   });
   route('post', '/business/venues', async (req, res) => {
     const input = parse(C.venueInput, req);
