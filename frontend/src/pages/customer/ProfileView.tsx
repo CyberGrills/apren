@@ -30,12 +30,17 @@ export function ProfileView({ user }: { user: SessionUser }) {
   const [bedPreference, setBedPreference] = useState<BedPreference>(details.bedPreference ?? 'ANY');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const attempt = useRef(crypto.randomUUID());
+  const saving = useRef(false);
 
-  async function save(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function save() {
+    if (saving.current) return;
+    saving.current = true;
     setBusy(true);
     setError(null);
+    const idempotencyKey =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `profile-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     try {
       await api<SessionUser>('/me', {
         method: 'PATCH',
@@ -50,7 +55,7 @@ export function ProfileView({ user }: { user: SessionUser }) {
           preferredRoomType,
           bedPreference,
         },
-        idempotencyKey: attempt.current,
+        idempotencyKey,
       });
       await refresh();
       try {
@@ -63,8 +68,14 @@ export function ProfileView({ user }: { user: SessionUser }) {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'We could not save your profile. Please try again.');
     } finally {
+      saving.current = false;
       setBusy(false);
     }
+  }
+
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void save();
   }
 
   async function signOut() {
@@ -92,7 +103,7 @@ export function ProfileView({ user }: { user: SessionUser }) {
             <p>{pcm ? 'Keep your contact details and stay preferences one place, make your next booking easier.' : 'Keep your contact details and stay preferences together so future bookings are easier.'}</p>
           </div>
         </div>
-        <form onSubmit={save} onChange={() => { attempt.current = crypto.randomUUID(); }}>
+        <form onSubmit={submit}>
           <div className="customer-profile-section">
             <span className="public-eyebrow">01 / Account details</span>
             <div className="customer-profile-fields">
@@ -158,7 +169,18 @@ export function ProfileView({ user }: { user: SessionUser }) {
           </div>
           {error && <ErrorNotice message={error} />}
           <div className="customer-profile-save-row">
-            <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? (pcm ? 'We dey save am…' : 'Saving…') : (pcm ? 'Save profile' : 'Save profile details')}</button>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={busy}
+              aria-busy={busy}
+              onClick={(event) => {
+                event.preventDefault();
+                void save();
+              }}
+            >
+              {busy ? (pcm ? 'We dey save am…' : 'Saving…') : (pcm ? 'Save profile' : 'Save profile details')}
+            </button>
             <Link className="text-button" to="/app/security">Change your password</Link>
           </div>
         </form>
