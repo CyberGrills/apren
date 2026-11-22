@@ -33,7 +33,7 @@ function localDate(offset = 0) {
   date.setDate(date.getDate() + offset);
   return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
 }
-function money(minor: string | null, currency: string | null) {
+function toMinorUnits(value: string): string {\n  if (!/^(0|[1-9]\\d*)(\\.\\d{1,2})?$/.test(value)) throw new Error('Enter a valid price with up to two decimal places.');\n  const [whole,fraction='']=value.split('.');\n  return (BigInt(whole)*100n+BigInt(fraction.padEnd(2,'0'))).toString();\n}\nfunction money(minor: string | null, currency: string | null) {
   if (minor === null) return 'No rate';
   return new Intl.NumberFormat('en-NG',{style:'currency',currency:currency || 'NGN',maximumFractionDigits:2}).format(Number(minor)/100);
 }
@@ -88,7 +88,7 @@ export function StayInventoryManager({ offeringId, title }: { offeringId: string
         setShowRateForm(false);setNotice('Rate plan saved.');
       } else if(kind==='price') {
         if(!selectedPlan) throw new Error('Create a rate plan first.');
-        await api('/business/stay/nightly-rates',{method:'PUT',idempotencyKey:crypto.randomUUID(),body:{ratePlanId:selectedPlan.id,startDate:get('startDate'),endDate:get('endDate'),amountMinor:String(Math.round(Number(get('price'))*100)),closedToArrival:values.has('closedToArrival'),closedToDeparture:values.has('closedToDeparture'),minStayNights:get('minStayNights')?Number(get('minStayNights')):null,maxStayNights:get('maxStayNights')?Number(get('maxStayNights')):null}});
+        await api('/business/stay/nightly-rates',{method:'PUT',idempotencyKey:crypto.randomUUID(),body:{ratePlanId:selectedPlan.id,startDate:get('startDate'),endDate:get('endDate'),amountMinor:toMinorUnits(get('price')),closedToArrival:values.has('closedToArrival'),closedToDeparture:values.has('closedToDeparture'),minStayNights:get('minStayNights')?Number(get('minStayNights')):null,maxStayNights:get('maxStayNights')?Number(get('maxStayNights')):null}});
         setShowPriceForm(false);setNotice('Nightly prices and restrictions saved.');
       } else {
         if(!room) throw new Error('Create the room category first.');
