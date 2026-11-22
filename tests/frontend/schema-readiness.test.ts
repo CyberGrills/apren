@@ -61,6 +61,7 @@ test('readiness marker references an existing numbered migration', async () => {
     .filter((file) => /^\d+.*\.sql$/.test(file));
   assert.ok(files.length > 0);
   assert.ok(files.includes(REQUIRED_SCHEMA_MIGRATION));
+  assert.ok(files.includes(CUSTOMER_PROFILE_MEDIA_MIGRATION));
 });
 
 test('both API entry points use schema-aware readiness rather than an old ledger row', async () => {
@@ -70,6 +71,8 @@ test('both API entry points use schema-aware readiness rather than an old ledger
   assert.match(app, /schemaIsReady\(pool,\s*environment\)/);
   assert.doesNotMatch(api, /SELECT 1 FROM seven\.migrations LIMIT 1/);
   assert.doesNotMatch(app, /SELECT 1 FROM seven\.migrations LIMIT 1/);
+  assert.match(app, /isCustomerProfileMediaRoute\\(req\\.path\\)/);
+  assert.match(app, /PROFILE_MEDIA_SCHEMA_NOT_READY/);
 });
 
 
