@@ -126,7 +126,7 @@ export function mountStayBooking(
            FROM seven.stay_nightly_rates
           WHERE rate_plan_id=$1 AND service_date >= $2::date AND service_date < $3::date
           ORDER BY service_date`,
-        [plan.rate_plan_id, checkInDate, checkOutDate],
+        [plan.rate_plan_id, checkInDate, checkOutDate, plan.room_type_id],
       );
       const inventory = await rows<{ service_date: string; capacity: number; allocated_count: number; fresh: boolean }>(
         pool,
@@ -137,6 +137,7 @@ export function mountStayBooking(
                 ) AS fresh
            FROM seven.inventory_windows iw
           WHERE iw.offering_id=$1
+            AND iw.room_type_id=$6
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date >= $4::date
             AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date < $5::date
           ORDER BY iw.starts_at`,
@@ -272,7 +273,7 @@ export function mountStayBooking(
          FROM seven.stay_nightly_rates
         WHERE rate_plan_id=$1 AND service_date >= $2::date AND service_date < $3::date
         ORDER BY service_date`,
-      [input.ratePlanId, input.checkInDate, input.checkOutDate],
+      [input.ratePlanId, input.checkInDate, input.checkOutDate, selected.room_type_id],
     );
     if (nightly.length !== dates.length || !dates.every((date, index) => nightly[index]?.service_date === date))
       return fail(409, 'NIGHTLY_RATE_MISSING', 'A price is not available for every night. Ask the hotel to update its rates.');
@@ -306,6 +307,7 @@ export function mountStayBooking(
               seven.inventory_window_is_fresh(iw.inventory_source,iw.inventory_confirmed_at,$2,$3) AS inventory_fresh
          FROM seven.inventory_windows iw
         WHERE iw.offering_id=$1
+            AND iw.room_type_id=$6
           AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date >= $4::date
           AND (iw.starts_at AT TIME ZONE 'Africa/Lagos')::date < $5::date
         ORDER BY iw.starts_at
