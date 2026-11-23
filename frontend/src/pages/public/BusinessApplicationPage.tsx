@@ -134,7 +134,7 @@ export function BusinessApplicationPage() {
               )}
               {loading ? (
                 <p>Checking your account…</p>
-              ) : !user ? (
+              ) : !user && !claimUnavailable ? (
                 <div className="application-signin">
                   {selectedListing && <p>You are requesting access to manage <strong>{selectedListing.name}</strong> in Uyo.</p>}
                   <p>Sign in or create an account so the property application belongs to an authorised team member.</p>
