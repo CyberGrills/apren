@@ -360,5 +360,5 @@ test('Explore surfaces approved directory profiles and source-backed dining and 
   assert.match(businessCard, /Directory only/);
   assert.match(businessCard, /Property evidence requires review/);
   assert.match(businessCard, /Booking is disabled/);
-  assert.match(listingCard, /Not bookable or payable through 7even yet/);
+  assert.match(listingCard, /Not bookable through 7EVEN yet/);
 });
