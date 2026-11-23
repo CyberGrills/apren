@@ -4,7 +4,7 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import { createApp } from '../../backend/platform/src/app.ts';
-import { createPool, one } from '../../backend/platform/src/db.ts';
+import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
 import { migrate } from '../../backend/platform/src/migrate.ts';
 import { MockProvider } from '../../backend/platform/src/provider.ts';
 
@@ -29,14 +29,48 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
   const users:string[]=[];
   const businesses:string[]=[];
   const offerings:string[]=[];
-  const roomTypes:string[]=[];
-  const ratePlans:string[]=[];
   let server:Server|undefined;
   try{
     const identity=await one(pool,'SELECT current_database() AS name,inet_server_port() AS port');
     assert.match(String(identity?.name),/_test_db$/);
     assert.deepEqual(await one(appPool,'SELECT current_database() AS name,inet_server_port() AS port'),identity);
     await migrate(pool);
+    await transaction(pool, async (client) => {
+      const suffix = randomUUID();
+      const stayName = `RLS stay probe ${suffix}`;
+      const diningName = `RLS dining probe ${suffix}`;
+      const names = [stayName, diningName];
+      await client.query(
+        `INSERT INTO seven.discovery_listings
+          (kind,display_name,state_name,city,image_url,image_source_url,source_name,source_url,listing_status,is_bookable)
+         VALUES
+          ('STAY',$1,'Akwa Ibom','Uyo','https://example.test/stay.jpg','https://example.test/stay.jpg','RLS test','https://example.test/stay','DIRECTORY_ONLY',false),
+          ('DINING',$2,'Akwa Ibom','Uyo','https://example.test/dining.jpg','https://example.test/dining.jpg','RLS test','https://example.test/dining','DIRECTORY_ONLY',false)`,
+        names,
+      );
+      const legacyPolicies = await rows<{ tablename: string; policyname: string }>(
+        client,
+        `SELECT tablename,policyname FROM pg_policies
+          WHERE schemaname='seven'
+            AND ((tablename='discovery_listings' AND policyname='discovery_listings_server_read')
+              OR (tablename='state_directories' AND policyname='state_directories_server_read'))`,
+      );
+      assert.deepEqual(legacyPolicies, [], 'legacy permissive policies must be removed');
+      for (const role of ['seven_app', 'seven_readonly'] as const) {
+        await client.query(`SET LOCAL ROLE ${role}`);
+        const visible = await rows<{ kind: string }>(
+          client,
+          'SELECT kind FROM seven.discovery_listings WHERE display_name = ANY($1::text[]) ORDER BY kind',
+          [names],
+        );
+        assert.deepEqual(visible.map((item) => item.kind), ['DINING']);
+        await client.query('RESET ROLE');
+      }
+      await client.query(
+        'DELETE FROM seven.discovery_listings WHERE display_name = ANY($1::text[])',
+        [names],
+      );
+    });
     const runtime=createApp({pool:appPool,provider:new MockProvider(),environment:'preview',publicOrigin:origin});
     server=await new Promise<Server>(resolve=>{
       const listener=runtime.app.listen(0,'127.0.0.1',()=>resolve(listener));
@@ -106,7 +140,6 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const room=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
       offeringId:offer.id,name:'King Room',maxOccupancy:2,bedConfiguration:'1 king bed',totalRooms:8,
     });
-    roomTypes.push(room.room_type_id);
     const adoptedLegacyWindow=await one<{room_type_id:string}>(pool,
       'SELECT room_type_id FROM seven.inventory_windows WHERE offering_id=$1 AND starts_at=$2',[offer.id,legacyWindowStart]);
     assert.equal(adoptedLegacyWindow?.room_type_id,room.room_type_id);
@@ -114,7 +147,6 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       roomTypeId:room.room_type_id,code:'FLEX',name:'Flexible room only',
       currencyCode:'NGN',mealPlan:'ROOM_ONLY',refundable:true,cancellationPolicy:'Free cancellation before arrival.',
     });
-    ratePlans.push(plan.rate_plan_id);
     await owner.request(`/business/stay/rate-plans/${plan.rate_plan_id}`,'PATCH',{
       code:'FLEX',name:'Flexible room only updated',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
       refundable:true,cancellationPolicy:'Free cancellation before arrival.',expectedRevision:1,
@@ -142,12 +174,10 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const secondRoom=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
       offeringId:offer.id,name:'Twin Room',maxOccupancy:2,bedConfiguration:'2 twin beds',totalRooms:3,
     });
-    roomTypes.push(secondRoom.room_type_id);
     const secondPlan=await owner.request<{rate_plan_id:string}>('/business/stay/rate-plans','POST',{
       roomTypeId:secondRoom.room_type_id,code:'TWIN',name:'Twin room only',
       currencyCode:'NGN',mealPlan:'ROOM_ONLY',refundable:true,cancellationPolicy:'Free cancellation before arrival.',
     });
-    ratePlans.push(secondPlan.rate_plan_id);
     await owner.request('/business/stay/nightly-rates','PUT',{
       ratePlanId:secondPlan.rate_plan_id,expectedRevision:1,startDate,endDate,amountMinor:'20000000',
       closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
@@ -170,6 +200,8 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
 
     const customerA=new Client();await customerA.register();
     const customerB=new Client();await customerB.register();
+    // A malformed quote must reach Express's validation handler, not become an unhandled rejection.
+    await customerA.request('/stay-quotes','POST',{},422);
     const plans=await customerA.request<{plans:Array<{roomType:{id:string;name:string};ratePlan:{id:string};available:boolean}>}>(
       `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=1`);
     assert.equal(plans.plans.length,2);
@@ -291,9 +323,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       roomTypeId:room.room_type_id,code:'OTHER',name:'Cross tenant attempt',
       currencyCode:'NGN',mealPlan:'ROOM_ONLY',
     },404);
-    await owner.request('/business/stay/rooms','POST',{
+    const unnamedRoom=await owner.request<{room_type_id:string;name:string}>('/business/stay/rooms','POST',{
       offeringId:offer.id,maxOccupancy:2,bedConfiguration:'1 king bed',totalRooms:8,
-    },409);
+    });
+    assert.notEqual(unnamedRoom.room_type_id,room.room_type_id);
+    assert.equal(unnamedRoom.name,'1 king bed');
   }finally{
     if(server)await new Promise<void>((resolve,reject)=>server!.close(error=>error?reject(error):resolve()));
     if(offerings.length){
@@ -302,9 +336,12 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       await pool.query('DELETE FROM seven.quotes WHERE offering_id=ANY($1::uuid[])',[offerings]);
     }
     if(offerings.length)await pool.query('DELETE FROM seven.inventory_windows WHERE offering_id=ANY($1::uuid[])',[offerings]);
-    if(ratePlans.length)await pool.query('DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
-    if(ratePlans.length)await pool.query('DELETE FROM seven.stay_rate_plans WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
-    if(roomTypes.length)await pool.query('DELETE FROM seven.stay_room_types WHERE room_type_id=ANY($1::uuid[])',[roomTypes]);
+    if(offerings.length)await pool.query(
+      'DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id IN (SELECT rate_plan_id FROM seven.stay_rate_plans WHERE offering_id=ANY($1::uuid[]))',
+      [offerings],
+    );
+    if(offerings.length)await pool.query('DELETE FROM seven.stay_rate_plans WHERE offering_id=ANY($1::uuid[])',[offerings]);
+    if(offerings.length)await pool.query('DELETE FROM seven.stay_room_types WHERE offering_id=ANY($1::uuid[])',[offerings]);
     if(offerings.length)await pool.query('DELETE FROM seven.observations WHERE offering_id=ANY($1::uuid[])',[offerings]);
     if(businesses.length)await pool.query('DELETE FROM seven.observations WHERE business_id=ANY($1::uuid[])',[businesses]);
     if(offerings.length)await pool.query('DELETE FROM seven.offerings WHERE offering_id=ANY($1::uuid[])',[offerings]);
