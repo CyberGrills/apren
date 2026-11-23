@@ -170,6 +170,8 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
 
     const customerA=new Client();await customerA.register();
     const customerB=new Client();await customerB.register();
+    // A malformed quote must reach Express's validation handler, not become an unhandled rejection.
+    await customerA.request('/stay-quotes','POST',{},422);
     const plans=await customerA.request<{plans:Array<{roomType:{id:string;name:string};ratePlan:{id:string};available:boolean}>}>(
       `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=1`);
     assert.equal(plans.plans.length,2);
