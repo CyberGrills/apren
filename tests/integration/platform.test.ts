@@ -105,7 +105,6 @@ test('7even real PostgreSQL API and invariant acceptance', {
   await t.test('migration runner adopts known Supabase-applied 037-039 without replaying DDL', async () => {
     await pool.query('DROP SCHEMA IF EXISTS supabase_migrations CASCADE');
     try {
-      await pool.query('DROP SCHEMA IF EXISTS supabase_migrations CASCADE');
       await pool.query('CREATE SCHEMA supabase_migrations');
       await pool.query(
         'CREATE TABLE supabase_migrations.schema_migrations (version text PRIMARY KEY, name text NOT NULL)',
@@ -132,7 +131,6 @@ test('7even real PostgreSQL API and invariant acceptance', {
         [names],
       );
       assert.deepEqual(adopted.map((row) => row.migration_name), [...names].sort());
-  
     } finally {
       // This schema is test scaffolding; do not leak its history into later isolated tests.
       await pool.query('DROP SCHEMA IF EXISTS supabase_migrations CASCADE');
