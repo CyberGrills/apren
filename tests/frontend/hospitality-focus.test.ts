@@ -103,22 +103,22 @@ test('public directory renders canonical business profiles separately from booki
 });
 
 test('customer wallet, benefits and exchange routes expose existing reward operations', () => {
-  assert.match(app, /path="\\/app\\/points" element={<AccountPage tab="wallet" \\/>}/);
-  assert.match(app, /path="\\/app\\/benefits" element={<AccountPage tab="benefits" \\/>}/);
-  assert.match(app, /path="\\/app\\/exchange" element={<AccountPage tab="exchange" \\/>}/);
-  assert.match(account, /useApi<Reward\\[]>\\(user && tab === 'wallet' \\? '\/rewards' : null\\)/);
-  assert.match(account, /api\\('\\/trades'/);
+  assert.ok(app.includes('path="/app/points" element={<AccountPage tab="wallet" />}'));
+  assert.ok(app.includes('path="/app/benefits" element={<AccountPage tab="benefits" />}'));
+  assert.ok(app.includes('path="/app/exchange" element={<AccountPage tab="exchange" />}'));
+  assert.ok(account.includes("useApi<Reward[]>(user && tab === 'wallet' ? '/rewards' : null)"));
+  assert.ok(account.includes("api('/trades'"));
 });
 
 test('customer account navigation exposes points wallet, benefits and exchange', () => {
-  assert.match(account, /\\['profile', 'Profile'\\]/);
-  assert.match(account, /\\['bookings', 'Bookings'\\]/);
-  assert.match(account, /\\['wallet', 'Points wallet'\\]/);
-  assert.match(account, /\\['benefits', 'Benefits'\\]/);
-  assert.match(account, /\\['exchange', 'Exchange'\\]/);
-  assert.match(account, /\\['activity', 'Updates'\\]/);
-  assert.match(account, /Points are earned after an eligible booking is completed/);
-  assert.match(account, /does not exchange cash, foreign currency or cryptocurrency/);
+  assert.ok(account.includes("['profile', 'Profile']"));
+  assert.ok(account.includes("['bookings', 'Bookings']"));
+  assert.ok(account.includes("['wallet', 'Points wallet']"));
+  assert.ok(account.includes("['benefits', 'Benefits']"));
+  assert.ok(account.includes("['exchange', 'Exchange']"));
+  assert.ok(account.includes("['activity', 'Updates']"));
+  assert.ok(account.includes('Points are earned after an eligible booking is completed'));
+  assert.ok(account.includes('does not exchange cash, foreign currency or cryptocurrency'));
 });
 
 test('checkout shows service fees separately when the quote includes one', () => {
