@@ -1385,7 +1385,11 @@ export function createApp(options: AppOptions = {}) {
         );
         if (!schemaReady?.ready)
           return fail(503, 'HOTEL_CLAIM_NOT_READY', 'Hotel profile claiming is being prepared. Please try again shortly.');
-        listing = await one(
+        listing = await one<{
+          discovery_listing_id: string; display_name: string; state_name: string; city: string;
+          address_text: string; description: string; details: Record<string, unknown>;
+          claimed_business_id: string | null;
+        }>(
           db,
           `SELECT d.discovery_listing_id::text, d.display_name, d.state_name, d.city,
                   d.address_text, d.description, d.details,
