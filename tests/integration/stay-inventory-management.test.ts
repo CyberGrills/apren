@@ -456,15 +456,22 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       await pool.query('DELETE FROM seven.outbox_events WHERE business_id=ANY($1::uuid[])',[businesses]);
       await pool.query('DELETE FROM seven.audit_events WHERE business_id=ANY($1::uuid[])',[businesses]);
       await pool.query('DELETE FROM seven.sources WHERE business_id=ANY($1::uuid[])',[businesses]);
-      await pool.query('DELETE FROM seven.memberships WHERE business_id=ANY($1::uuid[])',[businesses]);
-      await pool.query('DELETE FROM seven.venues WHERE business_id=ANY($1::uuid[])',[businesses]);
-      await pool.query('DELETE FROM seven.businesses WHERE business_id=ANY($1::uuid[])',[businesses]);
+      // Approved payment destinations are retained by domain policy. Keep the
+      // isolated fixture business, venue and owner membership rather than
+      // deleting a business_payment_accounts parent or weakening that policy.
+      // The entire _test_db is disposable and recreated for the next CI run.
     }
     if(users.length){
       await pool.query('DELETE FROM seven.notifications WHERE user_id=ANY($1::uuid[])',[users]);
       await pool.query('DELETE FROM seven.idempotencies WHERE user_id=ANY($1::uuid[])',[users]);
       await pool.query('DELETE FROM seven.sessions WHERE user_id=ANY($1::uuid[])',[users]);
-      await pool.query('DELETE FROM seven.users WHERE user_id=ANY($1::uuid[])',[users]);
+      // The retained approved-payment fixture still belongs to its owner.
+      // Delete disposable users (for example the test admin), but preserve any
+      // user who remains referenced by a retained business membership.
+      await pool.query(
+        'DELETE FROM seven.users AS test_user WHERE test_user.user_id=ANY($1::uuid[]) AND NOT EXISTS (SELECT 1 FROM seven.memberships AS membership WHERE membership.user_id=test_user.user_id)',
+        [users],
+      );
     }
     await appPool.end();await pool.end();
   }
