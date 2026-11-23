@@ -1262,7 +1262,7 @@
 
 /* Customer points wallet, benefits and exchange */
 .customer-value-view { display: grid; gap: 2.5rem; }
-.points-wallet-card { padding: clamp(1.5rem,4vw,2.5rem); border-radius: 1.25rem; background: var(--surface-raised); border: 1px solid var(--line); }
+.points-wallet-card { padding: clamp(1.5rem,4vw,2.5rem); border-radius: 1.25rem; background: var(--surface-subtle); border: 1px solid var(--line); }
 .points-wallet-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
 .points-wallet-heading > span:first-child { display:flex; align-items:center; gap:.55rem; font-size:.78rem; font-weight:700; letter-spacing:.12em; }
 .points-wallet-balance { display:block; margin:1.1rem 0 .5rem; font-size:clamp(3rem,7vw,5rem); line-height:1; letter-spacing:-.05em; font-family:var(--font-display); }
