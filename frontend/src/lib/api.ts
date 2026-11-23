@@ -46,6 +46,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   if (!response.ok) {
     if (
       response.status === 401 &&
+      path !== '/auth/session' &&
       body &&
       'error' in body &&
       body.error.code === 'AUTHENTICATION_REQUIRED'
