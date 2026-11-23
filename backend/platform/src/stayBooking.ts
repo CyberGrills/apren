@@ -414,5 +414,5 @@ export function mountStayBooking(
       nightlyBreakdown,
       cancellationPolicySnapshot: termsSnapshot.cancellationPolicySnapshot,
     };
-  }));
+  }, next));
 }
