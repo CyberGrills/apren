@@ -98,3 +98,212 @@ SET image_url='https://madinahr.com/storage/pool-2.jpg',
 WHERE kind='STAY'
   AND display_name='Madina Hotels & Residences'
   AND claimed_business_id IS NULL;
+
+-- Reconcile addresses and amenities against the hotels' current official websites.
+-- Preserve the original proposal addresses in details when a source conflict exists;
+-- the property owner must confirm the correct operating address before approval.
+
+UPDATE seven.discovery_listings
+SET address_text='Unit B, Plot 29-34, Chief Odion/Donald Etiebet Streets, off Tunde Ogbeha Lane, Ewet Housing Estate, Uyo, Akwa Ibom State, Nigeria',
+    area='Ewet Housing Estate',
+    source_name='Ceedapeg Hotels official website and 7EVEN hotel proposal',
+    source_url='https://ceedapeghotels.com/index.php/rooms-suites/',
+    details=details || jsonb_build_object(
+      'website','https://ceedapeghotels.com/',
+      'contactPhone','+2342085912110',
+      'contactEmail','reservations@ceedapeghotels.com',
+      'proposalAddress','1 Itam Industrial Layout, Uyo',
+      'addressSourceConflict',true,
+      'amenitySourceUrl','https://ceedapeghotels.com/',
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','CONNECTIVITY','name','Free Wi-Fi','description','Listed on Ceedapeg official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Swimming pool','description','Listed on Ceedapeg official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Fitness centre','description','Listed on Ceedapeg official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','PARKING','name','Car parking','description','Listed on Ceedapeg official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Air conditioning','description','Listed on Ceedapeg official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Television','description','Listed on Ceedapeg official website; confirm before activation.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),updated_at=now()
+WHERE kind='STAY' AND display_name='Ceedapeg Hotels' AND claimed_business_id IS NULL;
+
+UPDATE seven.discovery_listings
+SET address_text='10 Udo-Udoma Avenue, off Oron Road, Uyo, Akwa Ibom State, Nigeria',
+    area='Off Oron Road',
+    source_name='Vinpy Hotels official website and 7EVEN hotel proposal',
+    source_url='https://vinpyhotels.com/accommodations/',
+    details=details || jsonb_build_object(
+      'website','https://vinpyhotels.com/',
+      'contactPhone','08134779599',
+      'contactPhones',jsonb_build_array('08134779599','09013874290'),
+      'contactEmail','reservations@vinpyhotels.com',
+      'proposalAddress','11 Ewet Housing Estate Road, Uyo',
+      'addressSourceConflict',true,
+      'amenitySourceUrl','https://vinpyhotels.com/accommodations/',
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Albatross restaurant','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Bar','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','CONNECTIVITY','name','Free Wi-Fi','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Air conditioning','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Smart TV','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Refrigerator','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Water heater','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SAFETY','name','Fire alarm','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Electric kettle','description','Listed on Vinpy Hotels official website; confirm before activation.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),updated_at=now()
+WHERE kind='STAY' AND display_name='Vinpy Hotels' AND claimed_business_id IS NULL;
+
+UPDATE seven.discovery_listings
+SET address_text='37 General Edet Akpan Avenue (Four Lane), Uyo, Akwa Ibom State, Nigeria',
+    area='Four Lane',
+    source_name='Monty Suites official Uyo pages and corporate profile',
+    source_url='https://www.montysuites.com/uyo-rooms',
+    details=details || jsonb_build_object(
+      'website','https://www.montysuites.com/uyo/',
+      'contactPhone','07038091700',
+      'contactEmail','reservations.uyo@montysuites.com',
+      'proposalAddress','37, 37A, 39 and 39A Atiku Abubakar Avenue, Uyo',
+      'addressSourceConflict',true,
+      'amenitySourceUrl','https://montysuites.com/wp-content/uploads/2021/06/BROCHURE-UYO.pdf',
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','SAFETY','name','24-hour CCTV coverage','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','24-hour room service','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','EVENTS','name','Boardroom and meeting halls','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','Laundry and shoe shine','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Live kitchen and buffet restaurant','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Bar and lounge','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','RECREATION','name','Mini golf course','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Rooftop swimming pool','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Spa and wellness centre','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Gym and fitness','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','PARKING','name','Spacious parking','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Village/native kitchen','description','Listed in Monty Suites official corporate profile; confirm before activation.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),updated_at=now()
+WHERE kind='STAY' AND display_name='Monty Suites Uyo' AND claimed_business_id IS NULL;
+
+UPDATE seven.discovery_listings
+SET address_text='Plot 70-73 Unit K, Ewet Housing Estate, opposite 4 Lanes, Uyo, Akwa Ibom State, Nigeria',
+    area='Ewet Housing Estate',
+    source_name='Villa Hilton official website and 7EVEN hotel proposal',
+    source_url='https://villahiltonhotels.com/our-rooms-apartments/',
+    details=details || jsonb_build_object(
+      'website','https://villahiltonhotels.com/',
+      'contactPhone','+2349022277796',
+      'contactPhones',jsonb_build_array('+2349058338815','+2349022277796','+2348094466550'),
+      'contactEmail','info@villahiltonhotels.com',
+      'proposalAddress','16 Osongama Estate Road, Uyo',
+      'addressSourceConflict',true,
+      'amenitySourceUrl','https://villahiltonhotels.com/our-rooms-apartments/',
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Restaurant','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Bar','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','CONNECTIVITY','name','Free Wi-Fi','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Swimming pool','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','TRANSPORT','name','Car hire service','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Air conditioning','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Television','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Refrigerator','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Electric kettle and tea/coffee','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','In-room safe','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Kitchenette in selected apartments','description','Listed on Villa Hilton official website; confirm before activation.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),updated_at=now()
+WHERE kind='STAY' AND display_name='Villa Hilton Hotels & Apartments' AND claimed_business_id IS NULL;
+
+UPDATE seven.discovery_listings
+SET address_text='2B Udouweme Street, off Abak Road, Uyo, Akwa Ibom State, Nigeria',
+    area='Off Abak Road',
+    source_name='Gladmann Hotel official website and 7EVEN hotel proposal',
+    source_url='https://gladmannhotel.com/rooms/',
+    details=details || jsonb_build_object(
+      'website','https://gladmannhotel.com/',
+      'contactPhone','08035794573',
+      'contactPhones',jsonb_build_array('08035794573','09029910977'),
+      'proposalAddress','2B Udo Uweme Street, Uyo',
+      'addressSourceConflict',true,
+      'amenitySourceUrl','https://gladmannhotel.com/',
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','CONNECTIVITY','name','Complimentary Wi-Fi','description','Listed on Gladmann Hotel official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','En-suite bathroom','description','Listed on Gladmann Hotel official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Mini fridge','description','Listed on Gladmann Hotel official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Coffee and tea maker','description','Listed on Gladmann Hotel official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','Room service','description','Listed on Gladmann Hotel official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Television and work desk','description','Listed on Gladmann Hotel official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Complimentary breakfast','description','Listed on Gladmann Hotel official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','TRANSPORT','name','Airport pickup','description','Listed on Gladmann Hotel official website; confirm before activation.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),updated_at=now()
+WHERE kind='STAY' AND display_name='Gladmann Hotel' AND claimed_business_id IS NULL;
+
+UPDATE seven.discovery_listings
+SET source_name='Prosperous Royal official website and 7EVEN hotel proposal',
+    source_url='https://www.prosperousroyalhotel.com/',
+    details=details || jsonb_build_object(
+      'website','https://www.prosperousroyalhotel.com/',
+      'contactPhone','07075119429',
+      'contactEmail','info@prosperousroyalhotel.com',
+      'amenitySourceUrl','https://www.prosperousroyalhotel.com/',
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Restaurant','description','Listed on Prosperous Royal official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Bar','description','Listed on Prosperous Royal official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Club and entertainment','description','Listed on Prosperous Royal official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SAFETY','name','Secure environment','description','Listed on Prosperous Royal official website; confirm before activation.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),updated_at=now()
+WHERE kind='STAY' AND display_name='Prosperous Royal Hotel and Resort Center' AND claimed_business_id IS NULL;
+
+UPDATE seven.discovery_listings
+SET source_name='Havilah Towers official room categories, facilities pages and 7EVEN uploaded flyer',
+    source_url='https://havilahtowershotels.com/room-categories/',
+    details=details || jsonb_build_object(
+      'website','https://havilahtowershotels.com/',
+      'amenitySourceUrl','https://havilahtowershotels.com/',
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Restaurant','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Spa','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','EVENTS','name','Conference room','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Swimming pool','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','CONNECTIVITY','name','In-room Wi-Fi','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Breakfast','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Coffee maker and mini bar','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','Smart TV and air conditioning','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','RO and UV purified water','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','ROOM_FEATURES','name','In-room safe and direct-dial phone','description','Listed on Havilah official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','24-hour room service','description','Listed on 7EVEN uploaded Havilah flyer; property confirmation required.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','Laundry service','description','Listed on 7EVEN uploaded Havilah flyer; property confirmation required.','accessType','INCLUDED'),
+        jsonb_build_object('category','EVENTS','name','Banquet facilities','description','Listed on 7EVEN uploaded Havilah flyer; property confirmation required.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),updated_at=now()
+WHERE kind='STAY' AND display_name='Havilah Towers and Gold Suites' AND claimed_business_id IS NULL;
+
+UPDATE seven.discovery_listings
+SET source_name='Merry Spill official website and uploaded media archive',
+    source_url='https://merryspillhotel.com/rooms__apartments/',
+    details=details || jsonb_build_object(
+      'website','https://merryspillhotel.com/',
+      'contactPhone','+2349130805610',
+      'contactEmail','info@merryspillhotel.com',
+      'amenitySourceUrl','https://merryspillhotel.com/facilities/',
+      'thirdPartyAmenitiesSourceUrl','https://www.booking.com/hotel/ng/merry-spill-and-apartment.html',
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Restaurant','description','Listed on Merry Spill official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Bar','description','Listed on Merry Spill official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Lounge','description','Listed on Merry Spill official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','OUTDOOR','name','Rooftop space','description','Listed on Merry Spill official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Swimming pool','description','Listed on Merry Spill official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','EVENTS','name','Events and conference facilities','description','Listed on Merry Spill official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','CONNECTIVITY','name','Free Wi-Fi','description','Reported by a third-party booking profile; hotel owner must confirm.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','Room service and 24-hour reception','description','Reported by a third-party booking profile; hotel owner must confirm.','accessType','INCLUDED'),
+        jsonb_build_object('category','PARKING','name','Free on-site parking','description','Reported by a third-party booking profile; hotel owner must confirm.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),updated_at=now()
+WHERE kind='STAY' AND display_name='Merry Spill Hotel and Apartment' AND claimed_business_id IS NULL;
