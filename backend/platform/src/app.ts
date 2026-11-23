@@ -596,7 +596,9 @@ export function createApp(options: AppOptions = {}) {
                 NULLIF(d.details->>'contactPhone','') AS "contactPhone",
                 NULLIF(d.details->>'contactEmail','') AS "contactEmail",
                 d.details->'publishedRateNotes' AS "publishedRateNotes",
-                d.details->'amenities' AS amenities
+                d.details->'amenities' AS amenities,
+                d.details->'assetSourceFiles' AS "assetSourceFiles",
+                d.details->'galleryImageUrls' AS "galleryImageUrls"
          FROM seven.discovery_listings d WHERE ${where}
          ORDER BY d.state_name COLLATE "C", d.city COLLATE "C", d.display_name COLLATE "C"
          LIMIT $4 OFFSET $5`,
