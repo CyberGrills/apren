@@ -2149,12 +2149,14 @@ export function createApp(options: AppOptions = {}) {
     return mutate(req, res, async (db, actor) => {
       requireRole(actor, ['ADMIN']);
       const businessId = id(req);
-      const current = await one<{ details: Record<string, unknown> }>(
+      const current = await one<{ details: Record<string, unknown>; status: string }>(
         db,
-        'SELECT details FROM seven.businesses WHERE business_id=$1 FOR UPDATE',
+        'SELECT b.details,s.workflow_state_code AS status FROM seven.businesses b JOIN seven.workflow_states s USING(workflow_state_id) WHERE b.business_id=$1 FOR UPDATE OF b',
         [businessId],
       );
       if (!current) return fail(404, 'NOT_FOUND', 'Business not found.');
+      if (input.status === 'REJECTED' && current.status !== 'PENDING')
+        return fail(409, 'REJECTION_UNAVAILABLE', 'Only a pending business application can be rejected.');
 
       let details = current.details ?? {};
       const businessSector =
