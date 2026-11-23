@@ -34,6 +34,8 @@ export interface DirectoryListing {
   claimed?: boolean;
   photoStatus?: 'PENDING_HOTEL_UPLOAD' | 'PENDING_MEDIA_IMPORT' | 'AVAILABLE';
   amenities?: { category: string; name: string; description?: string; accessType?: 'INCLUDED' | 'PAID' }[];
+  assetSourceFiles?: string[];
+  galleryImageUrls?: string[];
   officialBookingUrl?: string;
   contactPhone?: string;
   contactEmail?: string;
