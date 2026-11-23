@@ -102,6 +102,35 @@ test('7even real PostgreSQL API and invariant acceptance', {
   );
   await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
   await migrate(pool);
+  await t.test('migration runner adopts known Supabase-applied 037-039 without replaying DDL', async () => {
+    await pool.query('DROP SCHEMA IF EXISTS supabase_migrations CASCADE');
+    await pool.query('CREATE SCHEMA supabase_migrations');
+    await pool.query(
+      'CREATE TABLE supabase_migrations.schema_migrations (version text PRIMARY KEY, name text NOT NULL)',
+    );
+    const names = [
+      '037_source_aware_inventory_freshness.sql',
+      '038_venue_amenities.sql',
+      '039_venue_amenities_rls.sql',
+    ];
+    await pool.query(
+      'DELETE FROM seven.migrations WHERE migration_name = ANY($1::text[])',
+      [names],
+    );
+    await pool.query(
+      `INSERT INTO supabase_migrations.schema_migrations(version,name) VALUES
+        ('20261122195652','037_source_aware_inventory_freshness'),
+        ('20261122204732','venue_amenities_038'),
+        ('20261122210023','venue_amenities_rls_039')`,
+    );
+    await migrate(pool);
+    const adopted = await rows<{ migration_name: string }>(
+      pool,
+      'SELECT migration_name FROM seven.migrations WHERE migration_name = ANY($1::text[]) ORDER BY migration_name',
+      [names],
+    );
+    assert.deepEqual(adopted.map((row) => row.migration_name), [...names].sort());
+  });
   await seed(pool, password);
   const appPool = process.env.TEST_RUNTIME_DATABASE_URL
     ? createPool(process.env.TEST_RUNTIME_DATABASE_URL)
