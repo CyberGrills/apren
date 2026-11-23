@@ -536,10 +536,17 @@ export function createApp(options: AppOptions = {}) {
       : z.string().trim().max(160).parse(req.query.q);
     const page = Math.max(1, Math.min(10000, Number(req.query.page) || 1));
     const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 100));
-    const where = `listing_status='DIRECTORY_ONLY' AND is_bookable=false
-      AND ($1='ALL' OR kind=$1)
-      AND ($2='' OR state_name=$2)
-      AND ($3='' OR lower(concat_ws(' ',display_name,state_name,city,area,address_text)) LIKE '%' || lower($3) || '%')`;
+    const where = `d.listing_status='DIRECTORY_ONLY' AND d.is_bookable=false
+      AND NOT EXISTS (
+        SELECT 1
+        FROM seven.businesses claimed_business
+        JOIN seven.workflow_states claimed_state USING (workflow_state_id)
+        WHERE claimed_business.business_id = NULLIF(to_jsonb(d)->>'claimed_business_id', '')::uuid
+          AND claimed_state.workflow_state_code = 'APPROVED'
+      )
+      AND ($1='ALL' OR d.kind=$1)
+      AND ($2='' OR d.state_name=$2)
+      AND ($3='' OR lower(concat_ws(' ',d.display_name,d.state_name,d.city,d.area,d.address_text)) LIKE '%' || lower($3) || '%')`;
     const businessCte = `WITH approved_businesses AS (
       SELECT b.business_id, b.slug, b.business_name, b.city, b.details,
              venue.venue_name, venue.address_line
@@ -570,19 +577,27 @@ export function createApp(options: AppOptions = {}) {
       ),
       one<{ total: number }>(
         pool,
-        `SELECT count(*)::int AS total FROM seven.discovery_listings WHERE ${where}`,
+        `SELECT count(*)::int AS total FROM seven.discovery_listings d WHERE ${where}`,
         [kind, state, searchText],
       ),
       rows(
         pool,
-        `SELECT discovery_listing_id::text AS id, kind, display_name AS name,
-                state_name AS state, city, area, address_text AS address,
-                description, image_url AS "imageUrl", image_source_url AS "imageSourceUrl",
-                split_part(split_part(image_source_url, '://', 2), '/', 1) AS "imageSourceName",
-                source_name AS "sourceName", source_url AS "sourceUrl",
-                'DIRECTORY_ONLY'::text AS status, false AS bookable, source_checked_at AS "sourceCheckedAt"
-         FROM seven.discovery_listings WHERE ${where}
-         ORDER BY state_name COLLATE "C", city COLLATE "C", display_name COLLATE "C"
+        `SELECT d.discovery_listing_id::text AS id, d.kind, d.display_name AS name,
+                d.state_name AS state, d.city, d.area, d.address_text AS address,
+                d.description, d.image_url AS "imageUrl", d.image_source_url AS "imageSourceUrl",
+                split_part(split_part(d.image_source_url, '://', 2), '/', 1) AS "imageSourceName",
+                d.source_name AS "sourceName", d.source_url AS "sourceUrl",
+                'DIRECTORY_ONLY'::text AS status, false AS bookable, d.source_checked_at AS "sourceCheckedAt",
+                (d.kind='STAY'
+                  AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='seven' AND table_name='discovery_listings' AND column_name='claimed_business_id')
+                  AND to_jsonb(d)->>'claimed_business_id' IS NULL) AS claimable,
+                (to_jsonb(d)->>'claimed_business_id' IS NOT NULL) AS claimed,
+                COALESCE(d.details->>'photoStatus','AVAILABLE') AS "photoStatus",
+                NULLIF(d.details->>'contactPhone','') AS "contactPhone",
+                NULLIF(d.details->>'contactEmail','') AS "contactEmail",
+                d.details->'publishedRateNotes' AS "publishedRateNotes"
+         FROM seven.discovery_listings d WHERE ${where}
+         ORDER BY d.state_name COLLATE "C", d.city COLLATE "C", d.display_name COLLATE "C"
          LIMIT $4 OFFSET $5`,
         [kind, state, searchText, pageSize, (page - 1) * pageSize],
       ),
@@ -1348,25 +1363,82 @@ export function createApp(options: AppOptions = {}) {
       requireRole(actor, ['CUSTOMER']);
       if (actor.businessId)
         return fail(409, 'ALREADY_MEMBER', 'This account already belongs to a business.');
+
+      let listing: {
+        discovery_listing_id: string;
+        display_name: string;
+        state_name: string;
+        city: string;
+        address_text: string;
+        description: string;
+        details: Record<string, unknown>;
+        claimed_business_id: string | null;
+      } | null = null;
+      if (input.discoveryListingId) {
+        const schemaReady = await one<{ ready: boolean }>(
+          db,
+          `SELECT EXISTS (
+             SELECT 1 FROM information_schema.columns
+             WHERE table_schema='seven' AND table_name='discovery_listings'
+               AND column_name='claimed_business_id'
+           ) AS ready`,
+        );
+        if (!schemaReady?.ready)
+          return fail(503, 'HOTEL_CLAIM_NOT_READY', 'Hotel profile claiming is being prepared. Please try again shortly.');
+        listing = await one(
+          db,
+          `SELECT d.discovery_listing_id::text, d.display_name, d.state_name, d.city,
+                  d.address_text, d.description, d.details,
+                  NULLIF(to_jsonb(d)->>'claimed_business_id','') AS claimed_business_id
+           FROM seven.discovery_listings d
+           WHERE d.discovery_listing_id=$1
+             AND d.kind='STAY'
+             AND d.listing_status='DIRECTORY_ONLY'
+             AND d.is_bookable=false
+           FOR UPDATE`,
+          [input.discoveryListingId],
+        );
+        if (!listing) return fail(404, 'HOTEL_PROFILE_NOT_FOUND', 'This hotel profile is no longer available to claim.');
+        if (listing.claimed_business_id)
+          return fail(409, 'HOTEL_PROFILE_ALREADY_CLAIMED', 'This hotel profile is already claimed or onboarding is in progress.');
+        const normalize = (value: string) =>
+          value.normalize('NFKC').trim().toLocaleLowerCase('en-NG').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+        if (normalize(input.businessName) !== normalize(listing.display_name))
+          return fail(422, 'HOTEL_PROFILE_NAME_MISMATCH', 'Use the exact hotel name shown on the preloaded profile.');
+        if (input.sector !== 'STAY')
+          return fail(422, 'HOTEL_PROFILE_SECTOR_MISMATCH', 'A hotel profile can only be claimed as a stay business.');
+      }
+
       const businessId = randomUUID();
       const venueId = randomUUID();
+      const sourceDetails = listing?.details ?? {};
+      const businessName = listing?.display_name ?? input.businessName;
       await db.query(
         `INSERT INTO seven.businesses(business_id,business_name,slug,city,description,workflow_state_id,details) VALUES($1,$2,$3,$4,$5,${S.sid('PENDING')},$6)`,
         [
           businessId,
-          input.businessName,
-          `${input.businessName
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .slice(0, 65)}-${businessId.slice(0, 8)}`,
+          businessName,
+          `${businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 65)}-${businessId.slice(0, 8)}`,
           input.city,
           input.description,
-          { address: input.address, phone: input.phone, sector: input.sector, isSample: false, state: input.state ?? null },
+          {
+            address: input.address,
+            phone: input.phone,
+            sector: input.sector,
+            isSample: false,
+            state: input.state ?? null,
+            ...(listing ? {
+              sourceListingId: listing.discovery_listing_id,
+              preloadedSourceWebsite: sourceDetails.website ?? null,
+              preloadedRateNotes: Array.isArray(sourceDetails.publishedRateNotes) ? sourceDetails.publishedRateNotes : [],
+              preloadedAmenityCount: Array.isArray(sourceDetails.amenities) ? sourceDetails.amenities.length : 0,
+            } : {}),
+          },
         ],
       );
       await db.query(
         'INSERT INTO seven.venues(venue_id,business_id,venue_name,address_line,city) VALUES($1,$2,$3,$4,$5)',
-        [venueId, businessId, input.businessName, input.address, input.city],
+        [venueId, businessId, businessName, input.address, input.city],
       );
       await db.query(
         "INSERT INTO seven.memberships(membership_id,user_id,business_id,role_id) VALUES($1,$2,$3,(SELECT role_id FROM seven.roles WHERE role_code='BUSINESS_OWNER'))",
@@ -1377,7 +1449,38 @@ export function createApp(options: AppOptions = {}) {
         actor.id,
         businessId,
       ]);
-      await S.audit(db, actor, businessId, 'business.applied', businessId);
+
+      if (listing) {
+        const claimed = await db.query(
+          `UPDATE seven.discovery_listings
+           SET claimed_business_id=$1, claimed_at=now(), updated_at=now()
+           WHERE discovery_listing_id=$2 AND claimed_business_id IS NULL`,
+          [businessId, listing.discovery_listing_id],
+        );
+        if (claimed.rowCount !== 1)
+          return fail(409, 'HOTEL_PROFILE_ALREADY_CLAIMED', 'Another authorised team member has already claimed this hotel profile.');
+
+        const suggestedAmenities = Array.isArray(sourceDetails.amenities) ? sourceDetails.amenities : [];
+        for (const suggestion of suggestedAmenities) {
+          if (!suggestion || typeof suggestion !== 'object') continue;
+          const amenity = suggestion as Record<string, unknown>;
+          const name = typeof amenity.name === 'string' ? amenity.name.trim() : '';
+          const category = typeof amenity.category === 'string' ? amenity.category.trim() : 'GENERAL';
+          if (name.length < 2 || name.length > 120 || category.length < 2 || category.length > 80) continue;
+          const description = typeof amenity.description === 'string' ? amenity.description.slice(0, 1200) : '';
+          const accessType = amenity.accessType === 'PAID' ? 'PAID' : 'INCLUDED';
+          await db.query(
+            `INSERT INTO seven.venue_amenities
+              (amenity_id,business_id,venue_id,category,name,description,status,access_type,booking_required,guest_notes,created_by)
+             VALUES($1,$2,$3,$4,$5,$6,'INACTIVE',$7,false,$8,NULL)`,
+            [
+              randomUUID(), businessId, venueId, category, name, description, accessType,
+              'Preloaded from a public source or 7EVEN-supplied material. Confirm the facility and access terms before activating it.',
+            ],
+          );
+        }
+      }
+      await S.audit(db, actor, businessId, listing ? 'business.applied_from_directory' : 'business.applied', businessId);
       return S.businessProjection(db, businessId);
     });
   });
