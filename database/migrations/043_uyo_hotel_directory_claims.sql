@@ -14,7 +14,7 @@ BEGIN
   END IF;
 END $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS discovery_listings_claimed_business_uidx
+CREATE INDEX IF NOT EXISTS discovery_listings_claimed_business_idx
   ON seven.discovery_listings (claimed_business_id)
   WHERE claimed_business_id IS NOT NULL;
 
