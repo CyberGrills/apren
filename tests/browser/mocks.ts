@@ -38,7 +38,8 @@ export async function installApiMocks(page: Page, role: 'CUSTOMER' | 'BUSINESS_O
     if (path === '/auth/methods') return route.fulfill({ json: { data: { google: { enabled: false }, apple: { enabled: false }, passkeys: { enabled: false } } } });
     if (path === '/auth/passkeys') return route.fulfill({ json: { data: { passkeys: [] } } });
     if (path === '/auth/social/accounts') return route.fulfill({ json: { data: { accounts: [] } } });
-    if (path === '/me/overview') return route.fulfill({ json: { data: { reservations: [], notifications: [] } } });
+    if (path === '/me/overview') return route.fulfill({ json: { data: { reservations: [], notifications: [], points: { balance: 0, available: 0, reserved: 0, shortfall: 0, entries: [] }, benefits: [], trades: [] } } });
+    if (path === '/rewards') return route.fulfill({ json: { data: [] } });
     if (path === '/me/avatar') return route.fulfill({ json: { data: { imageUrl: null } } });
     if (path === '/me/avatar/upload-intents') return route.fulfill({ status: 201, json: { data: { mediaId: 'avatar-upload-test', uploadUrl: 'https://storage.test/avatar?token=signed-upload-token', requiredHeaders: { 'Content-Type': 'image/png' } } } });
     if (path === '/me/avatar/avatar-upload-test/complete') return route.fulfill({ json: { data: { mediaId: 'avatar-upload-test', imageUrl: 'https://storage.test/avatar-view' } } });
