@@ -220,6 +220,20 @@ test(
       assert.equal(unauthorizedApproval.status, 403, JSON.stringify(unauthorizedApproval));
 
       const approvalPath = `/admin/businesses/${pendingBusinessId}/status`;
+      const rejection = await admin.request<C.Business>(approvalPath, 'POST', {
+        status: 'REJECTED',
+        reason: 'Please provide current room inventory and partner authority evidence.',
+      });
+      assert.equal(rejection.status, 200, JSON.stringify(rejection));
+      assert.equal(rejection.data.status, 'REJECTED');
+      const rejectionNotice = await one<{ title: string; body: string }>(
+        pool,
+        'SELECT title,body FROM seven.notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1',
+        [user.id],
+      );
+      assert.match(rejectionNotice?.title ?? '', /application needs changes/i);
+      assert.match(rejectionNotice?.body ?? '', /partner authority evidence/i);
+
       const missingVerification = await admin.request(
         approvalPath,
         'POST',
