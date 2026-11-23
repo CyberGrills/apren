@@ -7,6 +7,7 @@ import { createApp } from '../../backend/platform/src/app.ts';
 import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
 import { migrate } from '../../backend/platform/src/migrate.ts';
 import { MockProvider } from '../../backend/platform/src/provider.ts';
+import { pointsProjection } from '../../backend/platform/src/store.ts';
 
 const origin='http://127.0.0.1:5177';
 const password='Stay-Inventory-Integration-Test-Passphrase-42!';
@@ -315,6 +316,64 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const otherCategoryAllocation=await one<{allocated_count:number}>(
       pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1 AND room_type_id=$2',[offer.id,secondRoom.room_type_id]);
     assert.equal(otherCategoryAllocation?.allocated_count,0);
+
+    // Carry the winning room-category/rate-plan reservation through mock payment,
+    // hotel check-in, service completion and the rewards ledger in this same fixture.
+    const winnerClient = outcomes[0].status === 'fulfilled' ? customerA : customerB;
+    const winnerReservationId = winner.value.id;
+    const pointsBeforeStay = (await pointsProjection(pool, (await one<{user_id:string}>(
+      pool,'SELECT user_id FROM seven.users WHERE email=$1',[winnerClient.email],
+    ))!.user_id)).balance;
+    const checkout = await winnerClient.request<{paymentId:string}>(
+      `/reservations/${winnerReservationId}/checkout`,'POST',{});
+    assert.equal(checkout.status,200,JSON.stringify(checkout));
+    const paid = await winnerClient.request<{status:string}>(
+      `/payments/${checkout.data.paymentId}/dev-complete`,'POST',{outcome:'SUCCESS'});
+    assert.equal(paid.status,200,JSON.stringify(paid));
+    assert.equal(paid.data.status,'PAID');
+
+    const reception = new Client();const receptionId=await reception.register();
+    await pool.query(
+      "UPDATE seven.users SET role_id=(SELECT role_id FROM seven.roles WHERE role_code='RECEPTION') WHERE user_id=$1",
+      [receptionId],
+    );
+    await pool.query(
+      "INSERT INTO seven.memberships(membership_id,user_id,business_id,role_id) VALUES($1,$2,$3,(SELECT role_id FROM seven.roles WHERE role_code='RECEPTION'))",
+      [randomUUID(),receptionId,business.id],
+    );
+    await reception.login();
+    const checkedIn=await reception.request<{id:string;revision:number}>(
+      `/reservations/${winnerReservationId}/actions`,'POST',
+      {action:'CHECK_IN',expectedRevision:(await winnerClient.request<{revision:number}>(
+        `/reservations/${winnerReservationId}`)).data.revision});
+    assert.equal(checkedIn.status,200,JSON.stringify(checkedIn));
+
+    const earlyCompletion=await reception.request(
+      `/reservations/${winnerReservationId}/actions`,'POST',
+      {action:'FULFILL',expectedRevision:checkedIn.data.revision});
+    assert.equal(earlyCompletion.status,409,'A paid stay must not earn points before checkout time.');
+    const customerUserId=(await one<{user_id:string}>(
+      pool,'SELECT user_id FROM seven.users WHERE email=$1',[winnerClient.email],
+    ))!.user_id;
+    assert.equal((await pointsProjection(pool,customerUserId)).balance,pointsBeforeStay);
+
+    await pool.query(
+      "UPDATE seven.quotes SET ends_at=now()-interval '1 minute' WHERE quote_id=(SELECT quote_id FROM seven.reservations WHERE reservation_id=$1)",
+      [winnerReservationId],
+    );
+    const completed=await reception.request<{status:string;revision:number}>(
+      `/reservations/${winnerReservationId}/actions`,'POST',
+      {action:'FULFILL',expectedRevision:checkedIn.data.revision});
+    assert.equal(completed.status,200,JSON.stringify(completed));
+    assert.equal(completed.data.status,'FULFILLED');
+    const pointsAfterStay=(await pointsProjection(pool,customerUserId)).balance;
+    assert.ok(pointsAfterStay>pointsBeforeStay,'A paid, completed hotel stay must issue rewards.');
+    const replay=await reception.request(
+      `/reservations/${winnerReservationId}/actions`,'POST',
+      {action:'FULFILL',expectedRevision:checkedIn.data.revision});
+    assert.equal(replay.status,200);
+    assert.equal((await pointsProjection(pool,customerUserId)).balance,pointsAfterStay,
+      'Replaying fulfillment must not issue duplicate rewards.');
 
     const other=new Client();await other.register();await other.apply('Other inventory fixture');
     const isolated=await other.request<{rooms:unknown[]}>(`/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
