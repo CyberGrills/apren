@@ -21,6 +21,17 @@ const emptyDemoSchema: LegacyMigrationSchemaState = {
   demoAppPoliciesPresent: false,
   demoCatalogReadonlyPolicyPresent: false,
   demoEntryTypeLength: null,
+  inventorySourceColumnPresent: false,
+  inventorySourceConstraintPresent: false,
+  inventorySourceIndexPresent: false,
+  inventoryFreshnessFunctionPresent: false,
+  venueBusinessUniqueConstraintPresent: false,
+  venueAmenitiesTablePresent: false,
+  venueAmenitiesColumnsPresent: false,
+  venueAmenitiesIndexesPresent: false,
+  venueAmenitiesRlsEnabled: false,
+  venueAmenitiesAppPolicyPresent: false,
+  venueAmenitiesReadonlyPolicyPresent: false,
 };
 
 const completeDemoSchema: LegacyMigrationSchemaState = {
@@ -36,7 +47,89 @@ const completeDemoSchema: LegacyMigrationSchemaState = {
   demoAppPoliciesPresent: true,
   demoCatalogReadonlyPolicyPresent: true,
   demoEntryTypeLength: 20,
+  inventorySourceColumnPresent: false,
+  inventorySourceConstraintPresent: false,
+  inventorySourceIndexPresent: false,
+  inventoryFreshnessFunctionPresent: false,
+  venueBusinessUniqueConstraintPresent: false,
+  venueAmenitiesTablePresent: false,
+  venueAmenitiesColumnsPresent: false,
+  venueAmenitiesIndexesPresent: false,
+  venueAmenitiesRlsEnabled: false,
+  venueAmenitiesAppPolicyPresent: false,
+  venueAmenitiesReadonlyPolicyPresent: false,
 };
+
+
+const completeInventoryAndAmenitiesSchema: LegacyMigrationSchemaState = {
+  ...emptyDemoSchema,
+  inventorySourceColumnPresent: true,
+  inventorySourceConstraintPresent: true,
+  inventorySourceIndexPresent: true,
+  inventoryFreshnessFunctionPresent: true,
+  venueBusinessUniqueConstraintPresent: true,
+  venueAmenitiesTablePresent: true,
+  venueAmenitiesColumnsPresent: true,
+  venueAmenitiesIndexesPresent: true,
+  venueAmenitiesRlsEnabled: true,
+  venueAmenitiesAppPolicyPresent: true,
+  venueAmenitiesReadonlyPolicyPresent: true,
+};
+
+test('maps only the exact Supabase aliases for migrations 037-039', () => {
+  assert.equal(
+    legacySupabaseMigrationAlias('037_source_aware_inventory_freshness.sql'),
+    '037_source_aware_inventory_freshness',
+  );
+  assert.equal(legacySupabaseMigrationAlias('038_venue_amenities.sql'), 'venue_amenities_038');
+  assert.equal(legacySupabaseMigrationAlias('039_venue_amenities_rls.sql'), 'venue_amenities_rls_039');
+  assert.equal(legacySupabaseMigrationAlias('040_stay_room_types_and_rate_plans.sql'), undefined);
+});
+
+test('requires complete schema markers before adopting migrations 037-039', () => {
+  assert.equal(
+    isLegacyMigrationSchemaCompatible(
+      '037_source_aware_inventory_freshness.sql',
+      completeInventoryAndAmenitiesSchema,
+    ),
+    true,
+  );
+  assert.equal(
+    isLegacyMigrationSchemaCompatible('037_source_aware_inventory_freshness.sql', {
+      ...completeInventoryAndAmenitiesSchema,
+      inventorySourceIndexPresent: false,
+    }),
+    false,
+  );
+  assert.equal(
+    isLegacyMigrationSchemaCompatible(
+      '038_venue_amenities.sql',
+      completeInventoryAndAmenitiesSchema,
+    ),
+    true,
+  );
+  assert.equal(
+    isLegacyMigrationSchemaCompatible('038_venue_amenities.sql', {
+      ...completeInventoryAndAmenitiesSchema,
+      venueAmenitiesIndexesPresent: false,
+    }),
+    false,
+  );
+  assert.equal(
+    isLegacyMigrationSchemaCompatible(
+      '039_venue_amenities_rls.sql',
+      completeInventoryAndAmenitiesSchema,
+    ),
+    true,
+  );
+  assert.equal(
+    isLegacyMigrationSchemaCompatible('039_venue_amenities_rls.sql', {
+      ...completeInventoryAndAmenitiesSchema,
+      venueAmenitiesReadonlyPolicyPresent: false,
+    }),
+    false,
+  );
+});
 
 test('maps only the two known Supabase-applied migrations to repository migration files', () => {
   assert.equal(
