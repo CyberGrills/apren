@@ -60,3 +60,41 @@ COMMENT ON COLUMN seven.discovery_listings.claimed_business_id IS
   'Business created when an authorised hotel representative claims this preloaded directory profile.';
 COMMENT ON COLUMN seven.discovery_listings.claimed_at IS
   'Timestamp when the hotel profile was claimed; it does not mean the business is verified or bookable.';
+
+-- Madina's official website exposes a public gallery image and confirms the live
+-- published room references, amenities, address and contact details.
+UPDATE seven.discovery_listings
+SET image_url='https://madinahr.com/storage/pool-2.jpg',
+    image_source_url='https://madinahr.com/',
+    source_name='Madina official website gallery and room-rate page',
+    source_url='https://madinahr.com/',
+    details = details || jsonb_build_object(
+      'photoStatus','AVAILABLE',
+      'mediaImportStatus','Maldina.zip original room/corridor/bathroom/meeting-space archive still pending media import',
+      'galleryImageUrls',jsonb_build_array(
+        'https://madinahr.com/storage/pool-2.jpg',
+        'https://madinahr.com/storage/imgi-9-entrance-day-1.jpg',
+        'https://madinahr.com/storage/pic-1.png',
+        'https://madinahr.com/storage/pic-2.png'
+      ),
+      'amenities',jsonb_build_array(
+        jsonb_build_object('category','ROOM_FEATURES','name','Air conditioning','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','CONNECTIVITY','name','High-speed Wi-Fi','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Breakfast','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SAFETY','name','Smart security','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','Cleaning service','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Indoor restaurant/bar','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Outdoor restaurant/bar','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','Laundry services','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Catering services','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','WELLNESS','name','Swimming pool','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','PARKING','name','Secure parking','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','SERVICES','name','24/7 online support','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED'),
+        jsonb_build_object('category','FOOD_AND_DRINK','name','Fine dining','description','Listed on Madina official website; confirm before activation.','accessType','INCLUDED')
+      )
+    ),
+    source_checked_at=now(),
+    updated_at=now()
+WHERE kind='STAY'
+  AND display_name='Madina Hotels & Residences'
+  AND claimed_business_id IS NULL;
