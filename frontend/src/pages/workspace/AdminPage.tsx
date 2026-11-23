@@ -33,7 +33,7 @@ import {
 
 type Tab = 'overview' | 'businesses' | 'payments' | 'reservations' | 'policy' | 'audit';
 type Editor =
-  | { kind: 'status'; business: Business; status: 'APPROVED' | 'SUSPENDED' }
+  | { kind: 'status'; business: Business; status: 'APPROVED' | 'REJECTED' | 'SUSPENDED' }
   | { kind: 'subaccount'; business: Business }
   | { kind: 'cryptoWallet'; business: Business; account: BusinessPaymentAccount }
   | { kind: 'policy' };
@@ -147,7 +147,7 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
           collection="businesses"
           searchLabel="Find a business"
           placeholder="Name, city or state"
-          statuses={['PENDING', 'APPROVED', 'SUSPENDED']}
+          statuses={['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']}
           initialStatus="PENDING"
         >
           {(businesses) => (
@@ -184,9 +184,16 @@ export function AdminPage({ tab = 'overview' }: { tab?: Tab }) {
                   {b.cryptoCommissionOwedMinor && <p>USDC commission owed: <Money minor={b.cryptoCommissionOwedMinor} /></p>}
                   <div className="row-actions">
                     {b.status !== 'APPROVED' ? (
-                      <button type="button" className="btn btn-primary btn-small" onClick={() => setEditor({ kind: 'status', business: b, status: 'APPROVED' })}>
-                        <Check size={14} /> Review approval
-                      </button>
+                      <>
+                        <button type="button" className="btn btn-primary btn-small" onClick={() => setEditor({ kind: 'status', business: b, status: 'APPROVED' })}>
+                          <Check size={14} /> Review approval
+                        </button>
+                        {b.status === 'PENDING' && (
+                          <button type="button" className="btn btn-danger btn-small" onClick={() => setEditor({ kind: 'status', business: b, status: 'REJECTED' })}>
+                            Reject application
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <button type="button" className="btn btn-danger btn-small" onClick={() => setEditor({ kind: 'status', business: b, status: 'SUSPENDED' })}>
                         Suspend business
@@ -469,7 +476,7 @@ function AdminEditor({
     try {
       if (editor.kind === 'status') {
         const body: {
-          status: 'APPROVED' | 'SUSPENDED';
+          status: 'APPROVED' | 'REJECTED' | 'SUSPENDED';
           reason: string;
           verification?: Record<string, unknown>;
         } = { status: editor.status, reason: get('reason') };
@@ -557,7 +564,7 @@ function AdminEditor({
     <Modal
       title={
         editor.kind === 'status'
-          ? `${editor.status === 'APPROVED' ? 'Approve' : 'Suspend'} ${editor.business.businessName}?`
+          ? `${editor.status === 'APPROVED' ? 'Approve' : editor.status === 'REJECTED' ? 'Reject application for' : 'Suspend'} ${editor.business.businessName}?`
           : editor.kind === 'subaccount'
             ? 'Set verified bank mapping'
             : editor.kind === 'cryptoWallet'

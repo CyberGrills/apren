@@ -41,6 +41,8 @@ import { inventoryFreshnessSql } from './inventoryFreshness.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
 import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
+import { mountStayInventory } from './stayInventory.ts';
+import { mountStayBooking } from './stayBooking.ts';
 import { mountCustomerProfileMedia } from './customerProfileMedia.ts';
 import { mountCreatorArtworks } from './creatorArtworks.ts';
 import { mountCreatorArtworkRights } from './creatorArtworkRights.ts';
@@ -261,7 +263,8 @@ export function createApp(options: AppOptions = {}) {
       if (previous) {
         const cached = previous.response_body as Record<string, unknown>;
         if (req.path.startsWith('/api/business/') && req.path !== '/api/business/applications') {
-          requireRole(actor, ['BUSINESS_OWNER']);
+          const assignedInventoryEdit = req.path.startsWith('/api/business/stay/rooms/') && req.path.endsWith('/availability');
+          requireRole(actor, assignedInventoryEdit ? ['BUSINESS_OWNER', 'RECEPTION'] : ['BUSINESS_OWNER']);
           if (!actor.businessId) return fail(403, 'FORBIDDEN', 'Business access was revoked.');
         }
         if (
@@ -270,6 +273,8 @@ export function createApp(options: AppOptions = {}) {
           cached.ownerId !== actor.id
         )
           S.requireTenant(actor, cached.businessId);
+        if (req.path.startsWith('/api/business/stay/rooms/') && typeof cached.venueId === 'string')
+          S.requireVenue(actor, cached.venueId);
         if (req.path.includes('/reservations/') && typeof cached.id === 'string') {
           const current = await S.reservationProjection(db, cached.id);
           if (current) {
@@ -991,7 +996,12 @@ export function createApp(options: AppOptions = {}) {
   });
   route('post', '/quotes', async (req, res) => {
     const input = parse(C.quoteInput, req);
-    return mutate(req, res, (db, actor) => R.createQuote(db, actor, input, environment === 'production'));
+    return mutate(req, res, async (db, actor) => {
+      const offer = await S.offeringProjection(db, input.offeringId, true);
+      if (environment !== 'test' && offer?.kind === 'STAY')
+        return fail(409, 'RATE_PLAN_REQUIRED', 'Select a room category and an active nightly rate plan to request a stay quote.');
+      return R.createQuote(db, actor, input, environment === 'production');
+    });
   });
   route('post', '/reservations', async (req, res) => {
     const input = parse(C.reservationInput, req);
@@ -1371,6 +1381,39 @@ export function createApp(options: AppOptions = {}) {
       return S.businessProjection(db, businessId);
     });
   });
+  route('post', '/business/applications/resubmit', async (req, res) => {
+    const input = parse(C.businessApplicationInput, req);
+    return mutate(req, res, async (db, actor) => {
+      requireRole(actor, ['BUSINESS_OWNER']);
+      if (!actor.businessId)
+        return fail(403, 'BUSINESS_REQUIRED', 'This account has no business application to update.');
+      const current = await one<{ details: Record<string, unknown>; status: string }>(
+        db,
+        'SELECT b.details,s.workflow_state_code AS status FROM seven.businesses b JOIN seven.workflow_states s USING(workflow_state_id) WHERE b.business_id=$1 FOR UPDATE OF b',
+        [actor.businessId],
+      );
+      if (!current) return fail(404, 'NOT_FOUND', 'Business not found.');
+      if (current.status !== 'REJECTED')
+        return fail(409, 'RESUBMISSION_UNAVAILABLE', 'Only a rejected application can be resubmitted.');
+      const details = {
+        ...current.details,
+        address: input.address,
+        phone: input.phone,
+        sector: input.sector,
+        state: input.state ?? null,
+      };
+      await db.query(
+        `UPDATE seven.businesses SET business_name=$2,city=$3,description=$4,workflow_state_id=${S.sid('PENDING')},details=$5::jsonb,revision=revision+1,updated_at=now() WHERE business_id=$1`,
+        [actor.businessId, input.businessName, input.city, input.description, JSON.stringify(details)],
+      );
+      await db.query(
+        'UPDATE seven.venues SET venue_name=$2,address_line=$3,city=$4,revision=revision+1,updated_at=now() WHERE business_id=$1 AND is_active=true',
+        [actor.businessId, input.businessName, input.address, input.city],
+      );
+      await S.audit(db, actor, actor.businessId, 'business.resubmitted', actor.businessId, 'Owner updated the rejected application and requested a new review.');
+      return S.businessProjection(db, actor.businessId);
+    });
+  });
   async function businessActor(res: Response, ownerOnly = false): Promise<C.SessionUser> {
     const actor = actorFor(res);
     requireRole(actor, ownerOnly ? ['BUSINESS_OWNER'] : ['BUSINESS_OWNER', 'RECEPTION']);
@@ -1685,6 +1728,8 @@ export function createApp(options: AppOptions = {}) {
       const offer = await S.offeringProjection(db, id(req));
       if (!offer) return fail(404, 'NOT_FOUND', 'Offering not found.');
       S.requireTenant(actor, offer.businessId, true);
+      if (offer.kind === 'STAY' && environment !== 'test')
+        return fail(409, 'ROOM_CATEGORY_REQUIRED', 'Manage hotel availability from the room-category calendar so each room type has its own inventory.');
       const dates =
         offer.kind === 'STAY'
           ? serviceDates(
@@ -2104,12 +2149,14 @@ export function createApp(options: AppOptions = {}) {
     return mutate(req, res, async (db, actor) => {
       requireRole(actor, ['ADMIN']);
       const businessId = id(req);
-      const current = await one<{ details: Record<string, unknown> }>(
+      const current = await one<{ details: Record<string, unknown>; status: string }>(
         db,
-        'SELECT details FROM seven.businesses WHERE business_id=$1 FOR UPDATE',
+        'SELECT b.details,s.workflow_state_code AS status FROM seven.businesses b JOIN seven.workflow_states s USING(workflow_state_id) WHERE b.business_id=$1 FOR UPDATE OF b',
         [businessId],
       );
       if (!current) return fail(404, 'NOT_FOUND', 'Business not found.');
+      if (input.status === 'REJECTED' && current.status !== 'PENDING')
+        return fail(409, 'REJECTION_UNAVAILABLE', 'Only a pending business application can be rejected.');
 
       let details = current.details ?? {};
       const businessSector =
@@ -2165,6 +2212,22 @@ export function createApp(options: AppOptions = {}) {
         businessId,
         input.reason,
       );
+      if (input.status === 'REJECTED') {
+        const owners = await rows<{ user_id: string }>(
+          db,
+          "SELECT m.user_id FROM seven.memberships m JOIN seven.roles r USING(role_id) WHERE m.business_id=$1 AND m.is_active AND r.role_code='BUSINESS_OWNER'",
+          [businessId],
+        );
+        const business = await S.businessProjection(db, businessId);
+        for (const owner of owners)
+          await S.notify(
+            db,
+            owner.user_id,
+            'Your 7EVEN business application needs changes',
+            `We could not approve ${business?.businessName ?? 'your business'} yet. Review note: ${input.reason} You can contact 7EVEN support if you need help with the next steps.`,
+            '/business',
+          );
+      }
       return S.businessProjection(db, businessId);
     });
   });
@@ -2311,6 +2374,8 @@ export function createApp(options: AppOptions = {}) {
   mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
+  mountStayInventory(app, { pool, actor: actorFor, mutate });
+  mountStayBooking(app, { pool, mutate }, environment === 'production');
   app.use(async (req, res, next) => {
     if (!isCustomerProfileMediaRoute(req.path)) return next();
     try {

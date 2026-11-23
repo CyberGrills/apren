@@ -10,6 +10,17 @@ export type PersistedRecoveryEvent =
   | 'PAYMENT_FAILED'
   | 'BOOKING_CONFIRMED';
 
+export type RecoveryEvidenceTrust =
+  | 'UNVERIFIED_CLIENT_TELEMETRY'
+  | 'PROVIDER_VERIFIED_PAYMENT_MATCHED';
+
+/** Only payment-confirmed outcomes created by the server carry verified evidence. */
+export function recoveryEvidenceTrust(event: PersistedRecoveryEvent): RecoveryEvidenceTrust {
+  return event === 'BOOKING_CONFIRMED'
+    ? 'PROVIDER_VERIFIED_PAYMENT_MATCHED'
+    : 'UNVERIFIED_CLIENT_TELEMETRY';
+}
+
 /**
  * Recovery telemetry does not currently carry an authoritative inventory source
  * or confirmation timestamp. Keep inventory UNKNOWN so the engine fails closed.

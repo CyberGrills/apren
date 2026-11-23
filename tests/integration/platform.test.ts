@@ -102,6 +102,41 @@ test('7even real PostgreSQL API and invariant acceptance', {
   );
   await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
   await migrate(pool);
+  await t.test('migration runner adopts known Supabase-applied 037-039 without replaying DDL', async () => {
+    await pool.query('DROP SCHEMA IF EXISTS supabase_migrations CASCADE');
+    try {
+      await pool.query('CREATE SCHEMA supabase_migrations');
+      await pool.query(
+        'CREATE TABLE supabase_migrations.schema_migrations (version text PRIMARY KEY, name text NOT NULL)',
+      );
+      const names = [
+        '037_source_aware_inventory_freshness.sql',
+        '038_venue_amenities.sql',
+        '039_venue_amenities_rls.sql',
+      ];
+      await pool.query(
+        'DELETE FROM seven.migrations WHERE migration_name = ANY($1::text[])',
+        [names],
+      );
+      await pool.query(
+        `INSERT INTO supabase_migrations.schema_migrations(version,name) VALUES
+          ('20261122195652','037_source_aware_inventory_freshness'),
+          ('20261122204732','venue_amenities_038'),
+          ('20261122210023','venue_amenities_rls_039')`,
+      );
+      await migrate(pool);
+      const adopted = await rows<{ migration_name: string }>(
+        pool,
+        'SELECT migration_name FROM seven.migrations WHERE migration_name = ANY($1::text[]) ORDER BY migration_name',
+        [names],
+      );
+      assert.deepEqual(adopted.map((row) => row.migration_name), [...names].sort());
+    } finally {
+      // This schema is test scaffolding; do not leak its history into later isolated tests.
+      await pool.query('DROP SCHEMA IF EXISTS supabase_migrations CASCADE');
+    }
+  });
+
   await seed(pool, password);
   const appPool = process.env.TEST_RUNTIME_DATABASE_URL
     ? createPool(process.env.TEST_RUNTIME_DATABASE_URL)
@@ -437,6 +472,27 @@ test('7even real PostgreSQL API and invariant acceptance', {
     await t.test(
       'checkout completion, webhook-equivalent requery and once-only accepted-policy points',
       async () => {
+        const pointsBeforeUnpaidAttempt = (await pointsProjection(pool, guestUser.id)).balance;
+        await pool.query(
+          "UPDATE seven.reservations SET workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='CONFIRMED'),revision=revision+1 WHERE reservation_id=$1",
+          [reservation.id],
+        );
+        reservation = (await guest.request<C.Reservation>(`/reservations/${reservation.id}`)).data;
+        const unpaidFulfillment = await receptionist.request<C.Reservation>(
+          `/reservations/${reservation.id}/actions`,
+          'POST',
+          { action: 'FULFILL', expectedRevision: reservation.revision },
+          randomUUID(),
+        );
+        assert.equal(unpaidFulfillment.status, 409);
+        assert.equal(unpaidFulfillment.error?.code, 'PAYMENT_REQUIRED');
+        assert.equal((await pointsProjection(pool, guestUser.id)).balance, pointsBeforeUnpaidAttempt);
+        await pool.query(
+          "UPDATE seven.reservations SET workflow_state_id=(SELECT workflow_state_id FROM seven.workflow_states WHERE workflow_state_code='HELD'),revision=revision+1 WHERE reservation_id=$1",
+          [reservation.id],
+        );
+        reservation = (await guest.request<C.Reservation>(`/reservations/${reservation.id}`)).data;
+
         checkoutKey = randomUUID();
         const checkout = await guest.request<C.Checkout>(
           `/reservations/${reservation.id}/checkout`,
@@ -474,6 +530,40 @@ test('7even real PostgreSQL API and invariant acceptance', {
           holdMinutes: 15,
           reason: 'Verify accepted policy does not change retroactively.',
         });
+        reservation = (await guest.request<C.Reservation>(`/reservations/${reservation.id}`)).data;
+        const pointsBeforeCompletion = (await pointsProjection(pool, guestUser.id)).balance;
+        const prematureFulfillment = await receptionist.request<C.Reservation>(
+          `/reservations/${reservation.id}/actions`,
+          'POST',
+          { action: 'FULFILL', expectedRevision: reservation.revision },
+          randomUUID(),
+        );
+        assert.equal(prematureFulfillment.status, 409);
+        assert.equal(prematureFulfillment.error?.code, 'CHECK_IN_REQUIRED');
+        assert.equal((await pointsProjection(pool, guestUser.id)).balance, pointsBeforeCompletion);
+
+        const checkedIn = await receptionist.request<C.Reservation>(
+          `/reservations/${reservation.id}/actions`,
+          'POST',
+          { action: 'CHECK_IN', expectedRevision: reservation.revision },
+          randomUUID(),
+        );
+        assert.equal(checkedIn.status, 200, JSON.stringify(checkedIn));
+        reservation = checkedIn.data;
+        const beforeCheckout = await receptionist.request<C.Reservation>(
+          `/reservations/${reservation.id}/actions`,
+          'POST',
+          { action: 'FULFILL', expectedRevision: reservation.revision },
+          randomUUID(),
+        );
+        assert.equal(beforeCheckout.status, 409);
+        assert.equal(beforeCheckout.error?.code, 'SERVICE_NOT_COMPLETED');
+        assert.equal((await pointsProjection(pool, guestUser.id)).balance, pointsBeforeCompletion);
+
+        await pool.query(
+          "UPDATE seven.quotes SET ends_at=now()-interval '1 minute' WHERE quote_id=(SELECT quote_id FROM seven.reservations WHERE reservation_id=$1)",
+          [reservation.id],
+        );
         reservation = (await guest.request<C.Reservation>(`/reservations/${reservation.id}`)).data;
         fulfillKey = randomUUID();
         const fulfillment = await receptionist.request<C.Reservation>(

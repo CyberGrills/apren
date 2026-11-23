@@ -29,7 +29,9 @@ import { upcomingInventory } from '../../lib/businessWorkspace.ts';
 import { AdminRecords } from './AdminRecords.tsx';
 import { BusinessPayments } from './business/BusinessPayments.tsx';
 import { BusinessNotifications } from './business/BusinessNotifications.tsx';
+import { BusinessResubmission } from './business/BusinessResubmission.tsx';
 import { BusinessPhotoGallery } from './business/BusinessPhotoGallery.tsx';
+import { StayInventoryManager } from './business/StayInventoryManager.tsx';
 import { ListingUpdateReceipt } from './business/ListingUpdateReceipt.tsx';
 import { BusinessWorkspaceOverview } from './business/BusinessWorkspaceOverview.tsx';
 import { ListingBadge } from './ListingReadiness.tsx';
@@ -113,6 +115,9 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
       {error && <ErrorNotice message={error} retry={reload} />}
       {data && (
         <>
+          {tab === 'overview' && data.business?.status === 'REJECTED' && (
+            <BusinessResubmission business={data.business} onSubmitted={reload} />
+          )}
           {tab !== 'overview' && data.business?.status !== 'APPROVED' && (
             <div className="notice">
               Your business is {data.business?.status.toLowerCase() ?? 'awaiting setup'}. Publishing
@@ -198,7 +203,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             ))}
                           </ul>
                         )}
-                        {owner && (
+                        {owner && offer.kind !== 'STAY' && (
                           <div className="work-offering-actions">
                             <button
                               type="button"
@@ -216,6 +221,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             </button>
                           </div>
                         )}
+                        {offer.kind !== 'STAY' && <>
                         <p className="availability-legend">Upcoming dates · available / total</p>
                         <div className="availability-calendar">
                           {windows.slice(0, 7).map((w) => (
@@ -227,6 +233,10 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             </div>
                           ))}
                         </div>
+                        </>}
+                        {owner && offer.kind === 'STAY' && (
+                          <StayInventoryManager offeringId={offer.id} title={offer.title} />
+                        )}
                       </div>
                     </article>
                   );

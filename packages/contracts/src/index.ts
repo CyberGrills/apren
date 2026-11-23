@@ -23,7 +23,7 @@ export type PaymentStatus =
   | 'REFUNDED'
   | 'REVIEW_REQUIRED';
 export type SettlementStatus = 'UNSETTLED' | 'PENDING' | 'SETTLED' | 'FLAGGED' | 'UNKNOWN';
-export type BusinessStatus = 'PENDING' | 'APPROVED' | 'SUSPENDED';
+export type BusinessStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 export type BenefitStatus = 'AVAILABLE' | 'LOCKED' | 'CONSUMED' | 'EXPIRED' | 'REVOKED';
 export type TradeStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'EXPIRED';
 export type PaymentProviderId = 'flutterwave' | 'paystack' | 'crypto';
@@ -198,7 +198,7 @@ export const businessVerificationInput = z.strictObject({
   inventoryFreshnessHours: z.int().min(1).max(168),
 });
 export const businessStatusInput = z.strictObject({
-  status: z.enum(['APPROVED', 'SUSPENDED']),
+  status: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
   reason: z.string().trim().min(3).max(500),
   verification: businessVerificationInput.optional(),
 });
@@ -371,6 +371,35 @@ export interface Quote {
   expiresAt: string;
   policyVersion: number;
 }
+export interface StayReservationTerms {
+  roomType: {
+    id: string;
+    name?: string;
+    maxOccupancy: number;
+    bedConfiguration: string;
+  };
+  ratePlan: {
+    id: string;
+    code: string;
+    name: string;
+    currencyCode: string;
+    mealPlan: string;
+    refundable: boolean | null;
+    cancellationPolicy: string;
+    revision: number;
+  };
+  nightlyBreakdown: Array<{
+    date: string;
+    amountMinor: string;
+    quantity: number;
+    lineTotalMinor: string;
+  }>;
+  cancellationPolicySnapshot: {
+    refundable: boolean | null;
+    policy: string;
+    cancellationHours: number;
+  };
+}
 export interface Reservation {
   id: string;
   reference: string;
@@ -391,6 +420,7 @@ export interface Reservation {
   paymentStatus: PaymentStatus;
   settlementStatus: SettlementStatus;
   price: PriceBreakdown;
+  stayTerms: StayReservationTerms | null;
   holdExpiresAt: string | null;
   revision: number;
   createdAt: string;
