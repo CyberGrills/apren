@@ -75,7 +75,7 @@ test('customer workspace aliases resolve to bookings while wallet pages remain a
   await page.goto('/app/points');
   await expect(page).toHaveURL(/\/app\/points$/);
   await expect(page.getByRole('heading', { name: 'Your points. Your next experience.' })).toBeVisible();
-  await expect(page.getByText('7EVEN POINTS')).toBeVisible();
+  await expect(page.getByText('7EVEN POINTS').first()).toBeVisible();
   await page.goto('/app/benefits');
   await expect(page.getByRole('heading', { name: 'Good things you have earned.' })).toBeVisible();
   await page.goto('/app/exchange');
