@@ -86,7 +86,7 @@ test('Uyo hotel directory seeds 20 non-bookable profiles and authorised owners c
   const servers: Server[] = [];
   try {
     const identity = 'SELECT current_database() AS name, inet_server_addr()::text AS address, inet_server_port() AS port';
-    const ownerIdentity = await one(pool, identity);
+    const ownerIdentity = await one<{ name: string; address: string | null; port: number }>(pool, identity);
     assert.match(String(ownerIdentity?.name), /_test_db$/, 'A development or production database must never be reset.');
     assert.deepEqual(await one(appPool, identity), ownerIdentity);
     await pool.query('DROP SCHEMA IF EXISTS seven CASCADE');
@@ -108,7 +108,7 @@ test('Uyo hotel directory seeds 20 non-bookable profiles and authorised owners c
     await guest.login('guest@seven.test');
 
     const directory = await guest.request<{ listings: DirectoryItem[]; total: number }>(
-      '/directory?kind=STAY&state=Akwa%20Ibom&q=Uyo',
+      '/directory?kind=STAY&state=Akwa%20Ibom&q=Uyo&pageSize=100',
     );
     assert.equal(directory.status, 200, JSON.stringify(directory));
     const uyoHotels = directory.data.listings.filter((listing) => listing.name !== 'Kiniz Apartments and Hotel' && listing.name !== '1401 Luxury Apartments');
