@@ -348,10 +348,9 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
         `/reservations/${winnerReservationId}`)).revision});
     
 
-    const earlyCompletion=await reception.request(
+    await reception.request<unknown>(
       `/reservations/${winnerReservationId}/actions`,'POST',
       {action:'FULFILL',expectedRevision:checkedIn.revision},409);
-    assert.equal(earlyCompletion.status,409,'A paid stay must not earn points before checkout time.');
     const customerUserId=(await one<{user_id:string}>(
       pool,'SELECT user_id FROM seven.users WHERE email=$1',[winnerClient.email],
     ))!.user_id;
@@ -368,10 +367,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.equal(completed.status,'FULFILLED');
     const pointsAfterStay=(await pointsProjection(pool,customerUserId)).balance;
     assert.ok(pointsAfterStay>pointsBeforeStay,'A paid, completed hotel stay must issue rewards.');
-    const replay=await reception.request(
+    const fulfilledReservation=await reception.request<{revision:number}>(`/reservations/${winnerReservationId}`);
+    const replay=await reception.request<{status:string}>(
       `/reservations/${winnerReservationId}/actions`,'POST',
-      {action:'FULFILL',expectedRevision:checkedIn.data.revision});
-    assert.equal(replay.status,200);
+      {action:'FULFILL',expectedRevision:fulfilledReservation.revision});
+    assert.equal(replay.status,'FULFILLED');
     assert.equal((await pointsProjection(pool,customerUserId)).balance,pointsAfterStay,
       'Replaying fulfillment must not issue duplicate rewards.');
 
