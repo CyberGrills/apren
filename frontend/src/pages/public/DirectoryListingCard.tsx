@@ -10,9 +10,9 @@ const categoryLabel = {
 export function DirectoryListingCard({ listing }: { listing: DirectoryListing }) {
   return (
     <article className="seven-directory-card">
-      {listing.photoStatus === 'PENDING_HOTEL_UPLOAD' ? (
+      {listing.photoStatus && listing.photoStatus !== 'AVAILABLE' ? (
         <div className="seven-directory-image-link seven-business-directory-photo-placeholder" role="img" aria-label={`Original ${listing.name} photos are pending`}>
-          <span>Original hotel photos pending</span>
+          <span>{listing.photoStatus === 'PENDING_MEDIA_IMPORT' ? 'Uploaded property photos being prepared' : 'Property photos pending owner upload'}</span>
         </div>
       ) : (
         <a
@@ -45,6 +45,12 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         </p>
         {listing.area && <p className="seven-directory-area">{listing.area}</p>}
         <p className="seven-directory-description">{listing.description}</p>
+        {listing.amenities && listing.amenities.length > 0 && (
+          <section className="seven-directory-amenities" aria-label="Property-sourced amenities pending confirmation">
+            <p className="public-eyebrow">Property-sourced amenities · pending confirmation</p>
+            <ul>{listing.amenities.slice(0, 8).map((amenity) => <li key={amenity.name}>{amenity.name}</li>)}</ul>
+          </section>
+        )}
         <OfflineSaveButton listing={listing} />
         <a
           className="seven-directory-source-link"
@@ -54,7 +60,7 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         >
           View source listing <span aria-hidden="true">↗</span>
         </a>
-        {listing.photoStatus !== 'PENDING_HOTEL_UPLOAD' && (
+        {(!listing.photoStatus || listing.photoStatus === 'AVAILABLE') && (
           <a
             className="seven-directory-photo-credit"
             href={listing.imageSourceUrl}
@@ -73,7 +79,7 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
             <ul>
               {listing.publishedRateNotes.map((note) => (
                 <li key={`${note.source}:${note.roomType}`}>
-                  <span><strong>{note.roomType}</strong><small>{note.source}</small></span>
+                  <span><strong>{note.roomType}</strong><small><a href={note.url} target="_blank" rel="noreferrer noopener">{note.source}</a></small></span>
                   <span>{note.rate}</span>
                 </li>
               ))}
