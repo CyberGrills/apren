@@ -32,7 +32,8 @@ export interface DirectoryListing {
   bookable: false;
   claimable?: boolean;
   claimed?: boolean;
-  photoStatus?: 'PENDING_HOTEL_UPLOAD' | 'AVAILABLE';
+  photoStatus?: 'PENDING_HOTEL_UPLOAD' | 'PENDING_MEDIA_IMPORT' | 'AVAILABLE';
+  amenities?: { category: string; name: string; description?: string; accessType?: 'INCLUDED' | 'PAID' }[];
   officialBookingUrl?: string;
   contactPhone?: string;
   contactEmail?: string;
