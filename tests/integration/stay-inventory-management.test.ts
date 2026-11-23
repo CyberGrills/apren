@@ -326,11 +326,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     ))!.user_id)).balance;
     const checkout = await winnerClient.request<{paymentId:string}>(
       `/reservations/${winnerReservationId}/checkout`,'POST',{});
-    assert.equal(checkout.status,200,JSON.stringify(checkout));
+    
     const paid = await winnerClient.request<{status:string}>(
-      `/payments/${checkout.data.paymentId}/dev-complete`,'POST',{outcome:'SUCCESS'});
-    assert.equal(paid.status,200,JSON.stringify(paid));
-    assert.equal(paid.data.status,'PAID');
+      `/payments/${checkout.paymentId}/dev-complete`,'POST',{outcome:'SUCCESS'});
+    
+    assert.equal(paid.status,'PAID');
 
     const reception = new Client();const receptionId=await reception.register();
     await pool.query(
@@ -345,12 +345,12 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const checkedIn=await reception.request<{id:string;revision:number}>(
       `/reservations/${winnerReservationId}/actions`,'POST',
       {action:'CHECK_IN',expectedRevision:(await winnerClient.request<{revision:number}>(
-        `/reservations/${winnerReservationId}`)).data.revision});
-    assert.equal(checkedIn.status,200,JSON.stringify(checkedIn));
+        `/reservations/${winnerReservationId}`)).revision});
+    
 
     const earlyCompletion=await reception.request(
       `/reservations/${winnerReservationId}/actions`,'POST',
-      {action:'FULFILL',expectedRevision:checkedIn.data.revision});
+      {action:'FULFILL',expectedRevision:checkedIn.revision},409);
     assert.equal(earlyCompletion.status,409,'A paid stay must not earn points before checkout time.');
     const customerUserId=(await one<{user_id:string}>(
       pool,'SELECT user_id FROM seven.users WHERE email=$1',[winnerClient.email],
@@ -363,9 +363,9 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     );
     const completed=await reception.request<{status:string;revision:number}>(
       `/reservations/${winnerReservationId}/actions`,'POST',
-      {action:'FULFILL',expectedRevision:checkedIn.data.revision});
-    assert.equal(completed.status,200,JSON.stringify(completed));
-    assert.equal(completed.data.status,'FULFILLED');
+      {action:'FULFILL',expectedRevision:checkedIn.revision});
+    
+    assert.equal(completed.status,'FULFILLED');
     const pointsAfterStay=(await pointsProjection(pool,customerUserId)).balance;
     assert.ok(pointsAfterStay>pointsBeforeStay,'A paid, completed hotel stay must issue rewards.');
     const replay=await reception.request(
