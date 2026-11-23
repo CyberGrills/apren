@@ -166,6 +166,15 @@ export function BusinessApplicationPage() {
                       <strong>{selectedListing.name}</strong>
                       <span>{selectedListing.address}, {selectedListing.city}, {selectedListing.state}</span>
                       <p>This profile is preloaded from the 7EVEN hotel onboarding records. Your application links your team to this property; it does not publish unverified rates or availability.</p>
+                      {selectedListing.amenities && selectedListing.amenities.length > 0 && (
+                        <div className="application-claim-source-data">
+                          <strong>Facilities to review in your workspace</strong>
+                          <ul>{selectedListing.amenities.map((amenity) => <li key={amenity.name}>{amenity.name}</li>)}</ul>
+                        </div>
+                      )}
+                      {selectedListing.publishedRateNotes && selectedListing.publishedRateNotes.length > 0 && (
+                        <p className="public-small">The published website rate references are included for review. They are not live 7EVEN rate plans; confirm or update them in your workspace before publishing inventory.</p>
+                      )}
                     </div>
                   )}
                   <Field label="Business name">
