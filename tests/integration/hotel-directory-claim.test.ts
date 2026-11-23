@@ -64,7 +64,7 @@ interface DirectoryItem {
 test('Uyo hotel directory seeds 20 non-bookable profiles and authorised owners can claim one', {
   skip: !process.env.TEST_DATABASE_URL,
   timeout: 120000,
-}, async (t) => {
+}, async () => {
   const ownerUrl = process.env.TEST_DATABASE_URL;
   assert.ok(ownerUrl);
   const runtimeUrl = process.env.TEST_RUNTIME_DATABASE_URL ?? ownerUrl;
