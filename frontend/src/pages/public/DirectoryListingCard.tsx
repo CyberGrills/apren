@@ -10,24 +10,30 @@ const categoryLabel = {
 export function DirectoryListingCard({ listing }: { listing: DirectoryListing }) {
   return (
     <article className="seven-directory-card">
-      <a
-        className="seven-directory-image-link"
-        href={listing.sourceUrl}
-        target="_blank"
-        rel="noreferrer noopener"
-        aria-label={`View ${listing.name} at its source website`}
-      >
-        <img
-          src={listing.imageUrl}
-          alt={`${listing.name} in ${listing.city}, ${listing.state}`}
-          loading="lazy"
-          decoding="async"
-          referrerPolicy="no-referrer"
-          onError={(event) => {
-            event.currentTarget.style.visibility = 'hidden';
-          }}
-        />
-      </a>
+      {listing.photoStatus === 'PENDING_HOTEL_UPLOAD' ? (
+        <div className="seven-directory-image-link seven-business-directory-photo-placeholder" role="img" aria-label={`Original ${listing.name} photos are pending`}>
+          <span>Original hotel photos pending</span>
+        </div>
+      ) : (
+        <a
+          className="seven-directory-image-link"
+          href={listing.sourceUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label={`View ${listing.name} at its source website`}
+        >
+          <img
+            src={listing.imageUrl}
+            alt={`${listing.name} in ${listing.city}, ${listing.state}`}
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={(event) => {
+              event.currentTarget.style.visibility = 'hidden';
+            }}
+          />
+        </a>
+      )}
       <div className="seven-directory-card-body">
         <div className="seven-directory-card-meta">
           <span>{categoryLabel[listing.kind]}</span>
@@ -48,19 +54,21 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         >
           View source listing <span aria-hidden="true">↗</span>
         </a>
-        <a
-          className="seven-directory-photo-credit"
-          href={listing.imageSourceUrl}
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          Photo: {listing.imageSourceName}
-        </a>
+        {listing.photoStatus !== 'PENDING_HOTEL_UPLOAD' && (
+          <a
+            className="seven-directory-photo-credit"
+            href={listing.imageSourceUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            Photo: {listing.imageSourceName}
+          </a>
+        )}
         {listing.publishedRateNotes && (
           <section className="seven-directory-rate-notes" aria-label="Published third-party rate references">
             <p className="public-eyebrow">Published rate references · not live quotes</p>
             <p className="seven-directory-rate-warning">
-              Sources disagree on prices. These are public snapshots, not guaranteed 7even rates or date-specific availability. Confirm the final total and cancellation terms with the property before paying.
+              These are published website references, not live 7EVEN rates or date-specific availability. The hotel team must confirm the current rate and cancellation terms before the property becomes bookable.
             </p>
             <ul>
               {listing.publishedRateNotes.map((note) => (
@@ -83,7 +91,7 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         )}
         {listing.contactPhone && (
           <p className="seven-directory-contact">
-            Call Kiniz: <a href={`tel:${listing.contactPhone.replace(/[^+\d]/g, '')}`}>{listing.contactPhone}</a>
+            Contact the property: <a href={`tel:${listing.contactPhone.replace(/[^+\d]/g, '')}`}>{listing.contactPhone}</a>
           </p>
         )}
         {listing.contactEmail && (
@@ -93,10 +101,20 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         )}
         {listing.officialBookingUrl && (
           <a className="btn btn-primary seven-directory-direct-booking" href={listing.officialBookingUrl} target="_blank" rel="noreferrer noopener">
-            Check dates with Kiniz <span aria-hidden="true">↗</span>
+            Check dates with the property <span aria-hidden="true">↗</span>
           </a>
         )}
-        <p className="seven-directory-disclaimer">Not bookable or payable through 7even yet. Use the official or marketplace booking flow for date-specific rates and payment protections.</p>
+        {listing.kind === 'STAY' && listing.claimable && (
+          <a className="btn btn-primary seven-directory-claim" href={`/business/apply?listingId=${encodeURIComponent(listing.id)}`}>
+            Claim this hotel
+          </a>
+        )}
+        {listing.kind === 'STAY' && listing.claimed && (
+          <p className="seven-business-directory-warning">Property onboarding is in progress. Live booking will open after owner verification and hotel-managed inventory setup.</p>
+        )}
+        <p className="seven-directory-disclaimer">
+          Not bookable through 7EVEN yet. The property must claim its profile, complete verification, add room categories and rate plans, and publish current nightly availability before guests can reserve.
+        </p>
       </div>
     </article>
   );
