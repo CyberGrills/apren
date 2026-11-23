@@ -1,4 +1,23 @@
-import type { Address, EIP1193Provider, Hex } from 'viem';
+import type { Address, Chain, EIP1193Provider, Hex } from 'viem';
+
+// Keep only the two supported networks in the browser bundle instead of importing
+// viem's complete chain registry (which adds hundreds of unused chain definitions).
+const BASE_CHAIN = {
+  id: 8453,
+  name: 'Base',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: { default: { http: ['https://mainnet.base.org'] } },
+  blockExplorers: { default: { name: 'Basescan', url: 'https://basescan.org' } },
+} as const satisfies Chain;
+
+const BASE_SEPOLIA_CHAIN = {
+  id: 84532,
+  name: 'Base Sepolia',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: { default: { http: ['https://sepolia.base.org'] } },
+  blockExplorers: { default: { name: 'Basescan Sepolia', url: 'https://sepolia.basescan.org' } },
+  testnet: true,
+} as const satisfies Chain;
 
 export const SAMPLE_PAYER = '0x1111111111111111111111111111111111111111';
 const addressPattern = /^0x[0-9a-fA-F]{40}$/;
@@ -80,11 +99,8 @@ export async function prepareUsdcTransfer(input: {
   if (BigInt(input.amountAtoms) <= 0n)
     throw new Error('The transfer amount must be greater than zero.');
   const account = await connectPaymentWallet(input.chainId, input.payerAddress);
-  const [
-    { createPublicClient, custom, encodeFunctionData, formatEther, toHex },
-    { base, baseSepolia },
-  ] = await Promise.all([import('viem'), import('viem/chains')]);
-  const chain = input.chainId === 8453 ? base : baseSepolia;
+  const { createPublicClient, custom, encodeFunctionData, formatEther, toHex } = await import('viem');
+  const chain = input.chainId === 8453 ? BASE_CHAIN : BASE_SEPOLIA_CHAIN;
   const transport = custom(walletProvider(), { retryCount: 0 });
   const publicClient = createPublicClient({ chain, transport });
   const to = input.tokenAddress as Address;
