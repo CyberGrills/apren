@@ -4,7 +4,7 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
 import { createApp } from '../../backend/platform/src/app.ts';
-import { createPool, one } from '../../backend/platform/src/db.ts';
+import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
 import { migrate } from '../../backend/platform/src/migrate.ts';
 import { MockProvider } from '../../backend/platform/src/provider.ts';
 
@@ -37,6 +37,42 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.match(String(identity?.name),/_test_db$/);
     assert.deepEqual(await one(appPool,'SELECT current_database() AS name,inet_server_port() AS port'),identity);
     await migrate(pool);
+    await transaction(pool, async (client) => {
+      const suffix = randomUUID();
+      const stayName = `RLS stay probe ${suffix}`;
+      const diningName = `RLS dining probe ${suffix}`;
+      const names = [stayName, diningName];
+      await client.query(
+        `INSERT INTO seven.discovery_listings
+          (kind,display_name,state_name,city,image_url,image_source_url,source_name,source_url,listing_status,is_bookable)
+         VALUES
+          ('STAY',$1,'Akwa Ibom','Uyo','https://example.test/stay.jpg','https://example.test/stay.jpg','RLS test','https://example.test/stay','DIRECTORY_ONLY',false),
+          ('DINING',$2,'Akwa Ibom','Uyo','https://example.test/dining.jpg','https://example.test/dining.jpg','RLS test','https://example.test/dining','DIRECTORY_ONLY',false)`,
+        names,
+      );
+      const legacyPolicies = await rows<{ tablename: string; policyname: string }>(
+        client,
+        `SELECT tablename,policyname FROM pg_policies
+          WHERE schemaname='seven'
+            AND ((tablename='discovery_listings' AND policyname='discovery_listings_server_read')
+              OR (tablename='state_directories' AND policyname='state_directories_server_read'))`,
+      );
+      assert.deepEqual(legacyPolicies, [], 'legacy permissive policies must be removed');
+      for (const role of ['seven_app', 'seven_readonly'] as const) {
+        await client.query(`SET LOCAL ROLE ${role}`);
+        const visible = await rows<{ kind: string }>(
+          client,
+          'SELECT kind FROM seven.discovery_listings WHERE display_name = ANY($1::text[]) ORDER BY kind',
+          [names],
+        );
+        assert.deepEqual(visible.map((item) => item.kind), ['DINING']);
+        await client.query('RESET ROLE');
+      }
+      await client.query(
+        'DELETE FROM seven.discovery_listings WHERE display_name = ANY($1::text[])',
+        [names],
+      );
+    });
     const runtime=createApp({pool:appPool,provider:new MockProvider(),environment:'preview',publicOrigin:origin});
     server=await new Promise<Server>(resolve=>{
       const listener=runtime.app.listen(0,'127.0.0.1',()=>resolve(listener));
