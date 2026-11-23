@@ -1374,7 +1374,7 @@ export function createApp(options: AppOptions = {}) {
         description: string;
         details: Record<string, unknown>;
         claimed_business_id: string | null;
-      } | null = null;
+      } | undefined;
       if (input.discoveryListingId) {
         const schemaReady = await one<{ ready: boolean }>(
           db,
