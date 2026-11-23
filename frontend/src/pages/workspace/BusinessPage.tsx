@@ -30,6 +30,7 @@ import { AdminRecords } from './AdminRecords.tsx';
 import { BusinessPayments } from './business/BusinessPayments.tsx';
 import { BusinessNotifications } from './business/BusinessNotifications.tsx';
 import { BusinessPhotoGallery } from './business/BusinessPhotoGallery.tsx';
+import { StayInventoryManager } from './business/StayInventoryManager.tsx';
 import { ListingUpdateReceipt } from './business/ListingUpdateReceipt.tsx';
 import { BusinessWorkspaceOverview } from './business/BusinessWorkspaceOverview.tsx';
 import { ListingBadge } from './ListingReadiness.tsx';
@@ -198,7 +199,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             ))}
                           </ul>
                         )}
-                        {owner && (
+                        {owner && offer.kind !== 'STAY' && (
                           <div className="work-offering-actions">
                             <button
                               type="button"
@@ -216,6 +217,7 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             </button>
                           </div>
                         )}
+                        {offer.kind !== 'STAY' && <>
                         <p className="availability-legend">Upcoming dates · available / total</p>
                         <div className="availability-calendar">
                           {windows.slice(0, 7).map((w) => (
@@ -227,6 +229,10 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
                             </div>
                           ))}
                         </div>
+                        </>}
+                        {owner && offer.kind === 'STAY' && (
+                          <StayInventoryManager offeringId={offer.id} title={offer.title} />
+                        )}
                       </div>
                     </article>
                   );

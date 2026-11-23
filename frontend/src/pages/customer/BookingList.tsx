@@ -115,6 +115,20 @@ export function BookingList({
                   reservation.startAt &&
                   ` · ${new Intl.DateTimeFormat('en-NG', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' }).format(new Date(reservation.startAt))} WAT`}
               </p>
+              {reservation.stayTerms && (
+                <section className="booking-rate-policy" aria-label="Booked room and rate terms">
+                  <p><strong>{reservation.stayTerms.roomType.name || reservation.stayTerms.roomType.bedConfiguration || 'Room'}</strong> · {reservation.stayTerms.ratePlan.name}</p>
+                  <p className="public-small">{reservation.stayTerms.ratePlan.mealPlan} · {reservation.stayTerms.roomType.maxOccupancy} guests maximum · {reservation.stayTerms.cancellationPolicySnapshot.refundable === true ? 'Refundable' : reservation.stayTerms.cancellationPolicySnapshot.refundable === false ? 'Non-refundable' : 'Refund terms not specified'}</p>
+                  {reservation.stayTerms.nightlyBreakdown.map((night) => (
+                    <p className="public-small" key={night.date}>
+                      {friendlyDate(night.date)} · <Money minor={night.amountMinor} /> × {night.quantity}
+                    </p>
+                  ))}
+                  {reservation.stayTerms.cancellationPolicySnapshot.policy && (
+                    <p className="public-small">{reservation.stayTerms.cancellationPolicySnapshot.policy}</p>
+                  )}
+                </section>
+              )}
               <dl className="customer-booking-details">
                 <div>
                   <dt>{pcm ? 'Booking reference' : 'Reference'}</dt>
@@ -199,9 +213,17 @@ export function BookingList({
             <p>
               {cancel.title} · {cancel.reference}
             </p>
+            {cancel.stayTerms && (
+              <section className="booking-rate-policy" aria-label="Saved cancellation terms">
+                <p className="public-small"><strong>{cancel.stayTerms.ratePlan.name}</strong> · {cancel.stayTerms.ratePlan.refundable === true ? 'Refundable rate' : cancel.stayTerms.ratePlan.refundable === false ? 'Non-refundable rate' : 'Refund terms not specified'}</p>
+                {cancel.stayTerms.cancellationPolicySnapshot.policy && (
+                  <p className="public-small">{cancel.stayTerms.cancellationPolicySnapshot.policy}</p>
+                )}
+                <p className="public-small">Cancellation window: {cancel.stayTerms.cancellationPolicySnapshot.cancellationHours} hours before check-in.</p>
+              </section>
+            )}
             <p className="public-small">
-              The business's cancellation policy applies. If a refund is due, it will be tracked
-              separately. This action does not promise an immediate refund.
+              If a refund is due, it will be tracked separately. Cancelling does not promise an immediate refund.
             </p>
             <Field label={pcm ? 'Why you wan cancel am?' : 'Reason for cancelling'}>
               <textarea

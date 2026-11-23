@@ -371,6 +371,35 @@ export interface Quote {
   expiresAt: string;
   policyVersion: number;
 }
+export interface StayReservationTerms {
+  roomType: {
+    id: string;
+    name?: string;
+    maxOccupancy: number;
+    bedConfiguration: string;
+  };
+  ratePlan: {
+    id: string;
+    code: string;
+    name: string;
+    currencyCode: string;
+    mealPlan: string;
+    refundable: boolean | null;
+    cancellationPolicy: string;
+    revision: number;
+  };
+  nightlyBreakdown: Array<{
+    date: string;
+    amountMinor: string;
+    quantity: number;
+    lineTotalMinor: string;
+  }>;
+  cancellationPolicySnapshot: {
+    refundable: boolean | null;
+    policy: string;
+    cancellationHours: number;
+  };
+}
 export interface Reservation {
   id: string;
   reference: string;
@@ -391,6 +420,7 @@ export interface Reservation {
   paymentStatus: PaymentStatus;
   settlementStatus: SettlementStatus;
   price: PriceBreakdown;
+  stayTerms: StayReservationTerms | null;
   holdExpiresAt: string | null;
   revision: number;
   createdAt: string;

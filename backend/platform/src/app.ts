@@ -41,6 +41,8 @@ import { inventoryFreshnessSql } from './inventoryFreshness.ts';
 import { listingReadiness } from './listingReadiness.ts';
 import { mountAdminRecords } from './adminRecords.ts';
 import { businessMediaGallery, mountBusinessMedia } from './businessMedia.ts';
+import { mountStayInventory } from './stayInventory.ts';
+import { mountStayBooking } from './stayBooking.ts';
 import { mountCustomerProfileMedia } from './customerProfileMedia.ts';
 import { mountCreatorArtworks } from './creatorArtworks.ts';
 import { mountCreatorArtworkRights } from './creatorArtworkRights.ts';
@@ -261,7 +263,8 @@ export function createApp(options: AppOptions = {}) {
       if (previous) {
         const cached = previous.response_body as Record<string, unknown>;
         if (req.path.startsWith('/api/business/') && req.path !== '/api/business/applications') {
-          requireRole(actor, ['BUSINESS_OWNER']);
+          const assignedInventoryEdit = req.path.startsWith('/api/business/stay/rooms/') && req.path.endsWith('/availability');
+          requireRole(actor, assignedInventoryEdit ? ['BUSINESS_OWNER', 'RECEPTION'] : ['BUSINESS_OWNER']);
           if (!actor.businessId) return fail(403, 'FORBIDDEN', 'Business access was revoked.');
         }
         if (
@@ -270,6 +273,8 @@ export function createApp(options: AppOptions = {}) {
           cached.ownerId !== actor.id
         )
           S.requireTenant(actor, cached.businessId);
+        if (req.path.startsWith('/api/business/stay/rooms/') && typeof cached.venueId === 'string')
+          S.requireVenue(actor, cached.venueId);
         if (req.path.includes('/reservations/') && typeof cached.id === 'string') {
           const current = await S.reservationProjection(db, cached.id);
           if (current) {
@@ -991,7 +996,12 @@ export function createApp(options: AppOptions = {}) {
   });
   route('post', '/quotes', async (req, res) => {
     const input = parse(C.quoteInput, req);
-    return mutate(req, res, (db, actor) => R.createQuote(db, actor, input, environment === 'production'));
+    return mutate(req, res, async (db, actor) => {
+      const offer = await S.offeringProjection(db, input.offeringId, true);
+      if (environment !== 'test' && offer?.kind === 'STAY')
+        return fail(409, 'RATE_PLAN_REQUIRED', 'Select a room category and an active nightly rate plan to request a stay quote.');
+      return R.createQuote(db, actor, input, environment === 'production');
+    });
   });
   route('post', '/reservations', async (req, res) => {
     const input = parse(C.reservationInput, req);
@@ -1685,6 +1695,8 @@ export function createApp(options: AppOptions = {}) {
       const offer = await S.offeringProjection(db, id(req));
       if (!offer) return fail(404, 'NOT_FOUND', 'Offering not found.');
       S.requireTenant(actor, offer.businessId, true);
+      if (offer.kind === 'STAY' && environment !== 'test')
+        return fail(409, 'ROOM_CATEGORY_REQUIRED', 'Manage hotel availability from the room-category calendar so each room type has its own inventory.');
       const dates =
         offer.kind === 'STAY'
           ? serviceDates(
@@ -2311,6 +2323,8 @@ export function createApp(options: AppOptions = {}) {
   mountDemoMarketplace(app, pool, actorFor, environment);
   mountAdminRecords(app, { pool, actor: actorFor });
   mountBusinessMedia(app, { pool, actor: actorFor });
+  mountStayInventory(app, { pool, actor: actorFor, mutate });
+  mountStayBooking(app, { pool, mutate }, environment === 'production');
   app.use(async (req, res, next) => {
     if (!isCustomerProfileMediaRoute(req.path)) return next();
     try {
