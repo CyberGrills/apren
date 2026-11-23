@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Hotel photos coming soon</title>
+  <desc id="desc">A neutral placeholder displayed until the hotel uploads verified property photographs.</desc>
+  <rect width="1200" height="800" fill="#f0eee8"/>
+  <g fill="none" stroke="#59635f" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M430 570V290l170-90 170 90v280"/>
+    <path d="M380 570h440"/>
+    <path d="M490 350h70v70h-70zM640 350h70v70h-70zM490 470h70v70h-70zM640 470h70v70h-70z"/>
+    <path d="M570 570v-80h60v80"/>
+  </g>
+  <text x="600" y="660" text-anchor="middle" fill="#37433e" font-family="Arial, sans-serif" font-size="36" font-weight="700">PROPERTY PHOTOS PENDING</text>
+  <text x="600" y="710" text-anchor="middle" fill="#59635f" font-family="Arial, sans-serif" font-size="24">Verified hotel images will appear here</text>
+</svg>
