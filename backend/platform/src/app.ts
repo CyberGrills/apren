@@ -1361,9 +1361,9 @@ export function createApp(options: AppOptions = {}) {
   route('post', '/business/applications', async (req, res) => {
     const input = parse(C.businessApplicationInput, req);
     return mutate(req, res, async (db, actor) => {
-      requireRole(actor, ['CUSTOMER']);
       if (actor.businessId)
         return fail(409, 'ALREADY_MEMBER', 'This account already belongs to a business.');
+      requireRole(actor, ['CUSTOMER']);
 
       let listing: {
         discovery_listing_id: string;
