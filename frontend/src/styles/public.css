@@ -3618,3 +3618,6 @@
 .application-claim-source-data { margin-top:.7rem; }
 .application-claim-source-data ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.35rem 1rem; margin:.55rem 0; padding-left:1.2rem; color:var(--muted); font-size:.82rem; }
 @media (max-width: 640px) { .application-claim-source-data ul { grid-template-columns:1fr; } }
+
+.application-claim-gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; margin:.8rem 0; }
+.application-claim-gallery img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:.55rem; background:var(--surface-subtle); }
