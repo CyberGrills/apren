@@ -136,7 +136,7 @@ export function BookingPanel({ offering }: { offering: Offering }) {
       })
       .finally(() => { if (!controller.signal.aborted) setRatePlansLoading(false); });
     return () => controller.abort();
-  }, [isStay, offering.id, offering.isSample, startDate, endDate, quantity]);
+  }, [isStay, offering.id, offering.isSample, startDate, endDate, quantity, selectedRoomTypeId]);
   function clearQuote() {
     setQuote(null);
     setStayQuoteSnapshot(null);
