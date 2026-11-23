@@ -145,7 +145,7 @@ export function BusinessApplicationPage() {
                     Already have an account? Sign in
                   </Link>
                 </div>
-              ) : user.businessId ? (
+              ) : user?.businessId ? (
                 <div>
                   <p>
                     Your account already belongs to a business. Open your workspace to manage it.
@@ -154,7 +154,7 @@ export function BusinessApplicationPage() {
                     Open your workspace
                   </Link>
                 </div>
-              ) : !claimUnavailable && (!listingId || (selectedListing && selectedListing.claimable)) ? (
+              ) : !claimUnavailable && !!user && (!listingId || (selectedListing && selectedListing.claimable)) ? (
                 <form
                   onSubmit={submit}
                   onChange={() => {
