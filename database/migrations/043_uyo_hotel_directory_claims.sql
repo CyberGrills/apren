@@ -307,3 +307,10 @@ SET source_name='Merry Spill official website and uploaded media archive',
     ),
     source_checked_at=now(),updated_at=now()
 WHERE kind='STAY' AND display_name='Merry Spill Hotel and Apartment' AND claimed_business_id IS NULL;
+
+UPDATE seven.discovery_listings
+SET address_text='33 Samuel Effanga Crescent, Osong Ama Estate Road, Uyo 520102, Akwa Ibom State, Nigeria',
+    area='Osong Ama Estate',
+    source_checked_at=now(),
+    updated_at=now()
+WHERE kind='STAY' AND display_name='Merry Spill Hotel and Apartment' AND claimed_business_id IS NULL;
