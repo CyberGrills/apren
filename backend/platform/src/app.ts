@@ -1381,6 +1381,39 @@ export function createApp(options: AppOptions = {}) {
       return S.businessProjection(db, businessId);
     });
   });
+  route('post', '/business/applications/resubmit', async (req, res) => {
+    const input = parse(C.businessApplicationInput, req);
+    return mutate(req, res, async (db, actor) => {
+      requireRole(actor, ['BUSINESS_OWNER']);
+      if (!actor.businessId)
+        return fail(403, 'BUSINESS_REQUIRED', 'This account has no business application to update.');
+      const current = await one<{ details: Record<string, unknown> }>(
+        db,
+        'SELECT details FROM seven.businesses WHERE business_id=$1 FOR UPDATE',
+        [actor.businessId],
+      );
+      if (!current) return fail(404, 'NOT_FOUND', 'Business not found.');
+      if (S.businessStatus(current.details) !== 'REJECTED')
+        return fail(409, 'RESUBMISSION_UNAVAILABLE', 'Only a rejected application can be resubmitted.');
+      const details = {
+        ...current.details,
+        address: input.address,
+        phone: input.phone,
+        sector: input.sector,
+        state: input.state ?? null,
+      };
+      await db.query(
+        `UPDATE seven.businesses SET business_name=$2,city=$3,description=$4,workflow_state_id=${S.sid('PENDING')},details=$5::jsonb,revision=revision+1,updated_at=now() WHERE business_id=$1`,
+        [actor.businessId, input.businessName, input.city, input.description, JSON.stringify(details)],
+      );
+      await db.query(
+        'UPDATE seven.venues SET venue_name=$2,address_line=$3,city=$4,revision=revision+1,updated_at=now() WHERE business_id=$1 AND is_active=true',
+        [actor.businessId, input.businessName, input.address, input.city],
+      );
+      await S.audit(db, actor, actor.businessId, 'business.resubmitted', actor.businessId, 'Owner updated the rejected application and requested a new review.');
+      return S.businessProjection(db, actor.businessId);
+    });
+  });
   async function businessActor(res: Response, ownerOnly = false): Promise<C.SessionUser> {
     const actor = actorFor(res);
     requireRole(actor, ownerOnly ? ['BUSINESS_OWNER'] : ['BUSINESS_OWNER', 'RECEPTION']);
