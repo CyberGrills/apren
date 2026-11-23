@@ -173,7 +173,11 @@ export function BusinessApplicationPage() {
                         </div>
                       )}
                       {selectedListing.publishedRateNotes && selectedListing.publishedRateNotes.length > 0 && (
-                        <p className="public-small">The published website rate references are included for review. They are not live 7EVEN rate plans; confirm or update them in your workspace before publishing inventory.</p>
+                        <div className="application-claim-source-data">
+                          <strong>Published room rates to review</strong>
+                          <ul>{selectedListing.publishedRateNotes.map((rate) => <li key={rate.roomType}>{rate.roomType}: {rate.rate}</li>)}</ul>
+                          <p className="public-small">These are website references, not live 7EVEN rate plans. Confirm or update them in your workspace before publishing inventory.</p>
+                        </div>
                       )}
                     </div>
                   )}
