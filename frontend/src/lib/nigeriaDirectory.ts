@@ -30,6 +30,10 @@ export interface DirectoryListing {
   sourceUrl: string;
   status: 'DIRECTORY_ONLY';
   bookable: false;
+  claimable?: boolean;
+  claimed?: boolean;
+  photoStatus?: 'PENDING_HOTEL_UPLOAD' | 'PENDING_MEDIA_IMPORT' | 'AVAILABLE';
+  amenities?: { category: string; name: string; description?: string; accessType?: 'INCLUDED' | 'PAID' }[];
   officialBookingUrl?: string;
   contactPhone?: string;
   contactEmail?: string;
@@ -265,54 +269,6 @@ export const nigeriaStateDirectories: NigeriaStateDirectory[] = [
 ].sort((a, b) => a.stateName.localeCompare(b.stateName, 'en-NG'));
 
 export const sourcedDirectoryListings: DirectoryListing[] = [
-  {
-    id: 'stay-kiniz-apartments-hotel-uyo',
-    kind: 'STAY',
-    name: 'Kiniz Apartments & Hotel',
-    state: 'Akwa Ibom',
-    city: 'Uyo',
-    area: 'Osongama Estate',
-    address: '20 Basumoh Gas Road, Osongama Estate, Uyo, Akwa Ibom State, Nigeria',
-    description:
-      'Kiniz Apartments and Hotel Uyo, at 20 Basumoh Gas Road, is publicly listed with a 24-hour airport shuttle, balcony, three restaurants, a bar and lounge, full-service spa, breakfast, Wi-Fi and parking. Hotels.com showed an 8.0/10 score from one external review. Room prices and availability snapshots below are date-specific third-party references for 6–7 November 2026 (two travellers, one room), captured from user-provided listing details on 23 October 2026; they are not live 7even inventory or guaranteed prices. 7even has not confirmed current NGN rates, room counts, cancellation terms, or payment authorization with the property.',
-    imageUrl: 'https://images.trvl-media.com/lodging/136000000/135470000/135467700/135467630/26731097.jpg?impolicy=resizecrop&ra=fit&rw=297',
-    imageSourceName: 'Hotels.com',
-    imageSourceUrl: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/',
-    sourceName: 'Hotels.com',
-    sourceUrl: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/',
-    officialBookingUrl: 'https://kinizapartments.ng/cs/accommodation/executive-1-room-ensuite/',
-    contactPhone: '+234 903 000 2147',
-    contactEmail: 'info@kinizapartments.ng',
-    externalListings: [
-      { label: 'Official Kiniz booking site', url: 'https://kinizapartments.ng/cs/accommodation/executive-1-room-ensuite/' },
-      { label: 'Airbnb · Two-bedroom duplex', url: 'https://www.airbnb.com/rooms/1748812631839796794' },
-      { label: 'Airbnb · Four-bedroom apartment', url: 'https://www.airbnb.com/rooms/1749356558097433271' },
-      { label: 'Hotels.ng', url: 'https://hotels.ng/hotel/hn670229s-kiniz-apartments-hotels' },
-      { label: 'BookDirect.ng', url: 'https://bookdirect.ng/hotel/kiniz-luxury-apartments-uyo' },
-      { label: 'Hotels.com', url: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/' },
-      { label: 'Booking.com', url: 'https://www.booking.com/hotel/ng/kiniz-apartments-amp-uyo.html' },
-    ],
-    publishedRateNotes: [
-      { roomType: 'Executive Deluxe room', rate: 'From ₦45,000/night', source: 'Kiniz official website', url: 'https://kinizapartments.ng/cs/accommodation/executive-1-room-ensuite/' },
-      { roomType: 'Luxury single room', rate: '₦70,000/night direct rate; ₦77,000 standard rate', source: 'BookDirect.ng', url: 'https://bookdirect.ng/hotel/kiniz-luxury-apartments-uyo' },
-      { roomType: 'One-bedroom apartment', rate: '₦120,000/night direct rate; ₦132,000 standard rate', source: 'BookDirect.ng', url: 'https://bookdirect.ng/hotel/kiniz-luxury-apartments-uyo' },
-      { roomType: 'Two-bedroom apartment', rate: '₦200,000/night direct rate; ₦220,000 standard rate', source: 'BookDirect.ng', url: 'https://bookdirect.ng/hotel/kiniz-luxury-apartments-uyo' },
-      { roomType: 'Three-bedroom apartment', rate: '₦250,000/night direct rate; ₦275,000 standard rate', source: 'BookDirect.ng', url: 'https://bookdirect.ng/hotel/kiniz-luxury-apartments-uyo' },
-      { roomType: 'Four-bedroom apartment', rate: '₦370,000/night direct rate; ₦407,000 standard rate', source: 'BookDirect.ng', url: 'https://bookdirect.ng/hotel/kiniz-luxury-apartments-uyo' },
-      { roomType: 'Luxury single room', rate: '₦75,000/night published rate', source: 'Hotels.ng', url: 'https://hotels.ng/hotel/hn670229s-kiniz-apartments-hotels' },
-      { roomType: 'One-bedroom apartment', rate: '₦150,000/night published rate', source: 'Hotels.ng', url: 'https://hotels.ng/hotel/hn670229s-kiniz-apartments-hotels' },
-      { roomType: 'Two-bedroom apartment', rate: '₦250,000/night published rate', source: 'Hotels.ng', url: 'https://hotels.ng/hotel/hn670229s-kiniz-apartments-hotels' },
-      { roomType: 'Three-bedroom apartment', rate: '₦300,000/night published rate', source: 'Hotels.ng', url: 'https://hotels.ng/hotel/hn670229s-kiniz-apartments-hotels' },
-      { roomType: 'Four-bedroom apartment', rate: '₦400,000/night published rate', source: 'Hotels.ng', url: 'https://hotels.ng/hotel/hn670229s-kiniz-apartments-hotels' },
-      { roomType: 'Luxury Studio Suite, Balcony', rate: 'USD $45/night; $53 displayed total for 6–7 Nov 2026 (2 travellers, 1 room); public listing snapshot only', source: 'Hotels.com, user-provided snapshot dated 23 Oct 2026', url: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/' },
-      { roomType: 'Apartment, Balcony, City View', rate: 'USD $221/night; $262 displayed total for 6–7 Nov 2026; listing showed 1 left at snapshot time; not live 7even inventory', source: 'Hotels.com, user-provided snapshot dated 23 Oct 2026', url: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/' },
-      { roomType: 'Luxury Apartment, Balcony, City View', rate: 'USD $99/night; $117 displayed total for 6–7 Nov 2026; listing showed 6 available at snapshot time; not live 7even inventory', source: 'Hotels.com, user-provided snapshot dated 23 Oct 2026', url: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/' },
-      { roomType: 'Luxury Apartment, Balcony, Courtyard View', rate: 'USD $139/night; $164 displayed total for 6–7 Nov 2026; listing showed 7 available at snapshot time; not live 7even inventory', source: 'Hotels.com, user-provided snapshot dated 23 Oct 2026', url: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/' },
-      { roomType: 'Luxury Apartment, Balcony, Garden View', rate: 'USD $152/night; $180 displayed total for 6–7 Nov 2026; listing showed 2 available at snapshot time; not live 7even inventory', source: 'Hotels.com, user-provided snapshot dated 23 Oct 2026', url: 'https://www.hotels.com/ho4335964160/kiniz-apartments-and-hotel-uyo/' },
-    ],
-    status: 'DIRECTORY_ONLY',
-    bookable: false,
-  },
   {
     id: 'stay-eko-hotel-lagos',
     kind: 'STAY',
