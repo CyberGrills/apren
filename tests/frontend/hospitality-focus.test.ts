@@ -11,6 +11,38 @@ const explore = source('../../frontend/src/pages/public/ExplorePage.tsx');
 const publicStyles = source('../../frontend/src/styles/public.css');
 const account = source('../../frontend/src/pages/customer/AccountPage.tsx');
 const app = source('../../frontend/src/App.tsx');
+const directoryListingCard = source('../../frontend/src/pages/public/DirectoryListingCard.tsx');
+const businessApplication = source('../../frontend/src/pages/public/BusinessApplicationPage.tsx');
+const nigeriaDirectory = source('../../frontend/src/lib/nigeriaDirectory.ts');
+const backendApp = source('../../backend/platform/src/app.ts');
+const hotelDirectoryMigration = source('../../database/migrations/043_uyo_hotel_directory_claims.sql');
+
+
+test('preloaded Uyo hotel directory excludes Kiniz and 1401 and stays non-bookable until owner setup', () => {
+  assert.doesNotMatch(nigeriaDirectory, /Kiniz|1401/i);
+  assert.doesNotMatch(directoryListingCard, /Call Kiniz|Check dates with Kiniz/i);
+  assert.match(directoryListingCard, /Contact the property/);
+  assert.match(directoryListingCard, /Claim this hotel/);
+  assert.match(directoryListingCard, /Not bookable through 7EVEN yet/);
+  assert.match(hotelDirectoryMigration, /Madina Hotels & Residences/);
+  assert.match(hotelDirectoryMigration, /Merry Spill Hotel and Apartment/);
+  assert.match(hotelDirectoryMigration, /Ibom Hotel & Golf Resort/);
+  assert.match(hotelDirectoryMigration, /'DIRECTORY_ONLY',false/);
+  assert.match(hotelDirectoryMigration, /PENDING_HOTEL_UPLOAD/);
+  assert.match(hotelDirectoryMigration, /PENDING_MEDIA_IMPORT/);
+  assert.doesNotMatch(hotelDirectoryMigration, /Kiniz|1401/i);
+});
+
+test('hotel profile claim links the authorised team to a pending business workspace', () => {
+  assert.match(businessApplication, /useSearchParams/);
+  assert.match(businessApplication, /listingId/);
+  assert.match(businessApplication, /discoveryListingId/);
+  assert.match(businessApplication, /Claim this hotel profile/);
+  assert.match(businessApplication, /room categories, rates, amenities and availability/);
+  assert.match(backendApp, /business\.applied_from_directory/);
+  assert.match(backendApp, /status,access_type,booking_required,guest_notes,created_by\)\s*VALUES[\s\S]*?'INACTIVE'/);
+  assert.match(backendApp, /HOTEL_PROFILE_ALREADY_CLAIMED/);
+});
 
 test('sample offerings disable the booking and payment flow', () => {
   const bookingPanel = source('../../frontend/src/pages/public/BookingPanel.tsx');
