@@ -18,25 +18,11 @@ export interface LegacyMigrationSchemaState {
   demoAppPoliciesPresent: boolean;
   demoCatalogReadonlyPolicyPresent: boolean;
   demoEntryTypeLength: number | null;
-  inventorySourceColumnPresent: boolean;
-  inventorySourceConstraintPresent: boolean;
-  inventorySourceIndexPresent: boolean;
-  inventoryFreshnessFunctionPresent: boolean;
-  venueBusinessUniqueConstraintPresent: boolean;
-  venueAmenitiesTablePresent: boolean;
-  venueAmenitiesColumnsPresent: boolean;
-  venueAmenitiesIndexesPresent: boolean;
-  venueAmenitiesRlsEnabled: boolean;
-  venueAmenitiesAppPolicyPresent: boolean;
-  venueAmenitiesReadonlyPolicyPresent: boolean;
 }
 
 const legacySupabaseMigrations: Record<string, string> = {
   '027_demo_marketplace_wallet.sql': 'demo_marketplace_wallet_027',
   '028_demo_wallet_ledger_type.sql': 'demo_wallet_ledger_type_028',
-  '037_source_aware_inventory_freshness.sql': '037_source_aware_inventory_freshness',
-  '038_venue_amenities.sql': 'venue_amenities_038',
-  '039_venue_amenities_rls.sql': 'venue_amenities_rls_039',
 };
 
 export function legacySupabaseMigrationAlias(filename: string): string | undefined {
@@ -64,23 +50,6 @@ export function isLegacyMigrationSchemaCompatible(
   }
   if (filename === '028_demo_wallet_ledger_type.sql') {
     return state.demoWalletEntriesPresent && state.demoEntryTypeLength === 20;
-  }
-  if (filename === '037_source_aware_inventory_freshness.sql') {
-    return state.inventorySourceColumnPresent &&
-      state.inventorySourceConstraintPresent &&
-      state.inventorySourceIndexPresent &&
-      state.inventoryFreshnessFunctionPresent;
-  }
-  if (filename === '038_venue_amenities.sql') {
-    return state.venueBusinessUniqueConstraintPresent &&
-      state.venueAmenitiesTablePresent &&
-      state.venueAmenitiesColumnsPresent &&
-      state.venueAmenitiesIndexesPresent;
-  }
-  if (filename === '039_venue_amenities_rls.sql') {
-    return state.venueAmenitiesRlsEnabled &&
-      state.venueAmenitiesAppPolicyPresent &&
-      state.venueAmenitiesReadonlyPolicyPresent;
   }
   return false;
 }
@@ -121,18 +90,7 @@ export async function legacySupabaseMigrationAlreadyApplied(
       (SELECT count(*) = 4 FROM pg_class WHERE oid IN (to_regclass('seven.demo_catalog_items'),to_regclass('seven.demo_wallets'),to_regclass('seven.demo_bookings'),to_regclass('seven.demo_wallet_entries')) AND relrowsecurity) AS "demoTablesRlsEnabled",
       (SELECT count(DISTINCT tablename) = 4 FROM pg_policies WHERE schemaname='seven' AND tablename = ANY(ARRAY['demo_catalog_items','demo_wallets','demo_bookings','demo_wallet_entries']::text[]) AND policyname='seven_app_server_access' AND cmd='ALL' AND roles=ARRAY['seven_app']::name[]) AS "demoAppPoliciesPresent",
       EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='seven' AND tablename='demo_catalog_items' AND policyname='seven_readonly_select_access' AND cmd='SELECT' AND roles=ARRAY['seven_readonly']::name[]) AS "demoCatalogReadonlyPolicyPresent",
-      (SELECT character_maximum_length FROM information_schema.columns WHERE table_schema='seven' AND table_name='demo_wallet_entries' AND column_name='entry_type') AS "demoEntryTypeLength",
-      EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='seven' AND table_name='inventory_windows' AND column_name='inventory_source' AND data_type='text' AND is_nullable='NO') AS "inventorySourceColumnPresent",
-      EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid=to_regclass('seven.inventory_windows') AND conname='inventory_windows_inventory_source_check' AND contype='c') AS "inventorySourceConstraintPresent",
-      EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname='seven' AND indexname='inventory_windows_source_fresh_available_idx') AS "inventorySourceIndexPresent",
-      to_regprocedure('seven.inventory_window_is_fresh(text,timestamp with time zone,integer,boolean)') IS NOT NULL AS "inventoryFreshnessFunctionPresent",
-      EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid=to_regclass('seven.venues') AND conname='venues_venue_business_unique' AND contype='u') AS "venueBusinessUniqueConstraintPresent",
-      to_regclass('seven.venue_amenities') IS NOT NULL AS "venueAmenitiesTablePresent",
-      (SELECT count(*)=16 FROM information_schema.columns WHERE table_schema='seven' AND table_name='venue_amenities' AND column_name=ANY(ARRAY['amenity_id','business_id','venue_id','category','name','description','status','access_type','booking_required','opening_hours','guest_notes','sort_order','revision','created_by','created_at','updated_at']::text[])) AS "venueAmenitiesColumnsPresent",
-      (SELECT count(*)=2 FROM pg_indexes WHERE schemaname='seven' AND indexname=ANY(ARRAY['venue_amenities_public_listing_idx','venue_amenities_business_management_idx']::text[])) AS "venueAmenitiesIndexesPresent",
-      COALESCE((SELECT relrowsecurity FROM pg_class WHERE oid=to_regclass('seven.venue_amenities')),false) AS "venueAmenitiesRlsEnabled",
-      EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='seven' AND tablename='venue_amenities' AND policyname='seven_app_server_access' AND cmd='ALL' AND roles=ARRAY['seven_app']::name[] AND lower(btrim(coalesce(qual,'')))='true' AND lower(btrim(coalesce(with_check,'')))='true') AS "venueAmenitiesAppPolicyPresent",
-      EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='seven' AND tablename='venue_amenities' AND policyname='seven_readonly_select_access' AND cmd='SELECT' AND roles=ARRAY['seven_readonly']::name[] AND lower(btrim(coalesce(qual,'')))='false' AND with_check IS NULL) AS "venueAmenitiesReadonlyPolicyPresent"`,
+      (SELECT character_maximum_length FROM information_schema.columns WHERE table_schema='seven' AND table_name='demo_wallet_entries' AND column_name='entry_type') AS "demoEntryTypeLength"`,
   );
 
   // Migration 028 intentionally alters a table created by 027. Its mere
@@ -147,16 +105,7 @@ export async function legacySupabaseMigrationAlreadyApplied(
         state.demoWalletEntriesPresent
       : filename === '028_demo_wallet_ledger_type.sql'
         ? state.demoEntryTypeLength === 20
-        : filename === '037_source_aware_inventory_freshness.sql'
-          ? state.inventorySourceColumnPresent || state.inventorySourceConstraintPresent ||
-            state.inventorySourceIndexPresent || state.inventoryFreshnessFunctionPresent
-          : filename === '038_venue_amenities.sql'
-            ? state.venueBusinessUniqueConstraintPresent || state.venueAmenitiesTablePresent ||
-              state.venueAmenitiesIndexesPresent
-            : filename === '039_venue_amenities_rls.sql'
-              ? state.venueAmenitiesRlsEnabled || state.venueAmenitiesAppPolicyPresent ||
-                state.venueAmenitiesReadonlyPolicyPresent
-              : false),
+        : false),
   );
   if (!applied && !hasLegacySchemaMarker) return false;
 
