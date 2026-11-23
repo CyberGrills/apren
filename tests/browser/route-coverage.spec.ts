@@ -71,9 +71,9 @@ test('direct public deep links remain available after a browser refresh', async 
 test('customer workspace aliases resolve to bookings while wallet pages remain accessible', async ({ page }) => {
   await installApiMocks(page, 'CUSTOMER');
   await page.goto('/app');
-  await expect(page).toHaveURL(/\\/app\\/bookings$/);
+  await expect(page).toHaveURL(/\/app\/bookings$/);
   await page.goto('/app/points');
-  await expect(page).toHaveURL(/\\/app\\/points$/);
+  await expect(page).toHaveURL(/\/app\/points$/);
   await expect(page.getByRole('heading', { name: 'Your points. Your next experience.' })).toBeVisible();
   await expect(page.getByText('7EVEN POINTS')).toBeVisible();
   await page.goto('/app/benefits');
