@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { buildRecoveryShadowDecision } from '../../backend/platform/src/recoveryShadow.ts';
+import { buildRecoveryShadowDecision, recoveryEvidenceTrust } from '../../backend/platform/src/recoveryShadow.ts';
 
 describe('booking recovery shadow decisions', () => {
   const asOf = '2026-11-02T05:00:00.000Z';
@@ -25,6 +25,13 @@ describe('booking recovery shadow decisions', () => {
   it('does not authorize contact even when a future caller supplies consent elsewhere', () => {
     const result = buildRecoveryShadowDecision('ABANDON', asOf);
     assert.equal(result.mayContactGuest, false);
+  });
+
+  it('marks server-created provider-matched bookings as verified evidence', () => {
+    assert.equal(recoveryEvidenceTrust('BOOKING_CONFIRMED'), 'PROVIDER_VERIFIED_PAYMENT_MATCHED');
+    for (const event of ['SEARCH', 'ROOM_VIEW', 'BOOKING_START', 'CHECKOUT_VIEW', 'ABANDON', 'PAYMENT_FAILED'] as const) {
+      assert.equal(recoveryEvidenceTrust(event), 'UNVERIFIED_CLIENT_TELEMETRY', event);
+    }
   });
 
   it('supports confirmed events from the persisted schema without creating an outbound action', () => {
