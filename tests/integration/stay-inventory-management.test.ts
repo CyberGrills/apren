@@ -424,7 +424,15 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       // Break the reverse reservation -> payment-attempt FK before removing
       // attempts; the attempt itself also references the reservation.
       await pool.query(
-        'UPDATE seven.reservations SET funding_payment_attempt_id=NULL WHERE offering_id=ANY($1::uuid[])',
+        `UPDATE seven.reservations AS reservation
+            SET funding_payment_attempt_id=NULL
+          WHERE reservation.funding_payment_attempt_id IN (
+            SELECT attempt.payment_attempt_id
+              FROM seven.payment_attempts AS attempt
+             WHERE attempt.reservation_id IN (
+               SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[])
+             )
+          )`,
         [offerings],
       );
       await pool.query(
