@@ -102,17 +102,23 @@ test('public directory renders canonical business profiles separately from booki
   assert.match(businessCard, /Property evidence requires review/);
 });
 
-test('external directory and legacy rewards routes do not act as booking destinations', () => {
-  assert.match(app, /path="\/app\/points" element={<Navigate to="\/app\/bookings" replace \/>}/);
-  assert.match(app, /path="\/app\/benefits" element={<Navigate to="\/app\/bookings" replace \/>}/);
-  assert.match(app, /path="\/app\/exchange" element={<Navigate to="\/app\/bookings" replace \/>}/);
+test('customer wallet, benefits and exchange routes expose existing reward operations', () => {
+  assert.match(app, /path="\\/app\\/points" element={<AccountPage tab="wallet" \\/>}/);
+  assert.match(app, /path="\\/app\\/benefits" element={<AccountPage tab="benefits" \\/>}/);
+  assert.match(app, /path="\\/app\\/exchange" element={<AccountPage tab="exchange" \\/>}/);
+  assert.match(account, /useApi<Reward\\[]>\\(user && tab === 'wallet' \\? '\/rewards' : null\\)/);
+  assert.match(account, /api\\('\\/trades'/);
 });
 
-test('guest account navigation stays focused on profile, bookings and updates', () => {
-  assert.match(account, /\['profile', 'Profile'\]/);
-  assert.match(account, /\['bookings', 'Bookings'\]/);
-  assert.match(account, /\['activity', 'Updates'\]/);
-  assert.doesNotMatch(account, /\['points', 'Points'\]|\['benefits', 'Benefits'\]|\['exchange', 'Exchange'\]/);
+test('customer account navigation exposes points wallet, benefits and exchange', () => {
+  assert.match(account, /\\['profile', 'Profile'\\]/);
+  assert.match(account, /\\['bookings', 'Bookings'\\]/);
+  assert.match(account, /\\['wallet', 'Points wallet'\\]/);
+  assert.match(account, /\\['benefits', 'Benefits'\\]/);
+  assert.match(account, /\\['exchange', 'Exchange'\\]/);
+  assert.match(account, /\\['activity', 'Updates'\\]/);
+  assert.match(account, /Points are earned after an eligible booking is completed/);
+  assert.match(account, /does not exchange cash, foreign currency or cryptocurrency/);
 });
 
 test('checkout shows service fees separately when the quote includes one', () => {
