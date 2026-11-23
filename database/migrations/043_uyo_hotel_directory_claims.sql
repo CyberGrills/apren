@@ -64,7 +64,7 @@ COMMENT ON COLUMN seven.discovery_listings.claimed_at IS
 -- Madina's official website exposes a public gallery image and confirms the live
 -- published room references, amenities, address and contact details.
 UPDATE seven.discovery_listings
-SET image_url='https://madinahr.com/storage/pool-2.jpg',
+SET image_url='https://madinahr.com/storage/imgi-9-entrance-day-1.jpg',
     image_source_url='https://madinahr.com/',
     source_name='Madina official website gallery and room-rate page',
     source_url='https://madinahr.com/',
@@ -72,8 +72,8 @@ SET image_url='https://madinahr.com/storage/pool-2.jpg',
       'photoStatus','AVAILABLE',
       'mediaImportStatus','Maldina.zip original room/corridor/bathroom/meeting-space archive still pending media import',
       'galleryImageUrls',jsonb_build_array(
-        'https://madinahr.com/storage/pool-2.jpg',
         'https://madinahr.com/storage/imgi-9-entrance-day-1.jpg',
+        'https://madinahr.com/storage/pool-2.jpg',
         'https://madinahr.com/storage/pic-1.png',
         'https://madinahr.com/storage/pic-2.png'
       ),
