@@ -68,12 +68,18 @@ test('direct public deep links remain available after a browser refresh', async 
   await expect(page.getByRole('heading', { name: 'Test Creator' })).toBeVisible();
 });
 
-test('customer workspace aliases resolve to the canonical bookings route', async ({ page }) => {
+test('customer workspace aliases resolve to bookings while wallet pages remain accessible', async ({ page }) => {
   await installApiMocks(page, 'CUSTOMER');
   await page.goto('/app');
-  await expect(page).toHaveURL(/\/app\/bookings$/);
+  await expect(page).toHaveURL(/\\/app\\/bookings$/);
   await page.goto('/app/points');
-  await expect(page).toHaveURL(/\/app\/bookings$/);
+  await expect(page).toHaveURL(/\\/app\\/points$/);
+  await expect(page.getByRole('heading', { name: 'Your points. Your next experience.' })).toBeVisible();
+  await expect(page.getByText('7EVEN POINTS')).toBeVisible();
+  await page.goto('/app/benefits');
+  await expect(page.getByRole('heading', { name: 'Good things you have earned.' })).toBeVisible();
+  await page.goto('/app/exchange');
+  await expect(page.getByRole('heading', { name: 'Share a benefit. Make someone’s day.' })).toBeVisible();
 });
 
 test('authenticated creator route loads the profile and draft workspace', async ({ page }) => {
