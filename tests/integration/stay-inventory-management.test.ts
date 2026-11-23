@@ -122,6 +122,26 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
         fullAddress:evidence,coordinates:evidence,currentRates:evidence,
         roomInventoryAndPolicies:evidence,inventoryFreshnessHours:24},
     });
+    // The new business is not part of the development seed, so provision
+    // explicit mock-only fiat destinations in this isolated test database.
+    // Both providers are covered because fiat routing depends on the quoted total.
+    await pool.query(
+      `INSERT INTO seven.business_payment_accounts(
+         business_payment_account_id,business_id,payment_provider_id,account_code,
+         account_label,execution_mode_id,revision,workflow_state_id,details,verified_at
+       )
+       SELECT gen_random_uuid(),$1,p.payment_provider_id,
+         'TEST_MOCK_'||p.provider_code||'_'||replace(gen_random_uuid()::text,'-',''),
+         'Isolated integration mock destination',m.execution_mode_id,1,a.workflow_state_id,
+         jsonb_build_object('isTestFixture',true),now()
+       FROM seven.payment_providers p
+       CROSS JOIN seven.execution_modes m
+       CROSS JOIN seven.workflow_states a
+       WHERE p.provider_code IN ('flutterwave','paystack')
+         AND m.execution_mode_code='mock'
+         AND a.workflow_state_code='APPROVED'`,
+      [business.id],
+    );
     const offer=await owner.request<{id:string}>('/business/offerings','POST',{
       title:'Inventory test room',description:'Disposable hotel room for inventory API tests.',
       kind:'STAY',city:'Uyo',state:'Akwa Ibom',address:'1 Inventory Test Lane, Uyo',
