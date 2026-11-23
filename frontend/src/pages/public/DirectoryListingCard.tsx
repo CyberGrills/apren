@@ -12,7 +12,7 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
     <article className="seven-directory-card">
       {listing.photoStatus && listing.photoStatus !== 'AVAILABLE' ? (
         <div className="seven-directory-image-link seven-business-directory-photo-placeholder" role="img" aria-label={`Original ${listing.name} photos are pending`}>
-          <span>{listing.photoStatus === 'PENDING_MEDIA_IMPORT' ? 'Uploaded property photos being prepared' : 'Property photos pending owner upload'}</span>
+          <span>{listing.photoStatus === 'PENDING_MEDIA_IMPORT' ? 'Photo archive on record · import pending' : 'Property photos pending owner upload'}</span>
         </div>
       ) : (
         <a
