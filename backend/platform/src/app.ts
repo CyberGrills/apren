@@ -2177,6 +2177,22 @@ export function createApp(options: AppOptions = {}) {
         businessId,
         input.reason,
       );
+      if (input.status === 'REJECTED') {
+        const owners = await rows<{ user_id: string }>(
+          db,
+          "SELECT m.user_id FROM seven.memberships m JOIN seven.roles r USING(role_id) WHERE m.business_id=$1 AND m.is_active AND r.role_code='BUSINESS_OWNER'",
+          [businessId],
+        );
+        const business = await S.businessProjection(db, businessId);
+        for (const owner of owners)
+          await S.notify(
+            db,
+            owner.user_id,
+            'Your 7EVEN business application needs changes',
+            `We could not approve ${business?.businessName ?? 'your business'} yet. Review note: ${input.reason} You can contact 7EVEN support if you need help with the next steps.`,
+            '/business',
+          );
+      }
       return S.businessProjection(db, businessId);
     });
   });
