@@ -7,6 +7,7 @@ import { createApp } from '../../backend/platform/src/app.ts';
 import { createPool, one, rows, transaction } from '../../backend/platform/src/db.ts';
 import { migrate } from '../../backend/platform/src/migrate.ts';
 import { MockProvider } from '../../backend/platform/src/provider.ts';
+import { pointsProjection } from '../../backend/platform/src/store.ts';
 
 const origin='http://127.0.0.1:5177';
 const password='Stay-Inventory-Integration-Test-Passphrase-42!';
@@ -78,10 +79,10 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const base=`http://127.0.0.1:${(server.address() as AddressInfo).port}`;
     class Client{
       cookie='';csrf='';email=`stay-inventory-${randomUUID()}@seven.test`;
-      async request<T>(path:string,method='GET',body?:unknown,expected=200):Promise<T>{
+      async request<T>(path:string,method='GET',body?:unknown,expected=200,idempotencyKey=randomUUID()):Promise<T>{
         const response=await fetch(`${base}/api${path}`,{
           method,headers:{Origin:origin,'Content-Type':'application/json',Cookie:this.cookie,
-            'X-CSRF-Token':this.csrf,'Idempotency-Key':randomUUID()},
+            'X-CSRF-Token':this.csrf,'Idempotency-Key':idempotencyKey},
           ...(body===undefined?{}:{body:JSON.stringify(body)}),
         });
         const cookie=response.headers.get('set-cookie');
@@ -121,6 +122,26 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
         fullAddress:evidence,coordinates:evidence,currentRates:evidence,
         roomInventoryAndPolicies:evidence,inventoryFreshnessHours:24},
     });
+    // The new business is not part of the development seed, so provision
+    // explicit mock-only fiat destinations in this isolated test database.
+    // Both providers are covered because fiat routing depends on the quoted total.
+    await pool.query(
+      `INSERT INTO seven.business_payment_accounts(
+         business_payment_account_id,business_id,payment_provider_id,account_code,
+         account_label,execution_mode_id,revision,workflow_state_id,details,verified_at
+       )
+       SELECT gen_random_uuid(),$1,p.payment_provider_id,
+         'TEST_MOCK_'||p.provider_code||'_'||replace(gen_random_uuid()::text,'-',''),
+         'Isolated integration mock destination',m.execution_mode_id,1,a.workflow_state_id,
+         jsonb_build_object('isTestFixture',true),now()
+       FROM seven.payment_providers p
+       CROSS JOIN seven.execution_modes m
+       CROSS JOIN seven.workflow_states a
+       WHERE p.provider_code IN ('flutterwave','paystack')
+         AND m.execution_mode_code='mock'
+         AND a.workflow_state_code='APPROVED'`,
+      [business.id],
+    );
     const offer=await owner.request<{id:string}>('/business/offerings','POST',{
       title:'Inventory test room',description:'Disposable hotel room for inventory API tests.',
       kind:'STAY',city:'Uyo',state:'Akwa Ibom',address:'1 Inventory Test Lane, Uyo',
@@ -316,6 +337,67 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       pool,'SELECT max(allocated_count)::int AS allocated_count FROM seven.inventory_windows WHERE offering_id=$1 AND room_type_id=$2',[offer.id,secondRoom.room_type_id]);
     assert.equal(otherCategoryAllocation?.allocated_count,0);
 
+    // Carry the winning room-category/rate-plan reservation through mock payment,
+    // hotel check-in, service completion and the rewards ledger in this same fixture.
+    const winnerClient = outcomes[0].status === 'fulfilled' ? customerA : customerB;
+    const winnerReservationId = winner.value.id;
+    const pointsBeforeStay = (await pointsProjection(pool, (await one<{user_id:string}>(
+      pool,'SELECT user_id FROM seven.users WHERE email=$1',[winnerClient.email],
+    ))!.user_id)).balance;
+    const checkout = await winnerClient.request<{paymentId:string}>(
+      `/reservations/${winnerReservationId}/checkout`,'POST',{});
+    
+    const paid = await winnerClient.request<{status:string}>(
+      `/payments/${checkout.paymentId}/dev-complete`,'POST',{outcome:'SUCCESS'});
+    
+    assert.equal(paid.status,'PAID');
+
+    const reception = new Client();const receptionId=await reception.register();
+    await pool.query(
+      "UPDATE seven.users SET role_id=(SELECT role_id FROM seven.roles WHERE role_code='RECEPTION') WHERE user_id=$1",
+      [receptionId],
+    );
+    await pool.query(
+      "INSERT INTO seven.memberships(membership_id,user_id,business_id,role_id) VALUES($1,$2,$3,(SELECT role_id FROM seven.roles WHERE role_code='RECEPTION'))",
+      [randomUUID(),receptionId,business.id],
+    );
+    await reception.login();
+    const checkedIn=await reception.request<{id:string;revision:number}>(
+      `/reservations/${winnerReservationId}/actions`,'POST',
+      {action:'CHECK_IN',expectedRevision:(await winnerClient.request<{revision:number}>(
+        `/reservations/${winnerReservationId}`)).revision});
+    
+
+    await reception.request<unknown>(
+      `/reservations/${winnerReservationId}/actions`,'POST',
+      {action:'FULFILL',expectedRevision:checkedIn.revision},409);
+    const customerUserId=(await one<{user_id:string}>(
+      pool,'SELECT user_id FROM seven.users WHERE email=$1',[winnerClient.email],
+    ))!.user_id;
+    assert.equal((await pointsProjection(pool,customerUserId)).balance,pointsBeforeStay);
+
+    await pool.query(
+      "UPDATE seven.quotes SET ends_at=now()-interval '1 minute' WHERE quote_id=(SELECT quote_id FROM seven.reservations WHERE reservation_id=$1)",
+      [winnerReservationId],
+    );
+    const fulfillmentIdempotencyKey=randomUUID();
+    const fulfillmentRequest={action:'FULFILL',expectedRevision:checkedIn.revision};
+    const completed=await reception.request<{status:string;revision:number}>(
+      `/reservations/${winnerReservationId}/actions`,'POST',
+      fulfillmentRequest,200,fulfillmentIdempotencyKey);
+    
+    assert.equal(completed.status,'FULFILLED');
+    const pointsAfterStay=(await pointsProjection(pool,customerUserId)).balance;
+    assert.ok(pointsAfterStay>pointsBeforeStay,'A paid, completed hotel stay must issue rewards.');
+    // A retry must replay the exact same idempotent request (same key and body),
+    // not submit a new state transition against the already fulfilled reservation.
+    const replay=await reception.request<{status:string}>(
+      `/reservations/${winnerReservationId}/actions`,'POST',
+      fulfillmentRequest,200,fulfillmentIdempotencyKey);
+    assert.equal(replay.status,'FULFILLED');
+    assert.equal((await pointsProjection(pool,customerUserId)).balance,pointsAfterStay,
+      'Replaying fulfillment must not issue duplicate rewards.');
+
     const other=new Client();await other.register();await other.apply('Other inventory fixture');
     const isolated=await other.request<{rooms:unknown[]}>(`/business/stay/calendar?offeringId=${offer.id}&startDate=${startDate}&endDate=${endDate}`);
     assert.deepEqual(isolated.rooms,[]);
@@ -332,6 +414,34 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     if(server)await new Promise<void>((resolve,reject)=>server!.close(error=>error?reject(error):resolve()));
     if(offerings.length){
       await pool.query('DELETE FROM seven.allocations WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[]))',[offerings]);
+      // Payment attempts retain a RESTRICT relationship to reservations. Remove
+      // their dependent refund/crypto records first, then the isolated attempts.
+      await pool.query(
+        'DELETE FROM seven.crypto_payment_quotes WHERE payment_attempt_id IN (SELECT payment_attempt_id FROM seven.payment_attempts WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[])))',
+        [offerings],
+      );
+      await pool.query(
+        'DELETE FROM seven.refunds WHERE payment_attempt_id IN (SELECT payment_attempt_id FROM seven.payment_attempts WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[])))',
+        [offerings],
+      );
+      // Break the reverse reservation -> payment-attempt FK before removing
+      // attempts; the attempt itself also references the reservation.
+      await pool.query(
+        `UPDATE seven.reservations AS reservation
+            SET funding_payment_attempt_id=NULL
+          WHERE reservation.funding_payment_attempt_id IN (
+            SELECT attempt.payment_attempt_id
+              FROM seven.payment_attempts AS attempt
+             WHERE attempt.reservation_id IN (
+               SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[])
+             )
+          )`,
+        [offerings],
+      );
+      await pool.query(
+        'DELETE FROM seven.payment_attempts WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[]))',
+        [offerings],
+      );
       await pool.query('DELETE FROM seven.reservations WHERE offering_id=ANY($1::uuid[])',[offerings]);
       await pool.query('DELETE FROM seven.quotes WHERE offering_id=ANY($1::uuid[])',[offerings]);
     }
@@ -349,15 +459,22 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       await pool.query('DELETE FROM seven.outbox_events WHERE business_id=ANY($1::uuid[])',[businesses]);
       await pool.query('DELETE FROM seven.audit_events WHERE business_id=ANY($1::uuid[])',[businesses]);
       await pool.query('DELETE FROM seven.sources WHERE business_id=ANY($1::uuid[])',[businesses]);
-      await pool.query('DELETE FROM seven.memberships WHERE business_id=ANY($1::uuid[])',[businesses]);
-      await pool.query('DELETE FROM seven.venues WHERE business_id=ANY($1::uuid[])',[businesses]);
-      await pool.query('DELETE FROM seven.businesses WHERE business_id=ANY($1::uuid[])',[businesses]);
+      // Approved payment destinations are retained by domain policy. Keep the
+      // isolated fixture business, venue and owner membership rather than
+      // deleting a business_payment_accounts parent or weakening that policy.
+      // The entire _test_db is disposable and recreated for the next CI run.
     }
     if(users.length){
       await pool.query('DELETE FROM seven.notifications WHERE user_id=ANY($1::uuid[])',[users]);
       await pool.query('DELETE FROM seven.idempotencies WHERE user_id=ANY($1::uuid[])',[users]);
       await pool.query('DELETE FROM seven.sessions WHERE user_id=ANY($1::uuid[])',[users]);
-      await pool.query('DELETE FROM seven.users WHERE user_id=ANY($1::uuid[])',[users]);
+      // The retained approved-payment fixture still belongs to its owner.
+      // Delete disposable users (for example the test admin), but preserve any
+      // user who remains referenced by a retained business membership.
+      await pool.query(
+        'DELETE FROM seven.users AS test_user WHERE test_user.user_id=ANY($1::uuid[]) AND NOT EXISTS (SELECT 1 FROM seven.memberships AS membership WHERE membership.user_id=test_user.user_id)',
+        [users],
+      );
     }
     await appPool.end();await pool.end();
   }
