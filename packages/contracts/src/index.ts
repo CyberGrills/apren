@@ -23,7 +23,7 @@ export type PaymentStatus =
   | 'REFUNDED'
   | 'REVIEW_REQUIRED';
 export type SettlementStatus = 'UNSETTLED' | 'PENDING' | 'SETTLED' | 'FLAGGED' | 'UNKNOWN';
-export type BusinessStatus = 'PENDING' | 'APPROVED' | 'SUSPENDED';
+export type BusinessStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 export type BenefitStatus = 'AVAILABLE' | 'LOCKED' | 'CONSUMED' | 'EXPIRED' | 'REVOKED';
 export type TradeStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED' | 'EXPIRED';
 export type PaymentProviderId = 'flutterwave' | 'paystack' | 'crypto';
@@ -198,7 +198,7 @@ export const businessVerificationInput = z.strictObject({
   inventoryFreshnessHours: z.int().min(1).max(168),
 });
 export const businessStatusInput = z.strictObject({
-  status: z.enum(['APPROVED', 'SUSPENDED']),
+  status: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
   reason: z.string().trim().min(3).max(500),
   verification: businessVerificationInput.optional(),
 });

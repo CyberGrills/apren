@@ -29,6 +29,7 @@ import { upcomingInventory } from '../../lib/businessWorkspace.ts';
 import { AdminRecords } from './AdminRecords.tsx';
 import { BusinessPayments } from './business/BusinessPayments.tsx';
 import { BusinessNotifications } from './business/BusinessNotifications.tsx';
+import { BusinessResubmission } from './business/BusinessResubmission.tsx';
 import { BusinessPhotoGallery } from './business/BusinessPhotoGallery.tsx';
 import { StayInventoryManager } from './business/StayInventoryManager.tsx';
 import { ListingUpdateReceipt } from './business/ListingUpdateReceipt.tsx';
@@ -114,6 +115,9 @@ export function BusinessPage({ tab = 'overview' }: { tab?: Tab }) {
       {error && <ErrorNotice message={error} retry={reload} />}
       {data && (
         <>
+          {tab === 'overview' && data.business?.status === 'REJECTED' && (
+            <BusinessResubmission business={data.business} onSubmitted={reload} />
+          )}
           {tab !== 'overview' && data.business?.status !== 'APPROVED' && (
             <div className="notice">
               Your business is {data.business?.status.toLowerCase() ?? 'awaiting setup'}. Publishing

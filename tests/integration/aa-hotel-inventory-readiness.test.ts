@@ -220,6 +220,37 @@ test(
       assert.equal(unauthorizedApproval.status, 403, JSON.stringify(unauthorizedApproval));
 
       const approvalPath = `/admin/businesses/${pendingBusinessId}/status`;
+      const rejection = await admin.request<C.Business>(approvalPath, 'POST', {
+        status: 'REJECTED',
+        reason: 'Please provide current room inventory and partner authority evidence.',
+      });
+      assert.equal(rejection.status, 200, JSON.stringify(rejection));
+      assert.equal(rejection.data.status, 'REJECTED');
+      const rejectionNotice = await one<{ title: string; body: string }>(
+        pool,
+        'SELECT title,body FROM seven.notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1',
+        [user.id],
+      );
+      assert.match(rejectionNotice?.title ?? '', /application needs changes/i);
+      assert.match(rejectionNotice?.body ?? '', /partner authority evidence/i);
+
+      const resubmission = await client.request<C.Business>(
+        '/business/applications/resubmit',
+        'POST',
+        {
+          businessName: 'Inventory Readiness Test Property Updated',
+          city: 'Readiness Test City',
+          state: 'Akwa Ibom',
+          address: '2 Updated Test Lane, Readiness Test City',
+          phone: '+2348012345678',
+          sector: 'STAY',
+          description: 'Updated application details with corrected property and partner evidence.',
+        },
+      );
+      assert.equal(resubmission.status, 200, JSON.stringify(resubmission));
+      assert.equal(resubmission.data.status, 'PENDING');
+      assert.equal(resubmission.data.businessName, 'Inventory Readiness Test Property Updated');
+
       const missingVerification = await admin.request(
         approvalPath,
         'POST',
@@ -432,6 +463,10 @@ test(
           await pool.query('DELETE FROM seven.businesses WHERE business_id = ANY($1::uuid[])', [businessIds]);
         }
         if (testUserIds.length) {
+          await pool.query(
+            'DELETE FROM seven.notifications WHERE user_id = ANY($1::uuid[])',
+            [testUserIds],
+          );
           await pool.query(
             'DELETE FROM seven.audit_events WHERE user_id = ANY($1::uuid[])',
             [testUserIds],
