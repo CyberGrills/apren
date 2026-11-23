@@ -1387,13 +1387,13 @@ export function createApp(options: AppOptions = {}) {
       requireRole(actor, ['BUSINESS_OWNER']);
       if (!actor.businessId)
         return fail(403, 'BUSINESS_REQUIRED', 'This account has no business application to update.');
-      const current = await one<{ details: Record<string, unknown> }>(
+      const current = await one<{ details: Record<string, unknown>; status: string }>(
         db,
-        'SELECT details FROM seven.businesses WHERE business_id=$1 FOR UPDATE',
+        'SELECT b.details,s.workflow_state_code AS status FROM seven.businesses b JOIN seven.workflow_states s USING(workflow_state_id) WHERE b.business_id=$1 FOR UPDATE OF b',
         [actor.businessId],
       );
       if (!current) return fail(404, 'NOT_FOUND', 'Business not found.');
-      if (S.businessStatus(current.details) !== 'REJECTED')
+      if (current.status !== 'REJECTED')
         return fail(409, 'RESUBMISSION_UNAVAILABLE', 'Only a rejected application can be resubmitted.');
       const details = {
         ...current.details,
