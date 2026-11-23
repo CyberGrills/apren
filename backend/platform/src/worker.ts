@@ -7,7 +7,7 @@ import { applyReceipt, reconcile } from './payments.ts';
 import { expireHolds } from './reservations.ts';
 import { expireTrades } from './benefits.ts';
 import { observation, notify, paymentProjection } from './store.ts';
-import { buildRecoveryShadowDecision } from './recoveryShadow.ts';
+import { buildRecoveryShadowDecision, recoveryEvidenceTrust } from './recoveryShadow.ts';
 import { processCreatorArtworkRightsDocumentScans } from './creatorArtworkRightsDocumentScanner.ts';
 
 /** Reconstruct only observed local outcomes. Never relaunch an uncertain external effect. */
@@ -236,7 +236,7 @@ export async function processBookingRecoveryShadow(pool: Pool): Promise<number> 
       const auditPayload = {
         ...decision,
         eventCode: event.event_code,
-        evidenceTrust: 'UNVERIFIED_CLIENT_TELEMETRY',
+        evidenceTrust: recoveryEvidenceTrust(event.event_code),
         executionMode: 'SHADOW',
       };
       await db.query(
