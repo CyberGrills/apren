@@ -411,6 +411,20 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     if(server)await new Promise<void>((resolve,reject)=>server!.close(error=>error?reject(error):resolve()));
     if(offerings.length){
       await pool.query('DELETE FROM seven.allocations WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[]))',[offerings]);
+      // Payment attempts retain a RESTRICT relationship to reservations. Remove
+      // their dependent refund/crypto records first, then the isolated attempts.
+      await pool.query(
+        'DELETE FROM seven.crypto_payment_quotes WHERE payment_attempt_id IN (SELECT payment_attempt_id FROM seven.payment_attempts WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[])))',
+        [offerings],
+      );
+      await pool.query(
+        'DELETE FROM seven.refunds WHERE payment_attempt_id IN (SELECT payment_attempt_id FROM seven.payment_attempts WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[])))',
+        [offerings],
+      );
+      await pool.query(
+        'DELETE FROM seven.payment_attempts WHERE reservation_id IN (SELECT reservation_id FROM seven.reservations WHERE offering_id=ANY($1::uuid[]))',
+        [offerings],
+      );
       await pool.query('DELETE FROM seven.reservations WHERE offering_id=ANY($1::uuid[])',[offerings]);
       await pool.query('DELETE FROM seven.quotes WHERE offering_id=ANY($1::uuid[])',[offerings]);
     }
