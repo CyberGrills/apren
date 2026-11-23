@@ -79,10 +79,10 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const base=`http://127.0.0.1:${(server.address() as AddressInfo).port}`;
     class Client{
       cookie='';csrf='';email=`stay-inventory-${randomUUID()}@seven.test`;
-      async request<T>(path:string,method='GET',body?:unknown,expected=200):Promise<T>{
+      async request<T>(path:string,method='GET',body?:unknown,expected=200,idempotencyKey=randomUUID()):Promise<T>{
         const response=await fetch(`${base}/api${path}`,{
           method,headers:{Origin:origin,'Content-Type':'application/json',Cookie:this.cookie,
-            'X-CSRF-Token':this.csrf,'Idempotency-Key':randomUUID()},
+            'X-CSRF-Token':this.csrf,'Idempotency-Key':idempotencyKey},
           ...(body===undefined?{}:{body:JSON.stringify(body)}),
         });
         const cookie=response.headers.get('set-cookie');
@@ -380,17 +380,20 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       "UPDATE seven.quotes SET ends_at=now()-interval '1 minute' WHERE quote_id=(SELECT quote_id FROM seven.reservations WHERE reservation_id=$1)",
       [winnerReservationId],
     );
+    const fulfillmentIdempotencyKey=randomUUID();
+    const fulfillmentRequest={action:'FULFILL',expectedRevision:checkedIn.revision};
     const completed=await reception.request<{status:string;revision:number}>(
       `/reservations/${winnerReservationId}/actions`,'POST',
-      {action:'FULFILL',expectedRevision:checkedIn.revision});
+      fulfillmentRequest,200,fulfillmentIdempotencyKey);
     
     assert.equal(completed.status,'FULFILLED');
     const pointsAfterStay=(await pointsProjection(pool,customerUserId)).balance;
     assert.ok(pointsAfterStay>pointsBeforeStay,'A paid, completed hotel stay must issue rewards.');
-    const fulfilledReservation=await reception.request<{revision:number}>(`/reservations/${winnerReservationId}`);
+    // A retry must replay the exact same idempotent request (same key and body),
+    // not submit a new state transition against the already fulfilled reservation.
     const replay=await reception.request<{status:string}>(
       `/reservations/${winnerReservationId}/actions`,'POST',
-      {action:'FULFILL',expectedRevision:fulfilledReservation.revision});
+      fulfillmentRequest,200,fulfillmentIdempotencyKey);
     assert.equal(replay.status,'FULFILLED');
     assert.equal((await pointsProjection(pool,customerUserId)).balance,pointsAfterStay,
       'Replaying fulfillment must not issue duplicate rewards.');
