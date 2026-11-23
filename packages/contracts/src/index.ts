@@ -78,6 +78,7 @@ export const businessApplicationInput = z.strictObject({
   phone: z.string().trim().min(5).max(30),
   sector: z.enum(sectors),
   description: z.string().trim().min(20).max(2000),
+  discoveryListingId: z.string().regex(/^\\d{1,18}$/).optional(),
 });
 export const offeringInput = z.strictObject({
   title: z.string().trim().min(3).max(160),
