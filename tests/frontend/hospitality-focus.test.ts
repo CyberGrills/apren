@@ -33,6 +33,11 @@ test('preloaded Uyo hotel directory excludes Kiniz and 1401 and stays non-bookab
   assert.doesNotMatch(hotelDirectoryMigration, /Kiniz|1401/i);
 });
 
+test('hotel claim gallery is a labelled semantic region for assistive technology', () => {
+  assert.match(businessApplication, /<section className="application-claim-gallery" aria-label="Official property website gallery">/);
+  assert.doesNotMatch(businessApplication, /<div className="application-claim-gallery" aria-label=/);
+});
+
 test('hotel profile claim links the authorised team to a pending business workspace', () => {
   assert.match(businessApplication, /useSearchParams/);
   assert.match(businessApplication, /listingId/);
