@@ -41,10 +41,13 @@ export function PaymentMethodDialog({
   } = useApi<Payment>(options?.existingPaymentId ? `/payments/${options.existingPaymentId}` : null);
   const [method, setMethod] = useState<PaymentMethod>('FIAT');
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const keys = useRef<Record<string, string>>({});
   async function continuePayment() {
-    if (!options) return;
+    if (!options || submitting.current) return;
+    // State updates render asynchronously; the ref closes the rapid double-click window.
+    submitting.current = true;
     const selected = existing?.method ?? method;
     setBusy(true);
     setActionError(null);
@@ -75,6 +78,7 @@ export function PaymentMethodDialog({
       );
       reload();
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
