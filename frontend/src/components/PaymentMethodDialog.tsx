@@ -53,6 +53,7 @@ export function PaymentMethodDialog({
     try {
       const result = await api<{ cashierUrl: string }>(`/bookings/${encodeURIComponent(reservation.id)}/pay/opay`, {
         method: 'POST',
+        body: { returnUrl: `${window.location.origin}/payment/return?provider=opay` },
         idempotencyKey: opayKey.current,
       });
       const cashier = new URL(result.cashierUrl);
