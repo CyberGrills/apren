@@ -1307,3 +1307,8 @@
  .customer-trade-actions { justify-content:flex-start; }
  .points-wallet-stats { gap:.5rem; }
 }
+
+.opay-payment-button { width: 100%; min-height: 48px; background: #1DCF9F; border-color: #1DCF9F; color: #063b2e; font-weight: 700; }
+.opay-payment-button:hover:not(:disabled) { background: #18b98f; border-color: #18b98f; }
+.opay-payment-button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.opay-payment-button:disabled { opacity: .65; cursor: not-allowed; }
