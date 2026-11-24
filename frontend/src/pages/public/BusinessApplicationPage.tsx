@@ -170,11 +170,11 @@ export function BusinessApplicationPage() {
                         <p className="public-small">Uploaded source files on record: {selectedListing.assetSourceFiles.join(', ')}. Original archive import into the public gallery is still pending where noted.</p>
                       )}
                       {selectedListing.galleryImageUrls && selectedListing.galleryImageUrls.length > 0 && (
-                        <div className="application-claim-gallery" aria-label="Official property website gallery">
+                        <section className="application-claim-gallery" aria-label="Official property website gallery">
                           {selectedListing.galleryImageUrls.slice(0, 4).map((url) => (
                             <img key={url} src={url} alt={`${selectedListing.name} property gallery`} loading="lazy" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
                           ))}
-                        </div>
+                        </section>
                       )}
                       {selectedListing.amenities && selectedListing.amenities.length > 0 && (
                         <div className="application-claim-source-data">
