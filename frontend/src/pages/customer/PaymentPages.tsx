@@ -100,11 +100,13 @@ export function TestCheckoutPage() {
                 <div>
                   <dt>Provider</dt>
                   <dd>
-                    {payment.provider === 'paystack'
-                      ? 'Paystack'
-                      : payment.provider === 'crypto'
-                        ? 'USDC on Base'
-                        : 'Flutterwave'}{' '}
+                    {payment.provider === 'opay'
+                      ? 'OPay'
+                      : payment.provider === 'paystack'
+                        ? 'Paystack'
+                        : payment.provider === 'crypto'
+                          ? 'USDC on Base'
+                          : 'Flutterwave'}{' '}
                     · local test
                   </dd>
                 </div>
@@ -237,7 +239,9 @@ export function PaymentReturnPage() {
               ? 'Confirming payment...'
               : payment?.status === 'PAID'
                 ? 'Your payment was received.'
-                : 'Your payment status.'}
+                : payment?.status === 'FAILED'
+                  ? 'Your payment failed.'
+                  : 'Your payment status.'}
           </h1>
           <p>
             7even checks the provider's result on the server. The redirect address alone is never
