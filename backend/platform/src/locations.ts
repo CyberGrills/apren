@@ -35,7 +35,7 @@ export async function findLocations(
 ): Promise<NigeriaLocation[]> {
   locations ??= Promise.all(
     nigeriaStates.map(async (entry) => {
-      const file = new URL(`../../../apps/web/public${nigeriaStateDataPath(entry.code)}`, import.meta.url);
+      const file = new URL(`../../../frontend/public${nigeriaStateDataPath(entry.code)}`, import.meta.url);
       const data = JSON.parse(await readFile(file, 'utf8')) as NigeriaStateLocationData;
       return decodeNigeriaStateLocations(data);
     }),
