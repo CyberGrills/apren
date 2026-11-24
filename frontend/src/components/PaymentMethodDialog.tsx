@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi.ts';
 import { api } from '../lib/api.ts';
 import { connectPaymentWallet, SAMPLE_PAYER } from '../lib/paymentWallet.ts';
-import { openCheckout } from '../pages/customer/checkout.ts';
+import { openCheckout, openOpayCashier } from '../pages/customer/checkout.ts';
 import { ErrorNotice, Loading, Modal, Money } from './ui.tsx';
 import { useSevenLanguage } from '../lib/sevenLanguage.ts';
 
@@ -56,11 +56,8 @@ export function PaymentMethodDialog({
         body: { returnUrl: `${window.location.origin}/payment/return?provider=opay` },
         idempotencyKey: opayKey.current,
       });
-      const cashier = new URL(result.cashierUrl);
-      if (cashier.protocol !== 'https:' || cashier.username || cashier.password)
-        throw new Error('The OPay payment link could not be verified. Open your bookings to continue.');
       // Same-window navigation keeps the hosted cashier inside the app's current WebView/browser.
-      window.location.assign(cashier.href);
+      openOpayCashier(result.cashierUrl);
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : 'OPay checkout could not open. Check your booking before trying again.');
       submitting.current = false;
