@@ -28,3 +28,16 @@ export function openCheckout(checkout: Checkout, navigate: NavigateFunction) {
   }
   window.location.assign(target.href);
 }
+
+/** Opens an HTTPS OPay cashier in the current app browsing context (including an app WebView). */
+export function openOpayCashier(cashierUrl: string) {
+  let target: URL;
+  try {
+    target = new URL(cashierUrl);
+  } catch {
+    throw new Error('The OPay payment link could not be verified. Open your bookings to continue.');
+  }
+  if (target.protocol !== 'https:' || target.username || target.password)
+    throw new Error('The OPay payment link could not be verified. Open your bookings to continue.');
+  window.location.assign(target.href);
+}
