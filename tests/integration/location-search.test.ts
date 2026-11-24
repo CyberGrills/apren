@@ -8,8 +8,14 @@ import { createApp } from '../../backend/platform/src/app.ts';
 import { createPool, one } from '../../backend/platform/src/db.ts';
 import { migrate } from '../../backend/platform/src/migrate.ts';
 import { MockProvider } from '../../backend/platform/src/provider.ts';
+import { findLocations } from '../../backend/platform/src/locations.ts';
 
 type AmenityFixture = { id: string; name: string; revision: number; status: string };
+
+test('server location lookup loads state data from the deployed frontend public assets', async () => {
+  const results = await findLocations('Umuahia', 'Abia', 5);
+  assert.ok(results.some((location) => location.name === 'Umuahia' && location.state === 'Abia'));
+});
 
 test('state-scoped public search separates same-name cities and location edits retain only valid metadata', {
   skip: !process.env.TEST_DATABASE_URL || !process.env.TEST_RUNTIME_DATABASE_URL,
