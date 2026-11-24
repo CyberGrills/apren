@@ -100,7 +100,7 @@ export function TestCheckoutPage() {
                 <div>
                   <dt>Provider</dt>
                   <dd>
-                    {payment.provider === 'opay'
+                    {(payment.provider as string) === 'opay'
                       ? 'OPay'
                       : payment.provider === 'paystack'
                         ? 'Paystack'
@@ -261,11 +261,13 @@ export function PaymentReturnPage() {
                 <div>
                   <dt>Provider</dt>
                   <dd>
-                    {payment.provider === 'paystack'
-                      ? 'Paystack'
-                      : payment.provider === 'crypto'
-                        ? 'USDC on Base'
-                        : 'Flutterwave'}
+                    {(payment.provider as string) === 'opay'
+                      ? 'OPay'
+                      : payment.provider === 'paystack'
+                        ? 'Paystack'
+                        : payment.provider === 'crypto'
+                          ? 'USDC on Base'
+                          : 'Flutterwave'}
                   </dd>
                 </div>
                 <div>
