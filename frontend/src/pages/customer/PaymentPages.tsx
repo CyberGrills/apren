@@ -226,7 +226,7 @@ export function PaymentReturnPage() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [reference, transactionId, attempt, showSuccess, showError]);
+  }, [reference, transactionId, attempt, showSuccess, showError, opayReturn]);
   return (
     <div className="public-page customer-page">
       <PublicHeader />
