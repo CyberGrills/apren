@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi.ts';
 import { api } from '../lib/api.ts';
 import { connectPaymentWallet, SAMPLE_PAYER } from '../lib/paymentWallet.ts';
-import { openCheckout } from '../pages/customer/checkout.ts';
+import { openCheckout, openOpayCashier } from '../pages/customer/checkout.ts';
 import { ErrorNotice, Loading, Modal, Money } from './ui.tsx';
 import { useSevenLanguage } from '../lib/sevenLanguage.ts';
 
@@ -41,10 +41,33 @@ export function PaymentMethodDialog({
   } = useApi<Payment>(options?.existingPaymentId ? `/payments/${options.existingPaymentId}` : null);
   const [method, setMethod] = useState<PaymentMethod>('FIAT');
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const keys = useRef<Record<string, string>>({});
+  const opayKey = useRef<string>(crypto.randomUUID());
+  async function payWithOpay() {
+    if (submitting.current) return;
+    submitting.current = true;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const result = await api<{ cashierUrl: string }>(`/bookings/${encodeURIComponent(reservation.id)}/pay/opay`, {
+        method: 'POST',
+        body: { returnUrl: `${window.location.origin}/payment/return?provider=opay` },
+        idempotencyKey: opayKey.current,
+      });
+      // Same-window navigation keeps the hosted cashier inside the app's current WebView/browser.
+      openOpayCashier(result.cashierUrl);
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : 'OPay checkout could not open. Check your booking before trying again.');
+      submitting.current = false;
+      setBusy(false);
+    }
+  }
   async function continuePayment() {
-    if (!options) return;
+    if (!options || submitting.current) return;
+    // State updates render asynchronously; the ref closes the rapid double-click window.
+    submitting.current = true;
     const selected = existing?.method ?? method;
     setBusy(true);
     setActionError(null);
@@ -75,6 +98,7 @@ export function PaymentMethodDialog({
       );
       reload();
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }

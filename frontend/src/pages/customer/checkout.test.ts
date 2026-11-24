@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Checkout } from '@7even/contracts';
 import type { NavigateFunction } from 'react-router-dom';
-import { openCheckout } from './checkout.ts';
+import { openCheckout, openOpayCashier } from './checkout.ts';
 
 const fixture: Checkout = {
   paymentId: '9e6d393f-7d02-4d89-81d6-d04dcf1288f4',
@@ -137,5 +137,32 @@ describe('checkout destination boundary', () => {
       if (saved) Object.defineProperty(globalThis, 'window', saved);
       else Reflect.deleteProperty(globalThis, 'window');
     }
+  });
+});
+
+describe('OPay cashier destination boundary', () => {
+  it('opens an HTTPS cashier URL in the current app browsing context', () => {
+    const saved = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    const destinations: string[] = [];
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { location: { assign: (url: string) => destinations.push(url) } },
+    });
+    try {
+      openOpayCashier('https://cashier.example/checkout/session');
+      assert.deepEqual(destinations, ['https://cashier.example/checkout/session']);
+    } finally {
+      if (saved) Object.defineProperty(globalThis, 'window', saved);
+      else Reflect.deleteProperty(globalThis, 'window');
+    }
+  });
+
+  it('rejects insecure, malformed and credential-bearing cashier URLs', () => {
+    for (const url of [
+      'http://cashier.example/pay',
+      'javascript:alert(1)',
+      'https://user:pass@cashier.example/pay',
+      'not a url',
+    ]) assert.throws(() => openOpayCashier(url), /payment link could not be verified/);
   });
 });

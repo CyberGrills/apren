@@ -330,3 +330,11 @@ test('Explore surfaces approved directory profiles and source-backed dining and 
   assert.match(businessCard, /Booking is disabled/);
   assert.match(listingCard, /Not bookable or payable through 7even yet/);
 });
+
+test('payment submission uses a synchronous ref lock to prevent rapid duplicate checkout requests', () => {
+  const dialog = source('../../frontend/src/components/PaymentMethodDialog.tsx');
+  assert.match(dialog, /const submitting = useRef\(false\)/);
+  assert.match(dialog, /if \(!options \|\| submitting\.current\) return/);
+  assert.match(dialog, /submitting\.current = true/);
+  assert.match(dialog, /submitting\.current = false/);
+});

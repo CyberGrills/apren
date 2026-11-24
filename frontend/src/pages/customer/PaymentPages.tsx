@@ -100,11 +100,13 @@ export function TestCheckoutPage() {
                 <div>
                   <dt>Provider</dt>
                   <dd>
-                    {payment.provider === 'paystack'
-                      ? 'Paystack'
-                      : payment.provider === 'crypto'
-                        ? 'USDC on Base'
-                        : 'Flutterwave'}{' '}
+                    {payment.provider === 'opay'
+                      ? 'OPay'
+                      : payment.provider === 'paystack'
+                        ? 'Paystack'
+                        : payment.provider === 'crypto'
+                          ? 'USDC on Base'
+                          : 'Flutterwave'}{' '}
                     · local test
                   </dd>
                 </div>
@@ -171,6 +173,7 @@ export function PaymentReturnPage() {
   const [params] = useSearchParams();
   const reference = params.get('tx_ref') ?? params.get('reference') ?? params.get('trxref');
   const transactionId = params.get('transaction_id');
+  const opayReturn = params.get('provider') === 'opay';
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(!!reference);
   const [error, setError] = useState<string | null>(null);
@@ -185,10 +188,10 @@ export function PaymentReturnPage() {
       reference,
       ...(transactionId && /^\d+$/.test(transactionId) ? { transactionId } : {}),
     };
-    api<Payment>('/payments/verify', {
-      method: 'POST',
-      body,
-      idempotencyKey: `verify:${reference}:${transactionId ?? 'none'}:${attempt}`,
+    api<Payment>(opayReturn ? `/payments/verify?reference=${encodeURIComponent(reference)}` : '/payments/verify', {
+      method: opayReturn ? 'GET' : 'POST',
+      ...(opayReturn ? {} : { body }),
+      idempotencyKey: opayReturn ? undefined : `verify:${reference}:${transactionId ?? 'none'}:${attempt}`,
       signal: controller.signal,
     })
       .then((value) => {
@@ -233,10 +236,12 @@ export function PaymentReturnPage() {
           <span className="public-eyebrow">Back from payment</span>
           <h1 id="payment-return-title">
             {loading
-              ? 'Checking your payment.'
+              ? 'Confirming payment...'
               : payment?.status === 'PAID'
                 ? 'Your payment was received.'
-                : 'Your payment status.'}
+                : payment?.status === 'FAILED'
+                  ? 'Your payment failed.'
+                  : 'Your payment status.'}
           </h1>
           <p>
             7even checks the provider's result on the server. The redirect address alone is never
