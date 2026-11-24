@@ -1,4 +1,3 @@
-import type { NigeriaLocation } from '@7even/contracts';
 import {
   type FocusEvent,
   type KeyboardEvent,
@@ -12,7 +11,17 @@ import { searchLocations } from '../lib/locationSearch.ts';
 
 const MAX_VISIBLE = 50;
 
-export function LocationCombobox({
+/** The least a suggestion needs to be shown. NigeriaLocation already satisfies this. */
+export interface PlaceOption {
+  id: string | number;
+  name: string;
+  area?: string | null;
+  state?: string | null;
+  /** Replaces the default "area, state" line under the name. */
+  detail?: string;
+}
+
+export function LocationCombobox<T extends PlaceOption>({
   id,
   name,
   value,
@@ -27,13 +36,13 @@ export function LocationCombobox({
   hint,
 }: {
   id: string;
-  name: string;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
-  onSelectOption?: (location: NigeriaLocation) => void;
-  options: readonly NigeriaLocation[];
+  onSelectOption?: (option: T) => void;
+  options: readonly T[];
   loading?: boolean;
-  /** True when the options already match the typed text, because they came from the server. */
+  /** True when the options already match the typed text, because they were filtered elsewhere. */
   serverFiltered?: boolean;
   required?: boolean;
   /** Only accept a place from the list, for forms that need a canonical location. */
@@ -91,7 +100,7 @@ export function LocationCombobox({
       document.getElementById(`${listId}-${active}`)?.scrollIntoView({ block: 'nearest' });
   }, [active, listId]);
 
-  function choose(item: NigeriaLocation) {
+  function choose(item: T) {
     onChange(item.name);
     onSelectOption?.(item);
     setOpen(false);
@@ -194,7 +203,9 @@ export function LocationCombobox({
                   }}
                 >
                   <strong>{item.name}</strong>
-                  <small>{item.area ? `${item.area}, ${item.state}` : item.state}</small>
+                  <small>
+                    {item.detail ?? [item.area, item.state].filter(Boolean).join(', ')}
+                  </small>
                 </div>
               ))}
             </div>

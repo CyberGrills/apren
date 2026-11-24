@@ -2,7 +2,7 @@ import type { Offering, Sector } from '@7even/contracts';
 import { Compass, Hotel, Search, SlidersHorizontal, Utensils } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { StateCityFields } from '../../components/LocationFields.tsx';
+import { WhereField } from '../../components/WhereField.tsx';
 import { GoogleMapsScene } from '../../components/GoogleMapsScene.tsx';
 import { ScrollPilotScene } from '../../components/ScrollPilotScene.tsx';
 import {
@@ -231,7 +231,7 @@ export function ExplorePage() {
             <SlidersHorizontal size={17} aria-hidden="true" />
             <span>{language === 'pcm' ? 'Set your search' : 'Make it yours'}</span>
           </div>
-          <StateCityFields
+          <WhereField
             prefix="explore"
             initialState={params.get('state')}
             initialCity={params.get('city') ?? ''}

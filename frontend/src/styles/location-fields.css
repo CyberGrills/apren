@@ -157,3 +157,6 @@
   font-size: 0.78rem;
   line-height: 1.5;
 }
+
+/* One wider "Where" box in the Explore filters */
+.explore-filters > div.where-field.location-field { flex: 2 1 260px; min-width: 220px; }
