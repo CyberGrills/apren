@@ -195,6 +195,16 @@ export function PaymentMethodDialog({
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>
               {pcm ? 'Go back' : 'Go back'}
             </button>
+            {!options.existingPaymentId && (
+              <button
+                type="button"
+                className="btn opay-payment-button"
+                disabled={busy}
+                onClick={() => void payWithOpay()}
+              >
+                {busy ? 'Confirming payment...' : 'Pay with OPay'}
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-primary"
