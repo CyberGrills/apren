@@ -44,6 +44,28 @@ export function PaymentMethodDialog({
   const submitting = useRef(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const keys = useRef<Record<string, string>>({});
+  const opayKey = useRef<string>(crypto.randomUUID());
+  async function payWithOpay() {
+    if (submitting.current) return;
+    submitting.current = true;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const result = await api<{ cashierUrl: string }>(`/bookings/${encodeURIComponent(reservation.id)}/pay/opay`, {
+        method: 'POST',
+        idempotencyKey: opayKey.current,
+      });
+      const cashier = new URL(result.cashierUrl);
+      if (cashier.protocol !== 'https:' || cashier.username || cashier.password)
+        throw new Error('The OPay payment link could not be verified. Open your bookings to continue.');
+      // Same-window navigation keeps the hosted cashier inside the app's current WebView/browser.
+      window.location.assign(cashier.href);
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : 'OPay checkout could not open. Check your booking before trying again.');
+      submitting.current = false;
+      setBusy(false);
+    }
+  }
   async function continuePayment() {
     if (!options || submitting.current) return;
     // State updates render asynchronously; the ref closes the rapid double-click window.
