@@ -117,3 +117,18 @@ The existing model is still generic offering/capacity inventory. The relational 
 ## Audit boundary
 
 This report is documentation only. It does not apply migrations, alter grants or RLS policies, create hotel inventory, seed live data, connect a PMS, change Vercel settings, merge code or deploy production.
+
+## Follow-up correction — runtime role naming (23 November 2026)
+
+The initial role summary above used the name `seven_runtime` and described `seven_owner` as non-login. That was an inspection/reporting error; the live role name includes the digit **7**.
+
+A fresh read-only role-catalog inspection shows:
+
+- `7even_runtime` is a login role, inherits `seven_app`, and is neither a superuser nor granted `BYPASSRLS`.
+- `seven_owner` is also a login role, but is neither a superuser nor granted `BYPASSRLS`.
+- `seven_app` and `seven_readonly` are non-login roles.
+- `seven_preview_app` is a login role inheriting `seven_preview_reader`; it is not a member of `seven_app`.
+
+The production `/api/health/ready` endpoint returned HTTP 200 at 2026-11-23 03:36:17 UTC. A recent idle Supavisor session for `7even_runtime` was observed immediately after that request, with its state changing at 03:36:16.972 UTC. This is consistent with the intended production runtime role and confirms that the role is actively used; the endpoint does not expose a per-request `current_user`, so exact request-to-session correlation is not claimed.
+
+No database role, password, grant, membership, policy, or production configuration was changed. The original statement that no `seven_runtime` role exists is literally true but was misleading because the actual runtime login is named `7even_runtime`.
