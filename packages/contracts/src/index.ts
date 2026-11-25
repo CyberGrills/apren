@@ -197,10 +197,23 @@ export const businessVerificationInput = z.strictObject({
   roomInventoryAndPolicies: businessVerificationEvidenceInput,
   inventoryFreshnessHours: z.int().min(1).max(168),
 });
+export const diningVerificationEvidenceInput = z.strictObject({
+  businessIdentity: businessVerificationEvidenceInput,
+  ownerAuthority: businessVerificationEvidenceInput,
+  physicalVenue: businessVerificationEvidenceInput,
+  workingContact: businessVerificationEvidenceInput,
+  ownerApprovedMenu: businessVerificationEvidenceInput,
+  dishEvidence: businessVerificationEvidenceInput,
+  currentPricesNgn: businessVerificationEvidenceInput,
+  openingHours: businessVerificationEvidenceInput,
+  serviceCapacityAndTerms: businessVerificationEvidenceInput,
+  photoPermission: businessVerificationEvidenceInput,
+});
 export const businessStatusInput = z.strictObject({
   status: z.enum(['APPROVED', 'REJECTED', 'SUSPENDED']),
   reason: z.string().trim().min(3).max(500),
   verification: businessVerificationInput.optional(),
+  diningVerification: diningVerificationEvidenceInput.optional(),
 });
 export const subaccountInput = z
   .strictObject({

@@ -66,7 +66,7 @@ All routes start with `/api`. Success is `{ data: T }`; list data is an array, w
 | GET /reception/reservations/:id/payment-notes | None | PaymentNote[] | Scoped owner/reception or admin |
 | POST /reception/reservations/:id/payment-notes | paymentNoteInput | PaymentNote | Same scope, staff observation only; does not establish payment or reward eligibility |
 | GET /admin/overview | None | AdminOverview | Admin |
-| POST /admin/businesses/:id/status | businessStatusInput | Business | Admin, audited; APPROVED requires all hotel verification checks, evidence references and a 1–168 hour inventory freshness window |
+| POST /admin/businesses/:id/status | businessStatusInput | Business | Admin, audited; STAY approval requires the hotel evidence checklist and a 1–168 hour inventory freshness window; DINING approval requires all ten Dining identity, authority, venue, contact, owner-approved menu, dish evidence, NGN pricing, hours, service terms and photo-permission evidence checks |
 | POST /admin/businesses/:id/subaccount | `{ provider, subaccountCode, accountLabel }` (flutterwave or paystack) | Business | Admin; matching RS_/ACCT_ code and verified Nigerian bank mapping |
 | POST /admin/businesses/:id/crypto-wallet/approve | `{ expectedRevision, approved, reason }` | Business | Admin, reviewed current wallet ownership, revision and business status |
 | POST /admin/policy | policyInput | AdminOverview policy | Admin, immutable next version; commission fixed approved1000bps |
@@ -87,3 +87,9 @@ All routes start with `/api`. Success is `{ data: T }`; list data is an array, w
 Normal state flow is `HELD -> CONFIRMED -> CHECKED_IN -> FULFILLED`, with cancellation and expiry transitions constrained by policy. Payment success after a hold is expired or unavailable records an actual receipt but yields `PAYMENT_REVIEW` and no capacity claim. Payment, settlement, refund and reward state are separate. Repeated fulfillment issues points once. Every actual duplicate payment is recorded financially; only one payment may fund the reservation, and extra payments enter refund review.
 
 Baseline development data is explicit and labelled: sample Nigerian hospitality businesses across STAY/DINING/EXPERIENCE, upcoming capacity, representative reservations, and roles. Seed requires development/test mode and explicit invocation. Production startup never silently creates sample records or default logins. Development seed credentials are environment supplied or securely generated and shown only during local seed. Local verification uses private fixture credentials, never production credentials. Synthetic observations are retained with their provenance and excluded from measured demand suggestions.
+
+### Dining verification and booking eligibility
+
+A Dining business cannot be approved through the hotel checklist. Administrators must submit the separate `diningVerification` object with confirmed evidence references for all ten checks: `businessIdentity`, `ownerAuthority`, `physicalVenue`, `workingContact`, `ownerApprovedMenu`, `dishEvidence`, `currentPricesNgn`, `openingHours`, `serviceCapacityAndTerms` and `photoPermission`. Each item has the shape `{ confirmed: true, evidenceReference: "..." }`. The server records the checklist version, reviewer and review timestamp.
+
+Dining checklist completion is required at the public offerings list/detail boundary and again when creating a quote or reservation. Existing generic inventory windows remain the only scheduling primitive in this milestone; they are not restaurant table/seat allocation or menu-ordering. Cultural dish references are not commercial menu claims, and this milestone does not import legacy food records or create customer-facing Dining supply.

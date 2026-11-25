@@ -90,6 +90,17 @@ export async function createQuote(
   )
     return fail(409, 'OFFER_UNAVAILABLE', 'This offering is not available to book.');
 
+  if (
+    offer.kind === 'DINING' &&
+    (business.details.diningVerificationReview as { checklistVersion?: unknown } | undefined)
+      ?.checklistVersion !== 1
+  )
+    return fail(
+      409,
+      'DINING_VERIFICATION_REQUIRED',
+      'This Dining business has not completed the required verification review.',
+    );
+
   if (offer.kind === 'STAY') {
     const review = business.details.verificationReview as
       | { checklistVersion?: unknown; inventoryFreshnessHours?: unknown }
@@ -226,6 +237,16 @@ export async function createReservation(
     );
   if (!offer.published)
     return fail(409, 'OFFER_UNAVAILABLE', 'This offering is no longer available.');
+  if (
+    offer.kind === 'DINING' &&
+    (business.details.diningVerificationReview as { checklistVersion?: unknown } | undefined)
+      ?.checklistVersion !== 1
+  )
+    return fail(
+      409,
+      'DINING_VERIFICATION_REQUIRED',
+      'This Dining business has not completed the required verification review.',
+    );
   if (offer.kind === 'STAY') {
     const review = business.details.verificationReview as
       | { checklistVersion?: unknown; inventoryFreshnessHours?: unknown }
