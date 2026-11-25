@@ -1,20 +1,33 @@
 import type { Business } from '@7even/contracts';
 import { ArrowUpRight, CalendarDays, ChartNoAxesCombined, Store } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { StateCityFields } from '../../components/LocationFields.tsx';
-import { ErrorNotice, Field, useFeedback } from '../../components/ui.tsx';
+import { ErrorNotice, Field, Loading, useFeedback } from '../../components/ui.tsx';
 import { useSession } from '../../context/SessionContext.tsx';
+import { useApi } from '../../hooks/useApi.ts';
 import { api } from '../../lib/api.ts';
+import type { DirectoryListing } from '../../lib/nigeriaDirectory.ts';
 import { PublicFooter, PublicHeader } from './PublicShell.tsx';
 
+interface DirectoryApiResponse {
+  listings: DirectoryListing[];
+}
+
 export function BusinessApplicationPage() {
+  const [searchParams] = useSearchParams();
+  const listingId = searchParams.get('listingId');
   const { user, refresh, loading } = useSession();
   const { showSuccess } = useFeedback();
+  const { data: directory, loading: directoryLoading, error: directoryError, reload: reloadDirectory } =
+    useApi<DirectoryApiResponse>(listingId ? '/directory?kind=STAY&page=1&pageSize=100' : null);
+  const selectedListing = directory?.listings.find((item) => item.id === listingId) ?? null;
   const [business, setBusiness] = useState<Business | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const attempt = useRef(crypto.randomUUID());
+  const returnTo = listingId ? `/business/apply?listingId=${encodeURIComponent(listingId)}` : '/business/apply';
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -24,6 +37,7 @@ export function BusinessApplicationPage() {
         String(form.get(key) ?? '').trim(),
       ]),
     );
+    if (listingId) Object.assign(body, { discoveryListingId: listingId });
     setError(null);
     setBusy(true);
     try {
@@ -35,7 +49,7 @@ export function BusinessApplicationPage() {
       setBusiness(result);
       await refresh();
       showSuccess(
-        `${result.businessName} is awaiting review. Your listings stay unpublished until your business is approved.`,
+        `${result.businessName} is awaiting review. Your team can prepare its room categories, rates, amenities and availability in the 7EVEN workspace while the listing remains unpublished.`,
         'Application received.',
       );
     } catch (cause) {
@@ -48,6 +62,9 @@ export function BusinessApplicationPage() {
       setBusy(false);
     }
   }
+
+  const claimUnavailable = !!listingId && !directoryLoading && (!selectedListing || !selectedListing.claimable);
+
   return (
     <div className="public-page">
       <PublicHeader />
@@ -60,8 +77,8 @@ export function BusinessApplicationPage() {
             <em>your guests.</em>
           </h1>
           <p>
-            Bring your rooms, tables or experiences to 7even. Keep bookings in order and get a
-            clearer view of the days ahead.
+            Bring your rooms, tables or experiences to 7EVEN. You do not need a working hotel
+            website or a central payment gateway to start.
           </p>
           <ul className="business-apply-benefits">
             <li>
@@ -75,14 +92,14 @@ export function BusinessApplicationPage() {
               <CalendarDays size={22} aria-hidden="true" />
               <div>
                 <h2>A clear front desk.</h2>
-                <p>Reservations, arrivals and availability in one workspace.</p>
+                <p>Your authorised team manages room categories, rate plans, nightly availability and reservations.</p>
               </div>
             </li>
             <li>
               <ChartNoAxesCombined size={22} aria-hidden="true" />
               <div>
                 <h2>Demand you can examine.</h2>
-                <p>Suggestions show the evidence behind them. You decide what to change.</p>
+                <p>See booking activity and the evidence behind demand suggestions. Your team controls its own rates and inventory.</p>
               </div>
             </li>
           </ul>
@@ -94,7 +111,7 @@ export function BusinessApplicationPage() {
               <h2 id="apply-title">Awaiting review.</h2>
               <p>
                 {business.businessName} is awaiting review. Your listings stay unpublished until
-                your business is approved.
+                the business verification and inventory checks are complete.
               </p>
               <Link className="btn btn-primary" to="/business">
                 Open your workspace <ArrowUpRight size={18} aria-hidden="true" />
@@ -102,21 +119,33 @@ export function BusinessApplicationPage() {
             </div>
           ) : (
             <>
-              <span className="public-eyebrow">Tell us about your place</span>
-              <h2 id="apply-title">Start with the essentials.</h2>
+              <span className="public-eyebrow">{listingId ? 'Claim a preloaded hotel profile' : 'Tell us about your place'}</span>
+              <h2 id="apply-title">{listingId ? 'Confirm your property details.' : 'Start with the essentials.'}</h2>
+              {listingId && directoryLoading && <Loading inline label="Loading the hotel profile" />}
+              {listingId && directoryError && <ErrorNotice message={directoryError} retry={reloadDirectory} />}
+              {listingId && !directoryLoading && !directoryError && !selectedListing && (
+                <ErrorNotice message="This hotel profile could not be found. Return to the directory and choose an available property." />
+              )}
+              {listingId && selectedListing && !selectedListing.claimable && (
+                <div className="application-signin">
+                  <p>This hotel profile is already claimed or its onboarding is in progress. Contact 7EVEN support if you are the authorised property representative.</p>
+                  <Link className="btn btn-secondary" to="/directory?kind=STAY">Back to hotel directory</Link>
+                </div>
+              )}
               {loading ? (
                 <p>Checking your account…</p>
-              ) : !user ? (
+              ) : !user && !claimUnavailable ? (
                 <div className="application-signin">
-                  <p>Sign in or create an account so your application belongs to you.</p>
-                  <Link to="/register?returnTo=%2Fbusiness%2Fapply" className="btn btn-primary">
+                  {selectedListing && <p>You are requesting access to manage <strong>{selectedListing.name}</strong> in Uyo.</p>}
+                  <p>Sign in or create an account so the property application belongs to an authorised team member.</p>
+                  <Link to={`/register?returnTo=${encodeURIComponent(returnTo)}`} className="btn btn-primary">
                     Create your account
                   </Link>
-                  <Link to="/login?returnTo=%2Fbusiness%2Fapply" className="public-text-link">
+                  <Link to={`/login?returnTo=${encodeURIComponent(returnTo)}`} className="public-text-link">
                     Already have an account? Sign in
                   </Link>
                 </div>
-              ) : user.businessId ? (
+              ) : user?.businessId ? (
                 <div>
                   <p>
                     Your account already belongs to a business. Open your workspace to manage it.
@@ -125,13 +154,43 @@ export function BusinessApplicationPage() {
                     Open your workspace
                   </Link>
                 </div>
-              ) : (
+              ) : !claimUnavailable && !!user && (!listingId || (selectedListing && selectedListing.claimable)) ? (
                 <form
                   onSubmit={submit}
                   onChange={() => {
                     attempt.current = crypto.randomUUID();
                   }}
                 >
+                  {selectedListing && (
+                    <div className="application-claim-summary">
+                      <strong>{selectedListing.name}</strong>
+                      <span>{selectedListing.address}, {selectedListing.city}, {selectedListing.state}</span>
+                      <p>This profile is preloaded from the 7EVEN hotel onboarding records. Your application links your team to this property; it does not publish unverified rates or availability.</p>
+                      {selectedListing.assetSourceFiles && selectedListing.assetSourceFiles.length > 0 && (
+                        <p className="public-small">Uploaded source files on record: {selectedListing.assetSourceFiles.join(', ')}. Original archive import into the public gallery is still pending where noted.</p>
+                      )}
+                      {selectedListing.galleryImageUrls && selectedListing.galleryImageUrls.length > 0 && (
+                        <section className="application-claim-gallery" aria-label="Official property website gallery">
+                          {selectedListing.galleryImageUrls.slice(0, 4).map((url) => (
+                            <img key={url} src={url} alt={`${selectedListing.name} property gallery`} loading="lazy" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+                          ))}
+                        </section>
+                      )}
+                      {selectedListing.amenities && selectedListing.amenities.length > 0 && (
+                        <div className="application-claim-source-data">
+                          <strong>Facilities to review in your workspace</strong>
+                          <ul>{selectedListing.amenities.map((amenity) => <li key={amenity.name}>{amenity.name}</li>)}</ul>
+                        </div>
+                      )}
+                      {selectedListing.publishedRateNotes && selectedListing.publishedRateNotes.length > 0 && (
+                        <div className="application-claim-source-data">
+                          <strong>Published room rates to review</strong>
+                          <ul>{selectedListing.publishedRateNotes.map((rate) => <li key={rate.roomType}>{rate.roomType}: {rate.rate}</li>)}</ul>
+                          <p className="public-small">These are website references, not live 7EVEN rate plans. Confirm or update them in your workspace before publishing inventory.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <Field label="Business name">
                     <input
                       className="field-input"
@@ -140,17 +199,20 @@ export function BusinessApplicationPage() {
                       minLength={1}
                       maxLength={160}
                       autoComplete="organization"
+                      defaultValue={selectedListing?.name ?? ''}
+                      readOnly={!!selectedListing}
                     />
                   </Field>
                   <Field label="What do you offer?">
-                    <select name="sector" className="field-input" defaultValue="STAY">
+                    <select name="sector" className="field-input" defaultValue={selectedListing?.kind ?? 'STAY'} disabled={!!selectedListing}>
                       <option value="STAY">Rooms and places to stay</option>
                       <option value="DINING">Dining and table reservations</option>
                       <option value="EXPERIENCE">Experiences and activities</option>
                     </select>
+                    {selectedListing && <input type="hidden" name="sector" value="STAY" />}
                   </Field>
                   <div className="public-form-row">
-                    <StateCityFields required prefix="application" />
+                    <StateCityFields required prefix="application" initialState={selectedListing?.state ?? 'Akwa Ibom'} initialCity={selectedListing?.city ?? ''} />
                     <Field label="Business phone">
                       <input
                         className="field-input"
@@ -160,6 +222,7 @@ export function BusinessApplicationPage() {
                         required
                         minLength={5}
                         maxLength={30}
+                        defaultValue={selectedListing?.contactPhone ?? ''}
                       />
                     </Field>
                   </div>
@@ -171,11 +234,12 @@ export function BusinessApplicationPage() {
                       required
                       minLength={4}
                       maxLength={300}
+                      defaultValue={selectedListing?.address ?? ''}
                     />
                   </Field>
                   <Field
                     label="Tell guests about your place"
-                    hint="At least 20 characters. Include the details you would want to know before visiting."
+                    hint="At least 20 characters. Add the details you want guests to know; your team can update amenities and policies in the workspace."
                   >
                     <textarea
                       className="field-input"
@@ -184,19 +248,21 @@ export function BusinessApplicationPage() {
                       required
                       minLength={20}
                       maxLength={2000}
+                      defaultValue={selectedListing?.description ?? ''}
                     />
                   </Field>
                   {error && <ErrorNotice message={error} />}
                   <button className="btn btn-primary" type="submit" disabled={busy}>
-                    {busy ? 'Saving your application…' : 'Send your application'}{' '}
+                    {busy ? 'Saving your application…' : selectedListing ? 'Claim this hotel profile' : 'Send your application'}{' '}
                     <ArrowUpRight size={18} aria-hidden="true" />
                   </button>
                   <p className="public-small">
-                    We review businesses before their listings appear. Sending this form does not
-                    publish your business.
+                    We review business authority before a property can publish bookable offers.
+                    Room rates and availability become live only after the hotel team enters and
+                    confirms its inventory.
                   </p>
                 </form>
-              )}
+              ) : null}
             </>
           )}
         </section>

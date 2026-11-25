@@ -3600,3 +3600,24 @@
     flex-wrap: wrap;
   }
 }
+
+/* Preloaded Uyo hotel directory and owner-claim presentation */
+.seven-business-directory-photo-placeholder {
+  display:flex; align-items:center; justify-content:center; min-height:220px;
+  padding:1.5rem; background:var(--surface-subtle); color:var(--muted);
+  text-align:center; font-size:.85rem; font-weight:700; letter-spacing:.03em;
+}
+.seven-directory-amenities { margin:.8rem 0; padding:.85rem 0; border-top:1px solid var(--line); }
+.seven-directory-amenities ul { display:flex; flex-wrap:wrap; gap:.4rem .9rem; margin:.55rem 0 0; padding:0; list-style:none; }
+.seven-directory-amenities li { color:var(--muted); font-size:.78rem; }
+.seven-directory-amenities li::before { content:'•'; margin-right:.4rem; color:var(--accent); }
+.seven-directory-claim { width:100%; justify-content:center; margin-top:.35rem; }
+.application-claim-summary { display:grid; gap:.4rem; margin:1rem 0; padding:1rem; border:1px solid var(--line); border-radius:.8rem; background:var(--surface-subtle); }
+.application-claim-summary > span { color:var(--muted); font-size:.82rem; }
+.application-claim-summary p { margin:.25rem 0 0; color:var(--muted); line-height:1.55; }
+.application-claim-source-data { margin-top:.7rem; }
+.application-claim-source-data ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.35rem 1rem; margin:.55rem 0; padding-left:1.2rem; color:var(--muted); font-size:.82rem; }
+@media (max-width: 640px) { .application-claim-source-data ul { grid-template-columns:1fr; } }
+
+.application-claim-gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; margin:.8rem 0; }
+.application-claim-gallery img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:.55rem; background:var(--surface-subtle); }
