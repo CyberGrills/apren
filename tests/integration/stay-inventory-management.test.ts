@@ -287,9 +287,11 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       roomTypeId:room.room_type_id,code:'OTHER',name:'Cross tenant attempt',
       currencyCode:'NGN',mealPlan:'ROOM_ONLY',
     },404);
-    await owner.request('/business/stay/rooms','POST',{
+    const unnamedRoom=await owner.request<{room_type_id:string;name:string}>('/business/stay/rooms','POST',{
       offeringId:offer.id,maxOccupancy:2,bedConfiguration:'1 king bed',totalRooms:8,
-    },409);
+    });
+    assert.notEqual(unnamedRoom.room_type_id,room.room_type_id);
+    assert.equal(unnamedRoom.name,'1 king bed');
   }finally{
     if(server)await new Promise<void>((resolve,reject)=>server!.close(error=>error?reject(error):resolve()));
     if(offerings.length){
