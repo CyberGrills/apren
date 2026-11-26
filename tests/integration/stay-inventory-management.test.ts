@@ -29,8 +29,6 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
   const users:string[]=[];
   const businesses:string[]=[];
   const offerings:string[]=[];
-  const roomTypes:string[]=[];
-  const ratePlans:string[]=[];
   let server:Server|undefined;
   try{
     const identity=await one(pool,'SELECT current_database() AS name,inet_server_port() AS port');
@@ -106,7 +104,6 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const room=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
       offeringId:offer.id,name:'King Room',maxOccupancy:2,bedConfiguration:'1 king bed',totalRooms:8,
     });
-    roomTypes.push(room.room_type_id);
     const adoptedLegacyWindow=await one<{room_type_id:string}>(pool,
       'SELECT room_type_id FROM seven.inventory_windows WHERE offering_id=$1 AND starts_at=$2',[offer.id,legacyWindowStart]);
     assert.equal(adoptedLegacyWindow?.room_type_id,room.room_type_id);
@@ -114,7 +111,6 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       roomTypeId:room.room_type_id,code:'FLEX',name:'Flexible room only',
       currencyCode:'NGN',mealPlan:'ROOM_ONLY',refundable:true,cancellationPolicy:'Free cancellation before arrival.',
     });
-    ratePlans.push(plan.rate_plan_id);
     await owner.request(`/business/stay/rate-plans/${plan.rate_plan_id}`,'PATCH',{
       code:'FLEX',name:'Flexible room only updated',currencyCode:'NGN',mealPlan:'ROOM_ONLY',
       refundable:true,cancellationPolicy:'Free cancellation before arrival.',expectedRevision:1,
@@ -142,12 +138,10 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     const secondRoom=await owner.request<{room_type_id:string}>('/business/stay/rooms','POST',{
       offeringId:offer.id,name:'Twin Room',maxOccupancy:2,bedConfiguration:'2 twin beds',totalRooms:3,
     });
-    roomTypes.push(secondRoom.room_type_id);
     const secondPlan=await owner.request<{rate_plan_id:string}>('/business/stay/rate-plans','POST',{
       roomTypeId:secondRoom.room_type_id,code:'TWIN',name:'Twin room only',
       currencyCode:'NGN',mealPlan:'ROOM_ONLY',refundable:true,cancellationPolicy:'Free cancellation before arrival.',
     });
-    ratePlans.push(secondPlan.rate_plan_id);
     await owner.request('/business/stay/nightly-rates','PUT',{
       ratePlanId:secondPlan.rate_plan_id,expectedRevision:1,startDate,endDate,amountMinor:'20000000',
       closedToArrival:false,closedToDeparture:false,minStayNights:1,maxStayNights:7,
@@ -304,9 +298,12 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
       await pool.query('DELETE FROM seven.quotes WHERE offering_id=ANY($1::uuid[])',[offerings]);
     }
     if(offerings.length)await pool.query('DELETE FROM seven.inventory_windows WHERE offering_id=ANY($1::uuid[])',[offerings]);
-    if(ratePlans.length)await pool.query('DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
-    if(ratePlans.length)await pool.query('DELETE FROM seven.stay_rate_plans WHERE rate_plan_id=ANY($1::uuid[])',[ratePlans]);
-    if(roomTypes.length)await pool.query('DELETE FROM seven.stay_room_types WHERE room_type_id=ANY($1::uuid[])',[roomTypes]);
+    if(offerings.length)await pool.query(
+      'DELETE FROM seven.stay_nightly_rates WHERE rate_plan_id IN (SELECT rate_plan_id FROM seven.stay_rate_plans WHERE offering_id=ANY($1::uuid[]))',
+      [offerings],
+    );
+    if(offerings.length)await pool.query('DELETE FROM seven.stay_rate_plans WHERE offering_id=ANY($1::uuid[])',[offerings]);
+    if(offerings.length)await pool.query('DELETE FROM seven.stay_room_types WHERE offering_id=ANY($1::uuid[])',[offerings]);
     if(offerings.length)await pool.query('DELETE FROM seven.observations WHERE offering_id=ANY($1::uuid[])',[offerings]);
     if(businesses.length)await pool.query('DELETE FROM seven.observations WHERE business_id=ANY($1::uuid[])',[businesses]);
     if(offerings.length)await pool.query('DELETE FROM seven.offerings WHERE offering_id=ANY($1::uuid[])',[offerings]);
