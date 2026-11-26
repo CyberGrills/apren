@@ -167,7 +167,7 @@ export function BusinessApplicationPage() {
                       <span>{selectedListing.address}, {selectedListing.city}, {selectedListing.state}</span>
                       <p>This profile is preloaded from the 7EVEN hotel onboarding records. Your application links your team to this property; it does not publish unverified rates or availability.</p>
                       {selectedListing.assetSourceFiles && selectedListing.assetSourceFiles.length > 0 && (
-                        <p className="public-small">Uploaded source files on record: {selectedListing.assetSourceFiles.join(', ')}. Original archive import into the public gallery is still pending where noted.</p>
+                        <p className="public-small">Uploaded source files on record: {selectedListing.assetSourceFiles.join(', ')}. These are supporting references; additional property photos must be supplied and verified separately.</p>
                       )}
                       {selectedListing.galleryImageUrls && selectedListing.galleryImageUrls.length > 0 && (
                         <section className="application-claim-gallery" aria-label="Official property website gallery">

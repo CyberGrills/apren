@@ -59,6 +59,8 @@ interface DirectoryItem {
   bookable: boolean;
   amenities: { name: string }[];
   publishedRateNotes?: { roomType: string; rate: string; url: string }[];
+  assetSourceFiles?: string[];
+  galleryImageUrls?: string[];
 }
 
 test('Uyo hotel directory seeds 20 non-bookable profiles and authorised owners can claim one', {
@@ -120,6 +122,10 @@ test('Uyo hotel directory seeds 20 non-bookable profiles and authorised owners c
     assert.equal(madina.claimed, false);
     assert.equal(madina.bookable, false);
     assert.equal(madina.publishedRateNotes?.length, 3);
+    assert.deepEqual(madina.assetSourceFiles, [
+      '7EVEN_apren_Booking_Recovery_Proposal_Madina_Hotels_Residences.pdf',
+    ]);
+    assert.equal(madina.galleryImageUrls?.length, 4);
     assert.ok(madina.amenities.some((amenity) => amenity.name === 'High-speed Wi-Fi'));
 
     const application = await guest.request('/business/applications', 'POST', {
