@@ -169,6 +169,8 @@ test('owner room, rate and room-night APIs are tenant scoped and preserve manual
     assert.ok(secondCategoryRows.every(night=>night.amount_minor==='20000000' && night.capacity===1 && night.allocated_count===0 && night.inventory_source==='MANUAL'));
 
     const customerA=new Client();await customerA.register();
+    // Malformed quote input must reach Express's validation handler, not become an unhandled rejection.
+    await customerA.request('/stay-quotes','POST',{},422);
     const customerB=new Client();await customerB.register();
     const plans=await customerA.request<{plans:Array<{roomType:{id:string;name:string};ratePlan:{id:string};available:boolean}>}>(
       `/offerings/${offer.id}/stay-rate-plans?checkInDate=${startDate}&checkOutDate=${endDate}&rooms=1`);
