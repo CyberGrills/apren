@@ -52,6 +52,7 @@ export default async function handler(req: HandlerRequest, res: HandlerResponse)
   // Readiness checks the database but reports a controlled 503 rather than
   // letting missing credentials or TLS failures become Vercel function 500s.
   if (req.method === "GET" && pathname === "/api/health/ready") {
+    res.setHeader("Cache-Control", "no-store");
     if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
       return res.status(503).json({
         error: { code: "DATABASE_NOT_CONFIGURED", message: "Database connection is not configured." },
