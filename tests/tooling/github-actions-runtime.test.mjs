@@ -28,3 +28,20 @@ test('repository workflows use Node 24-compatible JavaScript actions', () => {
     }
   }
 });
+
+test('frontend CI covers pull requests targeting stacked feature branches', () => {
+  const content = readFileSync(
+    new URL('../../.github/workflows/frontend-ci.yml', import.meta.url),
+    'utf8',
+  );
+  const pullRequestSection = content
+    .split(/^  pull_request:\s*$/m)[1]
+    ?.split(/^  [A-Za-z_][\w-]*:\s*$/m)[0];
+
+  assert.ok(pullRequestSection !== undefined, 'frontend CI must declare pull_request');
+  assert.doesNotMatch(
+    pullRequestSection,
+    /^\s{4}branches\s*:/m,
+    'frontend CI must not restrict PRs to main; stacked PRs also need frontend validation',
+  );
+});
