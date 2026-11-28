@@ -28,6 +28,7 @@ export interface DirectoryListing {
   imageSourceUrl: string;
   sourceName: string;
   sourceUrl: string;
+  sourceCheckedAt?: string | null;
   status: 'DIRECTORY_ONLY';
   bookable: false;
   officialBookingUrl?: string;
@@ -35,6 +36,28 @@ export interface DirectoryListing {
   contactEmail?: string;
   externalListings?: { label: string; url: string }[];
   publishedRateNotes?: { roomType: string; rate: string; source: string; url: string }[];
+}
+
+const directorySourceMaxAgeMs = 30 * 24 * 60 * 60 * 1000;
+
+/** Directory-source age is informational; it is not an inventory or rate freshness guarantee. */
+export function getDirectorySourceFreshness(
+  sourceCheckedAt: string | null | undefined,
+  now = Date.now(),
+): { label: string; stale: boolean } {
+  if (!sourceCheckedAt) return { label: 'Source check date not recorded', stale: true };
+  const timestamp = Date.parse(sourceCheckedAt);
+  if (!Number.isFinite(timestamp) || timestamp > now)
+    return { label: 'Source check date unavailable', stale: true };
+  const checkedDate = new Intl.DateTimeFormat('en-NG', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(timestamp));
+  return {
+    label: 'Source last checked ' + checkedDate,
+    stale: now - timestamp > directorySourceMaxAgeMs,
+  };
 }
 
 const hotelDirectory = (slug: string) => `https://hotels.ng/hotels-in-${slug}`;

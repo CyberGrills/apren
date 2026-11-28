@@ -2892,6 +2892,19 @@
   font-size: .68rem;
   line-height: 1.5;
 }
+.seven-directory-source-freshness {
+  margin: .55rem 0 0;
+  color: var(--muted);
+  font-size: .7rem;
+  line-height: 1.55;
+}
+.seven-directory-source-freshness strong {
+  color: var(--accent);
+}
+.seven-directory-source-freshness.is-stale strong {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 @keyframes seven-directory-enter {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }

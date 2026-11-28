@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   directoryListingMatchKey,
+  getDirectorySourceFreshness,
   listingsForKind,
   nigeriaStateDirectories,
   sourcedDirectoryListings,
@@ -34,6 +35,24 @@ test('directory records are source-backed and never marked bookable', () => {
     assert.equal(entry.status, 'DIRECTORY_ONLY');
     assert.equal(entry.bookable, false);
   }
+});
+
+test('directory source timestamps are visible and become overdue after 30 days', () => {
+  const now = Date.parse('2026-11-28T00:00:00.000Z');
+  const recent = getDirectorySourceFreshness('2026-11-15T00:00:00.000Z', now);
+  assert.equal(recent.stale, false);
+  assert.match(recent.label, /^Source last checked /);
+
+  const overdue = getDirectorySourceFreshness('2026-10-22T00:00:00.000Z', now);
+  assert.equal(overdue.stale, true);
+  assert.match(overdue.label, /^Source last checked /);
+
+  assert.deepEqual(getDirectorySourceFreshness(null, now), {
+    label: 'Source check date not recorded',
+    stale: true,
+  });
+  assert.equal(getDirectorySourceFreshness('not-a-date', now).stale, true);
+  assert.equal(getDirectorySourceFreshness('2026-12-01T00:00:00.000Z', now).stale, true);
 });
 
 test('category filters only return the requested directory category, alphabetically sorted', () => {
