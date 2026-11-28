@@ -1,4 +1,4 @@
-import type { DirectoryListing } from '../../lib/nigeriaDirectory.ts';
+import { getDirectorySourceFreshness, type DirectoryListing } from '../../lib/nigeriaDirectory.ts';
 import { OfflineSaveButton } from '../../components/OfflineSaveButton.tsx';
 
 const categoryLabel = {
@@ -8,6 +8,7 @@ const categoryLabel = {
 } as const;
 
 export function DirectoryListingCard({ listing }: { listing: DirectoryListing }) {
+  const sourceFreshness = getDirectorySourceFreshness(listing.sourceCheckedAt);
   return (
     <article className="seven-directory-card">
       <a
@@ -39,6 +40,12 @@ export function DirectoryListingCard({ listing }: { listing: DirectoryListing })
         </p>
         {listing.area && <p className="seven-directory-area">{listing.area}</p>}
         <p className="seven-directory-description">{listing.description}</p>
+        <p className={"seven-directory-source-freshness" + (sourceFreshness.stale ? " is-stale" : "")}>
+          <strong>{sourceFreshness.stale ? "Source verification overdue. " : "Source verification. "}</strong>
+          {sourceFreshness.label}. {sourceFreshness.stale
+            ? "This is a directory reference, not a current confirmation. Verify details directly with the venue."
+            : "Confirm current details directly with the venue."}
+        </p>
         <OfflineSaveButton listing={listing} />
         <a
           className="seven-directory-source-link"
